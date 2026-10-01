@@ -1,0 +1,60 @@
+name: Mobile Lighthouse production diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mobile-lighthouse-production-diagnostic.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Measure production mobile performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run Lighthouse twice
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for i in 1 2; do
+            npx --yes lighthouse@12.8.2 https://ilkoku.com/ \
+              --quiet \
+              --chrome-flags="--headless --no-sandbox" \
+              --only-categories=performance \
+              --form-factor=mobile \
+              --output=json \
+              --output-path="lighthouse-$i.json"
+          done
+
+      - name: Summarize mobile metrics
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const runs = [1,2].map((i) => JSON.parse(fs.readFileSync(`lighthouse-${i}.json`, "utf8")));
+          const pick = (r) => ({
+            score: Math.round(r.categories.performance.score * 100),
+            fcp: r.audits["first-contentful-paint"].numericValue,
+            lcp: r.audits["largest-contentful-paint"].numericValue,
+            tbt: r.audits["total-blocking-time"].numericValue,
+            cls: r.audits["cumulative-layout-shift"].numericValue,
+            speedIndex: r.audits["speed-index"].numericValue,
+            server: r.audits["server-response-time"]?.numericValue ?? null,
+            lcpElement: r.audits["largest-contentful-paint-element"]?.details?.items?.[0]?.node?.snippet ?? null,
+          });
+          const metrics = runs.map(pick);
+          console.log("LIGHTHOUSE_MOBILE_RUNS|" + JSON.stringify(metrics));
+          const median = (xs) => [...xs].sort((a,b)=>a-b)[Math.floor(xs.length/2)];
+          console.log("LIGHTHOUSE_MOBILE_MEDIAN|" + JSON.stringify({
+            score: median(metrics.map(x=>x.score)),
+            fcp: median(metrics.map(x=>x.fcp)),
+            lcp: median(metrics.map(x=>x.lcp)),
+            tbt: median(metrics.map(x=>x.tbt)),
+            cls: median(metrics.map(x=>x.cls)),
+            speedIndex: median(metrics.map(x=>x.speedIndex)),
+            server: median(metrics.map(x=>x.server ?? 0)),
+            lcpElement: metrics[0].lcpElement,
+          }));
+          NODE

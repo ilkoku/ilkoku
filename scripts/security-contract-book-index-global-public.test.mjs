@@ -61,12 +61,12 @@ test("Spain research stays fail-closed while Canada Globe and Mail Top 10 is pub
   const meanings = source("src/lib/book-index/turkish-title-meanings.ts");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
 
-  contains(sources, 'code: "casadellibro-es"', "Spain research source registry");
+  contains(sources, 'code: "abc-gfk-es"', "Spain research source registry");
   contains(sources, 'market: "ES"', "Spain market code");
-  contains(lists, 'code: "casadellibro-es-bestsellers-research"', "Spain research list");
+  contains(lists, 'code: "abc-gfk-es-fiction-weekly-research"', "Spain research list");
   contains(lists, "collectionEveryMinutes: null", "Spain research list is unscheduled");
   contains(lists, "enabled: false", "Spain research list is disabled");
-  notContains(model, '"casadellibro-es-bestsellers-research"', "Spain is not public before rank verification");
+  notContains(model, '"abc-gfk-es-fiction-weekly-research"', "Spain is not public before transport verification");
 
   contains(adapter, 'const EXPECTED_BOOKS = 10', "Canada exact Top 10 guard");
   contains(adapter, "ARTICLE_PATH_PREFIX", "Canada latest weekly article discovery");

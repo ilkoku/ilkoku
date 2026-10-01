@@ -129,6 +129,7 @@ test("Brazil Amazon bestseller source is source-native and part of the world tab
   contains(brazil, 'const EXPECTED_BOOKS = 30', "Brazil exact Top 30 guard");
   contains(brazil, "p13n-asin-index-", "Brazil Amazon item parser");
   contains(brazil, "zg-bdg-text", "Brazil Amazon native rank parser");
+  contains(brazil, "authorFallbackHtml", "Brazil plain author fallback parser");
   contains(brazil, "BOOK_INDEX_AMAZON_BR_RANK_ORDER_MISMATCH", "Brazil rank guard");
   contains(collector, "amazonBrazilBookIndexAdapter", "Brazil collector registration");
   contains(sources, 'code: "amazon-br"', "Brazil source registry");
@@ -174,6 +175,7 @@ test("France Amazon bestseller source is fail-closed and source-native", () => {
   contains(adapter, 'const EXPECTED_BOOKS = 30', "Amazon France exact Top 30 guard");
   contains(adapter, "p13n-asin-index-", "Amazon France item parser");
   contains(adapter, "zg-bdg-text", "Amazon France native rank parser");
+  contains(adapter, "authorFallbackHtml", "Amazon France plain author fallback parser");
   contains(adapter, "BOOK_INDEX_AMAZON_FR_RANK_ORDER_MISMATCH", "Amazon France rank guard");
   contains(collector, "amazonFranceBookIndexAdapter", "Amazon France collector registration");
   contains(sources, 'code: "amazon-fr"', "France source registry");

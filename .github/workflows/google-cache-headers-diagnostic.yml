@@ -64,6 +64,9 @@ jobs:
             echo "x-robots-tag=${xrobots:-NONE}"
             echo "vary=${vary:-NONE}"
             echo "server=${server:-NONE}"
+            echo "cf-cache-status=$(header_value "$headers" 'cf-cache-status' || true)"
+            echo "cf-ray=$(header_value "$headers" 'cf-ray' || true)"
+            echo "x-nextjs-cache=$(header_value "$headers" 'x-nextjs-cache' || true)"
 
             if [[ -n "$etag" ]]; then
               local h2 b2 c2 n2
@@ -88,6 +91,10 @@ jobs:
             fi
 
             if [[ "$url" == 'https://ilkoku.com/' ]]; then
+              echo "homepage-cloudflare-markers:"
+              grep -Eoi 'cdn-cgi[^"< ]*|cloudflareinsights|beacon\.min\.js|data-cfemail|data-cf-settings|rocket-loader|challenges\.cloudflare\.com' "$body" | sort | uniq -c || true
+              echo "homepage-response-headers:"
+              cat "$headers"
               local asset
               asset="$(grep -Eo '(src|href)="[^"]+\.(js|css)(\?[^"]*)?"' "$body" | sed -E 's/^(src|href)="([^"]+)"/\2/' | head -1 || true)"
               if [[ -n "$asset" ]]; then

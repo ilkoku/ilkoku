@@ -23,7 +23,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Çok Satanlara Yeni Giren Kitaplar",
     searchTitle: "Çok Satanlara Yeni Giren Kitaplar",
     description:
-      "Bir önceki başarılı snapshotta görünmeyip güncel çok satan listelerine yeni giren kitapları, kaynak kanıtlarıyla inceleyin.",
+      "Bir önceki başarılı snapshotta görünmeyip güncel çok satan listelerine yeni giren kitapları, kitap satış kanalı bilgileriyle inceleyin.",
   },
   {
     slug: "cok-satanlarda-yukselenler",
@@ -32,7 +32,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Çok Satan Listelerinde Yükselen Kitaplar",
     searchTitle: "Çok Satanlarda Yükselen Kitaplar",
     description:
-      "Kaynak listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kaynak sayısıyla inceleyin.",
+      "Kitap satış kanalı listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kitap satış kanalı sayısıyla inceleyin.",
   },
   {
     slug: "birden-fazla-listede-cok-satanlar",
@@ -41,7 +41,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Birden Fazla Listede Çok Satan Kitaplar",
     searchTitle: "Birden Fazla Listede Çok Satan Kitaplar",
     description:
-      "Aynı anda en az üç bağımsız işletmeci grubunda görünen çok satan kitapları karşılaştırın.",
+      "Aynı anda en az üç kitap satış kanalında görünen çok satan kitapları karşılaştırın.",
   },
   {
     slug: "uzun-suredir-cok-satanlar",

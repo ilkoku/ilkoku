@@ -31,6 +31,6 @@ export async function GET() {
 
     return NextResponse.json({ content }, { headers: publicResourceHeaders });
   } catch {
-    return NextResponse.json({ content: null });
+    return NextResponse.json({ content: null }, { headers: publicResourceHeaders });
   }
 }

@@ -11,6 +11,7 @@ export const publicPlatformLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "/yazarlar-icin", label: "Yazarlar İçin" },
+  { href: "/okurlar-icin", label: "Okurlar İçin" },
   { href: "/editorler-icin", label: "Editörler İçin" },
   { href: "/yayinevleri-icin", label: "Yayınevleri İçin" },
 ] satisfies readonly PublicSiteLink[];

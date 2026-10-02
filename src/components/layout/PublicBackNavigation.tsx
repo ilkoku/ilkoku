@@ -12,6 +12,7 @@ const explicitBackRoutes = new Set([
   "/topluluk-kurallari",
   "/telif-bildirimi",
   "/yazarlar-icin",
+  "/okurlar-icin",
   "/editorler-icin",
   "/yayinevleri-icin",
   "/editorler",

@@ -49,6 +49,16 @@ test("homepage and all writing education routes stay canonical indexable and sit
   assertContains(sitemap, "const writingGenreHrefs = GENRES.map((genre)", "genre sitemap generation");
   assertContains(sitemap, "...writingEducationEntries", "writing education static sitemap inclusion");
   assertContains(sitemap, "...writingGenreHrefs", "writing genre CMS duplicate guard");
+  assertContains(
+    sitemap,
+    "${baseUrl}/yazarlar-icin/cizgi-anlati/webtoon",
+    "Webtoon required sitemap discovery guard",
+  );
+  assertContains(
+    sitemap,
+    "dedupeSitemapEntries",
+    "sitemap URL deduplication guard",
+  );
   assertContains(sitemap, "...WRITING_CATEGORY_HUBS.map((hub) => hub.href)", "writing category CMS duplicate guard");
 
   const hrefByCategory = new Map(hubs.map((hub) => [hub.category, hub.href]));

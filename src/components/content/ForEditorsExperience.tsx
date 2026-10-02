@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
@@ -130,7 +131,7 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
       <header className="how-header">
         <div className="how-container how-header__inner">
           <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris">Giriş yap</Link>
+          <Link className="how-header__account" href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Giriş yap</Link>
         </div>
       </header>
 
@@ -141,7 +142,7 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
             <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör olarak başla <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--primary" href="/kayit?rol=editor" rel={shouldNofollowSearchExcludedHref("/kayit?rol=editor") ? "nofollow" : undefined}>Editör olarak başla <span aria-hidden="true">→</span></Link>
               <Link className="how-button how-button--secondary" href="#editor-akisi">İnceleme akışını gör</Link>
             </div>
             <div className="how-hero__proof"><span><strong>Gerçek</strong> eser görevleri</span><span><strong>2</strong> bağımsız görüş</span><span><strong>Kayıtlı</strong> rapor süreci</span></div>
@@ -205,7 +206,7 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
       {extras.length > 0 ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      {sectionMap.get("Editör olarak başla") ? <section className="editors-start how-container"><EditorIcon name="pool" /><div><span>Sıra sende</span><h2>Yeni eserlerin gelişiminde profesyonel yerini al.</h2><EditorialBody body={sectionMap.get("Editör olarak başla")!.body} /><div className="editors-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=editor">Editör hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Önce standartları oku</Link></div></div></section> : null}
+      {sectionMap.get("Editör olarak başla") ? <section className="editors-start how-container"><EditorIcon name="pool" /><div><span>Sıra sende</span><h2>Yeni eserlerin gelişiminde profesyonel yerini al.</h2><EditorialBody body={sectionMap.get("Editör olarak başla")!.body} /><div className="editors-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=editor" rel={shouldNofollowSearchExcludedHref("/kayit?rol=editor") ? "nofollow" : undefined}>Editör hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/editoryal-standartlar">Önce standartları oku</Link></div></div></section> : null}
 
       <aside className="how-related how-container writers-education" id="editor-egitimi" aria-labelledby="editor-egitimi-title">
         <SectionHeading

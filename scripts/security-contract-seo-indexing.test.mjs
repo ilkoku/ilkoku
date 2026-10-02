@@ -181,6 +181,12 @@ test("public discovery links do not spend crawl signals on robots-excluded actio
   const header = source("src/components/layout/PublicSiteHeader.tsx");
   const megaMenu = source("src/components/layout/PublicHeaderNavigation.tsx");
   const cmsBlocks = source("src/components/content/PublicCmsPageBlocks.tsx");
+  const help = source("src/app/yardim/page.tsx");
+  const editorDirectory = source("src/features/editors/components/EditorDirectory.tsx");
+  const trustFooter = source("src/components/content/PublicTrustFooter.tsx");
+  const writersExperience = source("src/components/content/ForWritersExperience.tsx");
+  const editorsExperience = source("src/components/content/ForEditorsExperience.tsx");
+  const publishersExperience = source("src/components/content/ForPublishersExperience.tsx");
 
   for (const route of ["/kayit", "/giris", "/hesabim", "/sifremi-unuttum", "/yazar", "/editor", "/yayinevi"]) {
     assertContains(policy, `"${route}"`, `${route} private-link nofollow policy`);
@@ -199,6 +205,18 @@ test("public discovery links do not spend crawl signals on robots-excluded actio
   assertContains(header, 'href="/hesabim" rel="nofollow"', "header account nofollow");
   assertContains(header, 'href="/giris" rel="nofollow"', "header login nofollow");
   assertContains(header, 'href="/kayit" rel="nofollow"', "header registration nofollow");
+
+  for (const [text, label] of [
+    [help, "help center"],
+    [editorDirectory, "editor directory"],
+    [trustFooter, "shared public trust footer"],
+    [writersExperience, "writers public landing"],
+    [editorsExperience, "editors public landing"],
+    [publishersExperience, "publishers public landing"],
+  ]) {
+    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consumes private-action nofollow policy`);
+    assertContains(text, '"nofollow"', `${label} emits nofollow for private actions`);
+  }
 });
 
 test("active public help surfaces expose canonical social metadata", () => {

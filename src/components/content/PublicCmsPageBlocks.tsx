@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
+import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 function ActionLink({ href, label, secondary = false }: { href: string; label: string; secondary?: boolean }) {
   if (!href || !label) return null;
@@ -9,7 +10,7 @@ function ActionLink({ href, label, secondary = false }: { href: string; label: s
     ? "inline-flex items-center justify-center rounded-full border border-[#6847e8]/20 bg-white px-5 py-3 text-sm font-extrabold text-[#4b2dbf] no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/35"
     : "inline-flex items-center justify-center rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white no-underline shadow-[0_12px_28px_rgba(91,53,221,.24)] transition hover:-translate-y-0.5 hover:bg-[#4b2dbf]";
   if (href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return <a className={className} href={href}>{label}</a>;
-  return <Link className={className} href={href}>{label}</Link>;
+  return <Link className={className} href={href} rel={shouldNofollowSearchExcludedHref(href) ? "nofollow" : undefined}>{label}</Link>;
 }
 
 function SectionHeading({ heading, intro }: { heading?: string; intro?: string }) {

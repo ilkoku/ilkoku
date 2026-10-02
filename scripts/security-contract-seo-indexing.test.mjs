@@ -57,7 +57,14 @@ test("robots isolates private content management without blocking the public con
   assertNotContains(robots, '          "/icerik",', "broad private content robots prefix");
   assertContains(robots, '          "/icerik$",', "exact private content root robots rule");
   assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
-  assertContains(robots, 'allow: ["/", "/api/media/", "/api/site-assets/"]', "published public render media crawl allowance");
+  assertContains(robots, '"/api/media/"', "published public CMS media crawl allowance");
+  assertContains(robots, '"/api/site-assets/"', "published public site asset crawl allowance");
+  assertContains(robots, '"/api/site-content/footer-navigation"', "published footer render API crawl allowance");
+  assertContains(robots, '"/api/public-announcements"', "published announcement render API crawl allowance");
+  const footerApi = source("src/app/api/site-content/footer-navigation/route.ts");
+  const announcementApi = source("src/app/api/public-announcements/route.ts");
+  assertContains(footerApi, '"X-Robots-Tag": "noindex, noarchive"', "footer render API search exclusion");
+  assertContains(announcementApi, '"X-Robots-Tag": "noindex, noarchive"', "announcement render API search exclusion");
   assertContains(robots, '          "/api",', "private API robots boundary remains blocked");
   assertContains(robots, '          "/1q6z",', "Google Tag Gateway measurement path crawl block");
   assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");

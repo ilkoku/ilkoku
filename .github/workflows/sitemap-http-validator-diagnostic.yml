@@ -1,0 +1,50 @@
+name: Sitemap HTTP validator diagnostic
+
+on:
+  push:
+    branches:
+      - diag/sitemap-http-validators-live-20261002
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live sitemap validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://ilkoku.com/sitemap.xml"
+          H1="$(mktemp)"
+          B1="$(mktemp)"
+          H2="$(mktemp)"
+          B2="$(mktemp)"
+
+          CODE1="$(curl --silent --show-error --location --dump-header "$H1" --output "$B1" --write-out '%{http_code}' "$URL")"
+          ETAG="$(awk 'BEGIN{IGNORECASE=1} /^etag:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$H1")"
+          LAST_MODIFIED="$(awk 'BEGIN{IGNORECASE=1} /^last-modified:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$H1")"
+          CONTENT_TYPE="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$H1")"
+          CACHE_CONTROL="$(awk 'BEGIN{IGNORECASE=1} /^cache-control:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$H1")"
+          CF_CACHE_STATUS="$(awk 'BEGIN{IGNORECASE=1} /^cf-cache-status:/ {sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$H1")"
+          LOC_COUNT="$(grep -o '<loc>' "$B1" | wc -l | tr -d ' ')"
+
+          echo "SITEMAP_DIAG|FIRST|status=$CODE1|etag=$ETAG|last_modified=$LAST_MODIFIED|content_type=$CONTENT_TYPE|cache_control=$CACHE_CONTROL|cf_cache_status=$CF_CACHE_STATUS|loc_count=$LOC_COUNT"
+
+          test "$CODE1" = "200"
+          test -n "$ETAG"
+          test -n "$LAST_MODIFIED"
+          test "$LOC_COUNT" -ge 1
+
+          CODE2="$(curl --silent --show-error --location --dump-header "$H2" --output "$B2" --write-out '%{http_code}' -H "If-None-Match: $ETAG" "$URL")"
+          BODY2_BYTES="$(wc -c < "$B2" | tr -d ' ')"
+          echo "SITEMAP_DIAG|ETAG_CONDITIONAL|status=$CODE2|body_bytes=$BODY2_BYTES"
+          test "$CODE2" = "304"
+          test "$BODY2_BYTES" = "0"
+
+          CODE3="$(curl --silent --show-error --location --dump-header "$H2" --output "$B2" --write-out '%{http_code}' -H "If-Modified-Since: $LAST_MODIFIED" "$URL")"
+          BODY3_BYTES="$(wc -c < "$B2" | tr -d ' ')"
+          echo "SITEMAP_DIAG|IMS_CONDITIONAL|status=$CODE3|body_bytes=$BODY3_BYTES"
+          test "$CODE3" = "304"
+          test "$BODY3_BYTES" = "0"

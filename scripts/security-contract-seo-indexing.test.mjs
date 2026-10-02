@@ -91,7 +91,7 @@ test("public auth entry pages stay crawlable noindex-follow while private worksp
     const page = source(pagePath);
     assertContains(page, "robots: { index: false, follow: true }", `${route} metadata noindex-follow`);
     assertNotContains(robots, `          "${route}",`, `${route} must stay crawlable so noindex can be read`);
-    assertNotContains(sitemap, `${baseUrl}${route}`, `${route} must stay out of sitemap`);
+    assertNotContains(sitemap, `https://ilkoku.com${route}`, `${route} must stay out of sitemap`);
   }
 
   for (const route of [
@@ -104,7 +104,7 @@ test("public auth entry pages stay crawlable noindex-follow while private worksp
   ]) {
     assertContains(proxy, `"${route}/:path*"`, `${route} request-time auth matcher`);
     assertContains(nextConfig, `"${route}/:path*"`, `${route} private X-Robots coverage`);
-    assertNotContains(sitemap, `${baseUrl}${route}`, `${route} private workspace sitemap exclusion`);
+    assertNotContains(sitemap, `https://ilkoku.com${route}`, `${route} private workspace sitemap exclusion`);
   }
 });
 

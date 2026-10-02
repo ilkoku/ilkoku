@@ -22,7 +22,7 @@ test("community rules stay CMS-compatible, constructive and connected to safe pu
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(content, "İlkOku'nun değeri yalnız eserlerin yayımlanmasından değil, eserlerin etrafında oluşan gerçek etkileşimden gelir", "community value proposition");
   contains(content, "eleştiri kişiye değil metne, davranışa veya somut iş sonucuna yönelir", "constructive disagreement boundary");

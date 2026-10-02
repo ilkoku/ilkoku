@@ -22,7 +22,7 @@ test("writer public page stays CMS-compatible, publication-led and truthful abou
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const writerFlow = source("src/features/writer/components/NewWorkFlow.tsx");
   const howItWorks = source("src/content/how-it-works.ts");
 

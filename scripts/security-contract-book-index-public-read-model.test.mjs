@@ -118,7 +118,7 @@ test("Amazon TR and US public states remain market-isolated while both collector
 
 test("Book Index public read model stays independent from conditional sitemap publication", () => {
   const model = source("src/lib/book-index/public-read-model.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(model, 'publicRolloutState: "gated"', "read model remains gated");
   contains(
@@ -177,7 +177,7 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
   const page = source("src/app/en-cok-satanlar/turkiye/karsilastirma/page.tsx");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const comparison = source("src/features/book-index/public/BookIndexSourceComparison.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(
     page,
@@ -223,7 +223,7 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
 
 test("New-release read model stays source-native and isolated from generic list publication", () => {
   const model = source("src/lib/book-index/new-releases.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const lists = source("src/lib/book-index/lists.ts");
 
   contains(
@@ -451,7 +451,7 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const filter = source("src/features/book-index/public/NewReleaseFilterTable.tsx");
   const model = source("src/lib/book-index/new-releases.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
   contains(page, "noIndex: false", "Yeni Çıkanlar is indexable after source validation");

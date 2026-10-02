@@ -1,4 +1,5 @@
 name: GSC full sitemap URL inspection audit
+# rerun 2026-10-02 current-state audit
 
 on:
   push:

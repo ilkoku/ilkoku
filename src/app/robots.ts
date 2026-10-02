@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/api/media/"],
+        allow: ["/", "/api/media/", "/api/site-assets/"],
         disallow: [
           "/admin",
           "/icerik$",

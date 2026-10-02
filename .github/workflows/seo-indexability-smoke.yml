@@ -93,6 +93,7 @@ jobs:
           grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
           grep -Fq 'Allow: /' "$robots"
           grep -Fq 'Allow: /api/media/' "$robots"
+          grep -Fq 'Allow: /api/site-assets/' "$robots"
           grep -Fxq 'Disallow: /icerik$' "$robots"
           grep -Fxq 'Disallow: /icerik/' "$robots"
           grep -Fxq 'Disallow: /1q6z' "$robots"

@@ -101,7 +101,7 @@ test("editorial standards stay CMS-compatible and independent review access stay
   const experience = source("src/components/content/EditorialStandardsExperience.tsx");
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const collector = source("src/features/system-map/collector.ts");
   const howItWorks = source("src/components/content/HowItWorksExperience.tsx");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
@@ -140,7 +140,7 @@ test("content and age policy is enforced from work creation to the public readin
   const experience = source("src/components/content/ContentAgePolicyExperience.tsx");
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const collector = source("src/features/system-map/collector.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
   const schema = source("prisma/schema.prisma");
@@ -201,7 +201,7 @@ test("content and age policy is enforced from work creation to the public readin
 });
 
 test("sitemap, homepage and book pages form a truthful public graph", () => {
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const homepage = source("src/app/page.tsx");
   const homepageExperience = source("src/features/homepage/HomepageExperience.tsx");
   const publicNavigation = source("src/lib/public-site-navigation.ts");

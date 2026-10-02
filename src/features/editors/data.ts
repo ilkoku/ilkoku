@@ -5,6 +5,8 @@ import type { HumanEditor } from "./types";
 // excluded from the live directory until a verified editor data source is used.
 export const editors: readonly HumanEditor[] = [];
 
+export const hasPublishedEditorProfiles = editors.length > 0;
+
 export function findEditorBySlug(slug: string) {
   return editors.find((editor) => editor.slug === slug);
 }

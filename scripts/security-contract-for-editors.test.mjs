@@ -22,7 +22,7 @@ test("editor public page stays CMS-compatible, value-led and truthful about assi
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const requests = source("src/app/editor/talepler/page.tsx");
   const reviews = source("src/app/editor/incelemeler/page.tsx");
   const standards = source("src/content/editorial-standards.ts");
@@ -123,7 +123,7 @@ test("editor education final section adds publishing and professional editing wh
 });
 
 test("all editor education routes are indexable, self-canonical and included in the sitemap after final SEO release", () => {
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const lessons = [
     ["editorluge-baslama", "src/app/editorler-icin/egitim/editorluge-baslama/page.tsx"],
     ["metin-degerlendirme", "src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx"],

@@ -928,7 +928,12 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   );
   contains(
     adapter,
-    'VERIFIED_AUTHOR_BY_PRODUCT_ID.get(book.sourceExternalId ?? "")',
+    "VERIFIED_AUTHOR_BY_PRODUCT_ID.get(",
+    "KitapSec verified product fallback lookup",
+  );
+  contains(
+    adapter,
+    'book.sourceExternalId ?? ""',
     "KitapSec verified product fallback remains exact product-id scoped",
   );
   contains(

@@ -32,7 +32,7 @@ export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
     baseUrl: "https://www.kitapyurdu.com",
     includeInTurkeyIndex: false,
     phase: "v1",
-    collectionState: "ready",
+    collectionState: "blocked",
   },
   {
     code: "bkm",

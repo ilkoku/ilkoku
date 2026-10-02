@@ -9,7 +9,7 @@ const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu production adapter preserves verified native weekly bestseller list", () => {
+test("Kitapyurdu adapter is preserved but production collection stays blocked", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -49,24 +49,33 @@ test("Kitapyurdu production adapter preserves verified native weekly bestseller 
     '"User-Agent": "IlkOkuBookIndex/0.1 (+https://ilkoku.com)"',
     "transparent collector identity",
   );
-  contains(adapter, "kitapyurduBookIndexAdapter", "production adapter exists");
-  contains(collector, "kitapyurduBookIndexAdapter", "adapter is registered");
-  contains(lists, 'code: "kitapyurdu-tr-weekly"', "weekly production list is registered");
-  contains(sources, 'code: "kitapyurdu"', "source registry is present");
-  contains(
-    sources,
-    'baseUrl: "https://www.kitapyurdu.com",\n    includeInTurkeyIndex: true,\n    phase: "v1",\n    collectionState: "ready"',
-    "source is ready",
-  );
+  contains(adapter, "kitapyurduBookIndexAdapter", "adapter is preserved");
+  contains(collector, "kitapyurduBookIndexAdapter", "collector wiring is preserved");
+
+  const sourceStart = sources.indexOf('code: "kitapyurdu"');
+  assert.ok(sourceStart >= 0, "Kitapyurdu source registry must remain present");
+  const sourceEnd = sources.indexOf("  },", sourceStart);
+  const kitapyurduSource = sources.slice(sourceStart, sourceEnd);
+  contains(kitapyurduSource, "includeInTurkeyIndex: false", "Turkey index exclusion");
+  contains(kitapyurduSource, 'collectionState: "blocked"', "production block state");
+
+  const listStart = lists.indexOf('code: "kitapyurdu-tr-weekly"');
+  assert.ok(listStart >= 0, "Kitapyurdu weekly list must remain registered");
+  const listEnd = lists.indexOf("  },", listStart);
+  const kitapyurduList = lists.slice(listStart, listEnd);
+  contains(kitapyurduList, "includeInComposite: false", "composite exclusion");
+  contains(kitapyurduList, "collectionEveryMinutes: null", "scheduler disabled");
+  contains(kitapyurduList, "publiclyVisible: false", "public visibility disabled");
+  contains(kitapyurduList, "enabled: false", "collection disabled");
 
   assert.equal(
     lists.includes('code: "kitapyurdu-tr-new-releases"'),
     false,
-    "new-release production list stays out of this rollout",
+    "new-release production list stays out of rollout",
   );
   assert.equal(
     newReleaseRegistry.includes('sourceCode: "kitapyurdu"'),
     false,
-    "new-release registry stays out of this rollout",
+    "new-release registry stays out of rollout",
   );
 });

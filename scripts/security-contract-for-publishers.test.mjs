@@ -22,7 +22,7 @@ test("publisher public page stays CMS-compatible, evaluation-led and truthful ab
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const discovery = source("src/app/yayinevi/kesfet/eserler/page.tsx");
   const access = source("src/features/publisher-discovery/access.ts");
   const permissions = source("src/features/publisher-workspace/permissions.ts");

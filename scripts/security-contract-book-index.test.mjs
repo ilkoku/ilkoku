@@ -122,7 +122,7 @@ test("book index lives inside the existing system management shell", () => {
 });
 
 test("foundation does not publish Book Index sitemap entries before the public gate passes", () => {
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const contract = source("docs/BOOK_INDEX_V1.md");
 
   contains(
@@ -985,7 +985,7 @@ test("general marketplaces stay outside the Turkey Book Index source scope", () 
 test("Book Index public readiness stays evidence-based and non-publishing", () => {
   const readiness = source("src/lib/book-index/readiness.ts");
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(
     readiness,

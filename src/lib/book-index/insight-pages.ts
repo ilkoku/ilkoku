@@ -32,7 +32,7 @@ export const BOOK_INDEX_INSIGHT_PAGES: readonly BookIndexInsightPageDefinition[]
     heading: "Çok Satan Listelerinde Yükselen Kitaplar",
     searchTitle: "Çok Satanlarda Yükselen Kitaplar",
     description:
-      "Kitap satış kanalı listelerinde önceki başarılı snapshot'a göre sırası yükselen kitapları, toplam sıra kazanımı ve kitap satış kanalı sayısıyla inceleyin.",
+      "Kitap satış kanalı listelerinde önceki başarılı veri güncellemesine göre sırası yükselen kitapları, toplam sıra kazanımı ve kitap satış kanalı sayısıyla inceleyin.",
   },
   {
     slug: "birden-fazla-listede-cok-satanlar",

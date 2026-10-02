@@ -9,7 +9,7 @@ const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
 const contains = (text, fragment, label) =>
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 
-test("Kitapyurdu adapter is preserved and staged server-access probe stays isolated", () => {
+test("Kitapyurdu adapter is preserved but production collection stays blocked", () => {
   const adapter = source("src/lib/book-index/sources/kitapyurdu.ts");
   const collector = source("src/lib/book-index/collector.ts");
   const sources = source("src/lib/book-index/sources.ts");
@@ -57,7 +57,7 @@ test("Kitapyurdu adapter is preserved and staged server-access probe stays isola
   const sourceEnd = sources.indexOf("  },", sourceStart);
   const kitapyurduSource = sources.slice(sourceStart, sourceEnd);
   contains(kitapyurduSource, "includeInTurkeyIndex: false", "Turkey index exclusion");
-  contains(kitapyurduSource, 'collectionState: "ready"', "staged probe source state");
+  contains(kitapyurduSource, 'collectionState: "blocked"', "production block state");
 
   const listStart = lists.indexOf('code: "kitapyurdu-tr-weekly"');
   assert.ok(listStart >= 0, "Kitapyurdu weekly list must remain registered");
@@ -66,7 +66,7 @@ test("Kitapyurdu adapter is preserved and staged server-access probe stays isola
   contains(kitapyurduList, "includeInComposite: false", "composite exclusion");
   contains(kitapyurduList, "collectionEveryMinutes: null", "scheduler disabled");
   contains(kitapyurduList, "publiclyVisible: false", "public visibility disabled");
-  contains(kitapyurduList, "enabled: true", "force-probe collection enabled");
+  contains(kitapyurduList, "enabled: false", "collection disabled");
 
   assert.equal(
     lists.includes('code: "kitapyurdu-tr-new-releases"'),

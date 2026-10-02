@@ -41,7 +41,7 @@ export const BOOK_INDEX_LISTS: readonly BookIndexListDefinition[] = [
     includeInComposite: false,
     collectionEveryMinutes: null,
     publiclyVisible: false,
-    enabled: true,
+    enabled: false,
   },
   {
     code: "bkm-tr-weekly",

@@ -144,7 +144,8 @@ test("Book Index scheduler does not retry deterministic force/dependency failure
   contains(workflow, "--write-out '%{http_code}'", "workflow captures scheduler HTTP status");
   contains(workflow, '[[ "$http_status" =~ ^4[0-9][0-9]$ ]]', "workflow detects deterministic 4xx responses");
   contains(workflow, "not retrying", "workflow exits immediately on deterministic failure");
-  notContains(workflow, "--fail-with-body", "scheduler request preserves response status/body for classification");
+  contains(workflow, '--output "$response_file"', "scheduler response body is preserved for classification");
+  contains(workflow, '--write-out \'%{http_code}\'', "scheduler response status is captured independently");
 });
 
 test("Book Index scheduler invalidates public Book Index ISR routes after collection", () => {

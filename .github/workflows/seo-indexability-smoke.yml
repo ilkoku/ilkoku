@@ -105,6 +105,7 @@ jobs:
             'https://ilkoku.com/nasil-calisir' \
             'https://ilkoku.com/hakkimizda' \
             'https://ilkoku.com/icerik-ve-yas-politikasi' \
+            'https://ilkoku.com/okurlar-icin' \
             'https://ilkoku.com/yazarlar-icin' \
             'https://ilkoku.com/editorler-icin' \
             'https://ilkoku.com/yayinevleri-icin'; do
@@ -115,6 +116,7 @@ jobs:
           check_page '/' 'https://ilkoku.com/'
           check_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'
           check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
+          check_page '/okurlar-icin' 'https://ilkoku.com/okurlar-icin'
           check_page '/yazarlar-icin' 'https://ilkoku.com/yazarlar-icin'
 
           if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$sitemap"; then

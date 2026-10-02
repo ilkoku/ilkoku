@@ -94,6 +94,8 @@ jobs:
           grep -Fq 'Allow: /' "$robots"
           grep -Fq 'Allow: /api/media/' "$robots"
           grep -Fq 'Allow: /api/site-assets/' "$robots"
+          grep -Fq 'Allow: /api/site-content/footer-navigation' "$robots"
+          grep -Fq 'Allow: /api/public-announcements' "$robots"
           grep -Fxq 'Disallow: /icerik$' "$robots"
           grep -Fxq 'Disallow: /icerik/' "$robots"
           grep -Fxq 'Disallow: /1q6z' "$robots"
@@ -101,6 +103,19 @@ jobs:
             echo "FAIL: broad /icerik robots prefix blocks public content policy" >&2
             exit 1
           fi
+
+          for public_resource in \
+            'https://ilkoku.com/api/site-content/footer-navigation' \
+            'https://ilkoku.com/api/public-announcements'; do
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$public_resource" || true)"
+            echo "$public_resource -> HTTP $code"
+            circuit_break "$code" "$public_resource"
+            [[ "$code" == "200" ]]
+            grep -Eqi '^x-robots-tag:[[:space:]]*noindex' "$headers"
+            rm -f "$headers"
+            pace
+          done
 
           fetch_contract_file "https://ilkoku.com/sitemap.xml" "$sitemap"
           for required in \

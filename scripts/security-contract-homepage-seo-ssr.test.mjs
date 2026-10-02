@@ -71,3 +71,10 @@ test("site identity structured data uses a real alternate site name", () => {
   assertContains(layout, 'alternateName: "ilkoku.com"', "domain fallback alternate site name");
   assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning must not masquerade as an alternate name");
 });
+
+
+test("below-fold affiliate creative stays lazy-loaded", () => {
+  const banner = source("src/features/homepage/MagzterAffiliateBanner.tsx");
+
+  assertContains(banner, 'loading="lazy"', "affiliate creative lazy loading");
+});

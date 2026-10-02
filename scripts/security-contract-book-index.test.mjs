@@ -1028,6 +1028,26 @@ test("Book Index public readiness stays evidence-based and non-publishing", () =
   );
   contains(
     readiness,
+    "enabledRegistryListCodes",
+    "active readiness is bounded by current enabled registry lists",
+  );
+  contains(
+    readiness,
+    "compositeRegistryListCodes",
+    "composite readiness is bounded by current composite registry lists",
+  );
+  contains(
+    readiness,
+    "code: { in: enabledRegistryListCodes }",
+    "persisted active rows cannot revive disabled registry lists",
+  );
+  contains(
+    readiness,
+    "code: { in: compositeRegistryListCodes }",
+    "persisted composite rows cannot revive demoted registry lists",
+  );
+  contains(
+    readiness,
     "historySpanDays",
     "historical coverage metric",
   );

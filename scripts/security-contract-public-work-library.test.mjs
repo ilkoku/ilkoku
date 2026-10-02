@@ -227,7 +227,7 @@ test("public work detail and related reads reject inactive author and work surfa
 
 test("demo showcase works stay usable but are excluded from search indexing", () => {
   const safety = source("src/lib/public-content-safety.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const nextConfig = source("next.config.ts");
 
   contains(
@@ -269,7 +269,7 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   const nextConfig = source("next.config.ts");
   const publicNavigation = source("src/lib/public-site-navigation.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const smoke = source(
     ".github/workflows/production-smoke.yml",
   );

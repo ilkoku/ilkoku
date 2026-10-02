@@ -371,6 +371,13 @@ function historySpanDays(first: Date | null, last: Date | null) {
 }
 
 export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadinessSnapshot> {
+  const enabledRegistryListCodes = BOOK_INDEX_LISTS
+    .filter((list) => list.enabled)
+    .map((list) => list.code);
+  const compositeRegistryListCodes = BOOK_INDEX_LISTS
+    .filter((list) => list.enabled && list.includeInComposite)
+    .map((list) => list.code);
+
   const compositeSourceCodes = [...new Set(
     BOOK_INDEX_LISTS
       .filter((list) => list.enabled && list.includeInComposite)
@@ -408,6 +415,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         where: {
           active: true,
           includeInComposite: true,
+          code: { in: compositeRegistryListCodes },
           source: { includeInTurkeyIndex: true, status: "active" },
         },
         select: {
@@ -1001,6 +1009,7 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
   const persistedActiveLists = await prisma.bookIndexList.findMany({
     where: {
       active: true,
+      code: { in: enabledRegistryListCodes },
       source: { status: "active" },
     },
     select: {

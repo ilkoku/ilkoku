@@ -23,6 +23,13 @@ const VERIFIED_AUTHOR_BY_ISBN13 = new Map<string, string>([
   ["9786257582896", "Pegem Komisyon"],
 ]);
 
+// Exact product fallbacks verified on the KitapSeç detail pages.
+// These set products expose authors on detail but not in ranked-list metadata.
+const VERIFIED_AUTHOR_BY_PRODUCT_ID = new Map<string, string>([
+  ["923115", "Ramazan Yetgin"],
+  ["930457", "Emrah Vahap Özkaraca;Zeynep Salman İçli"],
+]);
+
 const CATEGORY_LIST_CODES = new Set([
   "kitapsec-edebiyat-live",
   "kitapsec-cocuk-genclik-live",
@@ -257,9 +264,13 @@ async function enrichKitapSecAuthors(
         const book = books[index];
         if (book.authorName) continue;
 
-        const verifiedFallback = book.isbn13
-          ? VERIFIED_AUTHOR_BY_ISBN13.get(book.isbn13) ?? null
-          : null;
+        const verifiedFallback =
+          (book.sourceExternalId
+            ? VERIFIED_AUTHOR_BY_PRODUCT_ID.get(book.sourceExternalId) ?? null
+            : null)
+          || (book.isbn13
+            ? VERIFIED_AUTHOR_BY_ISBN13.get(book.isbn13) ?? null
+            : null);
 
         try {
           const authorName = parseKitapSecProductAuthor(

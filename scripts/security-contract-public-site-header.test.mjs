@@ -148,27 +148,14 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   }
 
   assert.doesNotMatch(header, /getBookIndexPublicPageContext/);
-  assert.match(header, /withBookIndexMenu/);
-  assert.match(header, /label: "Kitap Endeksi"/);
-  assert.doesNotMatch(header, /if \(!enabled\) return withoutBookIndex/);
-  for (const href of [
-    "/en-cok-satanlar",
-    "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
-    "/yeni-cikanlar",
-    "/en-cok-satanlar/dunya",
-    "/en-cok-satanlar/cok-satanlara-yeni-girenler",
-    "/en-cok-satanlar/cok-satanlarda-yukselenler",
-    "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
-    "/en-cok-satanlar/uzun-suredir-cok-satanlar",
-  ]) {
-    assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
-  }
-  assert.match(header, /title: "Ana Listeler"/);
-  assert.match(header, /title: "Karşılaştır"/);
-  assert.match(header, /title: "Çok Satan Analizleri"/);
-  assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
-  assert.match(header, /menu\.id === "support"/);
+  assert.match(header, /withoutBookIndexMenu/);
+  assert.doesNotMatch(header, /withBookIndexMenu/);
+  assert.match(header, /menu\.id === "book-index"/);
+  assert.match(header, /!item\.pageId\.startsWith\("book-index"\)/);
+  assert.doesNotMatch(header, /label: "Kitap Endeksi"/);
+  assert.doesNotMatch(header, /title: "Ana Listeler"/);
+  assert.doesNotMatch(header, /title: "Karşılaştır"/);
+  assert.doesNotMatch(header, /title: "Çok Satan Analizleri"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);
   assert.match(config, /id: "book-index"/);
   assert.match(config, /href: "\/en-cok-satanlar"/);

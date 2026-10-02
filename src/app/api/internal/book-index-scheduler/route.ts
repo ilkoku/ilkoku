@@ -178,13 +178,21 @@ export async function POST(request: NextRequest) {
       ? error.message
       : "UNKNOWN_BOOK_INDEX_SCHEDULER_ERROR";
 
-    console.error("BOOK_INDEX_SCHEDULER_RUN_FAILED", {
+    const status = message.startsWith("BOOK_INDEX_FORCE_LIST_")
+      ? 400
+      : message.startsWith("BOOK_INDEX_SOURCE_HTTP_4")
+        ? 424
+        : 500;
+
+    const log = status >= 500 ? console.error : console.warn;
+    log("BOOK_INDEX_SCHEDULER_RUN_FAILED", {
       error: message,
+      status,
     });
 
     return NextResponse.json(
       { ok: false, error: message },
-      { status: 500 },
+      { status },
     );
   }
 }

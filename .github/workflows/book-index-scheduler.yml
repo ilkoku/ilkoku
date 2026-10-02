@@ -66,22 +66,29 @@ jobs:
               force_header=(--header "X-IlkOku-Book-Index-Force-Lists: $force_lists")
             fi
 
-            if response="$(curl \
-              --fail-with-body \
+            response_file="$(mktemp)"
+            http_status="$(curl \
               --silent \
               --show-error \
               --max-time 300 \
               --request POST \
               --header "Authorization: Bearer $oidc_token" \
               "${force_header[@]}" \
-              https://ilkoku.com/api/internal/book-index-scheduler)"; then
-              printf '%s\n' "$response"
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              https://ilkoku.com/api/internal/book-index-scheduler || true)"
+            response="$(cat "$response_file")"
+            rm -f "$response_file"
 
+            printf 'Book Index scheduler HTTP %s response: %s\n' "$http_status" "$response"
+
+            if [[ "$http_status" =~ ^2[0-9][0-9]$ ]]; then
               if printf '%s' "$response" | FORCE_LISTS="$force_lists" python3 -c 'import json,os,sys; payload=json.load(sys.stdin); force=os.environ.get("FORCE_LISTS",""); readiness=payload.get("readiness", {}); required=("splitMasterCollisionCount","unmatchedDuplicateIdentityGroupCount","leastSuccessfulRunCountSourceCodes","shortestHistorySpanSourceCodes","unmatchedMissingAuthorBooksBySource","unmatchedAmbiguousIdentityGroupCount"); expected=[x for x in force.split(",") if x]; forced_ok=(not expected) or (payload.get("forced") is True and payload.get("forceListCodes")==expected and len(payload.get("forcedResults") or [])==len(expected)); raise SystemExit(0 if forced_ok and "seoGate" in payload and all(key in readiness for key in required) else 1)'; then
                 exit 0
               fi
-            else
-              printf 'Book Index scheduler response: %s\n' "$response" >&2
+            elif [[ "$http_status" =~ ^4[0-9][0-9]$ ]]; then
+              echo "Deterministic scheduler request/dependency failure; not retrying." >&2
+              exit 1
             fi
 
             if [ "$attempt" -lt 20 ]; then

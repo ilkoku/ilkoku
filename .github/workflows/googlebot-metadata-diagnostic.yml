@@ -1,0 +1,34 @@
+name: Googlebot metadata diagnostic
+
+on:
+  push:
+    branches:
+      - diag/googlebot-metadata-20261002
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch representative public pages as Googlebot
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          UA='Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          for url in             'https://ilkoku.com/yazarlar-icin/kurgu'             'https://ilkoku.com/yazarlar-icin/kurgu/roman'             'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'             'https://ilkoku.com/okurlar-icin/okumaya-baslama'; do
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 30 --user-agent "$UA" --output "$body" --write-out '%{http_code}' "$url")"
+            echo "URL=$url HTTP=$code"
+            printf 'TITLE='
+            grep -Eoi '<title>[^<]*</title>' "$body" | head -1 || true
+            printf 'DESCRIPTION='
+            grep -Eoi '<meta[^>]+name="description"[^>]+>' "$body" | head -1 || true
+            printf 'CANONICAL='
+            grep -Eoi '<link[^>]+rel="canonical"[^>]+>' "$body" | head -1 || true
+            printf 'ROBOTS='
+            grep -Eoi '<meta[^>]+name="robots"[^>]+>' "$body" | head -1 || true
+            rm -f "$body"
+          done

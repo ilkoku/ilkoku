@@ -65,16 +65,20 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
-test("robots mirrors the private route inventory without shadowing public prefixes", () => {
+test("robots mirrors private and protected route inventories without shadowing public prefixes", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");
-  const inventory = nextConfig.match(/const privateRouteHeaders = \[([\s\S]*?)\];/u)?.[1];
+  const proxy = source("src/proxy.ts");
+  const privateInventory = nextConfig.match(/const privateRouteHeaders = \[([\s\S]*?)\];/u)?.[1];
+  const protectedInventory = proxy.match(/matcher:\s*\[([\s\S]*?)\]/u)?.[1];
 
-  assert.ok(inventory, "next.config privateRouteHeaders inventory must be readable");
+  assert.ok(privateInventory, "next.config privateRouteHeaders inventory must be readable");
+  assert.ok(protectedInventory, "proxy protected matcher inventory must be readable");
 
-  const privateRoutes = [...inventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
+  const privateRoutes = [...privateInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
+  const protectedRoutes = [...protectedInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
   const privateRoots = [...new Set(
-    privateRoutes.map((route) => route.replace(/\/:path\*$/u, "")),
+    [...privateRoutes, ...protectedRoutes].map((route) => route.replace(/\/:path\*$/u, "")),
   )];
 
   const exactPrefixRoots = new Set([

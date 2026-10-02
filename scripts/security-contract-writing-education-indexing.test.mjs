@@ -151,6 +151,36 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     ".slice(0, RECENT_ENTRY_LIMIT)",
     "Atom feed keeps only recent guide URLs",
   );
+  assertContains(
+    recentUpdatesAtom,
+    'import { createHash } from "node:crypto"',
+    "Atom feed deterministic ETag hashing",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    'ETag: etag',
+    "Atom feed ETag response header",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    '"Last-Modified": feedUpdated.toUTCString()',
+    "Atom feed Last-Modified response header",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    'request.headers.get("if-none-match") === etag',
+    "Atom feed If-None-Match conditional response",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    'request.headers.get("if-modified-since")',
+    "Atom feed If-Modified-Since conditional response",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    'return new Response(null, { status: 304, headers })',
+    "Atom feed 304 response path",
+  );
   assertNotContains(
     sitemap,
     "search-discovery-signals",

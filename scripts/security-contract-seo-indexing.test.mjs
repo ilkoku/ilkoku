@@ -65,6 +65,42 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
+test("robots mirrors private and protected route inventories without shadowing public prefixes", () => {
+  const robots = source("src/app/robots.ts");
+  const nextConfig = source("next.config.ts");
+  const proxy = source("src/proxy.ts");
+  const privateInventory = nextConfig.match(/const privateRouteHeaders = \[([\s\S]*?)\];/u)?.[1];
+  const protectedInventory = proxy.match(/matcher:\s*\[([\s\S]*?)\]/u)?.[1];
+
+  assert.ok(privateInventory, "next.config privateRouteHeaders inventory must be readable");
+  assert.ok(protectedInventory, "proxy protected matcher inventory must be readable");
+
+  const privateRoutes = [...privateInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
+  const protectedRoutes = [...protectedInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
+  const privateRoots = [...new Set(
+    [...privateRoutes, ...protectedRoutes].map((route) => route.replace(/\/:path\*$/u, "")),
+  )];
+
+  const exactPrefixRoots = new Set([
+    "/icerik",
+    "/editor",
+    "/yazar",
+    "/yayinevi",
+    "/yayinevleri",
+  ]);
+
+  for (const route of privateRoots) {
+    if (exactPrefixRoots.has(route)) {
+      assertContains(robots, `"${route}$"`, `exact private crawl boundary ${route}`);
+      assertContains(robots, `"${route}/"`, `private descendants crawl boundary ${route}`);
+      assertNotContains(robots, `          "${route}",`, `broad private prefix ${route}`);
+      continue;
+    }
+
+    assertContains(robots, `"${route}"`, `private crawl boundary ${route}`);
+  }
+});
+
 test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");

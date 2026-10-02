@@ -10,7 +10,6 @@ import {
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 import "./live-footer.css";
 
@@ -75,13 +74,13 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
           <div>
             <h3>Hesap</h3>
             {signedIn && workspaceHref ? <>
-              <Link href="/hesabim" rel={shouldNofollowSearchExcludedHref("/hesabim") ? "nofollow" : undefined}>Hesabım</Link>
+              <Link href="/hesabim">Hesabım</Link>
               <Link href={workspaceHref}>Çalışma Alanım</Link>
               <form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form>
             </> : <>
-              <Link href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Giriş Yap</Link>
+              <Link href="/giris">Giriş Yap</Link>
               <a href="#roller">Üye Ol</a>
-              <Link href="/sifremi-unuttum" rel={shouldNofollowSearchExcludedHref("/sifremi-unuttum") ? "nofollow" : undefined}>Şifremi Unuttum</Link>
+              <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
             </>}
           </div>
 

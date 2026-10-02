@@ -15,23 +15,6 @@ import "./public-site-mega-menu.css";
 import "./public-site-mega-menu-layer.css";
 import "./public-site-account-popover.css";
 
-function withoutBookIndexMenu(
-  menus: ReturnType<typeof resolveHeaderNavigation>,
-) {
-  return menus.flatMap((menu) => {
-    if (menu.id === "book-index") return [];
-
-    const groups = menu.groups
-      .map((group) => ({
-        ...group,
-        links: group.links.filter((item) => !item.pageId.startsWith("book-index")),
-      }))
-      .filter((group) => group.links.length > 0);
-
-    if (groups.length === 0) return [];
-    return [{ ...menu, groups }];
-  });
-}
 function AccountIcon() {
   return (
     <svg
@@ -55,8 +38,9 @@ export async function PublicSiteHeader() {
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
   ]);
-  const publicMenus = withoutBookIndexMenu(
-    resolveHeaderNavigation(navigation.payload, navigation.pages),
+  const publicMenus = resolveHeaderNavigation(
+    navigation.payload,
+    navigation.pages,
   );
 
   return (

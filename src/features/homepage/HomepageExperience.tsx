@@ -4,7 +4,6 @@ import { Suspense, type ReactNode } from "react";
 
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
@@ -108,7 +107,6 @@ async function HomepageRoleSection({
           {visibleRoles.map((role) => (
             <Link
               href={role.href}
-              rel={shouldNofollowSearchExcludedHref(role.href) ? "nofollow" : undefined}
               className={`nx-role nx-role--${role.key}`}
               key={role.key}
               aria-label={`${role.title} olarak kayıt ol`}
@@ -187,7 +185,7 @@ export default async function HomepageExperience() {
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</p>
             <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
-            <div className="nx-hero__actions"><Link href={primaryHref} rel={shouldNofollowSearchExcludedHref(primaryHref) ? "nofollow" : undefined} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
+            <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
           <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={60} sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>
@@ -229,7 +227,7 @@ export default async function HomepageExperience() {
 
       <section className="nx-passport" id="eser-pasaportu">
         <div className="nx-shell nx-passport__layout">
-          <div className="nx-passport__copy"><p className="nx-eyebrow nx-eyebrow--violet">{passport?.eyebrow || "Eserin dijital izi"}</p><h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2><p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p><ul><li><span>✓</span>Platform üzerinde oluşan yazım ve revizyon geçmişi</li><li><span>✓</span>Bölüm ve sürüm hareketlerinin düzenli kaydı</li><li><span>✓</span>Profesyonel editör inceleme durumu</li><li><span>✓</span>Yayınevi keşif ve takip görünürlüğü</li></ul><Link href={passportHref} rel={shouldNofollowSearchExcludedHref(passportHref) ? "nofollow" : undefined} className="nx-action nx-action--dark">{passport?.ctaLabel || "Rolünü Seç"}<span aria-hidden="true">→</span></Link></div>
+          <div className="nx-passport__copy"><p className="nx-eyebrow nx-eyebrow--violet">{passport?.eyebrow || "Eserin dijital izi"}</p><h2>{passport?.title || "Bir eserin yalnızca sonucunu değil, oluşum sürecini de görün."}</h2><p>{passport?.description || "Eser Pasaportu; yazım oturumlarını, revizyonları, sürüm geçmişini ve profesyonel inceleme durumunu tek bir kayıt altında birleştirir."}</p><ul><li><span>✓</span>Platform üzerinde oluşan yazım ve revizyon geçmişi</li><li><span>✓</span>Bölüm ve sürüm hareketlerinin düzenli kaydı</li><li><span>✓</span>Profesyonel editör inceleme durumu</li><li><span>✓</span>Yayınevi keşif ve takip görünürlüğü</li></ul><Link href={passportHref} className="nx-action nx-action--dark">{passport?.ctaLabel || "Rolünü Seç"}<span aria-hidden="true">→</span></Link></div>
           <div className="nx-passport__stage" aria-label="Örnek Eser Pasaportu görünümü"><div className="nx-passport-card"><div className="nx-passport-card__head"><div><small>Örnek görünüm</small><strong>Eser Pasaportu</strong></div><span><LandingIcon name="shield" /></span></div><div className="nx-passport-card__status"><span>Süreç kaydı</span><strong>Aktif</strong></div><div className="nx-passport-card__numbers"><div><strong>41</strong><span>Yazım oturumu</span></div><div><strong>19</strong><span>Revizyon</span></div><div><strong>7</strong><span>Sürüm</span></div></div><div className="nx-passport-card__timeline"><span><i /><b>Platform üzerinde yazıldı</b><small>Kayıtlı süreç</small></span><span><i /><b>Profesyonel inceleme</b><small>Tamamlandı</small></span><span><i /><b>Yayınevi görünürlüğü</b><small>Keşfe açık</small></span></div></div></div>
         </div>
       </section>

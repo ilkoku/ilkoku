@@ -919,6 +919,21 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
   contains(
     adapter,
     '["923115", "Ramazan Yetgin"]',
+    "KitapSec exact product fallback for Ramazan Yetgin set",
+  );
+  contains(
+    adapter,
+    '["930457", "Emrah Vahap Özkaraca; Zeynep Salman İçli"]',
+    "KitapSec exact product fallback for two-author AGS set",
+  );
+  contains(
+    adapter,
+    'VERIFIED_AUTHOR_BY_PRODUCT_ID.get(book.sourceExternalId ?? "")',
+    "KitapSec verified product fallback remains exact product-id scoped",
+  );
+  contains(
+    adapter,
+    '["923115", "Ramazan Yetgin"]',
     "KitapSec verified author fallback for product 923115",
   );
   contains(

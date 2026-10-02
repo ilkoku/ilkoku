@@ -1,21 +1,3 @@
-test("public header keeps the Book Index menu visible", () => {
-  const header = source("src/components/layout/PublicSiteHeader.tsx");
-  const navigation = source("src/lib/cms-header-navigation.ts");
-
-  assert.ok(
-    navigation.includes('id: "book-index"'),
-    "default public navigation must define the Book Index menu",
-  );
-  assert.ok(
-    header.includes("resolveHeaderNavigation("),
-    "public header must resolve the published navigation",
-  );
-  assert.ok(
-    !header.includes("withoutBookIndexMenu"),
-    "public header must not strip the Book Index menu",
-  );
-});
-
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -166,14 +148,13 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   }
 
   assert.doesNotMatch(header, /getBookIndexPublicPageContext/);
-  assert.match(header, /withoutBookIndexMenu/);
+  assert.doesNotMatch(header, /withoutBookIndexMenu/);
   assert.doesNotMatch(header, /withBookIndexMenu/);
-  assert.match(header, /menu\.id === "book-index"/);
-  assert.match(header, /!item\.pageId\.startsWith\("book-index"\)/);
-  assert.doesNotMatch(header, /label: "Kitap Endeksi"/);
-  assert.doesNotMatch(header, /title: "Ana Listeler"/);
-  assert.doesNotMatch(header, /title: "Karşılaştır"/);
-  assert.doesNotMatch(header, /title: "Çok Satan Analizleri"/);
+  assert.match(header, /resolveHeaderNavigation\(\s*navigation\.payload,\s*navigation\.pages,?\s*\)/);
+  assert.match(config, /label: "Kitap Endeksi"/);
+  assert.match(config, /title: "Ana Listeler"/);
+  assert.match(config, /title: "Karşılaştır"/);
+  assert.match(config, /title: "Çok Satan Analizleri"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);
   assert.match(config, /id: "book-index"/);
   assert.match(config, /href: "\/en-cok-satanlar"/);

@@ -65,51 +65,36 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
-test("robots blocks private member inventory without shadowing public role pages", () => {
+test("robots mirrors the private route inventory without shadowing public prefixes", () => {
   const robots = source("src/app/robots.ts");
+  const nextConfig = source("next.config.ts");
+  const inventory = nextConfig.match(/const privateRouteHeaders = \\[([\\s\\S]*?)\\];/u)?.[1];
 
-  for (const route of [
-    "/bildirimler",
-    "/editor-daveti",
-    "/editor-paneli",
-    "/erisim-reddedildi",
-    "/eserlerim",
-    "/favorilerim",
-    "/geri-bildirimler",
-    "/giris",
-    "/hesabim",
-    "/kayit",
-    "/kesfet",
-    "/okumaya-devam",
-    "/okuyucu",
-    "/rol-secimi",
-    "/sifre-yenile",
-    "/sifremi-unuttum",
-    "/tamamlanan-eserler",
-    "/satis-erisim",
-    "/gelirler",
-    "/satinal",
-    "/kutuphanem",
-    "/yazmaya-devam",
-    "/yorumlarim",
-  ]) {
+  assert.ok(inventory, "next.config privateRouteHeaders inventory must be readable");
+
+  const privateRoutes = [...inventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
+  const privateRoots = [...new Set(
+    privateRoutes.map((route) => route.replace(/\\\/:path\\\\\*$/u, "")),
+  )];
+
+  const exactPrefixRoots = new Set([
+    "/icerik",
+    "/editor",
+    "/yazar",
+    "/yayinevi",
+    "/yayinevleri",
+  ]);
+
+  for (const route of privateRoots) {
+    if (exactPrefixRoots.has(route)) {
+      assertContains(robots, `"${route}$"`, `exact private crawl boundary ${route}`);
+      assertContains(robots, `"${route}/"`, `private descendants crawl boundary ${route}`);
+      assertNotContains(robots, `          "${route}",`, `broad private prefix ${route}`);
+      continue;
+    }
+
     assertContains(robots, `"${route}"`, `private crawl boundary ${route}`);
   }
-
-  for (const [exact, descendants] of [
-    ["/editor$", "/editor/"],
-    ["/yazar$", "/yazar/"],
-    ["/yayinevi$", "/yayinevi/"],
-    ["/yayinevleri$", "/yayinevleri/"],
-  ]) {
-    assertContains(robots, `"${exact}"`, `exact private crawl boundary ${exact}`);
-    assertContains(robots, `"${descendants}"`, `private descendants crawl boundary ${descendants}`);
-  }
-
-  assertNotContains(robots, '          "/editor",', "broad editor prefix must not block /editorler-icin");
-  assertNotContains(robots, '          "/yazar",', "broad writer prefix must not block /yazarlar-icin");
-  assertNotContains(robots, '          "/yayinevi",', "broad publisher prefix must not block /yayinevleri-icin");
-  assertNotContains(robots, '          "/yayinevleri",', "broad publishers prefix must not block /yayinevleri-icin");
 });
 
 test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {

@@ -1,10 +1,10 @@
-name: Full public Googlebot guard
+name: Full public crawler compatibility guard
 
 on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: "Çalıştırmak için RUN-18-URL-GOOGLEBOT-DIAGNOSTIC yazın"
+        description: "Çalıştırmak için RUN-19-URL-CRAWLER-DIAGNOSTIC yazın"
         required: true
         type: string
 
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify all public URLs as Googlebot
+    name: Verify all public URLs with diagnostic crawler
     runs-on: ubuntu-latest
     timeout-minutes: 12
 
@@ -26,14 +26,16 @@ jobs:
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "$CONFIRMATION" = "RUN-18-URL-GOOGLEBOT-DIAGNOSTIC"
+          test "$CONFIRMATION" = "RUN-19-URL-CRAWLER-DIAGNOSTIC"
 
-      - name: Verify 18 public sitemap URLs slowly
+      - name: Verify 19 public sitemap URLs slowly
         shell: bash
         run: |
           set -Eeuo pipefail
 
-          USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          # Never spoof Googlebot from GitHub/Azure. It pollutes origin logs and
+          # cannot reproduce verified Googlebot behavior because bot identity is IP-based.
+          USER_AGENT="IlkOku-Public-Crawler-Guard/1.0 (+https://ilkoku.com)"
           REQUEST_DELAY_SECONDS=10
 
           normalize_url() {
@@ -101,6 +103,7 @@ jobs:
             '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari|Topluluk Kuralları'
             '/telif-bildirimi|https://ilkoku.com/telif-bildirimi|Telif Bildirimi'
             '/yazarlar-icin|https://ilkoku.com/yazarlar-icin|Yazarlar İçin'
+            '/okurlar-icin|https://ilkoku.com/okurlar-icin|Okurluk Okulu'
             '/editorler-icin|https://ilkoku.com/editorler-icin|Editörler İçin'
             '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin|Yayınevleri İçin'
             '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari|Kullanım Şartları'
@@ -118,4 +121,4 @@ jobs:
             check_page "$path" "$canonical" "$marker"
           done
 
-          echo "PASS: explicitly requested 18/18 Googlebot diagnostic completed without edge throttling."
+          echo "PASS: explicitly requested 19/19 crawler compatibility diagnostic completed without edge throttling."

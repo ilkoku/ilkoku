@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EditorDirectory } from "@/features/editors/components/EditorDirectory";
+import { hasPublishedEditorProfiles } from "@/features/editors/data";
 
 const baseUrl = "https://ilkoku.com";
 const title = "Editörleri Keşfet | İlkOku";
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/editorler",
   },
-  robots: { index: true, follow: true },
+  robots: { index: hasPublishedEditorProfiles, follow: true },
   openGraph: {
     type: "website",
     locale: "tr_TR",

@@ -346,7 +346,7 @@ export const getLiveSeoVerification = cache(async (): Promise<LiveSeoVerificatio
   const [website, book, collectionPage, profilePage, breadcrumb] = await Promise.all([
     verifySchema("WebSite", "/", "Ana Sayfa route'u belirlenemedi."),
     verifySchema("Book", representatives.work, "Canlı doğrulama için keşfe açık eser örneği bulunamadı."),
-    verifySchema("CollectionPage", "/editorler", "Editör dizini route'u belirlenemedi."),
+    verifySchema("CollectionPage", "/site-haritasi", "Site haritası CollectionPage route'u belirlenemedi."),
     Promise.resolve(inactiveSchema("Public ProfilePage yüzeyi etkin değil; bu şema kontrolü uygulanabilir değil.")),
     verifySchema("BreadcrumbList", "/yardim", "Yardım route'u belirlenemedi."),
   ]);

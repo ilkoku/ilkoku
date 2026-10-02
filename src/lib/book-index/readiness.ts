@@ -208,6 +208,24 @@ export type BookIndexReadinessSnapshot = {
   }>;
   unmatchedAmbiguousIdentitySamples: BookIndexUnmatchedAmbiguousIdentitySample[];
   matchCoveragePercent: number;
+  latestActiveExternalBookCount: number;
+  latestActiveMatchedExternalBookCount: number;
+  latestActiveUnmatchedExternalBookCount: number;
+  latestActiveUnmatchedBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
+  latestActiveUnmatchedMissingAuthorBooksBySource: Array<{
+    sourceCode: string;
+    count: number;
+  }>;
+  latestActiveUnmatchedMissingAuthorSamples: Array<{
+    sourceCode: string;
+    sourceKey: string;
+    title: string;
+    productUrl: string;
+  }>;
+  latestActiveMatchCoveragePercent: number;
   latestCompositeExternalBookCount: number;
   latestCompositeMatchedExternalBookCount: number;
   latestCompositeUnmatchedExternalBookCount: number;
@@ -979,6 +997,125 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
         lastSeenAt: group._max.lastSeenAt ?? null,
       } satisfies BookIndexUnmatchedIdentityDuplicateSample;
     });
+
+  const persistedActiveLists = await prisma.bookIndexList.findMany({
+    where: {
+      active: true,
+      source: { status: "active" },
+    },
+    select: {
+      code: true,
+      source: { select: { code: true } },
+      fetchRuns: {
+        where: { status: { in: ["success", "no_change"] } },
+        orderBy: { startedAt: "desc" },
+        take: 1,
+        select: {
+          observations: {
+            select: {
+              externalBook: {
+                select: {
+                  id: true,
+                  sourceKey: true,
+                  title: true,
+                  authorName: true,
+                  productUrl: true,
+                  masterBookId: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const latestActiveExternalBooks = new Map<string, {
+    sourceCode: string;
+    sourceKey: string;
+    title: string;
+    authorName: string | null;
+    productUrl: string;
+    matched: boolean;
+  }>();
+
+  for (const list of persistedActiveLists) {
+    const latestRun = list.fetchRuns[0];
+    if (!latestRun) continue;
+
+    for (const observation of latestRun.observations) {
+      const book = observation.externalBook;
+      latestActiveExternalBooks.set(book.id, {
+        sourceCode: list.source.code,
+        sourceKey: book.sourceKey,
+        title: book.title,
+        authorName: book.authorName,
+        productUrl: book.productUrl,
+        matched: Boolean(book.masterBookId),
+      });
+    }
+  }
+
+  const latestActiveBookValues = [...latestActiveExternalBooks.values()];
+  const latestActiveExternalBookCount = latestActiveBookValues.length;
+  const latestActiveMatchedExternalBookCount = latestActiveBookValues.filter(
+    (book) => book.matched,
+  ).length;
+  const latestActiveUnmatchedExternalBookCount =
+    latestActiveExternalBookCount - latestActiveMatchedExternalBookCount;
+
+  const latestActiveUnmatchedBySourceMap = new Map<string, number>();
+  const latestActiveUnmatchedMissingAuthorBySourceMap = new Map<string, number>();
+
+  for (const book of latestActiveBookValues) {
+    if (book.matched) continue;
+
+    latestActiveUnmatchedBySourceMap.set(
+      book.sourceCode,
+      (latestActiveUnmatchedBySourceMap.get(book.sourceCode) ?? 0) + 1,
+    );
+
+    if (!book.authorName) {
+      latestActiveUnmatchedMissingAuthorBySourceMap.set(
+        book.sourceCode,
+        (latestActiveUnmatchedMissingAuthorBySourceMap.get(book.sourceCode) ?? 0)
+          + 1,
+      );
+    }
+  }
+
+  const latestActiveUnmatchedBooksBySource =
+    [...latestActiveUnmatchedBySourceMap.entries()]
+      .map(([sourceCode, count]) => ({ sourceCode, count }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
+
+  const latestActiveUnmatchedMissingAuthorBooksBySource =
+    [...latestActiveUnmatchedMissingAuthorBySourceMap.entries()]
+      .map(([sourceCode, count]) => ({ sourceCode, count }))
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.sourceCode.localeCompare(b.sourceCode, "tr"),
+      );
+
+  const latestActiveUnmatchedMissingAuthorSamples = latestActiveBookValues
+    .filter((book) => !book.matched && !book.authorName)
+    .sort(
+      (a, b) =>
+        a.sourceCode.localeCompare(b.sourceCode, "tr")
+        || a.title.localeCompare(b.title, "tr"),
+    )
+    .slice(0, 30)
+    .map(({ matched: _matched, authorName: _authorName, ...book }) => book);
+
+  const latestActiveMatchCoveragePercent = latestActiveExternalBookCount
+    ? Math.round(
+        (latestActiveMatchedExternalBookCount / latestActiveExternalBookCount)
+          * 1000,
+      ) / 10
+    : 0;
 
   const successfulRunStats = persistedCompositeLists.length
     ? await prisma.bookIndexFetchRun.groupBy({
@@ -2016,6 +2153,13 @@ export async function getBookIndexReadinessSnapshot(): Promise<BookIndexReadines
     matchCoveragePercent: externalBookCount
       ? Math.round((matchedExternalBookCount / externalBookCount) * 1000) / 10
       : 0,
+    latestActiveExternalBookCount,
+    latestActiveMatchedExternalBookCount,
+    latestActiveUnmatchedExternalBookCount,
+    latestActiveUnmatchedBooksBySource,
+    latestActiveUnmatchedMissingAuthorBooksBySource,
+    latestActiveUnmatchedMissingAuthorSamples,
+    latestActiveMatchCoveragePercent,
     latestCompositeExternalBookCount,
     latestCompositeMatchedExternalBookCount,
     latestCompositeUnmatchedExternalBookCount,

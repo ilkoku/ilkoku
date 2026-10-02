@@ -384,6 +384,9 @@ test("sitemap XML route exposes stable HTTP validators", () => {
   assertContains(route, 'createHash("sha256")', "sitemap response uses content-derived ETag");
   assertContains(route, '"Last-Modified"', "sitemap response exposes Last-Modified");
   assertContains(route, 'request.headers.get("if-none-match")', "sitemap handles If-None-Match");
+  assertContains(route, 'replace(/^W\\//i, "")', "sitemap normalizes weak ETags");
+  assertContains(route, 'ifNoneMatch.split(",")', "sitemap accepts ETag lists");
+  assertContains(route, 'value === "*"', "sitemap honors wildcard If-None-Match");
   assertContains(route, 'request.headers.get("if-modified-since")', "sitemap handles If-Modified-Since");
   assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");

@@ -43,6 +43,19 @@ function serializeSitemap(entries: MetadataRoute.Sitemap) {
   ].join("\n");
 }
 
+function normalizeEntityTag(value: string) {
+  return value.trim().replace(/^W\//i, "");
+}
+
+function ifNoneMatchMatches(ifNoneMatch: string | null, etag: string) {
+  if (!ifNoneMatch) return false;
+  const normalizedEtag = normalizeEntityTag(etag);
+  return ifNoneMatch.split(",").some((candidate) => {
+    const value = candidate.trim();
+    return value === "*" || normalizeEntityTag(value) === normalizedEtag;
+  });
+}
+
 function latestSitemapModification(entries: MetadataRoute.Sitemap) {
   const timestamps = entries
     .map((entry) => normalizeLastModified(entry.lastModified)?.getTime() ?? null)
@@ -68,7 +81,7 @@ export async function GET(request: Request) {
   };
 
   const ifNoneMatch = request.headers.get("if-none-match");
-  if (ifNoneMatch === etag) {
+  if (ifNoneMatchMatches(ifNoneMatch, etag)) {
     return new Response(null, { status: 304, headers });
   }
 

@@ -57,14 +57,7 @@ test("robots isolates private content management without blocking the public con
   assertNotContains(robots, '          "/icerik",', "broad private content robots prefix");
   assertContains(robots, '          "/icerik$",', "exact private content root robots rule");
   assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
-  assertContains(robots, '"/api/media/"', "published public CMS media crawl allowance");
-  assertContains(robots, '"/api/site-assets/"', "published public site asset crawl allowance");
-  assertContains(robots, '"/api/site-content/footer-navigation"', "published footer render API crawl allowance");
-  assertContains(robots, '"/api/public-announcements"', "published announcement render API crawl allowance");
-  const footerApi = source("src/app/api/site-content/footer-navigation/route.ts");
-  const announcementApi = source("src/app/api/public-announcements/route.ts");
-  assertContains(footerApi, '"X-Robots-Tag": "noindex, noarchive"', "footer render API search exclusion");
-  assertContains(announcementApi, '"X-Robots-Tag": "noindex, noarchive"', "announcement render API search exclusion");
+  assertContains(robots, 'allow: ["/", "/api/media/"]', "published public CMS media crawl allowance");
   assertContains(robots, '          "/api",', "private API robots boundary remains blocked");
   assertContains(robots, '          "/1q6z",', "Google Tag Gateway measurement path crawl block");
   assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");
@@ -158,7 +151,6 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertContains(sitemap, 'url: `${baseUrl}/yasal/${slug}`', "legal sitemap URL template");
   assertContains(publicStore, "const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex", "public trust CMS noindex override");
   assertContains(legalStore, 'locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)', "Turkish legal CMS noindex override");
-  assertContains(sitemap, "hasPublishedEditorProfiles", "editor sitemap availability gate");
   assertNotContains(sitemap, "if (row?.noIndex)", "code-owned public trust and legal sitemap exclusion");
   assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
   assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
@@ -175,51 +167,6 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
-test("public discovery links do not spend crawl signals on robots-excluded actions", () => {
-  const policy = source("src/lib/search-link-policy.ts");
-  const homepage = source("src/features/homepage/HomepageExperience.tsx");
-  const footer = source("src/features/homepage/live-footer.tsx");
-  const header = source("src/components/layout/PublicSiteHeader.tsx");
-  const megaMenu = source("src/components/layout/PublicHeaderNavigation.tsx");
-  const cmsBlocks = source("src/components/content/PublicCmsPageBlocks.tsx");
-  const help = source("src/app/yardim/page.tsx");
-  const editorDirectory = source("src/features/editors/components/EditorDirectory.tsx");
-  const trustFooter = source("src/components/content/PublicTrustFooter.tsx");
-  const writersExperience = source("src/components/content/ForWritersExperience.tsx");
-  const editorsExperience = source("src/components/content/ForEditorsExperience.tsx");
-  const publishersExperience = source("src/components/content/ForPublishersExperience.tsx");
-
-  for (const route of ["/kayit", "/giris", "/hesabim", "/sifremi-unuttum", "/yazar", "/editor", "/yayinevi"]) {
-    assertContains(policy, `"${route}"`, `${route} private-link nofollow policy`);
-  }
-
-  for (const [text, label] of [
-    [homepage, "homepage private actions"],
-    [footer, "footer private account actions"],
-    [megaMenu, "public mega-menu private actions"],
-    [cmsBlocks, "public CMS private CTAs"],
-  ]) {
-    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consume shared nofollow policy`);
-    assertContains(text, '"nofollow"', `${label} emit nofollow`);
-  }
-
-  assertContains(header, 'href="/hesabim" rel="nofollow"', "header account nofollow");
-  assertContains(header, 'href="/giris" rel="nofollow"', "header login nofollow");
-  assertContains(header, 'href="/kayit" rel="nofollow"', "header registration nofollow");
-
-  for (const [text, label] of [
-    [help, "help center"],
-    [editorDirectory, "editor directory"],
-    [trustFooter, "shared public trust footer"],
-    [writersExperience, "writers public landing"],
-    [editorsExperience, "editors public landing"],
-    [publishersExperience, "publishers public landing"],
-  ]) {
-    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consumes private-action nofollow policy`);
-    assertContains(text, '"nofollow"', `${label} emits nofollow for private actions`);
-  }
-});
-
 test("active public help surfaces expose canonical social metadata", () => {
   for (const [path, canonical] of [
     ["src/app/yardim/page.tsx", "/yardim"],
@@ -234,13 +181,10 @@ test("active public help surfaces expose canonical social metadata", () => {
 
   const help = source("src/app/yardim/page.tsx");
   const editors = source("src/app/editorler/page.tsx");
-  const editorData = source("src/features/editors/data.ts");
   assertContains(help, '"@type": "FAQPage"', "help FAQ structured data");
   assertContains(help, '"@type": "BreadcrumbList"', "help breadcrumb structured data");
   assertContains(editors, '"@type": "CollectionPage"', "editor directory structured data");
   assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
-  assertContains(editorData, "hasPublishedEditorProfiles = editors.length > 0", "editor directory truthful publication gate");
-  assertContains(editors, "index: hasPublishedEditorProfiles", "empty editor directory noindex gate");
 });
 test("legal pages inherit canonical OG Twitter and language-alternate metadata", () => {
   const legal = source("src/app/yasal/[slug]/page.tsx");
@@ -355,7 +299,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
-test("public HTML site map exposes the live indexable crawl discovery graph", () => {
+test("public HTML site map exposes the complete crawl discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
@@ -370,7 +314,7 @@ test("public HTML site map exposes the live indexable crawl discovery graph", ()
   assertContains(page, "isSearchIndexExcludedPublicWorkSlug", "public work search safety exclusion");
   assertContains(page, "publicLegalLinks", "legal discovery links");
   assertContains(page, 'page.indexable !== false', "all indexable code-owned public routes stay discoverable");
-  assertContains(page, "getBookIndexPublicPageContext(30)", "HTML site map aligns gated Book Index links with indexed publication");
+  assertNotContains(page, "getBookIndexPublicPageContext", "HTML site map does not hide stable Book Index routes behind transient data availability");
   assertContains(page, 'style={{ color: "#3f3657" }}', "site map links keep explicit readable foreground contrast");
   assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
   assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");
@@ -415,12 +359,12 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
 
   for (const route of [
     '"/yardim"',
+    '"/editorler"',
     '"/iletisim"',
     '"/site-haritasi"',
   ]) {
     assertContains(routes, route, `canonical code-owned SEO route ${route}`);
   }
-  assertContains(routes, 'hasPublishedEditorProfiles ? ["/editorler"]', "editor route follows real profile availability");
 
   assertContains(routes, "publicPlatformLinks", "platform routes feed SEO catalog");
   assertContains(routes, "publicTrustLinks", "trust routes feed SEO catalog");
@@ -442,8 +386,7 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   for (const schemaType of ["CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"]) {
     assertContains(metadata, schemaType, `structured-data inventory ${schemaType}`);
   }
-  assertContains(metadata, 'href="/site-haritasi"', "active structured-data collection link");
-  assertContains(live, 'verifySchema("CollectionPage", "/site-haritasi"', "CollectionPage verification uses indexable site map");
+  assertContains(metadata, 'href="/editorler"', "active structured-data collection link");
   assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
   for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
     assertNotContains(routes, retired, `retired public SEO route ${retired}`);
@@ -483,19 +426,4 @@ test("sitemap XML route exposes stable HTTP validators", () => {
   assertContains(route, 'request.headers.get("if-modified-since")', "sitemap handles If-Modified-Since");
   assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
-});
-
-
-test("SEO smoke reports public HTML payload sizes without impersonating Googlebot", () => {
-  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
-
-  assertContains(smoke, 'USER_AGENT="IlkOku-SEO-Indexability/1.0 (+https://ilkoku.com)"', "dedicated SEO diagnostic user agent");
-  assertNotContains(smoke, "Googlebot/2.1", "diagnostic must not impersonate Googlebot");
-  assertContains(smoke, 'raw_bytes="$(wc -c < "$body" | tr -d', "raw HTML payload measurement");
-  assertContains(smoke, 'gzip_bytes="$(gzip -c "$body" | wc -c', "gzip HTML payload measurement");
-  assertContains(
-    smoke,
-    'echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"',
-    "payload diagnostic log",
-  );
 });

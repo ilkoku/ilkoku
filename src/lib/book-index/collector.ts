@@ -31,6 +31,7 @@ import { globeMailCanadaBookIndexAdapter } from "./sources/globe-mail-ca";
 import { abcGfkSpainBookIndexAdapter } from "./sources/abc-gfk-es";
 import { bkmBookIndexAdapter } from "./sources/bkm";
 import { kitapSepetiBookIndexAdapter } from "./sources/kitapsepeti";
+import { kitapyurduBookIndexAdapter } from "./sources/kitapyurdu";
 import { kitapStoreBookIndexResearchAdapter } from "./sources/kitapstore";
 
 import { kitapAmbariBookIndexAdapter } from "./sources/kitapambari";
@@ -72,6 +73,7 @@ const adapters = new Map<string, BookIndexSourceAdapter>([
   [penguenBookIndexAdapter.sourceCode, penguenBookIndexAdapter],
   [bkmBookIndexAdapter.sourceCode, bkmBookIndexAdapter],
   [kitapSepetiBookIndexAdapter.sourceCode, kitapSepetiBookIndexAdapter],
+  [kitapyurduBookIndexAdapter.sourceCode, kitapyurduBookIndexAdapter],
   [kitapStoreBookIndexResearchAdapter.sourceCode, kitapStoreBookIndexResearchAdapter],
 
   [kitapAmbariBookIndexAdapter.sourceCode, kitapAmbariBookIndexAdapter],

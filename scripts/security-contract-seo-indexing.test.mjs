@@ -158,6 +158,7 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertContains(sitemap, 'url: `${baseUrl}/yasal/${slug}`', "legal sitemap URL template");
   assertContains(publicStore, "const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex", "public trust CMS noindex override");
   assertContains(legalStore, 'locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)', "Turkish legal CMS noindex override");
+  assertContains(sitemap, "hasPublishedEditorProfiles", "editor sitemap availability gate");
   assertNotContains(sitemap, "if (row?.noIndex)", "code-owned public trust and legal sitemap exclusion");
   assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
   assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
@@ -233,10 +234,13 @@ test("active public help surfaces expose canonical social metadata", () => {
 
   const help = source("src/app/yardim/page.tsx");
   const editors = source("src/app/editorler/page.tsx");
+  const editorData = source("src/features/editors/data.ts");
   assertContains(help, '"@type": "FAQPage"', "help FAQ structured data");
   assertContains(help, '"@type": "BreadcrumbList"', "help breadcrumb structured data");
   assertContains(editors, '"@type": "CollectionPage"', "editor directory structured data");
   assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
+  assertContains(editorData, "hasPublishedEditorProfiles = editors.length > 0", "editor directory truthful publication gate");
+  assertContains(editors, "index: hasPublishedEditorProfiles", "empty editor directory noindex gate");
 });
 test("legal pages inherit canonical OG Twitter and language-alternate metadata", () => {
   const legal = source("src/app/yasal/[slug]/page.tsx");
@@ -411,12 +415,12 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
 
   for (const route of [
     '"/yardim"',
-    '"/editorler"',
     '"/iletisim"',
     '"/site-haritasi"',
   ]) {
     assertContains(routes, route, `canonical code-owned SEO route ${route}`);
   }
+  assertContains(routes, 'hasPublishedEditorProfiles ? ["/editorler"]', "editor route follows real profile availability");
 
   assertContains(routes, "publicPlatformLinks", "platform routes feed SEO catalog");
   assertContains(routes, "publicTrustLinks", "trust routes feed SEO catalog");
@@ -438,7 +442,8 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   for (const schemaType of ["CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"]) {
     assertContains(metadata, schemaType, `structured-data inventory ${schemaType}`);
   }
-  assertContains(metadata, 'href="/editorler"', "active structured-data collection link");
+  assertContains(metadata, 'href="/site-haritasi"', "active structured-data collection link");
+  assertContains(live, 'verifySchema("CollectionPage", "/site-haritasi"', "CollectionPage verification uses indexable site map");
   assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
   for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
     assertNotContains(routes, retired, `retired public SEO route ${retired}`);

@@ -332,3 +332,17 @@ test("SEO history evidence uses the minimum Turkey composite source history floo
     "public gate cannot use unrelated global/new-release history",
   );
 });
+
+
+test("HTML sitemap mirrors live Book Index indexability instead of linking gated routes", () => {
+  const siteMap = source("src/app/site-haritasi/page.tsx");
+
+  contains(siteMap, "getBookIndexPublicPageContext(30)", "HTML sitemap reads the strict Book Index publication gate");
+  contains(siteMap, "getBookIndexInsights(50)", "HTML sitemap reads current insight availability");
+  contains(siteMap, "getPublishedBookIndexInsightPages", "HTML sitemap publishes only insight pages with usable data");
+  contains(siteMap, '"/en-cok-satanlar/dunya"', "global bestsellers remain independently discoverable");
+  contains(siteMap, '"/yeni-cikanlar"', "new releases remain independently discoverable");
+  contains(siteMap, '"/en-cok-satanlar/turkiye/karsilastirma"', "comparison route stays behind the publication gate");
+  contains(siteMap, "return bookIndexPublished && publishedInsightHrefs.has(page.href)", "trend discovery follows the gate and insight data");
+  contains(siteMap, '|| !page.href.startsWith("/en-cok-satanlar")', "CMS-only fallback cannot leak gated Book Index routes");
+});

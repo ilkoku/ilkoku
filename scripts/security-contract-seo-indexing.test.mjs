@@ -68,13 +68,13 @@ test("robots isolates private content management without blocking the public con
 test("robots mirrors the private route inventory without shadowing public prefixes", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");
-  const inventory = nextConfig.match(/const privateRouteHeaders = \\[([\\s\\S]*?)\\];/u)?.[1];
+  const inventory = nextConfig.match(/const privateRouteHeaders = \[([\s\S]*?)\];/u)?.[1];
 
   assert.ok(inventory, "next.config privateRouteHeaders inventory must be readable");
 
   const privateRoutes = [...inventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
   const privateRoots = [...new Set(
-    privateRoutes.map((route) => route.replace(/\\\/:path\\\\\*$/u, "")),
+    privateRoutes.map((route) => route.replace(/\/:path\*$/u, "")),
   )];
 
   const exactPrefixRoots = new Set([

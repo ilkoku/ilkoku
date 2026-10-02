@@ -1,4 +1,3 @@
-import { hasPublishedEditorProfiles } from "@/features/editors/data";
 import {
   publicLegalLinks,
   publicPlatformLinks,
@@ -8,7 +7,7 @@ import {
 export const publicCodeOwnedIndexRoutes = [
   "/",
   "/yardim",
-  ...(hasPublishedEditorProfiles ? ["/editorler"] as const : []),
+  "/editorler",
   "/iletisim",
   "/site-haritasi",
   "/okurlar-icin",

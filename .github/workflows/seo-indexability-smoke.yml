@@ -36,7 +36,9 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          USER_AGENT="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          # Do not impersonate Googlebot. Real Googlebot must be identified from
+          # verified Google crawler IP ranges in server logs.
+          USER_AGENT="IlkOku-SEO-Indexability/1.0 (+https://ilkoku.com)"
           REQUEST_DELAY_SECONDS=5
 
           normalize_url() { local value="$1"; printf '%s' "${value%/}"; }

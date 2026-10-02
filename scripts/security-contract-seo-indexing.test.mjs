@@ -299,7 +299,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
-test("public HTML site map exposes the complete crawl discovery graph", () => {
+test("public HTML site map exposes the live indexable crawl discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
@@ -314,7 +314,7 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
   assertContains(page, "isSearchIndexExcludedPublicWorkSlug", "public work search safety exclusion");
   assertContains(page, "publicLegalLinks", "legal discovery links");
   assertContains(page, 'page.indexable !== false', "all indexable code-owned public routes stay discoverable");
-  assertNotContains(page, "getBookIndexPublicPageContext", "HTML site map does not hide stable Book Index routes behind transient data availability");
+  assertContains(page, "getBookIndexPublicPageContext(30)", "HTML site map aligns gated Book Index links with indexed publication");
   assertContains(page, 'style={{ color: "#3f3657" }}', "site map links keep explicit readable foreground contrast");
   assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
   assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");

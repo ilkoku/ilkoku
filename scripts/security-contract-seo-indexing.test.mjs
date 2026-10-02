@@ -427,3 +427,18 @@ test("sitemap XML route exposes stable HTTP validators", () => {
   assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
 });
+
+
+test("SEO smoke reports public HTML payload sizes without impersonating Googlebot", () => {
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+
+  assertContains(smoke, 'USER_AGENT="IlkOku-SEO-Indexability/1.0 (+https://ilkoku.com)"', "dedicated SEO diagnostic user agent");
+  assertNotContains(smoke, "Googlebot/2.1", "diagnostic must not impersonate Googlebot");
+  assertContains(smoke, 'raw_bytes="$(wc -c < "$body" | tr -d', "raw HTML payload measurement");
+  assertContains(smoke, 'gzip_bytes="$(gzip -c "$body" | wc -c', "gzip HTML payload measurement");
+  assertContains(
+    smoke,
+    'echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"',
+    "payload diagnostic log",
+  );
+});

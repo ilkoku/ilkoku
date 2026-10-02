@@ -33,7 +33,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
 
-test("public site map exposes only currently indexable Book Index routes", () => {
+test("public site map exposes stable indexable Book Index routes without a transient data gate", () => {
   const siteMapPage = source("src/app/site-haritasi/page.tsx");
 
   contains(
@@ -46,15 +46,15 @@ test("public site map exposes only currently indexable Book Index routes", () =>
     "page.indexable !== false",
     "site-map exposes only routes marked indexable",
   );
-  contains(
+  notContains(
     siteMapPage,
-    "getBookIndexPublicPageContext(30)",
-    "site-map mirrors the strict Book Index publication gate",
+    "getBookIndexPublicPageContext",
+    "stable Book Index discovery is not hidden behind transient data availability",
   );
-  contains(
+  notContains(
     siteMapPage,
-    "bookIndexPublished && publishedInsightHrefs.has(page.href)",
-    "site-map exposes trend routes only when indexed publication and data are ready",
+    "bookIndexPublished",
+    "obsolete runtime Book Index publication gate remains removed",
   );
 });
 

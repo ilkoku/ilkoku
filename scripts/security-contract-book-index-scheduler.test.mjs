@@ -132,6 +132,21 @@ test("Book Index scheduler keeps production cron and read-only diagnostics after
 
 
 
+test("Book Index scheduler does not retry deterministic force/dependency failures", () => {
+  const route = source("src/app/api/internal/book-index-scheduler/route.ts");
+  const workflow = source(".github/workflows/book-index-scheduler.yml");
+
+  contains(route, 'message.startsWith("BOOK_INDEX_FORCE_LIST_")', "invalid force-list requests map to client errors");
+  contains(route, 'message.startsWith("BOOK_INDEX_SOURCE_HTTP_4")', "blocked forced sources map to dependency errors");
+  contains(route, "? 400", "force-list validation uses HTTP 400");
+  contains(route, "? 424", "blocked source uses HTTP 424");
+
+  contains(workflow, "--write-out '%{http_code}'", "workflow captures scheduler HTTP status");
+  contains(workflow, '[[ "$http_status" =~ ^4[0-9][0-9]$ ]]', "workflow detects deterministic 4xx responses");
+  contains(workflow, "not retrying", "workflow exits immediately on deterministic failure");
+  notContains(workflow, "--fail-with-body", "scheduler request preserves response status/body for classification");
+});
+
 test("Book Index scheduler invalidates public Book Index ISR routes after collection", () => {
   const route = source("src/app/api/internal/book-index-scheduler/route.ts");
 

@@ -148,14 +148,13 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   }
 
   assert.doesNotMatch(header, /getBookIndexPublicPageContext/);
-  assert.match(header, /withoutBookIndexMenu/);
+  assert.doesNotMatch(header, /withoutBookIndexMenu/);
   assert.doesNotMatch(header, /withBookIndexMenu/);
-  assert.match(header, /menu\.id === "book-index"/);
-  assert.match(header, /!item\.pageId\.startsWith\("book-index"\)/);
-  assert.doesNotMatch(header, /label: "Kitap Endeksi"/);
-  assert.doesNotMatch(header, /title: "Ana Listeler"/);
-  assert.doesNotMatch(header, /title: "Karşılaştır"/);
-  assert.doesNotMatch(header, /title: "Çok Satan Analizleri"/);
+  assert.match(header, /resolveHeaderNavigation\(\s*navigation\.payload,\s*navigation\.pages,?\s*\)/);
+  assert.match(config, /label: "Kitap Endeksi"/);
+  assert.match(config, /title: "Ana Listeler"/);
+  assert.match(config, /title: "Karşılaştır"/);
+  assert.match(config, /title: "Çok Satan Analizleri"/);
   assert.match(config, /id: "book-index"[\s\S]*label: "Kitap Endeksi"[\s\S]*id: "support"/);
   assert.match(config, /id: "book-index"/);
   assert.match(config, /href: "\/en-cok-satanlar"/);

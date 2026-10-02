@@ -174,6 +174,33 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
+test("public discovery links do not spend crawl signals on robots-excluded actions", () => {
+  const policy = source("src/lib/search-link-policy.ts");
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+  const footer = source("src/features/homepage/live-footer.tsx");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const megaMenu = source("src/components/layout/PublicHeaderNavigation.tsx");
+  const cmsBlocks = source("src/components/content/PublicCmsPageBlocks.tsx");
+
+  for (const route of ["/kayit", "/giris", "/hesabim", "/sifremi-unuttum", "/yazar", "/editor", "/yayinevi"]) {
+    assertContains(policy, `"${route}"`, `${route} private-link nofollow policy`);
+  }
+
+  for (const [text, label] of [
+    [homepage, "homepage private actions"],
+    [footer, "footer private account actions"],
+    [megaMenu, "public mega-menu private actions"],
+    [cmsBlocks, "public CMS private CTAs"],
+  ]) {
+    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consume shared nofollow policy`);
+    assertContains(text, '"nofollow"', `${label} emit nofollow`);
+  }
+
+  assertContains(header, 'href="/hesabim" rel="nofollow"', "header account nofollow");
+  assertContains(header, 'href="/giris" rel="nofollow"', "header login nofollow");
+  assertContains(header, 'href="/kayit" rel="nofollow"', "header registration nofollow");
+});
+
 test("active public help surfaces expose canonical social metadata", () => {
   for (const [path, canonical] of [
     ["src/app/yardim/page.tsx", "/yardim"],

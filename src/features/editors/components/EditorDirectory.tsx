@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { editorsContent } from "@/content";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 import { editors } from "../data";
 import { EditorAvatar } from "./EditorAvatar";
 import { EditorsHeader } from "./EditorsHeader";
@@ -84,7 +83,7 @@ export function EditorDirectory() {
                 </p>
               </div>
               <div className="editors-empty__actions">
-                <Link className="editors-public-button editors-public-button--primary" href="/kayit?rol=editor" rel={shouldNofollowSearchExcludedHref("/kayit?rol=editor") ? "nofollow" : undefined}>
+                <Link className="editors-public-button editors-public-button--primary" href="/kayit?rol=editor">
                   Editör olarak katıl <span aria-hidden="true">→</span>
                 </Link>
                 <Link className="editors-public-button" href="/editorler-icin">Editörler için sayfası</Link>

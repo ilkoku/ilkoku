@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
-import { getBookIndexInsights } from "@/lib/book-index/insights";
-import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -111,39 +108,14 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks, bookIndexContext, bookIndexInsights] = await Promise.all([
+  const [cmsPages, publicWorks] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
-    getBookIndexPublicPageContext(30).catch(() => null),
-    getBookIndexInsights(50).catch(() => null),
   ]);
 
-  const bookIndexPublished = Boolean(bookIndexContext);
-  const publishedInsightHrefs = new Set(
-    bookIndexPublished && bookIndexInsights
-      ? getPublishedBookIndexInsightPages(bookIndexInsights).map(
-          (page) => `/en-cok-satanlar/${page.slug}`,
-        )
-      : [],
+  const codeOwnedPages = SITE_MAP_PAGES.filter(
+    (page) => page.indexable !== false,
   );
-  const alwaysDiscoverableBookIndexHrefs = new Set([
-    "/en-cok-satanlar/dunya",
-    "/yeni-cikanlar",
-  ]);
-  const gatedBookIndexHrefs = new Set([
-    "/en-cok-satanlar",
-    "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
-  ]);
-  const codeOwnedPages = SITE_MAP_PAGES.filter((page) => {
-    if (page.indexable === false) return false;
-    if (alwaysDiscoverableBookIndexHrefs.has(page.href)) return true;
-    if (gatedBookIndexHrefs.has(page.href)) return bookIndexPublished;
-    if (page.href.startsWith("/en-cok-satanlar/")) {
-      return bookIndexPublished && publishedInsightHrefs.has(page.href);
-    }
-    return true;
-  });
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
     ...publicLegalLinks.map((link) => link.href),
@@ -153,11 +125,7 @@ export default async function PublicSiteMapPage() {
     .filter(
       (page) =>
         page.indexable !== false
-        && !knownHrefs.has(page.href)
-        && (
-          bookIndexPublished
-          || !page.href.startsWith("/en-cok-satanlar")
-        ),
+        && !knownHrefs.has(page.href),
     )
     .map((page) => ({ href: page.href, label: page.label }));
 

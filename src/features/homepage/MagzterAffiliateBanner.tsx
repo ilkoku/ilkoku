@@ -76,7 +76,6 @@ export default function MagzterAffiliateBanner({ placement }: Props) {
                   height={creative.height}
                   alt={creative.alt}
                   loading="lazy"
-                  fetchPriority="low"
                 />
               </a>
             ) : (

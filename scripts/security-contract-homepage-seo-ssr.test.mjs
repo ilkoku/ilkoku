@@ -73,9 +73,8 @@ test("site identity structured data uses a real alternate site name", () => {
 });
 
 
-test("homepage affiliate creative stays below-fold and low-priority", () => {
+test("below-fold affiliate creative stays lazy-loaded", () => {
   const banner = source("src/features/homepage/MagzterAffiliateBanner.tsx");
 
   assertContains(banner, 'loading="lazy"', "affiliate creative lazy loading");
-  assertContains(banner, 'fetchPriority="low"', "affiliate creative low fetch priority");
 });

@@ -72,6 +72,42 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
+
+test("public auth entry pages stay crawlable noindex-follow while private workspaces stay protected", () => {
+  const robots = source("src/app/robots.ts");
+  const nextConfig = source("next.config.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const proxy = source("src/proxy.ts");
+
+  assertContains(nextConfig, "const publicAuthNoindexRouteHeaders", "public auth noindex header inventory");
+  assertContains(nextConfig, 'value: "noindex, follow, noarchive"', "public auth X-Robots noindex-follow");
+
+  for (const [route, pagePath] of [
+    ["/giris", "src/app/giris/page.tsx"],
+    ["/kayit", "src/app/kayit/page.tsx"],
+    ["/sifremi-unuttum", "src/app/sifremi-unuttum/page.tsx"],
+    ["/sifre-yenile", "src/app/sifre-yenile/page.tsx"],
+  ]) {
+    const page = source(pagePath);
+    assertContains(page, "robots: { index: false, follow: true }", `${route} metadata noindex-follow`);
+    assertNotContains(robots, `          "${route}",`, `${route} must stay crawlable so noindex can be read`);
+    assertNotContains(sitemap, `https://ilkoku.com${route}`, `${route} must stay out of sitemap`);
+  }
+
+  for (const route of [
+    "/hesabim",
+    "/editor",
+    "/yazar",
+    "/eserlerim",
+    "/kutuphanem",
+    "/yayinevi",
+  ]) {
+    assertContains(proxy, `"${route}/:path*"`, `${route} request-time auth matcher`);
+    assertContains(nextConfig, `"${route}/:path*"`, `${route} private X-Robots coverage`);
+    assertNotContains(sitemap, `https://ilkoku.com${route}`, `${route} private workspace sitemap exclusion`);
+  }
+});
+
 test("robots mirrors private and protected route inventories without shadowing public prefixes", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");
@@ -173,51 +209,6 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, 'url: \`${baseUrl}/eserler\`', "retired work directory sitemap route");
   assertNotContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "retired author directory sitemap route");
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
-});
-
-test("public discovery links do not spend crawl signals on robots-excluded actions", () => {
-  const policy = source("src/lib/search-link-policy.ts");
-  const homepage = source("src/features/homepage/HomepageExperience.tsx");
-  const footer = source("src/features/homepage/live-footer.tsx");
-  const header = source("src/components/layout/PublicSiteHeader.tsx");
-  const megaMenu = source("src/components/layout/PublicHeaderNavigation.tsx");
-  const cmsBlocks = source("src/components/content/PublicCmsPageBlocks.tsx");
-  const help = source("src/app/yardim/page.tsx");
-  const editorDirectory = source("src/features/editors/components/EditorDirectory.tsx");
-  const trustFooter = source("src/components/content/PublicTrustFooter.tsx");
-  const writersExperience = source("src/components/content/ForWritersExperience.tsx");
-  const editorsExperience = source("src/components/content/ForEditorsExperience.tsx");
-  const publishersExperience = source("src/components/content/ForPublishersExperience.tsx");
-
-  for (const route of ["/kayit", "/giris", "/hesabim", "/sifremi-unuttum", "/yazar", "/editor", "/yayinevi"]) {
-    assertContains(policy, `"${route}"`, `${route} private-link nofollow policy`);
-  }
-
-  for (const [text, label] of [
-    [homepage, "homepage private actions"],
-    [footer, "footer private account actions"],
-    [megaMenu, "public mega-menu private actions"],
-    [cmsBlocks, "public CMS private CTAs"],
-  ]) {
-    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consume shared nofollow policy`);
-    assertContains(text, '"nofollow"', `${label} emit nofollow`);
-  }
-
-  assertContains(header, 'href="/hesabim" rel="nofollow"', "header account nofollow");
-  assertContains(header, 'href="/giris" rel="nofollow"', "header login nofollow");
-  assertContains(header, 'href="/kayit" rel="nofollow"', "header registration nofollow");
-
-  for (const [text, label] of [
-    [help, "help center"],
-    [editorDirectory, "editor directory"],
-    [trustFooter, "shared public trust footer"],
-    [writersExperience, "writers public landing"],
-    [editorsExperience, "editors public landing"],
-    [publishersExperience, "publishers public landing"],
-  ]) {
-    assertContains(text, "shouldNofollowSearchExcludedHref", `${label} consumes private-action nofollow policy`);
-    assertContains(text, '"nofollow"', `${label} emits nofollow for private actions`);
-  }
 });
 
 test("active public help surfaces expose canonical social metadata", () => {
@@ -355,7 +346,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
-test("public HTML site map exposes the live indexable crawl discovery graph", () => {
+test("public HTML site map exposes the complete crawl discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
@@ -370,7 +361,7 @@ test("public HTML site map exposes the live indexable crawl discovery graph", ()
   assertContains(page, "isSearchIndexExcludedPublicWorkSlug", "public work search safety exclusion");
   assertContains(page, "publicLegalLinks", "legal discovery links");
   assertContains(page, 'page.indexable !== false', "all indexable code-owned public routes stay discoverable");
-  assertContains(page, "getBookIndexPublicPageContext(30)", "HTML site map aligns gated Book Index links with indexed publication");
+  assertNotContains(page, "getBookIndexPublicPageContext", "HTML site map does not hide stable Book Index routes behind transient data availability");
   assertContains(page, 'style={{ color: "#3f3657" }}', "site map links keep explicit readable foreground contrast");
   assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
   assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");

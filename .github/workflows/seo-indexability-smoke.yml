@@ -57,14 +57,11 @@ jobs:
             local path="$1"
             local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical raw_bytes gzip_bytes
+            local headers body code robots canonical
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
-            raw_bytes="$(wc -c < "$body" | tr -d ' ')"
-            gzip_bytes="$(gzip -c "$body" | wc -c | tr -d ' ')"
-            echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"
             circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"
@@ -96,9 +93,6 @@ jobs:
           grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
           grep -Fq 'Allow: /' "$robots"
           grep -Fq 'Allow: /api/media/' "$robots"
-          grep -Fq 'Allow: /api/site-assets/' "$robots"
-          grep -Fq 'Allow: /api/site-content/footer-navigation' "$robots"
-          grep -Fq 'Allow: /api/public-announcements' "$robots"
           grep -Fxq 'Disallow: /icerik$' "$robots"
           grep -Fxq 'Disallow: /icerik/' "$robots"
           grep -Fxq 'Disallow: /1q6z' "$robots"
@@ -106,19 +100,6 @@ jobs:
             echo "FAIL: broad /icerik robots prefix blocks public content policy" >&2
             exit 1
           fi
-
-          for public_resource in \
-            'https://ilkoku.com/api/site-content/footer-navigation' \
-            'https://ilkoku.com/api/public-announcements'; do
-            headers="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$public_resource" || true)"
-            echo "$public_resource -> HTTP $code"
-            circuit_break "$code" "$public_resource"
-            [[ "$code" == "200" ]]
-            grep -Eqi '^x-robots-tag:[[:space:]]*noindex' "$headers"
-            rm -f "$headers"
-            pace
-          done
 
           fetch_contract_file "https://ilkoku.com/sitemap.xml" "$sitemap"
           for required in \

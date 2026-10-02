@@ -3,10 +3,6 @@ import { prisma } from "@/lib/prisma";
 
 type Row = { valueJson: string };
 
-const publicResourceHeaders = {
-  "X-Robots-Tag": "noindex, noarchive",
-};
-
 export async function GET() {
   try {
     const rows = await prisma.$queryRaw<Row[]>`
@@ -19,7 +15,7 @@ export async function GET() {
     `;
 
     if (!rows[0]?.valueJson) {
-      return NextResponse.json({ content: null }, { headers: publicResourceHeaders });
+      return NextResponse.json({ content: null });
     }
 
     const raw = JSON.parse(rows[0].valueJson) as Record<string, unknown>;
@@ -29,8 +25,8 @@ export async function GET() {
       if (typeof value === "string") content[key] = value.trim();
     }
 
-    return NextResponse.json({ content }, { headers: publicResourceHeaders });
+    return NextResponse.json({ content });
   } catch {
-    return NextResponse.json({ content: null }, { headers: publicResourceHeaders });
+    return NextResponse.json({ content: null });
   }
 }

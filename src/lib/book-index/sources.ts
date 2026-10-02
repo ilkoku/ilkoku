@@ -25,6 +25,16 @@ export const TURKEY_INDEX_MIN_SOURCES = 3;
 
 export const BOOK_INDEX_SOURCES: readonly BookIndexSourceDefinition[] = [
   {
+    code: "kitapyurdu",
+    name: "Kitapyurdu",
+    market: "TR",
+    countryCode: "TR",
+    baseUrl: "https://www.kitapyurdu.com",
+    includeInTurkeyIndex: true,
+    phase: "v1",
+    collectionState: "ready",
+  },
+  {
     code: "bkm",
     name: "BKM Kitap",
     market: "TR",

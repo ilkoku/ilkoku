@@ -57,11 +57,14 @@ jobs:
             local path="$1"
             local expected_canonical="$2"
             local url="https://ilkoku.com${path}"
-            local headers body code robots canonical
+            local headers body code robots canonical raw_bytes gzip_bytes
             headers="$(mktemp)"
             body="$(mktemp)"
             code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
+            raw_bytes="$(wc -c < "$body" | tr -d ' ')"
+            gzip_bytes="$(gzip -c "$body" | wc -c | tr -d ' ')"
+            echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"
             circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
             robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$headers")"

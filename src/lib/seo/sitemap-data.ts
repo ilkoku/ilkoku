@@ -10,6 +10,7 @@ import { forWritersPageContent } from "@/content/for-writers";
 import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
+import { hasPublishedEditorProfiles } from "@/features/editors/data";
 import { GENRES } from "@/lib/genres";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
@@ -180,11 +181,13 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.6,
   },
-  {
-    url: `${baseUrl}/editorler`,
-    changeFrequency: "weekly",
-    priority: 0.7,
-  },
+  ...(hasPublishedEditorProfiles
+    ? [{
+        url: `${baseUrl}/editorler`,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }]
+    : []),
   {
     url: `${baseUrl}/iletisim`,
     changeFrequency: "monthly",

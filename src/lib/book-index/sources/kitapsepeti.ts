@@ -21,6 +21,7 @@ const VERIFIED_NON_BOOK_SOURCE_KEYS = new Set([
   "/note-the-time-2li-defter-set-soft-pastel-buyuk-ve-kucuk-cizgisiz",
   "/kenko-kk-613d-dijital-kucuk-masa-araba-saati-alarm-kronometre",
   "/canli-cicek-kitap-ayraci",
+  "/testttttttt",
 ]);
 
 function absoluteUrl(href: string) {

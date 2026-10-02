@@ -1613,6 +1613,7 @@ test("Book Index source adapters exclude only verified non-book catalogue entrie
     "/note-the-time-2li-defter-set-soft-pastel-buyuk-ve-kucuk-cizgisiz",
     "/kenko-kk-613d-dijital-kucuk-masa-araba-saati-alarm-kronometre",
     "/canli-cicek-kitap-ayraci",
+    "/testttttttt",
   ]) {
     contains(
       kitapsepeti,

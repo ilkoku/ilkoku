@@ -15,14 +15,10 @@ import "./public-site-mega-menu.css";
 import "./public-site-mega-menu-layer.css";
 import "./public-site-account-popover.css";
 
-type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
-  directHref?: string;
-};
-
-function withBookIndexMenu(
+function withoutBookIndexMenu(
   menus: ReturnType<typeof resolveHeaderNavigation>,
-): ResolvedHeaderMenu[] {
-  const withoutBookIndex = menus.flatMap((menu) => {
+) {
+  return menus.flatMap((menu) => {
     if (menu.id === "book-index") return [];
 
     const groups = menu.groups
@@ -35,99 +31,7 @@ function withBookIndexMenu(
     if (groups.length === 0) return [];
     return [{ ...menu, groups }];
   });
-
-  const bookIndexMenu: ResolvedHeaderMenu = {
-    id: "book-index",
-    label: "Kitap Endeksi",
-    groups: [
-      {
-        id: "book-index-main",
-        title: "Ana Listeler",
-        links: [
-          {
-            href: "/en-cok-satanlar",
-            label: "En Çok Satanlar",
-            primary: true,
-            pageId: "book-index",
-          },
-          {
-            href: "/en-cok-satanlar/turkiye",
-            label: "Türkiye",
-            primary: false,
-            pageId: "book-index-turkey",
-          },
-          {
-            href: "/yeni-cikanlar",
-            label: "Yeni Çıkanlar",
-            primary: false,
-            pageId: "book-index-new-releases",
-          },
-          {
-            href: "/en-cok-satanlar/dunya",
-            label: "Dünya",
-            primary: false,
-            pageId: "book-index-global",
-          },
-        ],
-      },
-      {
-        id: "book-index-compare",
-        title: "Karşılaştır",
-        links: [
-          {
-            href: "/en-cok-satanlar/turkiye/karsilastirma",
-            label: "Karşılaştırma",
-            primary: false,
-            pageId: "book-index-comparison",
-          },
-        ],
-      },
-      {
-        id: "book-index-trends",
-        title: "Çok Satan Analizleri",
-        links: [
-          {
-            href: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
-            label: "Çok Satanlara Yeni Girenler",
-            primary: false,
-            pageId: "book-index-new-entries",
-          },
-          {
-            href: "/en-cok-satanlar/cok-satanlarda-yukselenler",
-            label: "Çok Satanlarda Yükselenler",
-            primary: false,
-            pageId: "book-index-risers",
-          },
-          {
-            href: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
-            label: "Birden Fazla Listede Çok Satanlar",
-            primary: false,
-            pageId: "book-index-everywhere",
-          },
-          {
-            href: "/en-cok-satanlar/uzun-suredir-cok-satanlar",
-            label: "Uzun Süredir Çok Satanlar",
-            primary: false,
-            pageId: "book-index-long-sellers",
-          },
-        ],
-      },
-    ],
-  };
-
-  const supportIndex = withoutBookIndex.findIndex(
-    (menu) => menu.id === "support",
-  );
-
-  if (supportIndex < 0) return [...withoutBookIndex, bookIndexMenu];
-
-  return [
-    ...withoutBookIndex.slice(0, supportIndex),
-    bookIndexMenu,
-    ...withoutBookIndex.slice(supportIndex),
-  ];
 }
-
 function AccountIcon() {
   return (
     <svg
@@ -151,7 +55,7 @@ export async function PublicSiteHeader() {
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
   ]);
-  const publicMenus = withBookIndexMenu(
+  const publicMenus = withoutBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
   );
 

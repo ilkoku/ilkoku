@@ -3,6 +3,10 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/prisma";
 
 type Row = { contentKey: string; valueJson: string; updatedAt: Date };
+const publicResourceHeaders = {
+  "X-Robots-Tag": "noindex, noarchive",
+};
+
 type Notice = {
   title?: string;
   body?: string;
@@ -49,8 +53,8 @@ export async function GET() {
       return [{ key: row.contentKey, title: data.title, body: data.body, level: data.level || "info" }];
     });
 
-    return NextResponse.json({ items: items.slice(0, 3) });
+    return NextResponse.json({ items: items.slice(0, 3) }, { headers: publicResourceHeaders });
   } catch {
-    return NextResponse.json({ items: [] });
+    return NextResponse.json({ items: [] }, { headers: publicResourceHeaders });
   }
 }

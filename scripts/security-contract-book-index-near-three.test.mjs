@@ -158,6 +158,57 @@ test("Book Index readiness exposes unmatched external books by source without mu
   notContains(matching, "unmatchedDuplicateIdentitySamples", "identity diagnostic does not change matching");
 });
 
+test("Book Index readiness separates historical backlog from latest active snapshots", () => {
+  const readiness = source("src/lib/book-index/readiness.ts");
+  const matching = source("src/lib/book-index/matching.ts");
+
+  contains(
+    readiness,
+    "persistedActiveLists",
+    "latest-active diagnostics use active list snapshots",
+  );
+  contains(
+    readiness,
+    'source: { status: "active" }',
+    "latest-active diagnostics exclude blocked sources",
+  );
+  contains(
+    readiness,
+    'where: { status: { in: ["success", "no_change"] } }',
+    "latest-active diagnostics use the latest successful snapshot",
+  );
+  contains(
+    readiness,
+    "latestActiveUnmatchedExternalBookCount",
+    "latest-active unmatched count",
+  );
+  contains(
+    readiness,
+    "latestActiveUnmatchedBooksBySource",
+    "latest-active unmatched source breakdown",
+  );
+  contains(
+    readiness,
+    "latestActiveUnmatchedMissingAuthorBooksBySource",
+    "latest-active missing-author source breakdown",
+  );
+  contains(
+    readiness,
+    "latestActiveUnmatchedMissingAuthorSamples",
+    "latest-active missing-author samples",
+  );
+  contains(
+    readiness,
+    "latestActiveMatchCoveragePercent",
+    "latest-active match coverage",
+  );
+  notContains(
+    matching,
+    "latestActiveUnmatchedExternalBookCount",
+    "latest-active diagnostics do not mutate matching",
+  );
+});
+
 test("Book Index admin exposes source history maturity without publish judgments", () => {
   const admin = source("src/app/admin/kitap-endeksi/page.tsx");
 

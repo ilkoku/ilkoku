@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { GENRES } from "@/lib/genres";
 import { prisma } from "@/lib/prisma";
 import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
@@ -45,7 +46,7 @@ async function loadPublishedWritingGuideFreshness() {
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const freshnessBySlug = await loadPublishedWritingGuideFreshness();
   const recentGuides = GENRES.map((genre) => ({
     genre,
@@ -96,11 +97,26 @@ export async function GET() {
     "",
   ].join("\n");
 
-  return new Response(xml, {
-    headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=900, stale-while-revalidate=3600",
-      "Content-Type": "application/atom+xml; charset=utf-8",
-      Link: `<${hubUrl}>; rel="hub", <${feedUrl}>; rel="self"`,
-    },
-  });
+  const etag = `"${createHash("sha256").update(xml).digest("base64url")}"`;
+  const headers = {
+    "Cache-Control": "public, max-age=0, s-maxage=900, stale-while-revalidate=3600",
+    "Content-Type": "application/atom+xml; charset=utf-8",
+    ETag: etag,
+    "Last-Modified": feedUpdated.toUTCString(),
+    Link: `<${hubUrl}>; rel="hub", <${feedUrl}>; rel="self"`,
+  };
+
+  if (request.headers.get("if-none-match") === etag) {
+    return new Response(null, { status: 304, headers });
+  }
+
+  const ifModifiedSince = request.headers.get("if-modified-since");
+  if (ifModifiedSince) {
+    const validatorTime = Date.parse(ifModifiedSince);
+    if (Number.isFinite(validatorTime) && validatorTime >= feedUpdated.getTime()) {
+      return new Response(null, { status: 304, headers });
+    }
+  }
+
+  return new Response(xml, { headers });
 }

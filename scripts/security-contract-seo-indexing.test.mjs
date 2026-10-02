@@ -57,7 +57,14 @@ test("robots isolates private content management without blocking the public con
   assertNotContains(robots, '          "/icerik",', "broad private content robots prefix");
   assertContains(robots, '          "/icerik$",', "exact private content root robots rule");
   assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
-  assertContains(robots, 'allow: ["/", "/api/media/"]', "published public CMS media crawl allowance");
+  assertContains(robots, '"/api/media/"', "published public CMS media crawl allowance");
+  assertContains(robots, '"/api/site-assets/"', "published public site asset crawl allowance");
+  assertContains(robots, '"/api/site-content/footer-navigation"', "published footer render API crawl allowance");
+  assertContains(robots, '"/api/public-announcements"', "published announcement render API crawl allowance");
+  const footerApi = source("src/app/api/site-content/footer-navigation/route.ts");
+  const announcementApi = source("src/app/api/public-announcements/route.ts");
+  assertContains(footerApi, '"X-Robots-Tag": "noindex, noarchive"', "footer render API search exclusion");
+  assertContains(announcementApi, '"X-Robots-Tag": "noindex, noarchive"', "announcement render API search exclusion");
   assertContains(robots, '          "/api",', "private API robots boundary remains blocked");
   assertContains(robots, '          "/1q6z",', "Google Tag Gateway measurement path crawl block");
   assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");
@@ -151,6 +158,7 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertContains(sitemap, 'url: `${baseUrl}/yasal/${slug}`', "legal sitemap URL template");
   assertContains(publicStore, "const noIndex = alwaysIndexPublicTrustSlugs.has(slugPart) ? false : row.noIndex", "public trust CMS noindex override");
   assertContains(legalStore, 'locale === "tr" && alwaysIndexTurkishLegalSlugs.has(definition.slug)', "Turkish legal CMS noindex override");
+  assertContains(sitemap, "hasPublishedEditorProfiles", "editor sitemap availability gate");
   assertNotContains(sitemap, "if (row?.noIndex)", "code-owned public trust and legal sitemap exclusion");
   assertNotContains(sitemap, "contentKey LIKE 'guide:%'", "retired guide sitemap inventory");
   assertNotContains(sitemap, "foundationalGuides", "retired foundational guide sitemap source");
@@ -181,10 +189,13 @@ test("active public help surfaces expose canonical social metadata", () => {
 
   const help = source("src/app/yardim/page.tsx");
   const editors = source("src/app/editorler/page.tsx");
+  const editorData = source("src/features/editors/data.ts");
   assertContains(help, '"@type": "FAQPage"', "help FAQ structured data");
   assertContains(help, '"@type": "BreadcrumbList"', "help breadcrumb structured data");
   assertContains(editors, '"@type": "CollectionPage"', "editor directory structured data");
   assertContains(editors, '"@type": "BreadcrumbList"', "editor directory breadcrumb structured data");
+  assertContains(editorData, "hasPublishedEditorProfiles = editors.length > 0", "editor directory truthful publication gate");
+  assertContains(editors, "index: hasPublishedEditorProfiles", "empty editor directory noindex gate");
 });
 test("legal pages inherit canonical OG Twitter and language-alternate metadata", () => {
   const legal = source("src/app/yasal/[slug]/page.tsx");
@@ -359,12 +370,12 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
 
   for (const route of [
     '"/yardim"',
-    '"/editorler"',
     '"/iletisim"',
     '"/site-haritasi"',
   ]) {
     assertContains(routes, route, `canonical code-owned SEO route ${route}`);
   }
+  assertContains(routes, 'hasPublishedEditorProfiles ? ["/editorler"]', "editor route follows real profile availability");
 
   assertContains(routes, "publicPlatformLinks", "platform routes feed SEO catalog");
   assertContains(routes, "publicTrustLinks", "trust routes feed SEO catalog");
@@ -386,7 +397,8 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   for (const schemaType of ["CollectionPage", "ProfilePage", "FAQPage", "BreadcrumbList"]) {
     assertContains(metadata, schemaType, `structured-data inventory ${schemaType}`);
   }
-  assertContains(metadata, 'href="/editorler"', "active structured-data collection link");
+  assertContains(metadata, 'href="/site-haritasi"', "active structured-data collection link");
+  assertContains(live, 'verifySchema("CollectionPage", "/site-haritasi"', "CollectionPage verification uses indexable site map");
   assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
   for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
     assertNotContains(routes, retired, `retired public SEO route ${retired}`);
@@ -426,4 +438,19 @@ test("sitemap XML route exposes stable HTTP validators", () => {
   assertContains(route, 'request.headers.get("if-modified-since")', "sitemap handles If-Modified-Since");
   assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
+});
+
+
+test("SEO smoke reports public HTML payload sizes without impersonating Googlebot", () => {
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+
+  assertContains(smoke, 'USER_AGENT="IlkOku-SEO-Indexability/1.0 (+https://ilkoku.com)"', "dedicated SEO diagnostic user agent");
+  assertNotContains(smoke, "Googlebot/2.1", "diagnostic must not impersonate Googlebot");
+  assertContains(smoke, 'raw_bytes="$(wc -c < "$body" | tr -d', "raw HTML payload measurement");
+  assertContains(smoke, 'gzip_bytes="$(gzip -c "$body" | wc -c', "gzip HTML payload measurement");
+  assertContains(
+    smoke,
+    'echo "PAYLOAD path=$path raw_bytes=$raw_bytes gzip_bytes=$gzip_bytes"',
+    "payload diagnostic log",
+  );
 });

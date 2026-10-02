@@ -27,7 +27,7 @@ test("reader education keeps eight categories, six optional visual slots and sit
   const editor = source("src/app/icerik/egitim/okur/[slug]/page.tsx");
   const actions = source("src/features/cms/reader-education-actions.ts");
   const upload = source("src/app/api/cms-reader-education-media-upload/route.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   const categorySlugs = [...inventory.matchAll(/\n    slug: "([^"]+)",\n    number: "0[1-8]",/g)].map((match) => match[1]);
   assert.equal(categorySlugs.length, 8, "reader education inventory must stay at 8 main categories");

@@ -18,7 +18,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
   const seo = source("src/lib/book-index/seo.ts");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(seo, '"@type": "ItemList"', "ItemList schema");
   contains(seo, '"@type": "Book"', "Book schema");

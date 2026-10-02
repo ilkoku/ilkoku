@@ -17,7 +17,7 @@ function notContains(text, fragment, label) {
 
 test("contact is a complete indexable public SEO surface and sitemap member", () => {
   const page = source("src/app/iletisim/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 

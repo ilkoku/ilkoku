@@ -22,7 +22,7 @@ test("copyright notice stays CMS-compatible, evidence-led and truthful about pla
   const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
   const starterContent = source("src/features/cms/starter-content-actions.ts");
   const cmsStore = source("src/lib/cms-public-page-store.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(content, "somut iddiayı kayıtlı bir süreç üzerinden iletmenizi sağlar", "structured reporting value");
   contains(content, "hukuki ağırlıkları olayın niteliğine göre değişebilir", "no fabricated ownership adjudication");

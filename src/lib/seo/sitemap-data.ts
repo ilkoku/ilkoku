@@ -24,7 +24,6 @@ import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-f
 const baseUrl = "https://ilkoku.com";
 
 const WRITING_CATEGORY_INDEXABLE_AT = new Date("2026-09-13T19:15:11Z");
-// PR #1450 updated shared WebPage/BreadcrumbList structured data across all writing guides.\nconst WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT = new Date("2026-10-01T08:40:42Z");
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
   "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
@@ -274,9 +273,7 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
-export const dynamic = "force-dynamic";
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [
       works,

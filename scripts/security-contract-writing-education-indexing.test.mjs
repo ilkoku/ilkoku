@@ -32,7 +32,7 @@ function readWritingInventory() {
 
 test("homepage and all writing education routes stay canonical indexable and sitemap-owned", () => {
   const homepage = source("src/app/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const { genres, hubs } = readWritingInventory();
 
   assert.equal(hubs.length, 7, "writing category inventory must stay at 7 hubs");
@@ -87,7 +87,7 @@ test("homepage and all writing education routes stay canonical indexable and sit
 
 
 test("education sitemap lastmod uses only truthful published CMS timestamps", () => {
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   assertContains(sitemap, "type EducationFreshnessRow", "education freshness row contract");
   assertContains(sitemap, "'education_guide'", "writing education freshness namespace");

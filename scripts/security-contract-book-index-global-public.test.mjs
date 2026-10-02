@@ -399,7 +399,7 @@ test("Germany SPIEGEL bestseller source is fail-closed and source-native", () =>
 test("global bestseller page is indexable, discoverable and source-native", () => {
   const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   notContains(page, "notFound()", "global route is no longer gated");
   contains(page, "noIndex: false", "global page is indexable");
@@ -529,7 +529,7 @@ test("global bestseller table groups matching source-native ranks without repeti
 
 test("new releases page stays aligned across public discovery surfaces", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/cms-header-navigation.ts");
 
   contains(page, "noIndex: false", "new releases route remains indexable");

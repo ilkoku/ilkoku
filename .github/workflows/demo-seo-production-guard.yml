@@ -7,7 +7,8 @@ on:
       - main
     paths:
       - "next.config.ts"
-      - "src/app/sitemap.ts"
+      - "src/app/sitemap.xml/route.ts"
+      - "src/lib/seo/sitemap-data.ts"
       - "src/lib/public-content-safety.ts"
       - "src/features/demo-showcase/**"
       - ".github/workflows/demo-seo-production-guard.yml"

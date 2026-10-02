@@ -23,6 +23,12 @@ const VERIFIED_AUTHOR_BY_ISBN13 = new Map<string, string>([
   ["9786257582896", "Pegem Komisyon"],
 ]);
 
+// Exact product fallbacks verified against KitapSeç product detail pages.
+const VERIFIED_AUTHOR_BY_PRODUCT_ID = new Map<string, string>([
+  ["923115", "Ramazan Yetgin"],
+  ["930457", "Emrah Vahap Özkaraca; Zeynep Salman İçli"],
+]);
+
 // Exact product fallbacks verified on the KitapSeç detail pages.
 // These set products expose authors on detail but not in ranked-list metadata.
 const VERIFIED_AUTHOR_BY_PRODUCT_ID = new Map<string, string>([

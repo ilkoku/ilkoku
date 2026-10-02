@@ -32,3 +32,13 @@ jobs:
             grep -Eoi '<meta[^>]+name="robots"[^>]+>' "$body" | head -1 || true
             rm -f "$body"
           done
+
+          echo "=== RESPONSE HEADER SAMPLE ==="
+          for url in             'https://ilkoku.com/'             'https://ilkoku.com/yazarlar-icin/kurgu/roman'             'https://ilkoku.com/recent-updates.atom'             'https://ilkoku.com/sitemap.xml'             'https://ilkoku.com/landing/ilkoku-hero-user-final.webp'; do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 30 --user-agent "$UA" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url")"
+            echo "HEADER_URL=$url HTTP=$code"
+            grep -Ei '^(cache-control|etag|last-modified|age|cf-cache-status|content-type|content-length|vary|server):' "$headers" || true
+            rm -f "$headers" "$body"
+          done

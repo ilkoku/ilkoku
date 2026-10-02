@@ -66,7 +66,7 @@ test("robots isolates private content management without blocking the public con
 });
 
 test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");
   const legalStore = source("src/lib/cms-legal-public-store.ts");
 
@@ -227,7 +227,8 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   ]);
 
   for (const changedFile of [
-    "src/app/sitemap.ts",
+    "src/app/sitemap.xml/route.ts",
+    "src/lib/seo/sitemap-data.ts",
     "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
     "src/components/content/PublicCmsHydrator.tsx",
@@ -264,7 +265,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
 
 test("public HTML site map exposes the complete crawl discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const indexNow = source(".github/workflows/indexnow-submit.yml");
   const smoke = source(".github/workflows/production-smoke.yml");
@@ -298,7 +299,7 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
 test("dynamic public work route keeps canonical query noindex and structured-data contracts", () => {
   const book = source("src/app/kitap/[slug]/page.tsx");
   const safety = source("src/lib/public-content-safety.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   assertContains(book, "const canonical = `/kitap/${work.slug}`", "book self canonical");
   assertContains(book, "index: !query.from && !isSearchIndexExcludedPublicWorkSlug(slug)", "book return-path and test-work noindex");
@@ -373,4 +374,17 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertContains(roleCards, 'getPublishedRoleCardsState("tr")', "role card SEO reads TR state");
   assertNotContains(roleCards, 'getPublishedRoleCardsState("en")', "role card SEO ignores EN state");
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
+});
+
+
+test("sitemap XML route exposes stable HTTP validators", () => {
+  const route = source("src/app/sitemap.xml/route.ts");
+
+  assertContains(route, 'buildSitemap()', "sitemap route reuses canonical discovery inventory");
+  assertContains(route, 'createHash("sha256")', "sitemap response uses content-derived ETag");
+  assertContains(route, '"Last-Modified"', "sitemap response exposes Last-Modified");
+  assertContains(route, 'request.headers.get("if-none-match")', "sitemap handles If-None-Match");
+  assertContains(route, 'request.headers.get("if-modified-since")', "sitemap handles If-Modified-Since");
+  assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
+  assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
 });

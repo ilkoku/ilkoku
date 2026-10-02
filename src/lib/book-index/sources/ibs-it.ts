@@ -8,6 +8,7 @@ import { decodeBookIndexHtml } from "../html";
 const SOURCE_CODE = "ibs-it";
 const SOURCE_ORIGIN = "https://www.ibs.it";
 const EXPECTED_BOOKS = 40;
+const MAX_DETAIL_AUTHOR_LOOKUPS = 4;
 
 function absoluteUrl(value: string) {
   return new URL(value, SOURCE_ORIGIN).toString();
@@ -15,6 +16,36 @@ function absoluteUrl(value: string) {
 
 function normalizeText(value: string | undefined) {
   return decodeBookIndexHtml(value ?? "").replace(/\s+/gu, " ").trim();
+}
+
+export function parseIbsItalyProductAuthor(
+  html: string,
+  productTitle: string,
+): string | null {
+  const pageTitle = normalizeText(
+    html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/iu)?.[1],
+  );
+  if (!pageTitle) return null;
+
+  const bookMarker = " - Libro - ";
+  const markerIndex = pageTitle.lastIndexOf(bookMarker);
+  const expectedPrefix = `${productTitle} - `;
+
+  if (!pageTitle.startsWith(expectedPrefix) || markerIndex <= expectedPrefix.length) {
+    return null;
+  }
+
+  const authorSegment = pageTitle
+    .slice(expectedPrefix.length, markerIndex)
+    .trim();
+  if (!authorSegment) return null;
+
+  const authors = authorSegment
+    .split(/\s+-\s+/u)
+    .map((author) => author.trim())
+    .filter(Boolean);
+
+  return authors.length > 0 ? authors.join("; ") : null;
 }
 
 function parseCard(
@@ -60,7 +91,7 @@ function parseCard(
 
   const rank = Number(rankValue);
   const title = normalizeText(titleHtml);
-  const authorName = normalizeText(authorHtml);
+  const authorName = normalizeText(authorHtml) || null;
 
   if (
     !Number.isInteger(rank)
@@ -68,7 +99,6 @@ function parseCard(
     || !isbn13
     || !href
     || !title
-    || !authorName
   ) {
     throw new Error("BOOK_INDEX_IBS_IT_INVALID_ITEM");
   }
@@ -84,6 +114,45 @@ function parseCard(
     imageUrl: imageValue ? absoluteUrl(imageValue) : null,
     rank,
     currency: "EUR",
+  };
+}
+
+async function enrichMissingIbsAuthors(
+  result: BookIndexCollectionResult,
+): Promise<BookIndexCollectionResult> {
+  const missingAuthorBooks = result.books.filter((book) => !book.authorName);
+  if (missingAuthorBooks.length === 0) return result;
+
+  if (missingAuthorBooks.length > MAX_DETAIL_AUTHOR_LOOKUPS) {
+    throw new Error(
+      `BOOK_INDEX_IBS_IT_TOO_MANY_MISSING_AUTHORS:${missingAuthorBooks.length}`,
+    );
+  }
+
+  const enrichedAuthors = new Map<string, string>();
+
+  for (const book of missingAuthorBooks) {
+    const detailHtml = await fetchHtml(book.productUrl);
+    const authorName = parseIbsItalyProductAuthor(detailHtml, book.title);
+
+    if (!authorName) {
+      throw new Error(
+        `BOOK_INDEX_IBS_IT_AUTHOR_ENRICHMENT_MISSING:${book.sourceKey}`,
+      );
+    }
+
+    enrichedAuthors.set(book.sourceKey, authorName);
+  }
+
+  return {
+    ...result,
+    books: result.books.map((book) => ({
+      ...book,
+      authorName:
+        book.authorName
+        ?? enrichedAuthors.get(book.sourceKey)
+        ?? null,
+    })),
   };
 }
 
@@ -153,8 +222,10 @@ export const ibsItalyBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error("BOOK_INDEX_IBS_IT_LIST_NOT_SUPPORTED");
     }
 
-    return parseIbsItalyDailyBestsellers(
-      await fetchHtml(context.sourceUrl),
+    return enrichMissingIbsAuthors(
+      parseIbsItalyDailyBestsellers(
+        await fetchHtml(context.sourceUrl),
+      ),
     );
   },
 };

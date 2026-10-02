@@ -381,6 +381,20 @@ test("IBS Italy global source preserves the native daily Top 40", () => {
   contains(adapter, "BOOK_INDEX_IBS_IT_RANK_ORDER_MISMATCH", "IBS native rank continuity guard");
   contains(adapter, "BOOK_INDEX_IBS_IT_DUPLICATE_ISBN", "IBS ISBN uniqueness guard");
   contains(adapter, "isbn13", "IBS ISBN-13 identity");
+  contains(adapter, "MAX_DETAIL_AUTHOR_LOOKUPS = 4", "IBS detail fallback remains bounded");
+  contains(adapter, "parseIbsItalyProductAuthor", "IBS product-title author fallback");
+  contains(adapter, '" - Libro - "', "IBS product title delimiter");
+  contains(adapter, "enrichMissingIbsAuthors", "IBS missing-author enrichment");
+  contains(
+    adapter,
+    "BOOK_INDEX_IBS_IT_AUTHOR_ENRICHMENT_MISSING",
+    "IBS missing-author enrichment fail-closed guard",
+  );
+  contains(
+    adapter,
+    "BOOK_INDEX_IBS_IT_TOO_MANY_MISSING_AUTHORS",
+    "IBS bounded missing-author guard",
+  );
   contains(adapter, "return response.text();", "IBS full-page HTML markup is preserved for parser boundaries");
   contains(
     collector,

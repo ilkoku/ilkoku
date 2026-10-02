@@ -11,9 +11,13 @@ const deploymentId =
   undefined;
 
 const publicAuthNoindexRouteHeaders = [
+  "/giris",
   "/giris/:path*",
+  "/kayit",
   "/kayit/:path*",
+  "/sifre-yenile",
   "/sifre-yenile/:path*",
+  "/sifremi-unuttum",
   "/sifremi-unuttum/:path*",
 ] as const;
 

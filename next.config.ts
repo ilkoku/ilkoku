@@ -10,6 +10,16 @@ const deploymentId =
   process.env.DEPLOYMENT_VERSION?.trim() ||
   undefined;
 
+const publicAuthNoindexRouteHeaders = [
+  "/giris/:path*",
+  "/kayit/:path*",
+  "/sifre-yenile/:path*",
+  "/sifremi-unuttum/:path*",
+] as const;
+
+// These authentication entry/recovery pages are intentionally reachable so
+// crawlers can read the noindex directive. They are not search targets, but
+// links on them may still be followed.
 const privateRouteHeaders = [
   "/admin/:path*",
   "/sistem-yonetimi/:path*",
@@ -29,16 +39,11 @@ const privateRouteHeaders = [
   "/eserlerim/:path*",
   "/favorilerim/:path*",
   "/geri-bildirimler/:path*",
-  "/giris/:path*",
   "/hesabim/:path*",
-  "/kayit/:path*",
   "/kesfet/:path*",
   "/okumaya-devam/:path*",
   "/okuyucu/:path*",
   "/rol-secimi/:path*",
-  "/sifre-yenile/:path*",
-  "/sifremi-unuttum",
-  "/sifremi-unuttum/:path*",
   "/tamamlanan-eserler/:path*",
   "/yazar/:path*",
   "/satis-erisim/:path*",
@@ -89,6 +94,15 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      ...publicAuthNoindexRouteHeaders.map((source) => ({
+        source,
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, follow, noarchive",
+          },
+        ],
+      })),
       ...searchExcludedRouteHeaders.map((source) => ({
         source,
         headers: [

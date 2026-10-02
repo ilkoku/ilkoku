@@ -1,5 +1,4 @@
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
-import { hasPublishedEditorProfiles } from "@/features/editors/data";
 import { GENRES } from "@/lib/genres";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
@@ -52,7 +51,7 @@ const basePages: SiteMapPage[] = [
   { id: "readers-home", label: "Okurlar İçin", href: "/okurlar-icin", area: "Okur", group: "Başlangıç", kind: "page" },
   { id: "reader-register", label: "Okuyucu Ol", href: "/kayit?rol=reader", area: "Okur", group: "Başlangıç", kind: "action", indexable: false },
   { id: "editors-home", label: "Editörler İçin", href: "/editorler-icin", area: "Editör", group: "Başlangıç", kind: "page" },
-  { id: "editors", label: "Editörler", href: "/editorler", area: "Editör", group: "Başlangıç", kind: "page", indexable: hasPublishedEditorProfiles },
+  { id: "editors", label: "Editörler", href: "/editorler", area: "Editör", group: "Başlangıç", kind: "page" },
   { id: "editor-register", label: "Editör Başvurusu", href: "/kayit?rol=editor", area: "Editör", group: "Başlangıç", kind: "action", indexable: false },
   { id: "publishers-home", label: "Yayınevleri İçin", href: "/yayinevleri-icin", area: "Yayınevi", group: "Başlangıç", kind: "page" },
   { id: "publisher-register", label: "Yayınevi Ol", href: "/kayit?rol=publisher", area: "Yayınevi", group: "Başlangıç", kind: "action", indexable: false },

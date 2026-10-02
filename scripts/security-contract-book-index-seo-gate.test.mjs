@@ -52,7 +52,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   const overview = source("src/app/en-cok-satanlar/page.tsx");
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
   const insight = source("src/app/en-cok-satanlar/[insight]/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const header = source("src/components/layout/PublicSiteHeader.tsx");
 
@@ -206,7 +206,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
 test("Book Index admin shows SEO gate evidence without publishing", () => {
   const page = source("src/app/admin/kitap-endeksi/page.tsx");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
 
   contains(page, "getBookIndexSeoGateSnapshot", "admin reads SEO gate snapshot");

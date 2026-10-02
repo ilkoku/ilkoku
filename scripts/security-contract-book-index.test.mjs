@@ -916,6 +916,21 @@ test("KitapSec category and general collectors preserve bounded native ranks", (
     "KitapSec exact-ISBN fallback for product 923186",
   );
   contains(adapter, "VERIFIED_AUTHOR_BY_ISBN13.get(book.isbn13)", "KitapSec fallback remains exact-ISBN scoped");
+  contains(
+    adapter,
+    '["923115", "Ramazan Yetgin"]',
+    "KitapSec verified author fallback for product 923115",
+  );
+  contains(
+    adapter,
+    '["930457", "Emrah Vahap Özkaraca;Zeynep Salman İçli"]',
+    "KitapSec verified authors fallback for product 930457",
+  );
+  contains(
+    adapter,
+    "VERIFIED_AUTHOR_BY_PRODUCT_ID.get(book.sourceExternalId)",
+    "KitapSec product fallback remains exact-product scoped",
+  );
   contains(adapter, "enrichKitapSecAuthors", "KitapSec missing-author enrichment");
   contains(
     adapter,

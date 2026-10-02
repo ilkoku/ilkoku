@@ -10,6 +10,7 @@ import {
 } from "@/lib/public-site-navigation";
 import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
+import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 export async function PublicTrustFooter() {
   const [identity, bookIndexContext] = await Promise.all([
@@ -50,10 +51,10 @@ export async function PublicTrustFooter() {
 
         <div className="public-trust-footer__column">
           <h3>Hesap</h3>
-          <Link href="/hesabim">Hesabım</Link>
-          <Link href="/giris">Giriş Yap</Link>
-          <Link href="/kayit">Üye Ol</Link>
-          <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
+          <Link href="/hesabim" rel={shouldNofollowSearchExcludedHref("/hesabim") ? "nofollow" : undefined}>Hesabım</Link>
+          <Link href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Giriş Yap</Link>
+          <Link href="/kayit" rel={shouldNofollowSearchExcludedHref("/kayit") ? "nofollow" : undefined}>Üye Ol</Link>
+          <Link href="/sifremi-unuttum" rel={shouldNofollowSearchExcludedHref("/sifremi-unuttum") ? "nofollow" : undefined}>Şifremi Unuttum</Link>
         </div>
 
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">

@@ -13,7 +13,7 @@ const privateFamilies = ["/giris", "/kayit", "/sifremi-unuttum", "/yazar", "/ese
 test("authenticated product routes stay outside search while paused discovery fails closed", () => {
   const nextConfig = source("next.config.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
-  const sitemap = source("src/app/sitemap.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   assert.match(navigation, /export const publicDiscoveryEnabled = false;/u);
   assert.match(nextConfig, /const pausedPublicDiscoveryRouteHeaders = \[/u);

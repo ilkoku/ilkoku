@@ -65,6 +65,53 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
+test("robots blocks private member inventory without shadowing public role pages", () => {
+  const robots = source("src/app/robots.ts");
+
+  for (const route of [
+    "/bildirimler",
+    "/editor-daveti",
+    "/editor-paneli",
+    "/erisim-reddedildi",
+    "/eserlerim",
+    "/favorilerim",
+    "/geri-bildirimler",
+    "/giris",
+    "/hesabim",
+    "/kayit",
+    "/kesfet",
+    "/okumaya-devam",
+    "/okuyucu",
+    "/rol-secimi",
+    "/sifre-yenile",
+    "/sifremi-unuttum",
+    "/tamamlanan-eserler",
+    "/satis-erisim",
+    "/gelirler",
+    "/satinal",
+    "/kutuphanem",
+    "/yazmaya-devam",
+    "/yorumlarim",
+  ]) {
+    assertContains(robots, `"${route}"`, `private crawl boundary ${route}`);
+  }
+
+  for (const [exact, descendants] of [
+    ["/editor$", "/editor/"],
+    ["/yazar$", "/yazar/"],
+    ["/yayinevi$", "/yayinevi/"],
+    ["/yayinevleri$", "/yayinevleri/"],
+  ]) {
+    assertContains(robots, `"${exact}"`, `exact private crawl boundary ${exact}`);
+    assertContains(robots, `"${descendants}"`, `private descendants crawl boundary ${descendants}`);
+  }
+
+  assertNotContains(robots, '          "/editor",', "broad editor prefix must not block /editorler-icin");
+  assertNotContains(robots, '          "/yazar",', "broad writer prefix must not block /yazarlar-icin");
+  assertNotContains(robots, '          "/yayinevi",', "broad publisher prefix must not block /yayinevleri-icin");
+  assertNotContains(robots, '          "/yayinevleri",', "broad publishers prefix must not block /yayinevleri-icin");
+});
+
 test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");

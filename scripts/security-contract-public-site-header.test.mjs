@@ -1,3 +1,21 @@
+test("public header keeps the Book Index menu visible", () => {
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const navigation = source("src/lib/cms-header-navigation.ts");
+
+  assert.ok(
+    navigation.includes('id: "book-index"'),
+    "default public navigation must define the Book Index menu",
+  );
+  assert.ok(
+    header.includes("resolveHeaderNavigation("),
+    "public header must resolve the published navigation",
+  );
+  assert.ok(
+    !header.includes("withoutBookIndexMenu"),
+    "public header must not strip the Book Index menu",
+  );
+});
+
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";

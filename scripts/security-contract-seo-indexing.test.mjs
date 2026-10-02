@@ -72,6 +72,42 @@ test("robots isolates private content management without blocking the public con
   assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
 });
 
+
+test("public auth entry pages stay crawlable noindex-follow while private workspaces stay protected", () => {
+  const robots = source("src/app/robots.ts");
+  const nextConfig = source("next.config.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const proxy = source("src/proxy.ts");
+
+  assertContains(nextConfig, "const publicAuthNoindexRouteHeaders", "public auth noindex header inventory");
+  assertContains(nextConfig, 'value: "noindex, follow, noarchive"', "public auth X-Robots noindex-follow");
+
+  for (const [route, pagePath] of [
+    ["/giris", "src/app/giris/page.tsx"],
+    ["/kayit", "src/app/kayit/page.tsx"],
+    ["/sifremi-unuttum", "src/app/sifremi-unuttum/page.tsx"],
+    ["/sifre-yenile", "src/app/sifre-yenile/page.tsx"],
+  ]) {
+    const page = source(pagePath);
+    assertContains(page, "robots: { index: false, follow: true }", `${route} metadata noindex-follow`);
+    assertNotContains(robots, `          "${route}",`, `${route} must stay crawlable so noindex can be read`);
+    assertNotContains(sitemap, `${baseUrl}${route}`, `${route} must stay out of sitemap`);
+  }
+
+  for (const route of [
+    "/hesabim",
+    "/editor",
+    "/yazar",
+    "/eserlerim",
+    "/kutuphanem",
+    "/yayinevi",
+  ]) {
+    assertContains(proxy, `"${route}/:path*"`, `${route} request-time auth matcher`);
+    assertContains(nextConfig, `"${route}/:path*"`, `${route} private X-Robots coverage`);
+    assertNotContains(sitemap, `${baseUrl}${route}`, `${route} private workspace sitemap exclusion`);
+  }
+});
+
 test("robots mirrors private and protected route inventories without shadowing public prefixes", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");

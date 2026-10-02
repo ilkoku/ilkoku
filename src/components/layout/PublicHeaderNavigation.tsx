@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 import {
   useCallback,
   useEffect,
@@ -49,6 +50,7 @@ function MenuGroups({
             {group.links.map((link) => (
               <Link
                 href={link.href}
+                rel={shouldNofollowSearchExcludedHref(link.href) ? "nofollow" : undefined}
                 data-primary={link.primary ? "true" : undefined}
                 key={`${menu.id}-${group.id}-${link.pageId}`}
                 onClick={onNavigate}

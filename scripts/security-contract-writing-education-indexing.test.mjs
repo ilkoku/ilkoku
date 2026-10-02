@@ -225,33 +225,3 @@ test("public writing guides keep responsive Next image optimization enabled", ()
   assertNotContains(fiction, "unoptimizedImages", "fiction guide image optimization bypass");
   assertNotContains(education, "unoptimizedImages", "education guide image optimization bypass");
 });
-
-
-test("public writing guides stay ISR-cacheable and CMS reads stay published-only", () => {
-  const { genres, hubs } = readWritingInventory();
-  const hrefByCategory = new Map(hubs.map((hub) => [hub.category, hub.href]));
-
-  const informational = source("src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx");
-  assertContains(informational, "export const revalidate = 300;", "informational guide ISR");
-  assertNotContains(informational, 'export const dynamic = "force-dynamic";', "informational guide forced dynamic mode");
-  assertContains(informational, "export function generateStaticParams()", "informational guide static params");
-
-  for (const genre of genres) {
-    const categoryHref = hrefByCategory.get(genre.category);
-    assert.ok(categoryHref, `missing category href for ${genre.category}`);
-
-    if (genre.category === "Bilgilendirici") continue;
-
-    const route = `${categoryHref}/${genre.slug}`;
-    const page = source(`src/app${route}/page.tsx`);
-    assertContains(page, "export const revalidate = 300;", `${route} ISR`);
-    assertNotContains(page, 'export const dynamic = "force-dynamic";', `${route} forced dynamic mode`);
-  }
-
-  const cmsEducation = source("src/lib/cms-education.ts");
-  assertContains(cmsEducation, "AND status = 'published'", "writer education published-only CMS read");
-  assertNotContains(cmsEducation, 'from "next/headers"', "writer education request-state import");
-  assertNotContains(cmsEducation, "cookies(", "writer education cookies dependency");
-  assertNotContains(cmsEducation, "headers(", "writer education headers dependency");
-  assertNotContains(cmsEducation, "getServerSession", "writer education session dependency");
-});

@@ -7,7 +7,7 @@ import { getAuthenticatedDestination } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 import type { RegistrationRole } from "@/features/auth/types";
 
-export const metadata: Metadata = { title: authContent.register.metadataTitle, description: authContent.register.metadataDescription };
+export const metadata: Metadata = { title: authContent.register.metadataTitle, description: authContent.register.metadataDescription, robots: { index: false, follow: true } };
 
 const registrationRoles: RegistrationRole[] = [
   "reader",

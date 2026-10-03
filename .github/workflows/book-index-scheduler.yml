@@ -1,6 +1,11 @@
 name: Book Index scheduler
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/lib/book-index/sources/nobelkitap.ts"
   workflow_dispatch:
     inputs:
       force_lists:
@@ -48,6 +53,8 @@ jobs:
           force_lists=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             force_lists="$(printf '%s' "$DISPATCH_FORCE_LISTS" | tr -d '\r\n[:space:]')"
+          elif [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            force_lists="nobelkitap-tr-live,nobelkitap-tr-new-releases"
           fi
 
           for attempt in {1..20}; do

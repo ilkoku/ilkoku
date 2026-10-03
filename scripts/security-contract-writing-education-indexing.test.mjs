@@ -264,3 +264,14 @@ test("roman guide exposes Article and breadcrumb structured data", () => {
   assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
   assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
 });
+
+
+test("Roman guide uses the shared public metadata contract instead of inheriting homepage social metadata", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, 'import { createPublicPageMetadata } from "@/lib/public-page-metadata"', "Roman shared metadata helper");
+  assertContains(roman, "export const metadata: Metadata = createPublicPageMetadata({", "Roman metadata helper usage");
+  assertContains(roman, 'title: metadataTitle', "Roman metadata title");
+  assertContains(roman, 'description: metadataDescription', "Roman metadata description");
+  assertContains(roman, 'canonical,', "Roman metadata canonical");
+  assertContains(roman, 'image: defaultRomanVisuals.hero', "Roman social image");
+});

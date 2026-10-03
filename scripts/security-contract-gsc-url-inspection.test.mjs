@@ -9,6 +9,8 @@ const performanceWorkflow = fs.readFileSync(".github/workflows/gsc-book-index-pe
 const performanceScript = fs.readFileSync("scripts/gsc-book-index-performance.mjs", "utf8");
 const sitemapSubmitWorkflow = fs.readFileSync(".github/workflows/gsc-sitemap-submit.yml", "utf8");
 const sitemapSubmitScript = fs.readFileSync("scripts/gsc-sitemap-submit.mjs", "utf8");
+const censusWorkflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
+const censusScript = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
 const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const docs = fs.readFileSync("docs/seo-sprint11-status.md", "utf8");
 
@@ -122,6 +124,24 @@ test("package and docs expose the official diagnostic path", () => {
 });
 
 
+
+test("GSC full index census is read-only and bounded to the live İlkOku sitemap", () => {
+  assert.match(censusWorkflow, /workflow_dispatch:/u);
+  assert.match(censusWorkflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u);
+  assert.match(censusWorkflow, /permissions:\s*\n\s+contents: read/u);
+  assert.match(censusWorkflow, /gsc-full-index-census\.mjs/u);
+  assert.match(censusWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.doesNotMatch(censusWorkflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+
+  assert.match(censusScript, /const MAX_URLS = 500/u);
+  assert.match(censusScript, /const CONCURRENCY = 6/u);
+  assert.match(censusScript, /https:\/\/ilkoku\.com/u);
+  assert.match(censusScript, /https:\/\/searchconsole\.googleapis\.com\/v1\/urlInspection\/index:inspect/u);
+  assert.match(censusScript, /languageCode: "tr-TR"/u);
+  assert.match(censusScript, /Read-only census/u);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/u);
+  assert.doesNotMatch(censusScript, /method: "PUT"|method: "DELETE"/u);
+});
 
 test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
   assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);

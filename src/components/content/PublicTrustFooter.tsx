@@ -14,7 +14,7 @@ import { getPublicSiteIdentity } from "@/lib/site-identity";
 export async function PublicTrustFooter() {
   const [identity, bookIndexContext] = await Promise.all([
     getPublicSiteIdentity(),
-    getBookIndexPublicPageContext(10).catch(() => null),
+    getBookIndexPublicPageContext(100).catch(() => null),
   ]);
   const platformLinks = bookIndexContext
     ? [...publicPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]

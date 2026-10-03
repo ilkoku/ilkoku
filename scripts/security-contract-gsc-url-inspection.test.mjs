@@ -27,6 +27,9 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.match(script, /https:\/\/searchconsole\.googleapis\.com\/v1\/urlInspection\/index:inspect/u);
   assert.match(script, /https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps/u);
   assert.match(script, /https:\/\/oauth2\.googleapis\.com\/token/u);
+  assert.match(script, /https:\/\/oauth2\.googleapis\.com\/tokeninfo\?access_token=/u);
+  assert.match(script, /GSC OAuth granted scopes:/u);
+  assert.doesNotMatch(script, /console\.log\([^\n]*accessToken/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com/u);
   assert.match(script, /sc-domain:ilkoku\.com/u);
   assert.match(script, /MAX_URLS = 10/u);

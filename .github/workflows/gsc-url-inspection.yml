@@ -1,6 +1,12 @@
 name: GSC URL Inspection diagnostic
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-url-inspection.yml"
+      - "scripts/gsc-url-inspection.mjs"
   schedule:
     - cron: "23 5 * * 2"
   workflow_dispatch:

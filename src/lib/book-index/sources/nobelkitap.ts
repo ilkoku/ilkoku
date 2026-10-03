@@ -27,6 +27,7 @@ function productSlug(value: string) {
 
 export function parseNobelKitapBestsellers(
   html: string,
+  { allowMissingAuthor = false }: { allowMissingAuthor?: boolean } = {},
 ): BookIndexCollectionResult {
   const starts = [
     ...html.matchAll(
@@ -48,16 +49,16 @@ export function parseNobelKitapBestsellers(
         /<p\b[^>]*\bclass=["'][^"']*\btext-xs\b[^"']*\btext-gray-600\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/iu,
       )?.[1];
 
-      if (!productUrl || !title || !author) {
+      if (!productUrl || !title) {
         throw new Error("BOOK_INDEX_NOBELKITAP_INVALID_ITEM");
       }
 
       const decodedTitle = decodeBookIndexHtml(title);
-      const decodedAuthor = decodeBookIndexHtml(author);
+      const decodedAuthor = author ? decodeBookIndexHtml(author) : null;
       const slug = productSlug(productUrl);
       const isbn13 = isbn13FromProductUrl(productUrl);
 
-      if (!decodedTitle || !decodedAuthor || !slug) {
+      if (!decodedTitle || !slug || (!allowMissingAuthor && !decodedAuthor)) {
         throw new Error("BOOK_INDEX_NOBELKITAP_INVALID_ITEM");
       }
 
@@ -65,7 +66,7 @@ export function parseNobelKitapBestsellers(
         sourceKey: isbn13 || slug,
         sourceExternalId: slug,
         title: decodedTitle,
-        authorName: decodedAuthor,
+        authorName: decodedAuthor || null,
         publisherName: null,
         isbn13,
         productUrl: absoluteUrl(productUrl),
@@ -105,6 +106,9 @@ export const nobelKitapBookIndexAdapter: BookIndexSourceAdapter = {
       throw new Error(`BOOK_INDEX_SOURCE_HTTP_${response.status}`);
     }
 
-    return parseNobelKitapBestsellers(await response.text());
+    const sourcePath = new URL(context.sourceUrl).pathname.replace(/\/+$/u, "") || "/";
+    return parseNobelKitapBestsellers(await response.text(), {
+      allowMissingAuthor: sourcePath === "/yeni-cikanlar",
+    });
   },
 };

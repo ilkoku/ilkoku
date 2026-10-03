@@ -140,23 +140,38 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    "const RECENT_ENTRY_LIMIT = 20",
-    "Atom feed recent-entry cap",
+    'import { buildSitemap } from "@/lib/seo/sitemap-data"',
+    "Atom feed must reuse canonical sitemap inventory",
   );
   assertContains(
     recentUpdatesAtom,
-    "WHERE namespace = 'education_guide'",
-    "Atom feed published writing freshness source",
+    "const RECENT_ENTRY_LIMIT = 50",
+    "Atom feed bounded recent-entry cap",
   );
   assertContains(
     recentUpdatesAtom,
-    "AND status = 'published'",
-    "Atom feed published-only freshness",
+    "const sitemap = await buildSitemap()",
+    "Atom feed freshness must come from sitemap lastmod data",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "normalizeLastModified(entry.lastModified)",
+    "Atom feed accepts only explicit sitemap lastmod timestamps",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "parsed.origin !== baseUrl",
+    "Atom feed must stay same-origin",
   );
   assertContains(
     recentUpdatesAtom,
     ".slice(0, RECENT_ENTRY_LIMIT)",
-    "Atom feed keeps only recent guide URLs",
+    "Atom feed keeps only the bounded most-recent indexable URLs",
+  );
+  assertNotContains(
+    recentUpdatesAtom,
+    "WHERE namespace = 'education_guide'",
+    "Atom feed must not be restricted to writing-guide freshness only",
   );
   assertContains(
     recentUpdatesAtom,
@@ -199,21 +214,47 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     "Atom feed must not rely on the retired search discovery signal module",
   );
 
+  assertContains(
+    sitemap,
+    "bookIndexLastModified",
+    "dynamic Book Index freshness must be available to sitemap discovery entries",
+  );
+  assertContains(
+    sitemap,
+    'entry.url === \`${baseUrl}/yeni-cikanlar\`',
+    "new releases sitemap entry must inherit live Book Index freshness",
+  );
+
   const websubWorkflow = source(".github/workflows/google-websub-publish.yml");
   assertContains(
     websubWorkflow,
-    "search-content-freshness",
-    "WebSub reacts to real shared guide freshness changes",
+    'cron: "23 */6 * * *"',
+    "WebSub must periodically publish dynamic database/feed updates",
+  );
+  assertContains(
+    websubWorkflow,
+    "workflow_dispatch:",
+    "WebSub keeps an explicit manual dispatch path",
+  );
+  assertContains(
+    websubWorkflow,
+    "github.event_name != 'workflow_run'",
+    "WebSub scheduled/manual events must not depend on workflow_run fields",
+  );
+  assertContains(
+    websubWorkflow,
+    "https://ilkoku.com/recent-updates.atom",
+    "WebSub publishes the canonical recent-updates feed",
+  );
+  assertContains(
+    websubWorkflow,
+    "hub.mode=publish",
+    "WebSub uses the canonical publish notification",
   );
   assertNotContains(
     websubWorkflow,
-    "src/app/robots\\.ts",
-    "robots-only deploy must not republish the Atom feed",
-  );
-  assertNotContains(
-    websubWorkflow,
-    "src/app/sitemap\\.ts",
-    "sitemap-only deploy must not republish the Atom feed",
+    "Check whether discovery feed changed",
+    "WebSub must not remain limited by repository file-diff gating",
   );
   assertNotContains(
     websubWorkflow,

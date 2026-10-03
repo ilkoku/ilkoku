@@ -70,8 +70,13 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
   contains(
     overview,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "overview metadata and page use the full Turkey publication evidence floor",
+  );
+  notContains(
+    overview,
     "getBookIndexSoftLaunchPageContext(30)",
-    "overview uses route-only soft-launch context",
+    "overview metadata must not truncate Turkey evidence below the publication threshold",
   );
   contains(
     overview,

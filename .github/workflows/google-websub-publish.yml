@@ -6,6 +6,9 @@ on:
       - Production smoke
     types:
       - completed
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,38 +16,17 @@ permissions:
 jobs:
   publish:
     name: Publish recent search updates
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+    if: >-
+      github.event_name != 'workflow_run'
+      || (
+        github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.head_branch == 'main'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 3
 
     steps:
-      - name: Checkout deployed commit
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 2
-
-      - name: Check whether discovery feed changed
-        id: changes
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if git rev-parse HEAD^ >/dev/null 2>&1; then
-            git diff --name-only HEAD^ HEAD > /tmp/changed-files.txt
-          else
-            git show --pretty="" --name-only HEAD > /tmp/changed-files.txt
-          fi
-          cat /tmp/changed-files.txt
-          if grep -Eq '^(src/app/recent-updates\.atom/|src/app/yazarlar-icin/|src/components/content/Batched(Education|Fiction)GuidePage\.tsx|src/lib/(genres|search-content-freshness|writing-category-hubs|.*guide-batch)\.ts)' /tmp/changed-files.txt; then
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Verify live Atom feed
-        if: steps.changes.outputs.publish == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -54,9 +36,9 @@ jobs:
           grep -Fq 'https://pubsubhubbub.appspot.com/' "$body"
           grep -Fq '<feed' "$body"
           grep -Fq '<entry>' "$body"
+          grep -F '<updated>' "$body" | head -n 1
 
       - name: Publish feed to Google WebSub hub
-        if: steps.changes.outputs.publish == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail

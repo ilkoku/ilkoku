@@ -394,18 +394,34 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
+    const bookIndexLastModifiedValue =
+      bookIndexEntries.find((entry) => entry.lastModified)?.lastModified;
+    const bookIndexLastModified =
+      bookIndexLastModifiedValue instanceof Date
+        ? bookIndexLastModifiedValue
+        : bookIndexLastModifiedValue
+          ? new Date(bookIndexLastModifiedValue)
+          : undefined;
+
     const liveStaticDiscoveryEntries: MetadataRoute.Sitemap =
       staticDiscoveryEntries.map((entry) => {
         const cmsLastModified = educationLastModifiedByUrl.get(entry.url);
         const configuredLastModified = entry.lastModified
           ? new Date(entry.lastModified)
           : undefined;
-        const lastModified =
-          cmsLastModified && configuredLastModified
-            ? (cmsLastModified > configuredLastModified
-                ? cmsLastModified
-                : configuredLastModified)
-            : cmsLastModified ?? configuredLastModified;
+        const runtimeLastModified =
+          entry.url === `${baseUrl}/yeni-cikanlar`
+            ? bookIndexLastModified
+            : undefined;
+
+        let lastModified = configuredLastModified;
+        if (cmsLastModified && (!lastModified || cmsLastModified > lastModified)) {
+          lastModified = cmsLastModified;
+        }
+        if (runtimeLastModified && (!lastModified || runtimeLastModified > lastModified)) {
+          lastModified = runtimeLastModified;
+        }
+
         return lastModified ? { ...entry, lastModified } : entry;
       });
 

@@ -121,6 +121,21 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
 });
 
 
+test("homepage footer uses the same published Book Index gate depth", () => {
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+
+  contains(
+    homepage,
+    "getBookIndexPublicPageContext(100).catch(() => null)",
+    "homepage footer evaluates the full Turkey publication threshold",
+  );
+  contains(
+    homepage,
+    "bookIndexPublished={Boolean(bookIndexContext)}",
+    "homepage footer receives the published Book Index state",
+  );
+});
+
 test("Book Index gains a gated site-wide footer discovery link after publication", () => {
   const footer = source("src/components/content/PublicTrustFooter.tsx");
 

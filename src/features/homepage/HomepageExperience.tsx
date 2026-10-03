@@ -142,7 +142,7 @@ async function HomepageFooterSection({
   slogan: string;
   copyright: string;
 }) {
-  const bookIndexContext = await getBookIndexPublicPageContext(10).catch(() => null);
+  const bookIndexContext = await getBookIndexPublicPageContext(100).catch(() => null);
   return (
     <LiveHomepageFooter
       signedIn={false}

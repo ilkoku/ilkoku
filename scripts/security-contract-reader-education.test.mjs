@@ -101,3 +101,12 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(upload, "MAX_CMS_MEDIA_BYTES", "reader upload media size guard");
   assertContains(upload, '`/icerik/okur-egitim/${categorySlug}?${query}`', "reader upload returns to reader editor route");
 });
+
+
+test("reader education exposes Article and breadcrumb structured data", () => {
+  const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
+  assertContains(publicRoute, '"@type": "Article"', "reader Article schema");
+  assertContains(publicRoute, '"@type": "BreadcrumbList"', "reader breadcrumb schema");
+  assertContains(publicRoute, 'mainEntityOfPage: canonical', "reader canonical schema binding");
+  assertContains(publicRoute, 'publisher: { "@type": "Organization", name: "İlkOku"', "reader publisher schema");
+});

@@ -155,9 +155,35 @@ export default async function RomanYazarlikRehberiPage() {
   const title = guide?.title || "Roman Nasıl Yazılır?";
   const summary = guide?.summary || "Hayal et. Planla. Yaz. Tamamla. İlk roman fikrinden karaktere, olay örgüsünden ilk taslağa kadar adım adım ilerle.";
   const romanBlocks = buildRomanBlocks(romanVisuals, romanAlts, title, summary);
+  const canonical = "https://ilkoku.com/yazarlar-icin/kurgu/roman";
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      mainEntityOfPage: canonical,
+      author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
+      publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
+      image: `https://ilkoku.com${romanVisuals.hero}`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        { "@type": "ListItem", position: 3, name: "Kurgu", item: "https://ilkoku.com/yazarlar-icin/kurgu" },
+        { "@type": "ListItem", position: 4, name: title, item: canonical },
+      ],
+    },
+  ];
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="roman">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="roman">
       <div className="roman-writing-guide">
         <PublicCmsPageBlocks
           blocks={romanBlocks}
@@ -166,6 +192,7 @@ export default async function RomanYazarlikRehberiPage() {
           summary={summary}
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

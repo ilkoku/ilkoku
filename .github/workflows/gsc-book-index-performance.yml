@@ -1,6 +1,12 @@
 name: Book Index GSC performance
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-book-index-performance.yml"
+      - "scripts/gsc-book-index-performance.mjs"
   schedule:
     - cron: "45 5 * * 2"
   workflow_dispatch:

@@ -255,3 +255,12 @@ test("public writing guides stay ISR-cacheable and CMS reads stay published-only
   assertNotContains(cmsEducation, "headers(", "writer education headers dependency");
   assertNotContains(cmsEducation, "getServerSession", "writer education session dependency");
 });
+
+
+test("roman guide exposes Article and breadcrumb structured data", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, '"@type": "Article"', "Roman Article schema");
+  assertContains(roman, '"@type": "BreadcrumbList"', "Roman breadcrumb schema");
+  assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
+  assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
+});

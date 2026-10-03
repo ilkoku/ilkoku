@@ -55,5 +55,33 @@ export default async function ReaderEducationRoute({ params }: PageProps) {
   const guide = await getReaderEducationGuideRecord(category.slug);
   if (!guide) notFound();
 
-  return <ReaderEducationPage category={category} guide={guide} />;
+  const canonical = `https://ilkoku.com${readerEducationPublicPath(category)}`;
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: guide.title,
+      description: guide.summary,
+      inLanguage: "tr-TR",
+      mainEntityOfPage: canonical,
+      author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
+      publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Okurlar İçin", item: "https://ilkoku.com/okurlar-icin" },
+        { "@type": "ListItem", position: 3, name: guide.title, item: canonical },
+      ],
+    },
+  ];
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
+      <ReaderEducationPage category={category} guide={guide} />
+    </>
+  );
 }

@@ -17,7 +17,7 @@ const description =
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const context = await getBookIndexSoftLaunchPageContext(30);
+  const context = await getBookIndexSoftLaunchPageContext(100);
 
   return createPublicPageMetadata({
     title: pageTitle(),

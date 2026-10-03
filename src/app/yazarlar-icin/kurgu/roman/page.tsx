@@ -5,10 +5,16 @@ import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 import { getCmsPageTemplate } from "@/lib/cms-page-templates";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import "./roman-guide.css";
 
 const template = getCmsPageTemplate("ornek-roman");
+const canonical = "/yazarlar-icin/kurgu/roman";
+const canonicalUrl = `https://ilkoku.com${canonical}`;
+const metadataTitle = "Roman Nasıl Yazılır? | İlkOku";
+const metadataDescription =
+  "Roman fikrinden karaktere, olay örgüsünden sayfa düzenine, ilk taslaktan revizyona kadar örneklerle adım adım roman yazarlık rehberi.";
 
 export const revalidate = 300;
 
@@ -118,12 +124,12 @@ function buildRomanBlocks(romanVisuals: RomanVisuals, romanAlts: RomanAlts, titl
   });
 }
 
-export const metadata: Metadata = {
-  title: "Roman Nasıl Yazılır? | İlkOku",
-  description: "Roman fikrinden karaktere, olay örgüsünden sayfa düzenine, ilk taslaktan revizyona kadar örneklerle adım adım roman yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/roman" },
-  robots: { index: true, follow: true },
-};
+export const metadata: Metadata = createPublicPageMetadata({
+  title: metadataTitle,
+  description: metadataDescription,
+  canonical,
+  image: defaultRomanVisuals.hero,
+});
 
 export default async function RomanYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;
@@ -155,7 +161,6 @@ export default async function RomanYazarlikRehberiPage() {
   const title = guide?.title || "Roman Nasıl Yazılır?";
   const summary = guide?.summary || "Hayal et. Planla. Yaz. Tamamla. İlk roman fikrinden karaktere, olay örgüsünden ilk taslağa kadar adım adım ilerle.";
   const romanBlocks = buildRomanBlocks(romanVisuals, romanAlts, title, summary);
-  const canonical = "https://ilkoku.com/yazarlar-icin/kurgu/roman";
   const schema = [
     {
       "@context": "https://schema.org",
@@ -163,7 +168,7 @@ export default async function RomanYazarlikRehberiPage() {
       headline: title,
       description: summary,
       inLanguage: "tr-TR",
-      mainEntityOfPage: canonical,
+      mainEntityOfPage: canonicalUrl,
       author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       image: `https://ilkoku.com${romanVisuals.hero}`,
@@ -175,7 +180,7 @@ export default async function RomanYazarlikRehberiPage() {
         { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
         { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
         { "@type": "ListItem", position: 3, name: "Kurgu", item: "https://ilkoku.com/yazarlar-icin/kurgu" },
-        { "@type": "ListItem", position: 4, name: title, item: canonical },
+        { "@type": "ListItem", position: 4, name: title, item: canonicalUrl },
       ],
     },
   ];

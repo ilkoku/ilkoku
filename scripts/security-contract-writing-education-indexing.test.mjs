@@ -80,6 +80,13 @@ test("homepage and all writing education routes stay canonical indexable and sit
 
     const canonical = `${categoryHref}/${genre.slug}`;
     const page = source(`src/app${canonical}/page.tsx`);
+
+    if (canonical === "/yazarlar-icin/kurgu/roman") {
+      assertContains(page, 'createPublicPageMetadata({', `${canonical} shared metadata contract`);
+      assertContains(page, 'const canonical = "/yazarlar-icin/kurgu/roman"', `${canonical} canonical source`);
+      continue;
+    }
+
     assertContains(page, `canonical: "https://ilkoku.com${canonical}"`, `${canonical} self canonical`);
     assertContains(page, "robots: { index: true, follow: true }", `${canonical} index/follow`);
   }
@@ -263,4 +270,20 @@ test("roman guide exposes Article and breadcrumb structured data", () => {
   assertContains(roman, '"@type": "BreadcrumbList"', "Roman breadcrumb schema");
   assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
   assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
+});
+
+
+test("Roman guide uses the shared public metadata contract instead of inheriting homepage social metadata", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, 'import { createPublicPageMetadata } from "@/lib/public-page-metadata"', "Roman shared metadata helper");
+  assertContains(roman, "export const metadata: Metadata = createPublicPageMetadata({", "Roman metadata helper usage");
+  assertContains(roman, 'title: metadataTitle', "Roman metadata title");
+  assertContains(roman, 'description: metadataDescription', "Roman metadata description");
+  assertContains(roman, 'canonical,', "Roman metadata canonical");
+  assertContains(roman, 'image: defaultRomanVisuals.hero', "Roman social image");
+
+  const helper = source("src/lib/public-page-metadata.ts");
+  assertContains(helper, "noIndex = false", "shared metadata defaults to indexable");
+  assertContains(helper, "index: true", "shared metadata emits index");
+  assertContains(helper, "follow: true", "shared metadata emits follow");
 });

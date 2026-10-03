@@ -1,0 +1,54 @@
+name: GSC sitemap submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Çalıştırmak için SUBMIT-GSC-SITEMAP yazın"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gsc-sitemap-submit
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    name: Submit sitemap to Google Search Console
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate explicit confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "SUBMIT-GSC-SITEMAP"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Validate Search Console write OAuth secrets
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
+          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || { echo "Missing GSC_OAUTH_WRITE_REFRESH_TOKEN" >&2; exit 1; }
+
+      - name: Submit live sitemap
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
+        run: node scripts/gsc-sitemap-submit.mjs

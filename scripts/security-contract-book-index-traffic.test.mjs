@@ -126,7 +126,7 @@ test("Book Index gains a gated site-wide footer discovery link after publication
 
   contains(
     footer,
-    "getBookIndexPublicPageContext(10).catch(() => null)",
+    "getBookIndexPublicPageContext(100).catch(() => null)",
     "footer uses the same fail-closed public gate",
   );
   contains(

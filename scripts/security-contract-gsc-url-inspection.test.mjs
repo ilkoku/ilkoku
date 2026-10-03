@@ -7,6 +7,8 @@ const workflow = fs.readFileSync(".github/workflows/gsc-url-inspection.yml", "ut
 const script = fs.readFileSync("scripts/gsc-url-inspection.mjs", "utf8");
 const performanceWorkflow = fs.readFileSync(".github/workflows/gsc-book-index-performance.yml", "utf8");
 const performanceScript = fs.readFileSync("scripts/gsc-book-index-performance.mjs", "utf8");
+const sitemapSubmitWorkflow = fs.readFileSync(".github/workflows/gsc-sitemap-submit.yml", "utf8");
+const sitemapSubmitScript = fs.readFileSync("scripts/gsc-sitemap-submit.mjs", "utf8");
 const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const docs = fs.readFileSync("docs/seo-sprint11-status.md", "utf8");
 
@@ -119,6 +121,30 @@ test("package and docs expose the official diagnostic path", () => {
   assert.match(docs, /does not request indexing|dizine ekleme isteği göndermez/iu);
 });
 
+
+
+test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
+  assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+push:/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+schedule:/u);
+  assert.match(sitemapSubmitWorkflow, /SUBMIT-GSC-SITEMAP/u);
+  assert.match(sitemapSubmitWorkflow, /permissions:\s*\n\s+contents: read/u);
+  assert.match(sitemapSubmitWorkflow, /secrets\.GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+
+  assert.match(sitemapSubmitScript, /const SITEMAP_URL = "https:\/\/ilkoku\.com\/sitemap\.xml"/u);
+  assert.match(sitemapSubmitScript, /const WRITE_SCOPE = "https:\/\/www\.googleapis\.com\/auth\/webmasters"/u);
+  assert.match(sitemapSubmitScript, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.match(sitemapSubmitScript, /method: "PUT"/u);
+  assert.match(sitemapSubmitScript, /\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps\/\$\{encodeURIComponent\(SITEMAP_URL\)\}/u);
+  assert.match(sitemapSubmitScript, /DISCOVERY_TARGETS/u);
+  assert.match(sitemapSubmitScript, /editorler-icin\/egitim\/editorluge-baslama/u);
+  assert.match(sitemapSubmitScript, /en-cok-satanlar\/dunya/u);
+  assert.match(sitemapSubmitScript, /yasal\/kullanim-sartlari/u);
+  assert.match(sitemapSubmitScript, /grantedScopes\.includes\(WRITE_SCOPE\)/u);
+  assert.doesNotMatch(sitemapSubmitScript, /indexing\.googleapis\.com|requestIndexing/u);
+  assert.doesNotMatch(sitemapSubmitScript, /console\.log\([^\n]*accessToken/u);
+});
 
 test("Book Index Search performance report is weekly and read-only", () => {
   assert.match(performanceWorkflow, /schedule:/u);

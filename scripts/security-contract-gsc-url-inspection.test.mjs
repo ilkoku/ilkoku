@@ -10,13 +10,13 @@ const performanceScript = fs.readFileSync("scripts/gsc-book-index-performance.mj
 const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const docs = fs.readFileSync("docs/seo-sprint11-status.md", "utf8");
 
-test("GSC URL Inspection diagnostic is manual-or-weekly and read-only", () => {
+test("GSC URL Inspection diagnostic is self-change, manual-or-weekly and read-only", () => {
   assert.match(workflow, /workflow_dispatch:/u);
   assert.match(workflow, /schedule:/u);
   assert.match(workflow, /cron: "23 5 \* \* 2"/u);
   assert.match(workflow, /if: github\.event_name == 'workflow_dispatch'/u);
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
-  assert.doesNotMatch(workflow, /\n\s+push:/u);
+  assert.match(workflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:\s*\n\s+- "\\.github\/workflows\/gsc-url-inspection\\.yml"\s*\n\s+- "scripts\/gsc-url-inspection\\.mjs"/u);
   assert.match(workflow, /RUN-GSC-URL-INSPECTION/u);
   assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_ID/u);
   assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_SECRET/u);

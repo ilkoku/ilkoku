@@ -121,6 +121,28 @@ async function getAccessToken() {
   return body.access_token;
 }
 
+async function getGrantedScopes(accessToken) {
+  try {
+    const response = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
+      {
+        signal: AbortSignal.timeout(20_000),
+      },
+    );
+    const body = await response.json();
+    if (!response.ok) {
+      throw new Error("tokeninfo rejected the access token");
+    }
+    return String(body.scope ?? "")
+      .split(/\s+/u)
+      .map((scope) => scope.trim())
+      .filter(Boolean)
+      .sort();
+  } catch {
+    throw new Error("Google OAuth token scope introspection failed");
+  }
+}
+
 async function listSitemaps(accessToken) {
   const response = await fetch(
     `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/sitemaps`,
@@ -319,6 +341,8 @@ async function main() {
   console.log(`Inspection cohort: ${scope}`);
 
   const accessToken = await getAccessToken();
+  const grantedScopes = await getGrantedScopes(accessToken);
+  console.log(`GSC OAuth granted scopes: ${grantedScopes.join(" ") || "UNSPECIFIED"}`);
   const sitemaps = await listSitemaps(accessToken);
   console.log(`GSC sitemaps: ${sitemaps.length}`);
   for (const sitemap of sitemaps) {

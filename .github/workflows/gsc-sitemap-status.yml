@@ -1,0 +1,58 @@
+name: GSC sitemap status
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-sitemap-status.yml"
+      - "scripts/gsc-sitemap-status.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gsc-sitemap-status
+  cancel-in-progress: true
+
+jobs:
+  status:
+    name: Read sitemap status from Search Console
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Validate Search Console read OAuth secrets
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
+          test -n "$GSC_OAUTH_REFRESH_TOKEN" || { echo "Missing GSC_OAUTH_REFRESH_TOKEN" >&2; exit 1; }
+
+      - name: Read sitemap status
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+        run: node scripts/gsc-sitemap-status.mjs
+
+      - name: Upload sitemap status
+        uses: actions/upload-artifact@v6
+        with:
+          name: gsc-sitemap-status
+          path: /tmp/ilkoku-gsc-sitemap-status.json
+          if-no-files-found: error
+          retention-days: 14

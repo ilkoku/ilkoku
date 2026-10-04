@@ -229,6 +229,8 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
   const safety = source("src/lib/public-content-safety.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const nextConfig = source("next.config.ts");
+  const page = source("src/app/kitap/[slug]/page.tsx");
+  const guard = source(".github/workflows/demo-seo-production-guard.yml");
 
   contains(
     safety,
@@ -255,6 +257,13 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
     'value: "noindex, nofollow, noarchive"',
     "demo work robots exclusion header",
   );
+  contains(page, "const searchIndexExcluded = isSearchIndexExcludedPublicWorkSlug(slug);", "work metadata resolves search exclusion once");
+  contains(page, "index: !query.from && !searchIndexExcluded", "search-excluded work metadata noindex");
+  contains(page, "follow: !searchIndexExcluded", "search-excluded work metadata nofollow");
+  contains(guard, 'meta_robots=', "production guard reads HTML robots metadata");
+  contains(guard, 'effective_robots=', "production guard combines header and HTML robots directives");
+  contains(guard, '&& "$effective_robots" == *"noindex"*', "production guard requires effective noindex");
+  contains(guard, '&& "$effective_robots" == *"nofollow"*', "production guard requires effective nofollow");
   notContains(
     nextConfig,
     '"/kitap/:path*"',

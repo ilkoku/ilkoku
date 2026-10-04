@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -304,12 +305,11 @@ function buildBilimKurguBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Bilim Kurgu Nasıl Yazılır? | İlkOku",
   description: "Spekülatif fikirden bilimsel kurala, araştırmadan nedensellik zincirine ve karakter bedeline kadar adım adım bilim kurgu yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/bilim-kurgu",
+});
 
 export default async function BilimKurguYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;

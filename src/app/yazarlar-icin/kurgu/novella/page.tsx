@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -296,12 +297,11 @@ function buildNovellaBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Novella Nasıl Yazılır? | İlkOku",
   description: "Novella fikrinden karakter dönüşümüne, orta kırılmadan sahne ve bölüm planına kadar adım adım novella yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/novella" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/novella",
+});
 
 export default async function NovellaYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;

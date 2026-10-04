@@ -33,6 +33,7 @@ function readWritingInventory() {
 test("homepage and all writing education routes stay canonical indexable and sitemap-owned", () => {
   const homepage = source("src/app/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const metadataHelper = source("src/lib/public-page-metadata.ts");
   const { genres, hubs } = readWritingInventory();
 
   assert.equal(hubs.length, 7, "writing category inventory must stay at 7 hubs");
@@ -51,21 +52,27 @@ test("homepage and all writing education routes stay canonical indexable and sit
   assertContains(sitemap, "...writingGenreHrefs", "writing genre CMS duplicate guard");
   assertContains(sitemap, "...WRITING_CATEGORY_HUBS.map((hub) => hub.href)", "writing category CMS duplicate guard");
 
+  assertContains(metadataHelper, "openGraph: {", "shared metadata emits Open Graph");
+  assertContains(metadataHelper, "twitter: {", "shared metadata emits Twitter metadata");
+  assertContains(metadataHelper, "url: canonicalUrl", "shared metadata binds canonical Open Graph URL");
+  assertContains(metadataHelper, "index: true", "shared metadata emits index");
+  assertContains(metadataHelper, "follow: true", "shared metadata emits follow");
+
   const hrefByCategory = new Map(hubs.map((hub) => [hub.category, hub.href]));
 
   for (const hub of hubs) {
     const page = source(`src/app${hub.href}/page.tsx`);
-    assertContains(page, `canonical: "https://ilkoku.com${hub.href}"`, `${hub.href} self canonical`);
-    assertContains(page, "robots: { index: true, follow: true }", `${hub.href} index/follow`);
+    assertContains(page, 'createPublicPageMetadata({', `${hub.href} shared metadata contract`);
+    assertContains(page, `canonical: "${hub.href}"`, `${hub.href} self canonical`);
   }
 
   const informational = source("src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx");
+  assertContains(informational, "return createPublicPageMetadata({", "informational guide shared metadata contract");
   assertContains(
     informational,
-    'alternates: { canonical: `https://ilkoku.com/yazarlar-icin/bilgilendirici/${slug}` }',
+    'canonical: `/yazarlar-icin/bilgilendirici/${slug}`',
     "informational guide self canonical",
   );
-  assertContains(informational, "robots: { index: true, follow: true }", "informational guides index/follow");
   assertContains(
     informational,
     'return { title: "Eğitim bulunamadı | İlkOku", robots: { index: false, follow: false } };',
@@ -80,18 +87,10 @@ test("homepage and all writing education routes stay canonical indexable and sit
 
     const canonical = `${categoryHref}/${genre.slug}`;
     const page = source(`src/app${canonical}/page.tsx`);
-
-    if (canonical === "/yazarlar-icin/kurgu/roman") {
-      assertContains(page, 'createPublicPageMetadata({', `${canonical} shared metadata contract`);
-      assertContains(page, 'const canonical = "/yazarlar-icin/kurgu/roman"', `${canonical} canonical source`);
-      continue;
-    }
-
-    assertContains(page, `canonical: "https://ilkoku.com${canonical}"`, `${canonical} self canonical`);
-    assertContains(page, "robots: { index: true, follow: true }", `${canonical} index/follow`);
+    assertContains(page, 'createPublicPageMetadata({', `${canonical} shared metadata contract`);
+    assertContains(page, `canonical: "${canonical}"`, `${canonical} self canonical`);
   }
 });
-
 
 test("education sitemap lastmod uses only truthful published CMS timestamps", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");

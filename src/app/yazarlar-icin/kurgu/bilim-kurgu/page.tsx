@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
+import { WritingGuideStructuredData } from "@/components/content/WritingGuideStructuredData";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 
@@ -346,7 +347,15 @@ export default async function BilimKurguYazarlikRehberiPage() {
   const blocks = buildBilimKurguBlocks(visuals, alts, title, summary);
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="bilim-kurgu">
+    <>
+      <WritingGuideStructuredData
+        canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu"
+        title={title}
+        description={summary}
+        categoryName="Kurgu"
+        categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+      />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="bilim-kurgu">
       <div className="bilim-kurgu-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
@@ -356,6 +365,7 @@ export default async function BilimKurguYazarlikRehberiPage() {
           unoptimizedImages
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

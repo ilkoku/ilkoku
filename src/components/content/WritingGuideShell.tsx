@@ -104,6 +104,15 @@ type WritingGuideShellProps = {
 export function WritingGuideShell({ children, activeCategory, activeGenreSlug }: WritingGuideShellProps) {
   const genres = getGenresByCategory(activeCategory);
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
+  const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
+  const activeGenreIndex = genres.findIndex((genre) => genre.slug === activeGenreSlug);
+  const relatedGenres = activeGenreIndex >= 0
+    ? [activeGenreIndex - 1, activeGenreIndex + 1, 0, genres.length - 1]
+        .map((index) => genres[index])
+        .filter((genre): genre is (typeof genres)[number] => Boolean(genre) && genre.slug !== activeGenreSlug)
+        .filter((genre, index, all) => all.findIndex((candidate) => candidate.slug === genre.slug) === index)
+        .slice(0, 3)
+    : [];
 
   return (
     <>
@@ -165,7 +174,38 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
           </div>
         </aside>
 
-        <div className="min-w-0">{children}</div>
+        <div className="min-w-0">
+          {children}
+          {activeGenreSlug && categoryHub ? (
+            <aside
+              aria-label="İlgili yazarlık eğitimleri"
+              className="mt-6 rounded-[1.8rem] border border-[#6b52c7]/10 bg-[#fffdf8] p-6 shadow-[0_12px_36px_rgba(34,23,70,0.05)] sm:p-7"
+            >
+              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">İlgili eğitimler</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#211746]">
+                {activeCategory} yolculuğunda devam et.
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#696270]">
+                Bu rehber, <Link className="font-extrabold text-[#5b35dd] underline decoration-[#5b35dd]/25 underline-offset-4" href={categoryHub.href}>{categoryHub.title} ana eğitiminin</Link> bir parçasıdır. Konuyu komşu türlerle karşılaştırmak için ilgili rehberlere geçebilirsin.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {relatedGenres.map((genre) => {
+                  const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
+                  if (!href) return null;
+                  return (
+                    <Link
+                      className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
+                      href={href}
+                      key={genre.slug}
+                    >
+                      {genre.label} eğitimi →
+                    </Link>
+                  );
+                })}
+              </div>
+            </aside>
+          ) : null}
+        </div>
       </div>
     </div>
     {showOriginalFooter ? (

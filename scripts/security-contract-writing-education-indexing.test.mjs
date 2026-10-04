@@ -305,6 +305,25 @@ test("public writing guides stay ISR-cacheable and CMS reads stay published-only
 });
 
 
+test("bespoke fiction guides use the shared organization-authored structured data renderer", () => {
+  const helper = source("src/components/content/WritingGuideStructuredData.tsx");
+  assertContains(helper, '"@type": "Article"', "shared bespoke Article schema");
+  assertContains(helper, 'author: {', "shared bespoke author relation");
+  assertContains(helper, 'publisher: {', "shared bespoke publisher relation");
+  assertContains(helper, '"@id": "https://ilkoku.com/#organization"', "shared bespoke organization identity");
+
+  for (const slug of ["novella", "fantastik", "bilim-kurgu", "distopya"]) {
+    const page = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
+    assertContains(page, 'WritingGuideStructuredData', `${slug} structured data renderer`);
+    assertContains(
+      page,
+      `canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/${slug}"`,
+      `${slug} schema canonical`,
+    );
+  }
+});
+
+
 test("all writing guide renderers expose organization-authored Article structured data", () => {
   const education = source("src/components/content/BatchedEducationGuidePage.tsx");
   const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");

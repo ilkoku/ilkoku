@@ -131,53 +131,33 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
-  assertContains(
-    sitemap,
-    "WRITING_CATEGORY_INDEXABLE_AT",
-    "writing category hub lastmod must use the verified indexable release time",
-  );
-  assertContains(
-    sitemap,
-    'new Date("2026-09-13T19:15:11Z")',
-    "writing category verified indexable timestamp",
-  );
   const searchFreshness = source("src/lib/search-content-freshness.ts");
   const recentUpdatesAtom = source("src/app/recent-updates.atom/route.ts");
 
   assertContains(
     sitemap,
-    'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT, WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT',
-    "sitemap shared writing guide freshness imports",
+    'import { WRITING_INTERNAL_LINKS_UPDATED_AT } from "@/lib/search-content-freshness"',
+    "sitemap shared writing internal-link freshness import",
+  );
+  assert.equal(
+    (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,
+    2,
+    "writing hubs and writing guides must both expose the truthful internal-link content update",
   );
   assertContains(
-    sitemap,
-    'from "@/lib/search-content-freshness"',
-    "sitemap shared writing guide freshness module",
-  );
-  assertContains(
-    sitemap,
-    "WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT",
-    "writing guide lastmod must preserve the real shared structured-data update",
+    searchFreshness,
+    'WRITING_INTERNAL_LINKS_UPDATED_AT = new Date("2026-10-04T14:20:31Z")',
+    "writing internal-link truthful content lastmod",
   );
   assertContains(
     searchFreshness,
     'new Date("2026-10-01T08:40:42Z")',
-    "writing guide structured-data lastmod timestamp",
+    "writing guide structured-data lastmod history",
   );
   assertContains(
     searchFreshness,
     'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT = new Date("2026-10-04T12:14:35Z")',
-    "informational guide truthful content lastmod",
-  );
-  assertContains(
-    sitemap,
-    'genre.category === "Bilgilendirici"',
-    "informational guide sitemap lastmod gate",
-  );
-  assertContains(
-    sitemap,
-    "INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT",
-    "informational guide sitemap freshness source",
+    "informational guide truthful content lastmod history",
   );
   assertContains(
     recentUpdatesAtom,
@@ -307,6 +287,23 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     "search-discovery-signals",
     "WebSub must not reference the retired freshness module",
   );
+});
+
+
+test("writing hubs and guides expose contextual crawlable internal links", () => {
+  const landing = source("src/components/content/WritingCategoryLandingPage.tsx");
+  const shell = source("src/components/content/WritingGuideShell.tsx");
+
+  assertContains(landing, 'import Link from "next/link"', "writing hub Link renderer");
+  assertContains(landing, 'href={`${hub.href}/${genre.slug}`}', "writing hub contextual genre href");
+  assertContains(landing, "{genre.label} eğitimi", "writing hub descriptive genre anchor");
+
+  assertContains(shell, "const categoryHub = WRITING_CATEGORY_HUBS.find", "writing guide parent hub relation");
+  assertContains(shell, "const relatedGenres =", "writing guide related genre selection");
+  assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "writing guide contextual link region");
+  assertContains(shell, "href={categoryHub.href}", "writing guide contextual parent link");
+  assertContains(shell, "LIVE_WRITING_GUIDE_HREFS[genre.slug]", "writing guide contextual sibling href");
+  assertContains(shell, "{genre.label} eğitimi →", "writing guide descriptive sibling anchor");
 });
 
 

@@ -151,6 +151,7 @@ test("seven writing category hubs stay deep, category-specific and avoid duplica
   contains(landing, "Türünü seçmeden önce", "category choice guidance section");
   contains(landing, "Eğitim yolculuğu", "category learning journey section");
   contains(landing, "Somut çıktı", "category output section");
-  contains(landing, "Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.", "single genre navigation instruction");
+  contains(landing, 'href={`${hub.href}/${genre.slug}`}', "category hub contextual child link");
+  contains(landing, "{genre.label} eğitimi", "category hub descriptive child anchor");
   notContains(landing, "WRITING_CATEGORY_HUBS.map", "duplicate seven-category card navigation");
 });

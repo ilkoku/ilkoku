@@ -20,11 +20,10 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT, WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
+import { WRITING_INTERNAL_LINKS_UPDATED_AT } from "@/lib/search-content-freshness";
 
 const baseUrl = "https://ilkoku.com";
 
-const WRITING_CATEGORY_INDEXABLE_AT = new Date("2026-09-13T19:15:11Z");
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
   "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
@@ -116,7 +115,7 @@ const writingGenreHrefs = GENRES.map((genre) => {
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
-    lastModified: WRITING_CATEGORY_INDEXABLE_AT,
+    lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
@@ -127,10 +126,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified:
-        genre.category === "Bilgilendirici"
-          ? INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT
-          : WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
+      lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

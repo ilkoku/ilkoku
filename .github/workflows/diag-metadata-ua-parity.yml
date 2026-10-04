@@ -1,0 +1,140 @@
+name: Metadata UA parity diagnostic
+
+on:
+  push:
+    branches:
+      - diag/metadata-ua-parity-20261004
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_metadata_diag
+          MARIADB_USER: diag_user
+          MARIADB_PASSWORD: diag_password
+          MARIADB_ROOT_PASSWORD: diag_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://diag_user:diag_password@127.0.0.1:3306/ilkoku_metadata_diag"
+      NEXT_PUBLIC_SITE_URL: "https://ilkoku.com"
+      SITE_URL: "https://ilkoku.com"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Recover diagnostic database
+        env:
+          RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
+        run: npm run db:recover:fresh
+
+      - name: Build exact production application
+        run: npm run system-map:generate && npx prisma generate && npx next build --webpack
+
+      - name: Start local production server
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          nohup npx next start -H 127.0.0.1 -p 3000 >/tmp/ilkoku-next.log 2>&1 &
+          echo $! >/tmp/ilkoku-next.pid
+          for i in {1..60}; do
+            if curl -fsS --max-time 3 http://127.0.0.1:3000/ >/dev/null; then
+              echo "Local production server ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ilkoku-next.log
+          exit 1
+
+      - name: Compare local UA metadata and live raw HTML
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          NORMAL_UA='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36'
+          GOOGLEBOT_UA='Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+          DIAG_UA='IlkOku-Metadata-Diagnostic/1.0 (+https://ilkoku.com)'
+
+          inspect_html() {
+            local label="$1"
+            local url="$2"
+            local ua="$3"
+            local body headers code
+            body="$(mktemp)"
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --location --max-time 30 --user-agent "$ua" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+
+            echo
+            echo "===== $label ====="
+            echo "URL=$url"
+            echo "HTTP=$code"
+            awk 'BEGIN{IGNORECASE=1} /^(server|cache-control|age|etag|last-modified|x-hcdn-cache-status|cf-cache-status|vary):/{gsub(/\r/,""); print}' "$headers" || true
+
+            BODY_PATH="$body" node <<'NODE'
+const fs = require("fs");
+const html = fs.readFileSync(process.env.BODY_PATH, "utf8");
+const headMatch = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
+const head = headMatch ? headMatch[1] : "";
+const collect = (source, regex) => [...source.matchAll(regex)].map((m) => m[1].replace(/&amp;/g, "&").trim());
+const result = {
+  bytes: Buffer.byteLength(html),
+  fullTitles: collect(html, /<title[^>]*>([\s\S]*?)<\/title>/gi),
+  headTitles: collect(head, /<title[^>]*>([\s\S]*?)<\/title>/gi),
+  fullDescriptions: collect(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
+    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["'][^>]*>/gi)),
+  headDescriptions: collect(head, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
+    .concat(collect(head, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["'][^>]*>/gi)),
+  canonicals: collect(html, /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["'][^>]*>/gi)
+    .concat(collect(html, /<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["'][^>]*>/gi)),
+  robots: collect(html, /<meta[^>]+name=["']robots["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
+    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']robots["'][^>]*>/gi)),
+  googlebot: collect(html, /<meta[^>]+name=["']googlebot["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
+    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']googlebot["'][^>]*>/gi)),
+  titleTagCount: (html.match(/<title\b/gi) || []).length,
+  descriptionTagCount: (html.match(/<meta[^>]+name=["']description["']/gi) || []).length,
+  hasNextMetadataBoundary: html.includes("next-size-adjust") || html.includes("$RC(") || html.includes("__next_f"),
+};
+console.log(JSON.stringify(result, null, 2));
+NODE
+            rm -f "$body" "$headers"
+          }
+
+          routes=(
+            '/yazarlar-icin/kurgu/oyku'
+            '/yazarlar-icin/kurgu/roman'
+            '/editorler-icin/egitim/metin-degerlendirme'
+            '/okurlar-icin/aktif-okuma'
+          )
+
+          for path in "${routes[@]}"; do
+            inspect_html "LOCAL NORMAL" "http://127.0.0.1:3000$path" "$NORMAL_UA"
+            inspect_html "LOCAL GOOGLEBOT" "http://127.0.0.1:3000$path" "$GOOGLEBOT_UA"
+            inspect_html "LIVE DIAGNOSTIC UA" "https://ilkoku.com$path" "$DIAG_UA"
+          done
+
+      - name: Show local server log tail
+        if: always()
+        run: tail -n 120 /tmp/ilkoku-next.log || true

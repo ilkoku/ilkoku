@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -20,8 +20,9 @@ test("global public routes share one canonical SEO and social brand identity", (
   const brand = source("src/lib/public-brand.ts");
   const homepage = source("src/app/page.tsx");
   const layout = source("src/app/layout.tsx");
-  const openGraph = source("src/app/opengraph-image.tsx");
-  const twitter = source("src/app/twitter-image.tsx");
+  const socialImagePrepare = source("scripts/prepare-social-images.mjs");
+  const ogAlt = source("src/app/opengraph-image.alt.txt");
+  const twitterAlt = source("src/app/twitter-image.alt.txt");
   const exactTitle = "İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım";
 
   assertContains(brand, `publicBrandTitle = "${exactTitle}"`, "canonical homepage/social title");
@@ -40,16 +41,20 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(layout, '"max-snippet": -1', "global unlimited Google snippet preview");
   assertContains(layout, '"max-video-preview": -1', "global unlimited Google video preview");
 
-  assertContains(openGraph, 'import { ImageResponse } from "next/og"', "Open Graph image response");
-  assertContains(openGraph, "width: 1200", "Open Graph width");
-  assertContains(openGraph, "height: 630", "Open Graph height");
-  assertContains(openGraph, 'contentType = "image/png"', "Open Graph content type");
-  assertContains(openGraph, "publicBrandPositioning", "Open Graph positioning");
-  assertContains(openGraph, "publicBrandShortSlogan", "Open Graph short slogan");
-  assertNotContains(openGraph, "publicBrandDescription", "Open Graph artwork stays concise");
+  assert.equal(
+    existsSync(join(ROOT, "public/og/ilkoku-social-selected-2026.webp")),
+    true,
+    "selected source social image must exist",
+  );
+  assertContains(socialImagePrepare, "ilkoku-social-selected-2026.webp", "selected social image source");
+  assertContains(socialImagePrepare, "opengraph-image.jpg", "static Open Graph output");
+  assertContains(socialImagePrepare, "twitter-image.jpg", "static Twitter output");
+  assertContains(socialImagePrepare, ".resize(1200, 630", "social image dimensions");
+  assertContains(ogAlt, "İlkOku — Dijital Yazar Platformu", "Open Graph alt brand");
+  assertContains(ogAlt, "İlk cümle, ilk adım.", "Open Graph alt slogan");
+  assert.equal(twitterAlt, ogAlt, "Twitter and Open Graph image alt text stay aligned");
   assertContains(homepage, "const homeDescription = publicBrandDescription", "homepage keeps canonical metadata description");
   assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
-  assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 
 test("robots isolates private content management without blocking the public content policy route", () => {

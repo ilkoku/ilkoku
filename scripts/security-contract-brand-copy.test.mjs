@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -20,15 +20,24 @@ test("active shared brand copy derives from the canonical public brand source", 
   assert.match(authShell, /authContent\.common\.tagline/u);
 });
 
+test("root social share card uses the selected İlkOku artwork as static metadata images", () => {
+  const prepare = source("scripts/prepare-social-images.mjs");
+  const packageJson = JSON.parse(source("package.json"));
+  const ogAlt = source("src/app/opengraph-image.alt.txt");
+  const twitterAlt = source("src/app/twitter-image.alt.txt");
 
-test("root social share card stays concise and uses the selected İlkOku social image", () => {
-  const card = source("src/app/opengraph-image.tsx");
-  const twitterCard = source("src/app/twitter-image.tsx");
-
-  assert.match(card, /https:\/\/ilkoku\.com\/og\/ilkoku-social-selected-2026\.webp/u);
-  assert.match(card, /publicBrandPositioning/u);
-  assert.match(card, /publicBrandShortSlogan/u);
-  assert.doesNotMatch(card, /publicBrandDescription/u);
-  assert.doesNotMatch(card, /readFile\(/u);
-  assert.match(twitterCard, /from "\.\/opengraph-image"/u);
+  assert.equal(
+    existsSync(join(ROOT, "public/og/ilkoku-social-selected-2026.webp")),
+    true,
+  );
+  assert.match(prepare, /ilkoku-social-selected-2026\.webp/u);
+  assert.match(prepare, /opengraph-image\.jpg/u);
+  assert.match(prepare, /twitter-image\.jpg/u);
+  assert.match(prepare, /resize\(1200, 630/u);
+  assert.match(packageJson.scripts.dev, /social-images:prepare/u);
+  assert.match(packageJson.scripts.build, /social-images:prepare/u);
+  assert.match(packageJson.scripts["build:ci"], /social-images:prepare/u);
+  assert.match(ogAlt, /İlkOku — Dijital Yazar Platformu/u);
+  assert.match(ogAlt, /İlk cümle, ilk adım\./u);
+  assert.equal(twitterAlt, ogAlt);
 });

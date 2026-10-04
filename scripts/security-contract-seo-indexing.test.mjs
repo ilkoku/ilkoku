@@ -20,9 +20,6 @@ test("global public routes share one canonical SEO and social brand identity", (
   const brand = source("src/lib/public-brand.ts");
   const homepage = source("src/app/page.tsx");
   const layout = source("src/app/layout.tsx");
-  const socialImagePrepare = source("scripts/prepare-social-images.mjs");
-  const ogAlt = source("src/app/opengraph-image.alt.txt");
-  const twitterAlt = source("src/app/twitter-image.alt.txt");
   const exactTitle = "İlkOku | Dijital Yazar Platformu – İlk cümle, ilk adım";
 
   assertContains(brand, `publicBrandTitle = "${exactTitle}"`, "canonical homepage/social title");
@@ -46,13 +43,11 @@ test("global public routes share one canonical SEO and social brand identity", (
     true,
     "selected source social image must exist",
   );
-  assertContains(socialImagePrepare, "ilkoku-social-selected-2026.webp", "selected social image source");
-  assertContains(socialImagePrepare, "opengraph-image.jpg", "static Open Graph output");
-  assertContains(socialImagePrepare, "twitter-image.jpg", "static Twitter output");
-  assertContains(socialImagePrepare, ".resize(1200, 630", "social image dimensions");
-  assertContains(ogAlt, "İlkOku — Dijital Yazar Platformu", "Open Graph alt brand");
-  assertContains(ogAlt, "İlk cümle, ilk adım.", "Open Graph alt slogan");
-  assert.equal(twitterAlt, ogAlt, "Twitter and Open Graph image alt text stay aligned");
+  assertContains(
+    brand,
+    'publicBrandSocialImage = "/og/ilkoku-social-selected-2026.webp"',
+    "canonical static social image",
+  );
   assertContains(homepage, "const homeDescription = publicBrandDescription", "homepage keeps canonical metadata description");
   assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
 });

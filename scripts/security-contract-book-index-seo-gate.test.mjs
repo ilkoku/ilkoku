@@ -80,12 +80,12 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     overview,
-    "noIndex: !context.gate.canPublish",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
     "overview stays noindex until full publish gate passes",
   );
   contains(
     overview,
-    "context.gate.canPublish ? (",
+    "searchIndexable ? (",
     "overview structured data stays off during soft launch",
   );
   contains(
@@ -106,12 +106,12 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     turkey,
-    "noIndex: !context.gate.canPublish",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
     "Turkey route stays noindex until full publish gate passes",
   );
   contains(
     turkey,
-    "context.gate.canPublish ? (",
+    "searchIndexable ? (",
     "Turkey structured data stays off during soft launch",
   );
 
@@ -122,7 +122,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     insight,
-    "noIndex: !context.gate.canPublish || items.length === 0",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical(slug)) || !context.gate.canPublish || items.length === 0",
     "trend routes stay noindex until publish gate and data are both ready",
   );
   notContains(
@@ -137,7 +137,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     insight,
-    "context.gate.canPublish && items.length > 0 ? (",
+    "searchIndexable ? (",
     "trend structured data stays off until publication is allowed",
   );
 

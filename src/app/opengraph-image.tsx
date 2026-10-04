@@ -1,7 +1,10 @@
 import { ImageResponse } from "next/og";
-import { publicBrandTitle } from "@/lib/public-brand";
+import {
+  publicBrandPositioning,
+  publicBrandTitle,
+} from "@/lib/public-brand";
 
-export const alt = publicBrandTitle;
+export const alt = `${publicBrandTitle} — ${publicBrandPositioning}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

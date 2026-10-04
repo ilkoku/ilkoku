@@ -126,8 +126,13 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
 
   assertContains(
     sitemap,
-    'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
-    "sitemap shared writing guide freshness import",
+    'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT, WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT',
+    "sitemap shared writing guide freshness imports",
+  );
+  assertContains(
+    sitemap,
+    'from "@/lib/search-content-freshness"',
+    "sitemap shared writing guide freshness module",
   );
   assertContains(
     sitemap,

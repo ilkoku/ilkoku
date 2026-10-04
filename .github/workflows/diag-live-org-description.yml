@@ -1,0 +1,32 @@
+name: Live Organization description verify
+
+on:
+  push:
+    branches:
+      - diag/live-org-description-verify-20261004
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Verify live Organization JSON-LD description
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+
+          code="$(curl --silent --show-error --location --max-time 30 \
+            --user-agent 'IlkOku-Organization-Verify/1.0 (+https://ilkoku.com)' \
+            --output "$body" --write-out '%{http_code}' \
+            https://ilkoku.com/)"
+
+          test "$code" = "200"
+          grep -F '"@type":"Organization"' "$body" >/dev/null
+          grep -F 'İlkOku.com, dijital yazar platformudur.' "$body" >/dev/null
+
+          echo "LIVE_ORGANIZATION_DESCRIPTION_OK"

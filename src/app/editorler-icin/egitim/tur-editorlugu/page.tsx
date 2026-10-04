@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Tür Editörlüğü | İlkOku Editörlük Okulu",
-  description:
-    "Bir eseri kendi türünün okur vaadi, anlatı mantığı, alt türü, tür konvansiyonları ve hedef okur beklentileri içinde değerlendirmeyi; tür beklentisini klişeye dönüştürmeden editörlük yapmayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/tur-editorlugu" },
-  robots: { index: true, follow: true },
-};
+  description: "Bir eseri kendi türünün okur vaadi, anlatı mantığı, alt türü, tür konvansiyonları ve hedef okur beklentileri içinde değerlendirmeyi; tür beklentisini klişeye dönüştürmeden editörlük yapmayı öğren.",
+  canonical: "/editorler-icin/egitim/tur-editorlugu",
+});
 
 const outcomes = [
   {

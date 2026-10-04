@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Metin Değerlendirme | İlkOku Editörlük Okulu",
   description: "Bir metni ilk okumadan değerlendirme raporuna kadar sistemli biçimde çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/metin-degerlendirme" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/editorler-icin/egitim/metin-degerlendirme",
+});
 
 const outcomes = [
   {

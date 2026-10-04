@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Yapısal Editörlük | İlkOku Editörlük Okulu",
-  description:
-    "Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/yapisal-editorluk" },
-  robots: { index: true, follow: true },
-};
+  description: "Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren.",
+  canonical: "/editorler-icin/egitim/yapisal-editorluk",
+});
 
 const outcomes = [
   {

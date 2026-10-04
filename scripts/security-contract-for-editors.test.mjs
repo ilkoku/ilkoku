@@ -137,8 +137,8 @@ test("all editor education routes are indexable, self-canonical and included in 
 
   for (const [slug, path] of lessons) {
     const route = source(path);
-    contains(route, `alternates: { canonical: "/editorler-icin/egitim/${slug}" }`, `${slug} self canonical`);
-    contains(route, "robots: { index: true, follow: true }", `${slug} indexability`);
+    contains(route, 'createPublicPageMetadata({', `${slug} shared public metadata contract`);
+    contains(route, `canonical: "/editorler-icin/egitim/${slug}"`, `${slug} self canonical`);
     notContains(route, "robots: { index: false", `${slug} must not regress to noindex`);
   }
 

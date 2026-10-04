@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Editör Notu ve Geri Bildirim | İlkOku Editörlük Okulu",
-  description:
-    "Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim" },
-  robots: { index: true, follow: true },
-};
+  description: "Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren.",
+  canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim",
+});
 
 const outcomes = [
   {

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/site-haritasi" },
-  robots: { index: true, follow: true },
+  robots: { index: false, follow: true },
   openGraph: {
     type: "website",
     locale: "tr_TR",

@@ -5,6 +5,7 @@ import { TurkeyBookIndexView } from "@/features/book-index/public/BookIndexPubli
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 const canonical = "/en-cok-satanlar/turkiye";
@@ -25,12 +26,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: !context.gate.canPublish,
+    noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish,
   });
 }
 
 export default async function TurkeyBestsellersPage() {
   const context = await getBookIndexSoftLaunchPageContext(1200);
+  const searchIndexable = context.gate.canPublish && !isSoftLaunchSearchExcludedPath(canonical);
   if (context.model.turkey.availability !== "available") notFound();
 
   const lastObservedAt = getBookIndexLastObservedAt(context.model);
@@ -89,7 +91,7 @@ export default async function TurkeyBestsellersPage() {
 
   return (
     <>
-      {context.gate.canPublish ? (
+      {searchIndexable ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

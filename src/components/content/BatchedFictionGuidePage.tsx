@@ -257,6 +257,32 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       inLanguage: "tr-TR",
       isPartOf: { "@id": "https://ilkoku.com/#website" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
+      mainEntity: { "@id": `${canonicalUrl}#article` },
+      about: [
+        { "@type": "Thing", name: definition.label },
+        { "@type": "Thing", name: "Kurgu yazarlığı" },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "@id": `${canonicalUrl}#article`,
+      headline: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
+      author: {
+        "@type": "Organization",
+        "@id": "https://ilkoku.com/#organization",
+        name: "İlkOku",
+        url: "https://ilkoku.com/",
+      },
+      publisher: {
+        "@type": "Organization",
+        "@id": "https://ilkoku.com/#organization",
+        name: "İlkOku",
+        url: "https://ilkoku.com/",
+      },
       about: [
         { "@type": "Thing", name: definition.label },
         { "@type": "Thing", name: "Kurgu yazarlığı" },

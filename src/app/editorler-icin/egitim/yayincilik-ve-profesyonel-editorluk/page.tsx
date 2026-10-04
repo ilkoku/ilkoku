@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Yayıncılık ve Profesyonel Editörlük | İlkOku Editörlük Okulu",
-  description:
-    "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk" },
-  robots: { index: true, follow: true },
-};
+  description: "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren.",
+  canonical: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
+});
 
 const outcomes = [
   {

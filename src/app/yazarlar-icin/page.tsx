@@ -6,6 +6,7 @@ import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { forWritersPageContent } from "@/content/for-writers";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/nasil-calisir/public-trust-footer.css";
@@ -49,12 +50,13 @@ const resolvePage = cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await resolvePage();
+  const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);
 
   return {
     title: page.seoTitle,
     description: page.seoDescription,
     alternates: { canonical: page.canonical },
-    robots: page.noIndex ? { index: false, follow: true } : { index: true, follow: true },
+    robots: noIndex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       title: page.seoTitle,
       description: page.seoDescription,

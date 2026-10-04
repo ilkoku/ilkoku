@@ -88,6 +88,13 @@ test("homepage and all writing education routes stay canonical indexable and sit
     const canonical = `${categoryHref}/${genre.slug}`;
     const page = source(`src/app${canonical}/page.tsx`);
     assertContains(page, 'createPublicPageMetadata({', `${canonical} shared metadata contract`);
+
+    if (canonical === "/yazarlar-icin/kurgu/roman") {
+      assertContains(page, 'const canonical = "/yazarlar-icin/kurgu/roman"', `${canonical} canonical source`);
+      assertContains(page, "canonical,", `${canonical} metadata canonical binding`);
+      continue;
+    }
+
     assertContains(page, `canonical: "${canonical}"`, `${canonical} self canonical`);
   }
 });

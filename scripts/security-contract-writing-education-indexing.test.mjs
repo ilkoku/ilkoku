@@ -270,6 +270,20 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
 });
 
 
+test("informational guides keep shared methodology on the hub and emphasize field-specific content", () => {
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+
+  assertContains(education, 'definition.category === "Bilgilendirici"', "informational differentiation gate");
+  assertContains(education, '-ortak-yazim-sistemi', "informational shared-framework pointer");
+  assertContains(education, '/yazarlar-icin/bilgilendirici', "informational hub contextual link");
+  assertContains(education, '-tam-yazim-rotasi', "shared route block exclusion");
+  assertContains(education, '-structure-visual', "shared structure visual exclusion");
+  assertContains(education, '-yazim-duzeni', "shared workspace exclusion");
+  assertContains(education, '-yayina-hazirlik', "shared final checklist exclusion");
+  assertContains(education, 'blocks={renderedBlocks}', "field-specific rendered block set");
+});
+
+
 test("public writing guides keep responsive Next image optimization enabled", () => {
   const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
   const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");

@@ -273,7 +273,7 @@ const metadataDescription =
 export const metadata: Metadata = {
   title: "Öykü Nasıl Yazılır? | İlkOku",
   description: metadataDescription,
-  alternates: { canonical: canonicalUrl },
+  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/oyku" },
   robots: { index: true, follow: true },
 };
 

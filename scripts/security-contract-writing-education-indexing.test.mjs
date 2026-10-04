@@ -99,6 +99,26 @@ test("homepage and all writing education routes stay canonical indexable and sit
   }
 });
 
+test("editor education routes use the shared public metadata contract", () => {
+  const slugs = [
+    "editorluge-baslama",
+    "metin-degerlendirme",
+    "yapisal-editorluk",
+    "dil-ve-anlatim-editorlugu",
+    "tur-editorlugu",
+    "editor-notu-ve-geri-bildirim",
+    "yazarla-calismak",
+    "yayincilik-ve-profesyonel-editorluk",
+  ];
+
+  for (const slug of slugs) {
+    const page = source(`src/app/editorler-icin/egitim/${slug}/page.tsx`);
+    assertContains(page, 'createPublicPageMetadata({', `${slug} shared metadata contract`);
+    assertContains(page, `canonical: "/editorler-icin/egitim/${slug}"`, `${slug} self canonical`);
+  }
+});
+
+
 test("education sitemap lastmod uses only truthful published CMS timestamps", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 

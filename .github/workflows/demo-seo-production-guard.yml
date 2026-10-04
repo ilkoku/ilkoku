@@ -9,6 +9,7 @@ on:
       - "next.config.ts"
       - "src/app/sitemap.xml/route.ts"
       - "src/lib/seo/sitemap-data.ts"
+      - "src/app/kitap/[slug]/page.tsx"
       - "src/lib/public-content-safety.ts"
       - "src/features/demo-showcase/**"
       - ".github/workflows/demo-seo-production-guard.yml"
@@ -45,6 +46,7 @@ jobs:
 
             sitemap_body="$(mktemp)"
             demo_headers="$(mktemp)"
+            demo_body="$(mktemp)"
 
             sitemap_code="$(curl --silent --show-error --location --max-time 20 \
               --user-agent "$USER_AGENT" \
@@ -55,11 +57,13 @@ jobs:
             demo_code="$(curl --silent --show-error --max-time 20 \
               --user-agent "$USER_AGENT" \
               --dump-header "$demo_headers" \
-              --output /dev/null \
+              --output "$demo_body" \
               --write-out '%{http_code}' \
               "$DEMO_URL" || true)"
 
-            robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$demo_headers")"
+            header_robots="$(awk 'BEGIN{IGNORECASE=1} /^x-robots-tag:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' "$demo_headers")"
+            meta_robots="$(grep -Eoi '<meta[^>]+name="robots"[^>]+content="[^"]*"' "$demo_body" | head -1 | sed -n 's/.*content="\([^"]*\)"/\1/p' || true)"
+            effective_robots="${header_robots,,} ${meta_robots,,}"
 
             sitemap_has_demo=0
             if grep -Fq '<loc>https://ilkoku.com/kitap/demo-' "$sitemap_body"; then
@@ -67,16 +71,16 @@ jobs:
             fi
 
             printf 'Sitemap -> HTTP %s | demo URL içeriyor: %s\n' "$sitemap_code" "$sitemap_has_demo"
-            printf '%s -> HTTP %s | X-Robots-Tag: %s\n' "$DEMO_URL" "$demo_code" "${robots:-YOK}"
+            printf '%s -> HTTP %s | X-Robots-Tag: %s | meta robots: %s\n' "$DEMO_URL" "$demo_code" "${header_robots:-YOK}" "${meta_robots:-YOK}"
 
-            rm -f "$sitemap_body" "$demo_headers"
+            rm -f "$sitemap_body" "$demo_headers" "$demo_body"
 
             if [[ "$sitemap_code" == "200" \
               && "$sitemap_has_demo" == "0" \
               && "$demo_code" == "200" \
-              && "${robots,,}" == *"noindex"* \
-              && "${robots,,}" == *"nofollow"* ]]; then
-              echo "PASS: Demo eserler sitemap dışında ve canlı demo sayfası noindex/nofollow."
+              && "$effective_robots" == *"noindex"* \
+              && "$effective_robots" == *"nofollow"* ]]; then
+              echo "PASS: Demo eserler sitemap dışında ve canlı demo sayfası etkili olarak noindex/nofollow."
               exit 0
             fi
 

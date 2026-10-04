@@ -28,7 +28,12 @@ test("contact stays public and canonical but noindex during soft launch", () => 
   contains(page, 'const socialImage = "/opengraph-image"', "contact social image fallback");
   contains(sitemap, "filterSoftLaunchSitemapEntries", "contact sitemap output is soft-launch filtered");
   contains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned route inventory");
-  notContains(publicSeoRoutes, '"/iletisim"', "contact is excluded from the temporary index-target inventory");
+  contains(publicSeoRoutes, '"/iletisim"', "contact remains in the code-owned public candidate inventory");
+  contains(
+    publicSeoRoutes,
+    "(route) => !isSoftLaunchSearchExcludedPath(route)",
+    "soft-launch policy filters contact from the temporary index-target inventory",
+  );
 });
 
 test("SEO workbench never paints robots social or structured data green without live evidence", () => {

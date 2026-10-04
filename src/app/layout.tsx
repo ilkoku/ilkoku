@@ -85,6 +85,7 @@ const organizationSchema = {
   "@id": `${baseUrl}/#organization`,
   name: publicBrandName,
   alternateName: "ilkoku.com",
+  description: "İlkOku.com, dijital yazar platformudur.",
   url: baseUrl,
   email: siteContact.generalEmail,
   sameAs: officialEntityUrls,

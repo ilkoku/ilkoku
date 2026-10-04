@@ -69,6 +69,11 @@ test("site identity structured data uses a real alternate site name", () => {
   const layout = source("src/app/layout.tsx");
 
   assertContains(layout, 'alternateName: "ilkoku.com"', "domain fallback alternate site name");
+  assertContains(
+    layout,
+    'description: "İlkOku.com, dijital yazar platformudur."',
+    "concise organization description",
+  );
   assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning must not masquerade as an alternate name");
 });
 

@@ -1,9 +1,7 @@
 name: Metadata UA parity diagnostic
 
 on:
-  push:
-    branches:
-      - diag/metadata-ua-parity-20261004
+  workflow_dispatch:
 
 permissions:
   contents: read

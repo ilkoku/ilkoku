@@ -1,11 +1,12 @@
 import { hasPublishedEditorProfiles } from "@/features/editors/data";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import {
   publicLegalLinks,
   publicPlatformLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
 
-export const publicCodeOwnedIndexRoutes = [
+const publicCodeOwnedIndexCandidates = [
   "/",
   "/yardim",
   ...(hasPublishedEditorProfiles ? ["/editorler"] as const : []),
@@ -14,11 +15,15 @@ export const publicCodeOwnedIndexRoutes = [
   "/okurlar-icin",
 ] as const;
 
+export const publicCodeOwnedIndexRoutes = publicCodeOwnedIndexCandidates.filter(
+  (route) => !isSoftLaunchSearchExcludedPath(route),
+);
+
 export const publicCmsManagedCoreRoutes = [
   ...publicPlatformLinks.map((link) => link.href),
   ...publicTrustLinks.map((link) => link.href),
   ...publicLegalLinks.map((link) => link.href),
-] as readonly string[];
+].filter((route) => !isSoftLaunchSearchExcludedPath(route));
 
 export const publicDefaultCoreSeoRoutes = Array.from(
   new Set<string>([

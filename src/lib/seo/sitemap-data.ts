@@ -21,6 +21,7 @@ import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 import { WRITING_INTERNAL_LINKS_UPDATED_AT } from "@/lib/search-content-freshness";
+import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -458,7 +459,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
-    return [
+    return filterSoftLaunchSitemapEntries([
       ...liveStaticDiscoveryEntries,
       ...bookIndexEntries,
       ...publicPageEntries,
@@ -482,11 +483,11 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
-    ];
+    ]);
   } catch {
     // Search engines must keep seeing the currently enabled code-owned public
     // surface even when CMS/database lookups are temporarily unavailable.
     // Dynamic author, genre, work and CMS-owned URLs fail closed.
-    return staticFallbackEntries;
+    return filterSoftLaunchSitemapEntries(staticFallbackEntries);
   }
 }

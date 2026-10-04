@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Dil ve Anlatım Editörlüğü | İlkOku Editörlük Okulu",
-  description:
-    "Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu" },
-  robots: { index: true, follow: true },
-};
+  description: "Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren.",
+  canonical: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+});
 
 const outcomes = [
   {

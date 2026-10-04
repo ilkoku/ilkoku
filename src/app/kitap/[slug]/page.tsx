@@ -82,6 +82,7 @@ export async function generateMetadata({
   const description = getSeoDescription(work.description, work.title, work.authorName);
   const canonical = `/kitap/${work.slug}`;
   const cover = absoluteUrl(work.coverUrl);
+  const searchIndexExcluded = isSearchIndexExcludedPublicWorkSlug(slug);
 
   return {
     title,
@@ -90,8 +91,8 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: !query.from && !isSearchIndexExcludedPublicWorkSlug(slug),
-      follow: true,
+      index: !query.from && !searchIndexExcluded,
+      follow: !searchIndexExcluded,
     },
     openGraph: {
       type: "article",

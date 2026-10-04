@@ -1,3 +1,4 @@
+import Link from "next/link";
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
@@ -124,11 +125,19 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             Yazmak istediğin türü seç.
           </h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.invitation}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <p className="inline-flex rounded-full bg-[#211746] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm">
-              {genres.length} tür eğitimi soldaki menüde →
-            </p>
-            <p className="text-sm font-semibold text-[#77707f]">Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.</p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {genres.map((genre) => (
+              <Link
+                className="group rounded-[1.35rem] border border-[#6b52c7]/10 bg-[#fffdf8] px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.04)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
+                href={`${hub.href}/${genre.slug}`}
+                key={genre.slug}
+              >
+                <strong className="block text-sm font-extrabold text-[#211746]">{genre.label} eğitimi</strong>
+                <span className="mt-1 block text-xs font-semibold leading-5 text-[#77707f]">
+                  {genre.label} yazarlığına özel rehbere geç <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
       </article>

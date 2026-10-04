@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Editörlüğe Başlama | İlkOku Editörlük Okulu",
   description: "Editörün rolünü, müdahale sınırını, ilk okuma yaklaşımını, editöryal geri bildirimi ve profesyonel çalışma ilkelerini adım adım öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/editorluge-baslama" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/editorler-icin/egitim/editorluge-baslama",
+});
 
 const gains = [
   {

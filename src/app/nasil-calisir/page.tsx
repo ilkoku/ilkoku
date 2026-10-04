@@ -5,6 +5,7 @@ import { HowItWorksExperience } from "@/components/content/HowItWorksExperience"
 import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import "./how-it-works.css";
 import "./hero-proof-light.css";
 import "./role-illustrations.css";
@@ -45,12 +46,13 @@ const resolvePage = cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await resolvePage();
+  const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);
 
   return {
     title: page.seoTitle,
     description: page.seoDescription,
     alternates: { canonical: page.canonical },
-    robots: page.noIndex
+    robots: noIndex
       ? { index: false, follow: true }
       : { index: true, follow: true },
     openGraph: {

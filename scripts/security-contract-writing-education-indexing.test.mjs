@@ -305,11 +305,37 @@ test("public writing guides stay ISR-cacheable and CMS reads stay published-only
 });
 
 
+test("all writing guide renderers expose organization-authored Article structured data", () => {
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+  const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
+  const story = source("src/app/yazarlar-icin/kurgu/oyku/page.tsx");
+
+  for (const [label, guide] of [
+    ["batched education", education],
+    ["batched fiction", fiction],
+    ["story", story],
+  ]) {
+    assertContains(guide, '"@type": "Article"', `${label} Article schema`);
+    assertContains(guide, 'name: "İlkOku"', `${label} organization author name`);
+    assertContains(guide, 'author: {', `${label} author relation`);
+    assertContains(guide, 'publisher: {', `${label} publisher relation`);
+    assertContains(guide, '"@id": "https://ilkoku.com/#organization"', `${label} organization identity`);
+  }
+
+  assertContains(education, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "education WebPage to Article relation");
+  assertContains(fiction, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "fiction WebPage to Article relation");
+  assertContains(education, 'mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` }', "education Article to WebPage relation");
+  assertContains(fiction, 'mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` }', "fiction Article to WebPage relation");
+  assertContains(story, "mainEntityOfPage: canonicalUrl", "story canonical Article relation");
+});
+
+
 test("roman guide exposes Article and breadcrumb structured data", () => {
   const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
   assertContains(roman, '"@type": "Article"', "Roman Article schema");
   assertContains(roman, '"@type": "BreadcrumbList"', "Roman breadcrumb schema");
   assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
+  assertContains(roman, 'author: { "@type": "Organization", name: "İlkOku"', "Roman author schema");
   assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
 });
 

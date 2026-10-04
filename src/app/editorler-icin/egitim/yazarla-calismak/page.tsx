@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Yazarla Çalışmak | İlkOku Editörlük Okulu",
-  description:
-    "Editör-yazar ilişkisinde hedef, kapsam, revizyon döngüsü, fikir ayrılığı, profesyonel iletişim, müdahale sınırı ve yazarın yaratıcı karar alanını korumayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/yazarla-calismak" },
-  robots: { index: true, follow: true },
-};
+  description: "Editör-yazar ilişkisinde hedef, kapsam, revizyon döngüsü, fikir ayrılığı, profesyonel iletişim, müdahale sınırı ve yazarın yaratıcı karar alanını korumayı öğren.",
+  canonical: "/editorler-icin/egitim/yazarla-calismak",
+});
 
 const outcomes = [
   {

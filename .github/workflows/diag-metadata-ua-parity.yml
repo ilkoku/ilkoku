@@ -93,32 +93,8 @@ jobs:
             echo "HTTP=$code"
             awk 'BEGIN{IGNORECASE=1} /^(server|cache-control|age|etag|last-modified|x-hcdn-cache-status|cf-cache-status|vary):/{gsub(/\r/,""); print}' "$headers" || true
 
-            BODY_PATH="$body" node <<'NODE'
-const fs = require("fs");
-const html = fs.readFileSync(process.env.BODY_PATH, "utf8");
-const headMatch = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
-const head = headMatch ? headMatch[1] : "";
-const collect = (source, regex) => [...source.matchAll(regex)].map((m) => m[1].replace(/&amp;/g, "&").trim());
-const result = {
-  bytes: Buffer.byteLength(html),
-  fullTitles: collect(html, /<title[^>]*>([\s\S]*?)<\/title>/gi),
-  headTitles: collect(head, /<title[^>]*>([\s\S]*?)<\/title>/gi),
-  fullDescriptions: collect(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
-    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["'][^>]*>/gi)),
-  headDescriptions: collect(head, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
-    .concat(collect(head, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["'][^>]*>/gi)),
-  canonicals: collect(html, /<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["'][^>]*>/gi)
-    .concat(collect(html, /<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["'][^>]*>/gi)),
-  robots: collect(html, /<meta[^>]+name=["']robots["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
-    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']robots["'][^>]*>/gi)),
-  googlebot: collect(html, /<meta[^>]+name=["']googlebot["'][^>]+content=["']([^"']*)["'][^>]*>/gi)
-    .concat(collect(html, /<meta[^>]+content=["']([^"']*)["'][^>]+name=["']googlebot["'][^>]*>/gi)),
-  titleTagCount: (html.match(/<title\b/gi) || []).length,
-  descriptionTagCount: (html.match(/<meta[^>]+name=["']description["']/gi) || []).length,
-  hasNextMetadataBoundary: html.includes("next-size-adjust") || html.includes("$RC(") || html.includes("__next_f"),
-};
-console.log(JSON.stringify(result, null, 2));
-NODE
+            node scripts/diag-metadata-html.mjs "$body"
+
             rm -f "$body" "$headers"
           }
 

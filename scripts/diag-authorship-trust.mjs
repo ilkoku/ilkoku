@@ -11,7 +11,13 @@ function textOnly(html=""){return decode(html.replace(/<script\b[\s\S]*?<\/scrip
 const sm=await fetch(`${BASE}/sitemap.xml`,{headers:{"user-agent":UA},signal:AbortSignal.timeout(TIMEOUT_MS)});
 if(!sm.ok) throw new Error(`sitemap HTTP ${sm.status}`);
 const xml=await sm.text();
-const urls=[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>normUrl(decode(m[1]))).filter(u=>u&&u.includes("/yazarlar-icin/"));
+const urls=[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+  .map(m=>normUrl(decode(m[1])))
+  .filter(u=>u&&u.includes("/yazarlar-icin/"))
+  .filter(u=>{
+    const path=new URL(u).pathname;
+    return path.split("/").filter(Boolean).length===3;
+  });
 
 const rows=[];
 for(let i=0;i<urls.length;i++){

@@ -217,6 +217,7 @@ test("soft-launch search gate keeps sensitive and utility pages crawlable but ou
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const robots = source("src/app/robots.ts");
+  const productionSmoke = source(".github/workflows/production-smoke.yml");
 
   for (const route of [
     "/nasil-calisir",
@@ -267,6 +268,12 @@ test("soft-launch search gate keeps sensitive and utility pages crawlable but ou
 
   const legal = source("src/app/yasal/[slug]/page.tsx");
   assertContains(legal, "Boolean(cms?.noIndex) || isSoftLaunchSearchExcludedPath(canonical)", "legal pages combine CMS and soft-launch noindex");
+
+  assertContains(productionSmoke, "check_soft_launch_sitemap", "production smoke uses the soft-launch sitemap contract");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu</loc>'", "production smoke requires a safe writing hub");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/nasil-calisir</loc>'", "production smoke forbids sensitive how-it-works from sitemap");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/en-cok-satanlar'", "production smoke forbids the Book Index sitemap family");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/'", "production smoke forbids legal utility sitemap family");
 });
 
 

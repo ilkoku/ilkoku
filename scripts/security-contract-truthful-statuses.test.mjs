@@ -15,20 +15,20 @@ function notContains(text, fragment, label) {
   assert.equal(text.includes(fragment), false, `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("contact is a complete indexable public SEO surface and sitemap member", () => {
+test("contact stays public and canonical but noindex during soft launch", () => {
   const page = source("src/app/iletisim/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 
   contains(page, 'canonical: "/iletisim"', "contact self canonical");
-  contains(page, "robots: { index: true, follow: true }", "contact index policy");
+  contains(page, "robots: { index: false, follow: true }", "contact soft-launch noindex policy");
   contains(page, "openGraph:", "contact Open Graph metadata");
   contains(page, "twitter:", "contact Twitter metadata");
   contains(page, 'const socialImage = "/opengraph-image"', "contact social image fallback");
-  contains(sitemap, 'url: `${baseUrl}/iletisim`', "contact sitemap entry");
+  contains(sitemap, "filterSoftLaunchSitemapEntries", "contact sitemap output is soft-launch filtered");
   contains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned route inventory");
-  contains(publicSeoRoutes, '"/iletisim"', "canonical code-owned contact inventory");
+  notContains(publicSeoRoutes, '"/iletisim"', "contact is excluded from the temporary index-target inventory");
 });
 
 test("SEO workbench never paints robots social or structured data green without live evidence", () => {

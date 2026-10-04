@@ -21,11 +21,11 @@ test("active shared brand copy derives from the canonical public brand source", 
 });
 
 
-test("root social share card stays concise and uses the official logo", () => {
+test("root social share card stays concise and uses the selected İlkOku social image", () => {
   const card = source("src/app/opengraph-image.tsx");
   const twitterCard = source("src/app/twitter-image.tsx");
 
-  assert.match(card, /https:\/\/ilkoku\.com\/icons\/ilkoku-512\.png/u);
+  assert.match(card, /https:\/\/ilkoku\.com\/og\/ilkoku-social-selected-2026\.webp/u);
   assert.match(card, /publicBrandPositioning/u);
   assert.match(card, /publicBrandShortSlogan/u);
   assert.doesNotMatch(card, /publicBrandDescription/u);

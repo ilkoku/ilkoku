@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import {
   publicBrandName,
@@ -11,11 +9,8 @@ import {
 export const alt = publicBrandTitle;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const runtime = "nodejs";
-
-export default async function OpenGraphImage() {
-  const logoData = await readFile(join(process.cwd(), "public/icons/ilkoku-512.png"), "base64");
-  const logoSrc = `data:image/png;base64,${logoData}`;
+export default function OpenGraphImage() {
+  const logoSrc = "https://ilkoku.com/icons/ilkoku-512.png";
 
   return new ImageResponse(
     <div
@@ -68,8 +63,8 @@ export default async function OpenGraphImage() {
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <img
             src={logoSrc}
-            width="118"
-            height="118"
+            width={118}
+            height={118}
             alt=""
             style={{
               borderRadius: 999,

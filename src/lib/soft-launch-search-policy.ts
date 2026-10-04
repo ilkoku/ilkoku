@@ -1,4 +1,4 @@
-const SOFT_LAUNCH_NOINDEX_EXACT_PATHS = new Set([
+const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/nasil-calisir",
   "/yazarlar-icin",
   "/editorler-icin",
@@ -42,9 +42,7 @@ function normalizePublicPath(value: string) {
 export function isSoftLaunchSearchExcludedPath(value: string) {
   const path = normalizePublicPath(value);
 
-  if (SOFT_LAUNCH_NOINDEX_EXACT_PATHS.has(
-    path as (typeof SOFT_LAUNCH_NOINDEX_EXACT_PATHS extends Set<infer T> ? T : never),
-  )) {
+  if (SOFT_LAUNCH_NOINDEX_EXACT_PATHS.has(path)) {
     return true;
   }
 

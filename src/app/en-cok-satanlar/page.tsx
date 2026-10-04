@@ -4,6 +4,7 @@ import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-acces
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 const canonical = "/en-cok-satanlar";
@@ -24,12 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: !context.gate.canPublish,
+    noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish,
   });
 }
 
 export default async function BestsellersPage() {
   const context = await getBookIndexSoftLaunchPageContext(100);
+  const searchIndexable = context.gate.canPublish && !isSoftLaunchSearchExcludedPath(canonical);
   const previewItems = context.model.turkey.items.filter((item) => item.rank <= 3);
   const [lastObservedAt, insights] = await Promise.all([
     Promise.resolve(getBookIndexLastObservedAt(context.model)),
@@ -84,7 +86,7 @@ export default async function BestsellersPage() {
 
   return (
     <>
-      {context.gate.canPublish ? (
+      {searchIndexable ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

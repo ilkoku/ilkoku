@@ -13,6 +13,7 @@ import {
   getBookIndexLastObservedAt,
 } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: definition.description,
     canonical: canonical(slug),
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: !context.gate.canPublish || items.length === 0,
+    noIndex: isSoftLaunchSearchExcludedPath(canonical(slug)) || !context.gate.canPublish || items.length === 0,
   });
 }
 
@@ -73,6 +74,9 @@ export default async function BookIndexInsightPage({
     getBookIndexInsights(50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);
+  const searchIndexable = context.gate.canPublish
+    && items.length > 0
+    && !isSoftLaunchSearchExcludedPath(canonical(slug));
 
   const pageUrl = `${baseUrl}${canonical(slug)}`;
   const lastObservedAt = getBookIndexLastObservedAt(context.model);
@@ -131,7 +135,7 @@ export default async function BookIndexInsightPage({
 
   return (
     <>
-      {context.gate.canPublish && items.length > 0 ? (
+      {searchIndexable ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

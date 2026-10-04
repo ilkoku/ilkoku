@@ -191,7 +191,7 @@ test("Bestseller comparison has a dedicated gated SEO route", () => {
   );
   contains(
     page,
-    "noIndex: !context.gate.canPublish",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
     "comparison route stays noindex until Book Index publication is approved",
   );
   contains(
@@ -445,7 +445,7 @@ test("New-release production exceptions stay source-specific and fail closed", (
   );
 });
 
-test("Yeni Çıkanlar page is indexable and remains source-native", () => {
+test("Yeni Çıkanlar page stays public but noindex during soft launch and remains source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
@@ -454,9 +454,9 @@ test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
-  contains(page, "noIndex: false", "Yeni Çıkanlar is indexable after source validation");
+  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "Yeni Çıkanlar follows soft-launch noindex policy");
   contains(page, "getTurkeyNewReleaseRows(500)", "Yeni Çıkanlar uses the isolated read model");
-  contains(sitemap, 'url: `${baseUrl}/yeni-cikanlar`', "Yeni Çıkanlar is included in the public sitemap");
+  contains(sitemap, "filterSoftLaunchSitemapEntries", "Yeni Çıkanlar sitemap output is filtered during soft launch");
 
   contains(
     view,

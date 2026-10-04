@@ -35,7 +35,17 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
   );
   contains(
     workflow,
-    "Book Index is not published in sitemap; gated SEO checks remain skipped.",
-    "Book Index remains fail-closed before publication",
+    "check_noindex_page",
+    "soft-launch crawlable noindex verification helper",
+  );
+  contains(
+    workflow,
+    "PASS: soft-launch index targets and crawlable noindex routes verified.",
+    "scheduled smoke verifies the temporary search policy",
+  );
+  contains(
+    workflow,
+    "! grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar' \"$sitemap\"",
+    "Book Index stays excluded from sitemap during soft launch",
   );
 });

@@ -146,7 +146,7 @@ test("robots mirrors private and protected route inventories without shadowing p
   }
 });
 
-test("sitemap keeps public trust and legal routes always indexable while preserving CMS noindex elsewhere", () => {
+test("CMS trust/legal defaults remain stable while sitemap applies route-level soft-launch filtering", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");
   const legalStore = source("src/lib/cms-legal-public-store.ts");
@@ -212,6 +212,63 @@ test("sitemap keeps public trust and legal routes always indexable while preserv
   assertNotContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "retired author directory sitemap route");
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
+
+test("soft-launch search gate keeps sensitive and utility pages crawlable but out of the index and sitemap", () => {
+  const policy = source("src/lib/soft-launch-search-policy.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const robots = source("src/app/robots.ts");
+
+  for (const route of [
+    "/nasil-calisir",
+    "/yazarlar-icin",
+    "/editorler-icin",
+    "/yayinevleri-icin",
+    "/editoryal-standartlar",
+    "/yardim",
+    "/iletisim",
+    "/site-haritasi",
+    "/yasal/kullanim-sartlari",
+    "/yasal/gizlilik-politikasi",
+    "/yasal/kvkk",
+    "/yasal/cerez-politikasi",
+    "/yasal/telif-hakki-politikasi",
+    "/yeni-cikanlar",
+  ]) {
+    assertContains(policy, `"${route}"`, `${route} soft-launch exact exclusion`);
+    assertNotContains(robots, `"${route}"`, `${route} stays crawlable so noindex can be read`);
+  }
+
+  assertContains(policy, '"/en-cok-satanlar"', "Book Index prefix exclusion");
+  assertContains(policy, "path.startsWith(`${prefix}/`)", "Book Index descendants inherit exclusion");
+  assertContains(policy, "filterSoftLaunchSitemapEntries", "central sitemap soft-launch filter");
+  assertContains(sitemap, 'import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";', "sitemap imports soft-launch filter");
+  assertContains(sitemap, "return filterSoftLaunchSitemapEntries([", "database-backed sitemap is filtered");
+  assertContains(sitemap, "return filterSoftLaunchSitemapEntries(staticFallbackEntries);", "fallback sitemap is filtered");
+
+  for (const pagePath of [
+    "src/app/nasil-calisir/page.tsx",
+    "src/app/yazarlar-icin/page.tsx",
+    "src/app/editorler-icin/page.tsx",
+    "src/app/yayinevleri-icin/page.tsx",
+    "src/app/editoryal-standartlar/page.tsx",
+  ]) {
+    const page = source(pagePath);
+    assertContains(page, "isSoftLaunchSearchExcludedPath", `${pagePath} soft-launch metadata gate`);
+    assertContains(page, "const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);", `${pagePath} CMS plus soft-launch noindex`);
+  }
+
+  for (const pagePath of [
+    "src/app/yardim/page.tsx",
+    "src/app/iletisim/page.tsx",
+    "src/app/site-haritasi/page.tsx",
+  ]) {
+    assertContains(source(pagePath), "robots: { index: false, follow: true }", `${pagePath} noindex-follow`);
+  }
+
+  const legal = source("src/app/yasal/[slug]/page.tsx");
+  assertContains(legal, "Boolean(cms?.noIndex) || isSoftLaunchSearchExcludedPath(canonical)", "legal pages combine CMS and soft-launch noindex");
+});
+
 
 test("active public help surfaces expose canonical social metadata", () => {
   for (const [path, canonical] of [
@@ -348,7 +405,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
-test("public HTML site map exposes the complete crawl discovery graph", () => {
+test("public HTML site map remains a crawlable noindex discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
@@ -356,7 +413,7 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
   const smoke = source(".github/workflows/production-smoke.yml");
 
   assertContains(page, 'alternates: { canonical: "/site-haritasi" }', "site map self canonical");
-  assertContains(page, "robots: { index: true, follow: true }", "site map index/follow");
+  assertContains(page, "robots: { index: false, follow: true }", "site map noindex/follow");
   assertContains(page, "SITE_MAP_PAGES", "code-owned public route inventory");
   assertContains(page, "loadPublishedCmsSiteMapPages()", "published CMS discovery links");
   assertContains(page, "prisma.work.findMany", "published public work discovery links");
@@ -368,7 +425,7 @@ test("public HTML site map exposes the complete crawl discovery graph", () => {
   assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
   assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");
   assertContains(navigation, '{ href: "/site-haritasi", label: "Site Haritası" }', "site map footer/support link");
-  assertContains(sitemap, 'url: `${baseUrl}/site-haritasi`', "XML sitemap includes HTML site map");
+  assertContains(sitemap, "filterSoftLaunchSitemapEntries", "XML sitemap filters the noindex HTML site map");
 
   for (const cohort of [
     "https://ilkoku.com/site-haritasi",

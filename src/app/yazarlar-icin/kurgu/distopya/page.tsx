@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -285,12 +286,11 @@ function buildDistopyaBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Distopya Nasıl Yazılır? | İlkOku",
   description: "Toplumsal korkudan kontrol sistemine, normalleşmeden karakter suç ortaklığına, direniş ve revizyona kadar adım adım distopya yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/distopya" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/distopya",
+});
 
 export default async function DistopyaYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;

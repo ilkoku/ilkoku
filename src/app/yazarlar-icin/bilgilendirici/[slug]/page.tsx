@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { notFound } from "next/navigation";
 
 import { BatchedEducationGuidePage } from "@/components/content/BatchedEducationGuidePage";
@@ -51,12 +52,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Eğitim bulunamadı | İlkOku", robots: { index: false, follow: false } };
   }
   const definition = getEducationGuideDefinition(slug);
-  return {
+  return createPublicPageMetadata({
     title: `${definition.title} | İlkOku`,
     description: definition.description,
-    alternates: { canonical: `https://ilkoku.com/yazarlar-icin/bilgilendirici/${slug}` },
-    robots: { index: true, follow: true },
-  };
+    canonical: `/yazarlar-icin/bilgilendirici/${slug}`,
+  });
 }
 
 export default async function InformationalGuidePage({ params }: PageProps) {

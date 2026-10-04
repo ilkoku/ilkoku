@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -302,12 +303,11 @@ function buildFantastikBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Fantastik Nasıl Yazılır? | İlkOku",
   description: "Dünya kurmadan büyü sistemine, haritadan kültür ve karakter bedeline kadar adım adım fantastik yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/fantastik" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/fantastik",
+});
 
 export default async function FantastikYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;

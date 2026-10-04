@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { BatchedEducationGuidePage } from "@/components/content/BatchedEducationGuidePage";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { getEducationGuideDefinition } from "@/lib/academic-guide-batch";
 import "../../batched-education-guide.css";
 
 export const revalidate = 300;
 const definition = getEducationGuideDefinition("makale");
-export const metadata: Metadata = { title: `${definition.title} | İlkOku`, description: definition.description, alternates: { canonical: "https://ilkoku.com/yazarlar-icin/akademik/makale" }, robots: { index: true, follow: true } };
+export const metadata: Metadata = createPublicPageMetadata({
+  title: `${definition.title} | İlkOku`,
+  description: definition.description,
+  canonical: "/yazarlar-icin/akademik/makale",
+});
 export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

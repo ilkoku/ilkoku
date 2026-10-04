@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -270,12 +271,11 @@ const canonicalUrl = "https://ilkoku.com/yazarlar-icin/kurgu/oyku";
 const metadataDescription =
   "Öykü fikrinden karaktere, kısa form yapısından sahne ekonomisine, finalden revizyona kadar örneklerle adım adım öykü yazarlık rehberi.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Öykü Nasıl Yazılır? | İlkOku",
   description: metadataDescription,
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/oyku" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/oyku",
+});
 
 export default async function OykuYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;

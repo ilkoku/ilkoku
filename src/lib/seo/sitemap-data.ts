@@ -116,7 +116,7 @@ const writingGenreHrefs = GENRES.map((genre) => {
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
-    lastModified: WRITING_CATEGORY_INDEXABLE_AT,
+    lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
@@ -127,10 +127,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified:
-        genre.category === "Bilgilendirici"
-          ? INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT
-          : WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
+      lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

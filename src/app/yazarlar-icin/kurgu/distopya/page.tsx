@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
+import { WritingGuideStructuredData } from "@/components/content/WritingGuideStructuredData";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 
@@ -327,7 +328,15 @@ export default async function DistopyaYazarlikRehberiPage() {
   const blocks = buildDistopyaBlocks(visuals, alts, title, summary);
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="distopya">
+    <>
+      <WritingGuideStructuredData
+        canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/distopya"
+        title={title}
+        description={summary}
+        categoryName="Kurgu"
+        categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+      />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="distopya">
       <div className="distopya-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
@@ -337,6 +346,7 @@ export default async function DistopyaYazarlikRehberiPage() {
           unoptimizedImages
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

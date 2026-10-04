@@ -242,6 +242,40 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     },
   ];
 
+  const renderedBlocks: CmsPageBlock[] = definition.category === "Bilgilendirici"
+    ? blocks.flatMap((block) => {
+        const sharedFrameworkIds = new Set([
+          `${definition.slug}-tam-yazim-rotasi`,
+          `${definition.slug}-structure`,
+          `${definition.slug}-structure-visual`,
+          `${definition.slug}-anatomy`,
+          `${definition.slug}-practice`,
+          `${definition.slug}-page-setup`,
+          `${definition.slug}-yazim-duzeni`,
+          `${definition.slug}-ilk-taslak`,
+          `${definition.slug}-revision`,
+          `${definition.slug}-yayina-hazirlik`,
+          `${definition.slug}-uygulama-ciktisi`,
+        ]);
+
+        if (sharedFrameworkIds.has(block.id)) return [];
+
+        if (block.id === `${definition.slug}-tur-farki`) {
+          return [
+            block,
+            {
+              id: `${definition.slug}-ortak-yazim-sistemi`,
+              type: "text",
+              heading: "Ortak araştırma ve doğrulama sistemi",
+              body: `Kaynak planı, iddia–kanıt eşleştirme, taslak düzeni ve yayın öncesi doğrulamanın bütün Bilgilendirici eserlerde ortak olan adımları **[Bilgilendirici Yazarlık Eğitimleri](/yazarlar-icin/bilgilendirici)** sayfasında tek çatı altında anlatılır. Bu sayfa ise **${definition.label}** alanına özgü kaynak sorunlarına, yöntemlere, risklere, örnek projeye ve uygulama kararlarına odaklanır.`,
+            },
+          ];
+        }
+
+        return [block];
+      })
+    : blocks;
+
   const categoryHub = WRITING_CATEGORY_HUBS.find((hub) => hub.category === definition.category);
   const canonicalUrl = categoryHub
     ? `https://ilkoku.com${categoryHub.href}/${definition.slug}`
@@ -308,7 +342,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       <WritingGuideShell activeCategory={definition.category} activeGenreSlug={definition.slug}>
       <div className="batched-education-writing-guide">
         <PublicCmsPageBlocks
-          blocks={blocks}
+          blocks={renderedBlocks}
           eyebrow={`Yazarlar İçin · ${definition.category}`}
           pageTitle={title}
           summary={summary}

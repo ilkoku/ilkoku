@@ -1,0 +1,25 @@
+name: Authorship trust audit
+
+on:
+  push:
+    branches:
+      - diag/metadata-ua-parity-20261004
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Audit writing guide authorship signals
+        run: node scripts/diag-authorship-trust.mjs

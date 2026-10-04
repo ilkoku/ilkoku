@@ -20,7 +20,7 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
+import { INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT, WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
 
 const baseUrl = "https://ilkoku.com";
 
@@ -127,7 +127,10 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified: WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
+      lastModified:
+        genre.category === "Bilgilendirici"
+          ? INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT
+          : WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

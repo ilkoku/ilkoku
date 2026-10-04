@@ -126,8 +126,13 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
 
   assertContains(
     sitemap,
-    'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
-    "sitemap shared writing guide freshness import",
+    'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT, WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT',
+    "sitemap shared writing guide freshness imports",
+  );
+  assertContains(
+    sitemap,
+    'from "@/lib/search-content-freshness"',
+    "sitemap shared writing guide freshness module",
   );
   assertContains(
     sitemap,
@@ -138,6 +143,21 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     searchFreshness,
     'new Date("2026-10-01T08:40:42Z")',
     "writing guide structured-data lastmod timestamp",
+  );
+  assertContains(
+    searchFreshness,
+    'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT = new Date("2026-10-04T12:14:35Z")',
+    "informational guide truthful content lastmod",
+  );
+  assertContains(
+    sitemap,
+    'genre.category === "Bilgilendirici"',
+    "informational guide sitemap lastmod gate",
+  );
+  assertContains(
+    sitemap,
+    "INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT",
+    "informational guide sitemap freshness source",
   );
   assertContains(
     recentUpdatesAtom,

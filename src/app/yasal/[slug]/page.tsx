@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getPublishedLegalDocumentState } from "@/lib/cms-legal-public-store";
 import { contactEmail, legalNavigation, legalPages } from "@/lib/legal-public-content";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import "../legal.css";
 
 type PageProps = {
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     canonical,
-    noIndex: Boolean(cms?.noIndex),
+    noIndex: Boolean(cms?.noIndex) || isSoftLaunchSearchExcludedPath(canonical),
     languages: {
       "tr-TR": `/yasal/${slug}`,
       "x-default": `/yasal/${slug}`,

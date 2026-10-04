@@ -46,7 +46,9 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(openGraph, 'contentType = "image/png"', "Open Graph content type");
   assertContains(openGraph, "publicBrandPositioning", "Open Graph positioning");
   assertContains(openGraph, "publicBrandShortSlogan", "Open Graph short slogan");
-  assertContains(openGraph, "publicBrandDescription", "Open Graph description");
+  assertNotContains(openGraph, "publicBrandDescription", "Open Graph artwork stays concise");
+  assertContains(homepage, "const homeDescription = publicBrandDescription", "homepage keeps canonical metadata description");
+  assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
   assertContains(twitter, 'from "./opengraph-image"', "Twitter reuses canonical social artwork");
 });
 

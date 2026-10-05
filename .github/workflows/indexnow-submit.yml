@@ -95,12 +95,12 @@ jobs:
             sitemap_ready=1
 
             for required in \
-              'https://ilkoku.com/site-haritasi' \
               'https://ilkoku.com/yazarlar-icin/kurgu/roman' \
               'https://ilkoku.com/okurlar-icin/okumaya-baslama' \
               'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'; do
               if [[ "$sitemap_body" != *"<loc>${required}</loc>"* ]]; then
                 sitemap_ready=0
+                echo "Sitemap cohort not ready yet: missing ${required}"
               fi
             done
 

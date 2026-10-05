@@ -129,23 +129,28 @@ jobs:
             for required in \
               '<loc>https://ilkoku.com/</loc>' \
               '<loc>https://ilkoku.com/hakkimizda</loc>' \
-              '<loc>https://ilkoku.com/icerik-ve-yas-politikasi</loc>' \
-              '<loc>https://ilkoku.com/topluluk-kurallari</loc>' \
-              '<loc>https://ilkoku.com/telif-bildirimi</loc>' \
+              '<loc>https://ilkoku.com/nasil-calisir</loc>' \
+              '<loc>https://ilkoku.com/yazarlar-icin</loc>' \
               '<loc>https://ilkoku.com/okurlar-icin</loc>' \
+              '<loc>https://ilkoku.com/editorler-icin</loc>' \
+              '<loc>https://ilkoku.com/yayinevleri-icin</loc>' \
+              '<loc>https://ilkoku.com/editoryal-standartlar</loc>' \
               '<loc>https://ilkoku.com/yazarlar-icin/kurgu</loc>' \
+              '<loc>https://ilkoku.com/yazarlar-icin/edebiyat</loc>' \
               '<loc>https://ilkoku.com/yazarlar-icin/kurgu/roman</loc>' \
+              '<loc>https://ilkoku.com/yazarlar-icin/edebiyat/siir</loc>' \
               '<loc>https://ilkoku.com/okurlar-icin/okumaya-baslama</loc>' \
               '<loc>https://ilkoku.com/editorler-icin/egitim/editorluge-baslama</loc>'; do
               grep -Fq "$required" "$body" || { echo "Eksik sitemap hedefi: $required" >&2; rm -f "$body"; return 1; }
             done
 
             for forbidden in \
-              '<loc>https://ilkoku.com/nasil-calisir</loc>' \
-              '<loc>https://ilkoku.com/yazarlar-icin</loc>' \
-              '<loc>https://ilkoku.com/editorler-icin</loc>' \
-              '<loc>https://ilkoku.com/yayinevleri-icin</loc>' \
-              '<loc>https://ilkoku.com/editoryal-standartlar</loc>' \
+              '<loc>https://ilkoku.com/icerik-ve-yas-politikasi</loc>' \
+              '<loc>https://ilkoku.com/topluluk-kurallari</loc>' \
+              '<loc>https://ilkoku.com/telif-bildirimi</loc>' \
+              '<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>' \
+              '<loc>https://ilkoku.com/okurlar-icin/aktif-okuma</loc>' \
+              '<loc>https://ilkoku.com/editorler-icin/egitim/yapisal-editorluk</loc>' \
               '<loc>https://ilkoku.com/yardim</loc>' \
               '<loc>https://ilkoku.com/iletisim</loc>' \
               '<loc>https://ilkoku.com/site-haritasi</loc>' \

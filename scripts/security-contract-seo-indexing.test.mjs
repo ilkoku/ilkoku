@@ -218,21 +218,50 @@ test("CMS trust/legal defaults remain stable while sitemap applies route-level s
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
-test("soft-launch search gate keeps sensitive and utility pages crawlable but out of the index and sitemap", () => {
+test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const robots = source("src/app/robots.ts");
+  const metadata = source("src/lib/public-page-metadata.ts");
+  const readerLesson = source("src/app/okurlar-icin/[slug]/page.tsx");
   const productionSmoke = source(".github/workflows/production-smoke.yml");
 
   for (const route of [
     "/nasil-calisir",
+    "/hakkimizda",
     "/yazarlar-icin",
+    "/okurlar-icin",
     "/editorler-icin",
     "/yayinevleri-icin",
     "/editoryal-standartlar",
+    "/yazarlar-icin/kurgu",
+    "/yazarlar-icin/edebiyat",
+    "/yazarlar-icin/akademik",
+    "/yazarlar-icin/bilgilendirici",
+    "/yazarlar-icin/senaryo-ve-sahne",
+    "/yazarlar-icin/cocuk-ve-genclik",
+    "/yazarlar-icin/cizgi-anlati",
+    "/yazarlar-icin/kurgu/roman",
+    "/yazarlar-icin/kurgu/oyku",
+    "/yazarlar-icin/kurgu/fantastik",
+    "/yazarlar-icin/kurgu/bilim-kurgu",
+    "/yazarlar-icin/kurgu/distopya",
+    "/yazarlar-icin/edebiyat/siir",
+    "/okurlar-icin/okumaya-baslama",
+    "/editorler-icin/egitim/editorluge-baslama",
+    "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+    "/editorler-icin/egitim/metin-degerlendirme",
+  ]) {
+    assertContains(policy, `"${route}"`, `${route} focused index cohort`);
+  }
+
+  for (const route of [
     "/yardim",
     "/iletisim",
     "/site-haritasi",
+    "/topluluk-kurallari",
+    "/icerik-ve-yas-politikasi",
+    "/telif-bildirimi",
     "/yasal/kullanim-sartlari",
     "/yasal/gizlilik-politikasi",
     "/yasal/kvkk",
@@ -240,16 +269,27 @@ test("soft-launch search gate keeps sensitive and utility pages crawlable but ou
     "/yasal/telif-hakki-politikasi",
     "/yeni-cikanlar",
   ]) {
-    assertContains(policy, `"${route}"`, `${route} soft-launch exact exclusion`);
-    assertNotContains(robots, `"${route}"`, `${route} stays crawlable so noindex can be read`);
+    assertContains(policy, `"${route}"`, `${route} exact noindex route`);
+    assertNotContains(robots, `"${route}"`, `${route} remains crawlable and available on site`);
   }
 
-  assertContains(policy, '"/en-cok-satanlar"', "Book Index prefix exclusion");
-  assertContains(policy, "path.startsWith(`${prefix}/`)", "Book Index descendants inherit exclusion");
+  for (const prefix of [
+    "/en-cok-satanlar",
+    "/yazarlar-icin",
+    "/okurlar-icin",
+    "/editorler-icin/egitim",
+  ]) {
+    assertContains(policy, `"${prefix}"`, `${prefix} focused noindex prefix`);
+  }
+
+  assertContains(policy, "SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path)", "explicit indexable routes override family noindex prefixes");
+  assertContains(policy, "path.startsWith(`${prefix}/`)", "descendants inherit exclusion unless explicitly indexable");
   assertContains(policy, "filterSoftLaunchSitemapEntries", "central sitemap soft-launch filter");
   assertContains(sitemap, 'import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";', "sitemap imports soft-launch filter");
   assertContains(sitemap, "return filterSoftLaunchSitemapEntries([", "database-backed sitemap is filtered");
   assertContains(sitemap, "return filterSoftLaunchSitemapEntries(staticFallbackEntries);", "fallback sitemap is filtered");
+  assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "shared public metadata applies focused search policy");
+  assertContains(readerLesson, "const noIndex = isSoftLaunchSearchExcludedPath(canonical);", "reader lesson metadata applies focused search policy");
 
   for (const pagePath of [
     "src/app/nasil-calisir/page.tsx",
@@ -263,20 +303,15 @@ test("soft-launch search gate keeps sensitive and utility pages crawlable but ou
     assertContains(page, "const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);", `${pagePath} CMS plus soft-launch noindex`);
   }
 
-  for (const pagePath of [
-    "src/app/yardim/page.tsx",
-    "src/app/iletisim/page.tsx",
-    "src/app/site-haritasi/page.tsx",
-  ]) {
-    assertContains(source(pagePath), "robots: { index: false, follow: true }", `${pagePath} noindex-follow`);
-  }
-
   const legal = source("src/app/yasal/[slug]/page.tsx");
   assertContains(legal, "Boolean(cms?.noIndex) || isSoftLaunchSearchExcludedPath(canonical)", "legal pages combine CMS and soft-launch noindex");
 
-  assertContains(productionSmoke, "check_soft_launch_sitemap", "production smoke uses the soft-launch sitemap contract");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu</loc>'", "production smoke requires a safe writing hub");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/nasil-calisir</loc>'", "production smoke forbids sensitive how-it-works from sitemap");
+  assertContains(productionSmoke, "check_soft_launch_sitemap", "production smoke uses the focused sitemap contract");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/nasil-calisir</loc>'", "production smoke requires how-it-works pillar");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin</loc>'", "production smoke requires writer pillar");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/editorler-icin</loc>'", "production smoke requires editor pillar");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yayinevleri-icin</loc>'", "production smoke requires publisher pillar");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>'", "production smoke forbids non-cohort long-tail writing route");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/en-cok-satanlar'", "production smoke forbids the Book Index sitemap family");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/'", "production smoke forbids legal utility sitemap family");
 });

@@ -24,13 +24,13 @@ export const metadata: Metadata = {
     url: canonical,
     title,
     description,
-    images: [{ url: "/opengraph-image", alt: "İlkOku Okurluk Okulu" }],
+    images: [{ url: "/og/ilkoku-social-selected-2026.webp", alt: "İlkOku Okurluk Okulu" }],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
-    images: ["/opengraph-image"],
+    images: ["/og/ilkoku-social-selected-2026.webp"],
   },
 };
 

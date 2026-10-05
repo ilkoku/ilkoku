@@ -1,12 +1,37 @@
-const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
+const SOFT_LAUNCH_INDEXABLE_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/nasil-calisir",
+  "/hakkimizda",
   "/yazarlar-icin",
+  "/okurlar-icin",
   "/editorler-icin",
   "/yayinevleri-icin",
   "/editoryal-standartlar",
+  "/yazarlar-icin/kurgu",
+  "/yazarlar-icin/edebiyat",
+  "/yazarlar-icin/akademik",
+  "/yazarlar-icin/bilgilendirici",
+  "/yazarlar-icin/senaryo-ve-sahne",
+  "/yazarlar-icin/cocuk-ve-genclik",
+  "/yazarlar-icin/cizgi-anlati",
+  "/yazarlar-icin/kurgu/roman",
+  "/yazarlar-icin/kurgu/oyku",
+  "/yazarlar-icin/kurgu/fantastik",
+  "/yazarlar-icin/kurgu/bilim-kurgu",
+  "/yazarlar-icin/kurgu/distopya",
+  "/yazarlar-icin/edebiyat/siir",
+  "/okurlar-icin/okumaya-baslama",
+  "/editorler-icin/egitim/editorluge-baslama",
+  "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+  "/editorler-icin/egitim/metin-degerlendirme",
+] as const);
+
+const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/yardim",
   "/iletisim",
   "/site-haritasi",
+  "/topluluk-kurallari",
+  "/icerik-ve-yas-politikasi",
+  "/telif-bildirimi",
   "/yasal/kullanim-sartlari",
   "/yasal/gizlilik-politikasi",
   "/yasal/kvkk",
@@ -17,6 +42,9 @@ const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
 
 const SOFT_LAUNCH_NOINDEX_PREFIXES = [
   "/en-cok-satanlar",
+  "/yazarlar-icin",
+  "/okurlar-icin",
+  "/editorler-icin/egitim",
 ] as const;
 
 function normalizePublicPath(value: string) {
@@ -41,6 +69,10 @@ function normalizePublicPath(value: string) {
 
 export function isSoftLaunchSearchExcludedPath(value: string) {
   const path = normalizePublicPath(value);
+
+  if (SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path)) {
+    return false;
+  }
 
   if (SOFT_LAUNCH_NOINDEX_EXACT_PATHS.has(path)) {
     return true;

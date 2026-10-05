@@ -11,7 +11,7 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
-test("reader education keeps eight categories, six optional visual slots and sitemap coverage", () => {
+test("reader education keeps eight live categories while search indexability follows the focused cohort", () => {
   const inventory = source("src/lib/reader-education.ts");
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
   const renderer = source("src/components/content/ReaderEducationPage.tsx");
@@ -38,7 +38,8 @@ test("reader education keeps eight categories, six optional visual slots and sit
     assertContains(renderer, `slotKey="${slot}"`, `reader renderer slot ${slot}`);
   }
 
-  assertContains(publicRoute, "robots: { index: true, follow: true }", "reader education index/follow");
+  assertContains(publicRoute, "const noIndex = isSoftLaunchSearchExcludedPath(canonical);", "reader education focused index gate");
+  assertContains(publicRoute, "robots: noIndex ? { index: false, follow: true } : { index: true, follow: true }", "reader education conditional index/follow");
   assertContains(publicRoute, "readerEducationPublicPath(category)", "reader education self canonical source");
   assertContains(publicRoute, "notFound()", "invalid reader education slug 404");
 

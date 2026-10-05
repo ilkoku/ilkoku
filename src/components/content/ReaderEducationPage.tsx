@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+
 import { ReaderEducationShell } from "@/components/content/ReaderEducationShell";
 import type { ReaderEducationGuideRecord } from "@/lib/cms-reader-education";
 import {
@@ -138,6 +140,7 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <Link className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746] shadow-sm transition hover:-translate-y-0.5" href={category.application.href}>{category.application.label} →</Link>
           <ReaderVisual guide={guide} slotKey="finalCta" fallbackAlt={`${category.title} eğitimi kapanış görseli`} />
         </section>
+        <EditorialTrustNote context="reading" />
       </article>
     </ReaderEducationShell>
   );

@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+
+import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
 import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
@@ -104,7 +106,10 @@ export async function EditorEducationShell({
             ) : null}
           </aside>
 
-          <div className="min-w-0">{renderedChildren}</div>
+          <div className="min-w-0">
+            {renderedChildren}
+            <EditorialTrustNote context="editing" />
+          </div>
         </div>
       </div>
 

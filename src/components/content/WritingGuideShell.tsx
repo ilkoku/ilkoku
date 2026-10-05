@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
@@ -176,6 +178,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
 
         <div className="min-w-0">
           {children}
+          <EditorialTrustNote context="writing" />
           {activeGenreSlug && categoryHub ? (
             <aside
               aria-label="İlgili yazarlık eğitimleri"

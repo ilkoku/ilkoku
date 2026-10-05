@@ -439,13 +439,15 @@ test("public HTML site map remains a crawlable noindex discovery graph", () => {
   assertContains(navigation, '{ href: "/site-haritasi", label: "Site Haritası" }', "site map footer/support link");
   assertContains(sitemap, "filterSoftLaunchSitemapEntries", "XML sitemap filters the noindex HTML site map");
 
+  assertNotContains(indexNow, "https://ilkoku.com/site-haritasi", "IndexNow does not wait for soft-launch noindex site map");
+  assertContains(smoke, "https://ilkoku.com/site-haritasi", "production smoke still verifies live noindex site map");
+
   for (const cohort of [
-    "https://ilkoku.com/site-haritasi",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
   ]) {
-    assertContains(indexNow, cohort, `IndexNow waits for live cohort ${cohort}`);
+    assertContains(indexNow, cohort, `IndexNow waits for live indexable cohort ${cohort}`);
     assertContains(smoke, cohort, `production smoke verifies live cohort ${cohort}`);
   }
 });

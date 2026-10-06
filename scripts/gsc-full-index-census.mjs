@@ -224,6 +224,7 @@ async function main() {
       errors: results.filter((item) => item.error).length,
       coverageState: countBy(results, "coverageState"),
       verdict: countBy(results, "verdict"),
+      robotsTxtState: countBy(results, "robotsTxtState"),
       pageFetchState: countBy(results, "pageFetchState"),
       indexingState: countBy(results, "indexingState"),
       newestCrawl: newestCrawl(results),

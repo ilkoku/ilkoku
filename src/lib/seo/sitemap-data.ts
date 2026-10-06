@@ -20,10 +20,40 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { WRITING_INTERNAL_LINKS_UPDATED_AT } from "@/lib/search-content-freshness";
+import {
+  getSearchCodeFreshness,
+  WRITING_INTERNAL_LINKS_UPDATED_AT,
+} from "@/lib/search-content-freshness";
 import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
+
+function applySearchCodeFreshness(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return entries.map((entry) => {
+    const codeFreshness = getSearchCodeFreshness(entry.url);
+    if (!codeFreshness) return entry;
+
+    const currentLastModified =
+      entry.lastModified instanceof Date
+        ? entry.lastModified
+        : entry.lastModified
+          ? new Date(entry.lastModified)
+          : null;
+
+    if (
+      currentLastModified &&
+      !Number.isNaN(currentLastModified.getTime()) &&
+      currentLastModified >= codeFreshness
+    ) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      lastModified: codeFreshness,
+    };
+  });
+}
 
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
@@ -459,7 +489,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
-    return filterSoftLaunchSitemapEntries([
+    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([
       ...liveStaticDiscoveryEntries,
       ...bookIndexEntries,
       ...publicPageEntries,
@@ -483,11 +513,11 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
-    ]);
+    ]));
   } catch {
     // Search engines must keep seeing the currently enabled code-owned public
     // surface even when CMS/database lookups are temporarily unavailable.
     // Dynamic author, genre, work and CMS-owned URLs fail closed.
-    return filterSoftLaunchSitemapEntries(staticFallbackEntries);
+    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));
   }
 }

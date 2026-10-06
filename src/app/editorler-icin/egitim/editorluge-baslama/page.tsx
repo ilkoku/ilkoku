@@ -3,6 +3,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
@@ -109,7 +110,13 @@ export default function EditorlugeBaslamaPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Editörlüğe Başlama"
+        description="Editörün rolünü, müdahale sınırını, ilk okuma yaklaşımını, editöryal geri bildirimi ve profesyonel çalışma ilkelerini adım adım öğren."
+        canonical="/editorler-icin/egitim/editorluge-baslama"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -241,6 +248,7 @@ export default function EditorlugeBaslamaPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

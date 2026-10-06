@@ -144,7 +144,13 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
 
 test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
   assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
-  assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+push:/u);
+  assert.match(
+    sitemapSubmitWorkflow,
+    /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u,
+  );
+  assert.match(sitemapSubmitWorkflow, /src\/lib\/soft-launch-search-policy\.ts/u);
+  assert.match(sitemapSubmitWorkflow, /src\/lib\/seo\/sitemap-data\.ts/u);
+  assert.match(sitemapSubmitWorkflow, /if: github\.event_name == 'workflow_dispatch'/u);
   assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+schedule:/u);
   assert.match(sitemapSubmitWorkflow, /SUBMIT-GSC-SITEMAP/u);
   assert.match(sitemapSubmitWorkflow, /permissions:\s*\n\s+contents: read/u);

@@ -12,7 +12,7 @@ import "./about-final-mark.css";
 import "../nasil-calisir/public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";
-const socialImage = `${baseUrl}/opengraph-image`;
+const socialImage = `${baseUrl}/og/ilkoku-social-selected-2026.webp`;
 const requiredHeadings = [
   "## Neden İlkOku var?",
   "## Dört rol, tek eser yolculuğu",

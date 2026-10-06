@@ -3,6 +3,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
@@ -88,7 +89,13 @@ export default function MetinDegerlendirmePage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Metin Değerlendirme"
+        description="Bir metni ilk okumadan değerlendirme raporuna kadar sistemli biçimde çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren."
+        canonical="/editorler-icin/egitim/metin-degerlendirme"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -164,6 +171,7 @@ export default function MetinDegerlendirmePage() {
           <div className="mt-7 flex flex-wrap gap-3"><Link className="rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white" href="/editorler-icin">Editörler İçin ana sayfası</Link><Link className="rounded-full border border-[#5b35dd]/20 bg-white px-5 py-3 text-sm font-extrabold text-[#5b35dd]" href="/editoryal-standartlar">Editoryal Standartlar</Link></div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

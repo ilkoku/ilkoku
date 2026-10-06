@@ -23,6 +23,9 @@ on:
       - "src/lib/public-site-navigation.ts"
       - "src/lib/public-brand.ts"
       - "src/lib/public-page-metadata.ts"
+      - "src/lib/seo/**"
+      - "src/lib/search-content-freshness.ts"
+      - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/site-contact.ts"
       - "public/**"
       - "scripts/prepare-indexnow-payload.mjs"
@@ -84,7 +87,15 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          KEY="f4c33493caf6550560462af5a424980e"
+          KEY_FILE="$(find public -maxdepth 1 -type f -name '????????????????????????????????.txt' -print | while read -r file; do
+            base="$(basename "$file" .txt)"
+            body="$(tr -d '\\r\\n' < "$file")"
+            if [[ "$body" == "$base" ]]; then
+              printf '%s\\n' "$file"
+            fi
+          done | head -n 1)"
+          test -n "$KEY_FILE" || { echo "IndexNow public verification key file not found." >&2; exit 1; }
+          KEY="$(basename "$KEY_FILE" .txt)"
           KEY_URL="https://ilkoku.com/${KEY}.txt"
           SITEMAP_URL="https://ilkoku.com/sitemap.xml"
           READY=0

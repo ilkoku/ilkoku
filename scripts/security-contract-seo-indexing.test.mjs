@@ -709,13 +709,23 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
   );
   assertContains(
     submitWorkflow,
-    "workflow_dispatch:",
-    "GSC sitemap submit remains explicitly manual",
-  );
-  assertNotContains(
-    submitWorkflow,
     "  push:",
-    "GSC sitemap submit must not mutate Search Console on ordinary pushes",
+    "GSC sitemap submit must refresh when the focused sitemap pipeline changes",
+  );
+  assertContains(
+    submitWorkflow,
+    '"src/lib/soft-launch-search-policy.ts"',
+    "focused cohort policy changes trigger GSC sitemap resubmission",
+  );
+  assertContains(
+    submitWorkflow,
+    '"src/lib/seo/sitemap-data.ts"',
+    "sitemap inventory changes trigger GSC sitemap resubmission",
+  );
+  assertContains(
+    submitWorkflow,
+    "if: github.event_name == 'workflow_dispatch'",
+    "manual confirmation remains required only for manual GSC submissions",
   );
   assertContains(
     census,

@@ -3,6 +3,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
@@ -127,6 +128,8 @@ export default function EditorlugeBaslamaPage() {
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-2">Yazarın sesini koru</span>
           </div>
         </header>
+
+        <PriorityEducationIntentPanel area="editing" slug="editorluge-baslama" />
 
         <section className="mt-6 rounded-[2.25rem] border border-black/[0.06] bg-white px-7 py-9 shadow-[0_14px_48px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11" aria-labelledby="editor-baslama-kazanim">
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Bu eğitim sana ne kazandıracak?</span>

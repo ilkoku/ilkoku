@@ -709,13 +709,13 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
   );
   assertContains(
     submitWorkflow,
-    "paths:",
-    "GSC sitemap submit keeps a narrow automatic push trigger",
+    "workflow_dispatch:",
+    "GSC sitemap submit remains explicitly manual",
   );
-  assertContains(
+  assertNotContains(
     submitWorkflow,
-    "if: github.event_name == 'workflow_dispatch'",
-    "manual confirmation only applies to manual GSC submissions",
+    "  push:",
+    "GSC sitemap submit must not mutate Search Console on ordinary pushes",
   );
   assertContains(
     census,

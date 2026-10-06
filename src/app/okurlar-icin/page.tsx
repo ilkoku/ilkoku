@@ -6,6 +6,7 @@ import {
   READER_EDUCATION_CATEGORIES,
   readerEducationPublicPath,
 } from "@/lib/reader-education";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 const canonical = "/okurlar-icin";
@@ -31,6 +32,30 @@ export const metadata: Metadata = {
     title,
     description,
     images: ["/og/ilkoku-social-selected-2026.webp"],
+  },
+};
+
+const priorityReaderCategories = READER_EDUCATION_CATEGORIES.filter(
+  (category) => !isSoftLaunchSearchExcludedPath(readerEducationPublicPath(category)),
+);
+
+const pageSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "İlkOku Okurluk Okulu",
+  description,
+  inLanguage: "tr-TR",
+  url: `${baseUrl}${canonical}`,
+  isPartOf: { "@type": "WebSite", name: "İlkOku", url: `${baseUrl}/` },
+  mainEntity: {
+    "@type": "ItemList",
+    name: "Öncelikli Okurluk Okulu eğitimleri",
+    itemListElement: priorityReaderCategories.map((category, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: category.title,
+      url: `${baseUrl}${readerEducationPublicPath(category)}`,
+    })),
   },
 };
 
@@ -60,7 +85,7 @@ export default function ReadersHomePage() {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
+            __html: JSON.stringify([pageSchema, breadcrumbSchema]).replace(/</g, "\\u003c"),
           }}
         />
 

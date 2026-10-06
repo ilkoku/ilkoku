@@ -649,3 +649,77 @@ test("SEO smoke reports public HTML payload sizes without impersonating Googlebo
     "payload diagnostic log",
   );
 });
+
+
+test("indexing diagnostics and GSC submission stay aligned with the focused live cohort", () => {
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+  const crawlerGuard = source(".github/workflows/full-public-googlebot-guard.yml");
+  const inspection = source("scripts/gsc-url-inspection.mjs");
+  const submit = source("scripts/gsc-sitemap-submit.mjs");
+  const submitWorkflow = source(".github/workflows/gsc-sitemap-submit.yml");
+  const census = source("scripts/gsc-full-index-census.mjs");
+
+  assertContains(
+    smoke,
+    'local url="https://ilkoku.com\scripts/security-contract-seo-indexing.test.mjs"',
+    "noindex diagnostic must fetch the requested İlkOku path",
+  );
+  assertNotContains(
+    smoke,
+    "https://ilkoku.com.github/workflows/seo-indexability-smoke.yml",
+    "broken workflow-file URL must never be used as a page target",
+  );
+
+  for (const route of [
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+  ]) {
+    assertContains(smoke, route, route + " current smoke cohort");
+    assertContains(submit, route, route + " GSC sitemap submit cohort");
+  }
+
+  for (const staleTarget of [
+    '"https://ilkoku.com/en-cok-satanlar"',
+    '"https://ilkoku.com/en-cok-satanlar/dunya"',
+    '"https://ilkoku.com/yasal/kullanim-sartlari"',
+  ]) {
+    assertNotContains(submit, staleTarget, staleTarget + " stale GSC submit target");
+  }
+
+  assertContains(
+    inspection,
+    "/hakkimizda",
+    "About page must be part of the current URL Inspection cohort",
+  );
+  assertContains(
+    crawlerGuard,
+    "mapfile -t sitemap_urls",
+    "manual crawler guard must derive URLs from the live sitemap",
+  );
+  assertNotContains(
+    crawlerGuard,
+    "RUN-19-URL-CRAWLER-DIAGNOSTIC",
+    "crawler confirmation must not freeze an obsolete URL count",
+  );
+  assertContains(
+    submitWorkflow,
+    "paths:",
+    "GSC sitemap submit keeps a narrow automatic push trigger",
+  );
+  assertContains(
+    submitWorkflow,
+    "if: github.event_name == 'workflow_dispatch'",
+    "manual confirmation only applies to manual GSC submissions",
+  );
+  assertContains(
+    census,
+    'robotsTxtState: countBy(results, "robotsTxtState")',
+    "full GSC census must summarize robots state",
+  );
+});

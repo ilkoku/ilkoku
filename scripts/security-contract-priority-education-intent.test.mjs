@@ -35,3 +35,30 @@ test("priority reader and editor lessons expose distinct search-intent panels", 
   assert.ok(panel.includes("Bu eğitimi diğerlerinden ayıran şey"));
   assert.ok(panel.includes("Eğitim sonunda elinde"));
 });
+
+
+test("priority editor lessons expose structured data without changing visible content", () => {
+  const structuredData = source("src/components/content/EditorEducationStructuredData.tsx");
+
+  assert.ok(structuredData.includes('"@type": "Article"'));
+  assert.ok(structuredData.includes('"@type": "BreadcrumbList"'));
+  assert.ok(structuredData.includes('"@id": pageUrl'));
+  assert.ok(structuredData.includes('name: "Editörler İçin"'));
+  assert.ok(!structuredData.includes("datePublished"));
+  assert.ok(!structuredData.includes("dateModified"));
+
+  for (const path of [
+    "src/app/editorler-icin/egitim/editorluge-baslama/page.tsx",
+    "src/app/editorler-icin/egitim/metin-degerlendirme/page.tsx",
+    "src/app/editorler-icin/egitim/dil-ve-anlatim-editorlugu/page.tsx",
+  ]) {
+    const page = source(path);
+    assert.ok(page.includes("EditorEducationStructuredData"), `missing structured data on ${path}`);
+  }
+});
+
+test("about page uses the selected İlkOku social image", () => {
+  const about = source("src/app/hakkimizda/page.tsx");
+  assert.ok(about.includes("/og/ilkoku-social-selected-2026.webp"));
+  assert.ok(!about.includes('const socialImage = `${baseUrl}/opengraph-image`;'));
+});

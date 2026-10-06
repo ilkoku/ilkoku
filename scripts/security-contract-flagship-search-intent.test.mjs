@@ -12,7 +12,7 @@ test("flagship writing guides expose distinct search-intent and output panels", 
   const shell = source("src/components/content/WritingGuideShell.tsx");
 
   for (const slug of ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "siir"]) {
-    assert.match(panel, new RegExp(`\\b${slug.replace("-", "\\-")}\\b`, "u"));
+    assert.ok(panel.includes(`${slug}:`) || panel.includes(`"${slug}":`), `missing flagship intent for ${slug}`);
   }
 
   for (const phrase of [
@@ -23,9 +23,9 @@ test("flagship writing guides expose distinct search-intent and output panels", 
     "Distopya nasıl yazılır ve baskıcı sistem inandırıcı biçimde nasıl kurulur?",
     "Şiir nasıl yazılır ve duygu açıklamadan nasıl hissettirilir?",
   ]) {
-    assert.match(panel, new RegExp(phrase.replace(/[.*+?^$()|[\]{}]/g, "\\$&"), "u"));
+    assert.ok(panel.includes(phrase), `missing distinct search intent: ${phrase}`);
   }
 
-  assert.match(panel, /Bu rehberden çıkarken/u);
-  assert.match(shell, /<PriorityGuideIntentPanel slug={activeGenreSlug} \/>/u);
+  assert.ok(panel.includes("Bu rehberden çıkarken"));
+  assert.ok(shell.includes("<PriorityGuideIntentPanel slug={activeGenreSlug} />"));
 });

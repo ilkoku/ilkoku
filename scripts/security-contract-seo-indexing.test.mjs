@@ -661,7 +661,7 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
 
   assertContains(
     smoke,
-    'local url="https://ilkoku.com\scripts/security-contract-seo-indexing.test.mjs"',
+    'local url="https://ilkoku.com${path}"',
     "noindex diagnostic must fetch the requested İlkOku path",
   );
   assertNotContains(

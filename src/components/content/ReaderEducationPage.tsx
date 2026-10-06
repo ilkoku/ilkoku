@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 
 import { ReaderEducationShell } from "@/components/content/ReaderEducationShell";
 import type { ReaderEducationGuideRecord } from "@/lib/cms-reader-education";
@@ -58,6 +59,8 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-2">İlkOku’da uygula</span>
           </div>
         </header>
+
+        <PriorityEducationIntentPanel area="reading" slug={category.slug} />
 
         <ReaderVisual guide={guide} slotKey="hero" fallbackAlt={`${category.title} eğitimini anlatan ana görsel`} />
 

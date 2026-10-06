@@ -3,6 +3,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
@@ -99,6 +100,8 @@ export default function MetinDegerlendirmePage() {
             İyi değerlendirme, “beğendim / beğenmedim” cümlesinin ötesine geçer. Metnin ne yapmaya çalıştığını tanımlar, nerede çalıştığını ve nerede zorlandığını gösterir, sonra da hangi sorunların önce ele alınması gerektiğini belirler.
           </p>
         </header>
+
+        <PriorityEducationIntentPanel area="editing" slug="metin-degerlendirme" />
 
         <section className="mt-6 rounded-[2.25rem] border border-black/[0.06] bg-white px-7 py-9 shadow-[0_14px_48px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11">
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Bu eğitim sana ne kazandıracak?</span>

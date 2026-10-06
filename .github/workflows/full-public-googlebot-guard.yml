@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: "Çalıştırmak için RUN-19-URL-CRAWLER-DIAGNOSTIC yazın"
+        description: "Çalıştırmak için RUN-PUBLIC-CRAWLER-DIAGNOSTIC yazın"
         required: true
         type: string
 
@@ -26,9 +26,9 @@ jobs:
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "$CONFIRMATION" = "RUN-19-URL-CRAWLER-DIAGNOSTIC"
+          test "$CONFIRMATION" = "RUN-PUBLIC-CRAWLER-DIAGNOSTIC"
 
-      - name: Verify 19 public sitemap URLs slowly
+      - name: Verify current public sitemap URLs slowly
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -80,45 +80,36 @@ jobs:
             (( body_bytes >= 5000 )) || { echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)"; rm -f "$headers" "$body"; return 1; }
             (( title_count >= 1 )) || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
             (( h1_count >= 1 )) || { echo "FAIL: $url H1 missing"; rm -f "$headers" "$body"; return 1; }
-            grep -Fqi -- "$expected_marker" "$body" || { echo "FAIL: $url visible content marker missing: $expected_marker"; rm -f "$headers" "$body"; return 1; }
+            if [[ -n "$expected_marker" ]]; then
+              grep -Fqi -- "$expected_marker" "$body" || { echo "FAIL: $url visible content marker missing: $expected_marker"; rm -f "$headers" "$body"; return 1; }
+            fi
 
             canonical_href="$(canonical_from_body "$body")"
             [[ -n "$canonical_href" ]] || { echo "FAIL: $url canonical missing"; rm -f "$headers" "$body"; return 1; }
             [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$expected_canonical")" ]] || { echo "FAIL: $url canonical mismatch: $canonical_href"; rm -f "$headers" "$body"; return 1; }
 
-            echo "PASS: $url canonical=$canonical_href | marker=$expected_marker"
-            rm -f "$headers" "$body"
-            sleep "$REQUEST_DELAY_SECONDS"
-          }
+            echo "PASS: $url canonical=$canonical_href${expected_marker:+ | marker=$expected_marker}"
+                 sitemap="$(mktemp)"
+          trap 'rm -f "$sitemap"' EXIT
+          sitemap_code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$sitemap" --write-out '%{http_code}' https://ilkoku.com/sitemap.xml || true)"
+          echo "https://ilkoku.com/sitemap.xml -> HTTP $sitemap_code"
+          if [[ "$sitemap_code" == "403" || "$sitemap_code" == "429" ]]; then
+            echo "CIRCUIT BREAKER: sitemap returned HTTP $sitemap_code. No page requests will be sent." >&2
+            exit 1
+          fi
+          [[ "$sitemap_code" == "200" ]]
 
-          pages=(
-            '/|https://ilkoku.com/|İlk cümle'
-            '/yardim|https://ilkoku.com/yardim|Yardım'
-            '/editorler|https://ilkoku.com/editorler|Editör'
-            '/iletisim|https://ilkoku.com/iletisim|İletişim'
-            '/hakkimizda|https://ilkoku.com/hakkimizda|Hakkımızda'
-            '/nasil-calisir|https://ilkoku.com/nasil-calisir|Nasıl Çalışır'
-            '/editoryal-standartlar|https://ilkoku.com/editoryal-standartlar|Editoryal Standartlar'
-            '/icerik-ve-yas-politikasi|https://ilkoku.com/icerik-ve-yas-politikasi|İçerik ve Yaş Politikası'
-            '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari|Topluluk Kuralları'
-            '/telif-bildirimi|https://ilkoku.com/telif-bildirimi|Telif Bildirimi'
-            '/yazarlar-icin|https://ilkoku.com/yazarlar-icin|Yazarlar İçin'
-            '/okurlar-icin|https://ilkoku.com/okurlar-icin|Okurluk Okulu'
-            '/editorler-icin|https://ilkoku.com/editorler-icin|Editörler İçin'
-            '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin|Yayınevleri İçin'
-            '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari|Kullanım Şartları'
-            '/yasal/gizlilik-politikasi|https://ilkoku.com/yasal/gizlilik-politikasi|Gizlilik Politikası'
-            '/yasal/kvkk|https://ilkoku.com/yasal/kvkk|KVKK'
-            '/yasal/cerez-politikasi|https://ilkoku.com/yasal/cerez-politikasi|Çerez Politikası'
-            '/yasal/telif-hakki-politikasi|https://ilkoku.com/yasal/telif-hakki-politikasi|Telif Hakkı Politikası'
-          )
+          mapfile -t sitemap_urls < <(grep -Eo '<loc>[^<]+</loc>' "$sitemap" | sed -E 's#</?loc>##g')
+          (( ${#sitemap_urls[@]} > 0 )) || { echo "FAIL: sitemap contains no URLs" >&2; exit 1; }
 
-          for entry in "${pages[@]}"; do
-            path="${entry%%|*}"
-            remainder="${entry#*|}"
-            canonical="${remainder%%|*}"
-            marker="${remainder#*|}"
-            check_page "$path" "$canonical" "$marker"
+          echo "Current public sitemap URLs: ${#sitemap_urls[@]}"
+
+          for url in "${sitemap_urls[@]}"; do
+            [[ "$url" == https://ilkoku.com/* ]] || { echo "FAIL: unexpected sitemap origin: $url" >&2; exit 1; }
+            path="${url#https://ilkoku.com}"
+            [[ -n "$path" ]] || path="/"
+            check_page "$path" "$url" ""
           done
 
-          echo "PASS: explicitly requested 19/19 crawler compatibility diagnostic completed without edge throttling."
+          echo "PASS: explicitly requested current-sitemap crawler compatibility diagnostic completed without edge throttling."
+y requested 19/19 crawler compatibility diagnostic completed without edge throttling."

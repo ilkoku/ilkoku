@@ -286,8 +286,8 @@ test("soft-launch search gate keeps every page live while focusing the indexable
   assertContains(policy, "path.startsWith(`${prefix}/`)", "descendants inherit exclusion unless explicitly indexable");
   assertContains(policy, "filterSoftLaunchSitemapEntries", "central sitemap soft-launch filter");
   assertContains(sitemap, 'import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";', "sitemap imports soft-launch filter");
-  assertContains(sitemap, "return filterSoftLaunchSitemapEntries([", "database-backed sitemap is filtered");
-  assertContains(sitemap, "return filterSoftLaunchSitemapEntries(staticFallbackEntries);", "fallback sitemap is filtered");
+  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([", "database-backed sitemap is filtered and freshness-aware");
+  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap is filtered and freshness-aware");
   assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "shared public metadata applies focused search policy");
   assertContains(readerLesson, "const noIndex = isSoftLaunchSearchExcludedPath(canonical);", "reader lesson metadata applies focused search policy");
 
@@ -569,6 +569,56 @@ test("SEO center and audit API stay Turkish-only", () => {
   assertNotContains(roleCards, "TR / EN", "role card SEO has no language parity work");
 });
 
+
+test("significant Oct 6 search updates propagate truthful freshness to sitemap and Atom", () => {
+  const freshness = source("src/lib/search-content-freshness.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const atom = source("src/app/recent-updates.atom/route.ts");
+
+  for (const [route, timestamp] of [
+    ["/yazarlar-icin/kurgu/roman", "2026-10-06T07:55:57Z"],
+    ["/yazarlar-icin/kurgu/oyku", "2026-10-06T07:55:57Z"],
+    ["/yazarlar-icin/kurgu/fantastik", "2026-10-06T07:55:57Z"],
+    ["/yazarlar-icin/kurgu/bilim-kurgu", "2026-10-06T07:55:57Z"],
+    ["/yazarlar-icin/kurgu/distopya", "2026-10-06T07:55:57Z"],
+    ["/yazarlar-icin/edebiyat/siir", "2026-10-06T07:55:57Z"],
+    ["/okurlar-icin/okumaya-baslama", "2026-10-06T08:04:59Z"],
+    ["/yazarlar-icin/kurgu", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/edebiyat", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/akademik", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/bilgilendirici", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/senaryo-ve-sahne", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/cocuk-ve-genclik", "2026-10-06T08:33:10Z"],
+    ["/yazarlar-icin/cizgi-anlati", "2026-10-06T08:33:10Z"],
+    ["/okurlar-icin", "2026-10-06T08:33:10Z"],
+    ["/editorler-icin/egitim/editorluge-baslama", "2026-10-06T09:14:20Z"],
+    ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", "2026-10-06T09:14:20Z"],
+    ["/editorler-icin/egitim/metin-degerlendirme", "2026-10-06T09:14:20Z"],
+  ]) {
+    assertContains(freshness, `"${route}"`, `${route} route freshness`);
+    assertContains(freshness, `new Date("${timestamp}")`, `${route} truthful update timestamp`);
+  }
+
+  assertNotContains(
+    freshness,
+    '["/hakkimizda",',
+    "about social-image-only change must not falsify sitemap lastmod",
+  );
+  assertContains(sitemap, "getSearchCodeFreshness(entry.url)", "sitemap route-specific code freshness");
+  assertContains(sitemap, "currentLastModified >= codeFreshness", "newer CMS/content freshness wins");
+  assertContains(
+    sitemap,
+    "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([",
+    "database sitemap applies freshness after indexability filtering",
+  );
+  assertContains(
+    sitemap,
+    "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));",
+    "fallback sitemap applies the same freshness",
+  );
+  assertContains(atom, "const sitemap = await buildSitemap();", "Atom derives freshness from canonical sitemap inventory");
+  assertContains(atom, "const updatedAt = normalizeLastModified(entry.lastModified);", "Atom uses sitemap lastmod as updated");
+});
 
 test("sitemap XML route exposes stable HTTP validators", () => {
   const route = source("src/app/sitemap.xml/route.ts");

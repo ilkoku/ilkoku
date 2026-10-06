@@ -1,6 +1,12 @@
 name: GSC sitemap submit
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-sitemap-submit.yml"
+      - "scripts/gsc-sitemap-submit.mjs"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -23,6 +29,7 @@ jobs:
 
     steps:
       - name: Validate explicit confirmation
+        if: github.event_name == 'workflow_dispatch'
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |

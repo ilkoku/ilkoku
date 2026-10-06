@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+import { PriorityGuideIntentPanel } from "@/components/content/PriorityGuideIntentPanel";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
@@ -183,6 +184,7 @@ export function WritingGuideShell({
         </aside>
 
         <div className="min-w-0">
+          <PriorityGuideIntentPanel slug={activeGenreSlug} />
           {children}
           <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
           {activeGenreSlug && categoryHub ? (

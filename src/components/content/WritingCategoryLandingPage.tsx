@@ -10,9 +10,45 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
   const priorityGenres = genres.filter(
     (genre) => !isSoftLaunchSearchExcludedPath(`${hub.href}/${genre.slug}`),
   );
+  const canonicalUrl = `https://ilkoku.com${hub.href}`;
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${hub.title} Yazarlığı ve Eğitimleri`,
+      description: hub.promise,
+      inLanguage: "tr-TR",
+      url: canonicalUrl,
+      isPartOf: { "@type": "WebSite", name: "İlkOku", url: "https://ilkoku.com/" },
+      about: { "@type": "Thing", name: hub.title },
+      mainEntity: {
+        "@type": "ItemList",
+        name: `${hub.title} için öncelikli yazarlık rehberleri`,
+        itemListElement: priorityGenres.map((genre, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: `${genre.label} yazarlık rehberi`,
+          url: `https://ilkoku.com${hub.href}/${genre.slug}`,
+        })),
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        { "@type": "ListItem", position: 3, name: hub.title, item: canonicalUrl },
+      ],
+    },
+  ];
 
   return (
     <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+    />
     <WritingGuideShell activeCategory={hub.category} activeGenreSlug="">
       <article className="mx-auto max-w-5xl pb-6 sm:pb-10">
         <header className="overflow-hidden rounded-[2.5rem] border border-black/[0.06] bg-white px-7 py-10 shadow-[0_20px_70px_rgba(34,23,70,0.09)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">

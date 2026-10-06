@@ -2,10 +2,14 @@ import Link from "next/link";
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
 
 export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub }) {
   const genres = getGenresByCategory(hub.category);
+  const priorityGenres = genres.filter(
+    (genre) => !isSoftLaunchSearchExcludedPath(`${hub.href}/${genre.slug}`),
+  );
 
   return (
     <>
@@ -77,6 +81,40 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             ))}
           </div>
         </section>
+
+        {priorityGenres.length > 0 ? (
+          <section
+            className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-9 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-11"
+            aria-labelledby={`${hub.slug}-baslangic-rehberleri`}
+          >
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5b35dd]">
+              Öne çıkan başlangıç rehberleri
+            </span>
+            <h2
+              id={`${hub.slug}-baslangic-rehberleri`}
+              className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl"
+            >
+              Önce bu rehberlerle güçlü bir temel kur.
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-[#5f5869]">
+              Bu rehberler, kategori içindeki temel yazarlık problemlerini farklı çalışma biçimleriyle ele alır. İhtiyacına en yakın rehberden başlayıp diğer türlere daha sonra geçebilirsin.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {priorityGenres.map((genre) => (
+                <Link
+                  className="group rounded-[1.35rem] border border-[#6b52c7]/15 bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.05)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
+                  href={`${hub.href}/${genre.slug}`}
+                  key={genre.slug}
+                >
+                  <strong className="block text-sm font-extrabold text-[#211746]">{genre.label} yazarlık rehberi</strong>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-[#6b6472]">
+                    Türe özgü yöntem, örnek ve uygulama planını incele <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mt-6 rounded-[2.35rem] bg-[#17122f] px-7 py-9 text-white shadow-[0_20px_60px_rgba(23,18,47,0.2)] sm:px-10 sm:py-11" aria-labelledby={`${hub.slug}-yolculuk`}>
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#b7a8ff]">Eğitim yolculuğu</span>

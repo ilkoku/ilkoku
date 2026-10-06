@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cache } from "react";
 
 import { ForEditorsExperience } from "@/components/content/ForEditorsExperience";
@@ -104,6 +105,54 @@ export default async function ForEditorsPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
       <ForEditorsExperience body={page.body} summary={page.summary} title={page.title} updatedAt={page.updatedAt} />
+      <section
+        aria-labelledby="editor-priority-education"
+        className="mx-auto mt-8 max-w-6xl rounded-[2.2rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-8 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-10"
+      >
+        <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5b35dd]">
+          Editörlük Okulu · başlangıç rotası
+        </span>
+        <h2
+          id="editor-priority-education"
+          className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl"
+        >
+          Editörlüğü üç temel beceriyle kur.
+        </h2>
+        <p className="mt-4 max-w-3xl text-base leading-8 text-[#5f5869]">
+          Önce editörün rolünü ve sınırlarını tanı, sonra metni sistematik değerlendirmeyi öğren ve dil-anlatım düzeyindeki müdahaleyi ayrı bir çalışma katmanı olarak geliştir.
+        </p>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          {[
+            {
+              href: "/editorler-icin/egitim/editorluge-baslama",
+              title: "Editörlüğe Başlama",
+              text: "Rol, kapsam, kanıt ve profesyonel çalışma sınırlarını kur.",
+            },
+            {
+              href: "/editorler-icin/egitim/metin-degerlendirme",
+              title: "Metin Değerlendirme",
+              text: "Sorunu sınıflandır, metinden kanıt göster ve uygulanabilir geri bildirim üret.",
+            },
+            {
+              href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+              title: "Dil ve Anlatım Editörlüğü",
+              text: "Cümle, ton, tekrar ve akıcılık müdahalelerini yazarın sesini koruyarak yap.",
+            },
+          ].map((item) => (
+            <Link
+              className="group rounded-[1.35rem] border border-[#6b52c7]/15 bg-white px-5 py-5 shadow-[0_8px_24px_rgba(34,23,70,0.05)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
+              href={item.href}
+              key={item.href}
+            >
+              <strong className="block text-base font-extrabold text-[#211746]">{item.title}</strong>
+              <span className="mt-2 block text-sm leading-7 text-[#665f70]">{item.text}</span>
+              <span className="mt-4 inline-flex text-sm font-extrabold text-[#5b35dd]">
+                Eğitime geç <span aria-hidden="true" className="ml-1 transition group-hover:translate-x-1">→</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
       <PublicTrustFooter />
     </>
   );

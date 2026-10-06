@@ -136,8 +136,13 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
 
   assertContains(
     sitemap,
-    'import { WRITING_INTERNAL_LINKS_UPDATED_AT } from "@/lib/search-content-freshness"',
-    "sitemap shared writing internal-link freshness import",
+    "WRITING_INTERNAL_LINKS_UPDATED_AT,",
+    "sitemap shared writing internal-link freshness symbol",
+  );
+  assertContains(
+    sitemap,
+    'from "@/lib/search-content-freshness";',
+    "sitemap shared search-content freshness import",
   );
   assert.equal(
     (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,

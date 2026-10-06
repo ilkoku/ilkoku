@@ -101,9 +101,15 @@ type WritingGuideShellProps = {
   children: ReactNode;
   activeCategory: GenreCategory;
   activeGenreSlug: string;
+  expertVerificationRequired?: boolean;
 };
 
-export function WritingGuideShell({ children, activeCategory, activeGenreSlug }: WritingGuideShellProps) {
+export function WritingGuideShell({
+  children,
+  activeCategory,
+  activeGenreSlug,
+  expertVerificationRequired = false,
+}: WritingGuideShellProps) {
   const genres = getGenresByCategory(activeCategory);
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
   const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
@@ -178,7 +184,7 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
 
         <div className="min-w-0">
           {children}
-          <EditorialTrustNote context="writing" />
+          <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
           {activeGenreSlug && categoryHub ? (
             <aside
               aria-label="İlgili yazarlık eğitimleri"

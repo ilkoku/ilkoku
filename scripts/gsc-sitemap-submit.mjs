@@ -6,10 +6,17 @@ const CLIENT_SECRET = process.env.GSC_OAUTH_CLIENT_SECRET;
 const WRITE_REFRESH_TOKEN = process.env.GSC_OAUTH_WRITE_REFRESH_TOKEN;
 const MAX_SITEMAP_BYTES = 50 * 1024 * 1024;
 const DISCOVERY_TARGETS = [
+  "https://ilkoku.com/",
+  "https://ilkoku.com/nasil-calisir",
+  "https://ilkoku.com/hakkimizda",
+  "https://ilkoku.com/yazarlar-icin",
+  "https://ilkoku.com/okurlar-icin",
+  "https://ilkoku.com/editorler-icin",
+  "https://ilkoku.com/yayinevleri-icin",
+  "https://ilkoku.com/editoryal-standartlar",
+  "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+  "https://ilkoku.com/okurlar-icin/okumaya-baslama",
   "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-  "https://ilkoku.com/en-cok-satanlar/dunya",
-  "https://ilkoku.com/en-cok-satanlar",
-  "https://ilkoku.com/yasal/kullanim-sartlari",
 ];
 
 function requireSecret(name, value) {

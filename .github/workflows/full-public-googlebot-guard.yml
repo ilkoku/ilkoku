@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: "Çalıştırmak için RUN-19-URL-CRAWLER-DIAGNOSTIC yazın"
+        description: "Çalıştırmak için RUN-PUBLIC-CRAWLER-DIAGNOSTIC yazın"
         required: true
         type: string
 
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify all public URLs with diagnostic crawler
+    name: Verify current public sitemap URLs with diagnostic crawler
     runs-on: ubuntu-latest
     timeout-minutes: 12
 
@@ -26,15 +26,15 @@ jobs:
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "$CONFIRMATION" = "RUN-19-URL-CRAWLER-DIAGNOSTIC"
+          test "$CONFIRMATION" = "RUN-PUBLIC-CRAWLER-DIAGNOSTIC"
 
-      - name: Verify 19 public sitemap URLs slowly
+      - name: Verify current public sitemap URLs slowly
         shell: bash
         run: |
           set -Eeuo pipefail
 
-          # Never spoof Googlebot from GitHub/Azure. It pollutes origin logs and
-          # cannot reproduce verified Googlebot behavior because bot identity is IP-based.
+          # Never spoof Googlebot from GitHub/Azure. Real Googlebot identity is
+          # IP-based and must be verified from Google crawler ranges in origin logs.
           USER_AGENT="IlkOku-Public-Crawler-Guard/1.0 (+https://ilkoku.com)"
           REQUEST_DELAY_SECONDS=10
 
@@ -50,11 +50,17 @@ jobs:
             printf '%s' "$canonical_tag" | sed -n 's/.*href="\([^"]*\)".*/\1/p'
           }
 
+          circuit_break() {
+            local code="$1"
+            local url="$2"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              echo "CIRCUIT BREAKER: $url returned HTTP $code. Diagnostic stopped." >&2
+              exit 1
+            fi
+          }
+
           check_page() {
-            local path="$1"
-            local expected_canonical="$2"
-            local expected_marker="$3"
-            local url="https://ilkoku.com${path}"
+            local url="$1"
             local headers body code robots canonical_href body_bytes h1_count title_count content_type
 
             headers="$(mktemp)"
@@ -67,58 +73,41 @@ jobs:
             title_count="$( { grep -Eoi '<title([[:space:]][^>]*)?>' "$body" || true; } | wc -l | tr -d ' ')"
 
             echo "$url -> HTTP $code | Content-Type: ${content_type:-YOK} | X-Robots-Tag: ${robots:-YOK} | bytes=$body_bytes | title=$title_count | h1=$h1_count"
+            circuit_break "$code" "$url"
 
-            if [[ "$code" == "403" || "$code" == "429" ]]; then
-              echo "CIRCUIT BREAKER: $url returned HTTP $code. Remaining URLs will not be requested." >&2
-              rm -f "$headers" "$body"
-              exit 1
-            fi
-            [[ "$code" == "200" ]] || { echo "FAIL: $url returned HTTP $code"; rm -f "$headers" "$body"; return 1; }
-            [[ "${content_type,,}" == text/html* ]] || { echo "FAIL: $url returned unexpected Content-Type"; rm -f "$headers" "$body"; return 1; }
-            [[ "${robots,,}" != *"noindex"* ]] || { echo "FAIL: $url returned X-Robots-Tag noindex"; rm -f "$headers" "$body"; return 1; }
-            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" || { echo "FAIL: $url contains meta robots noindex"; rm -f "$headers" "$body"; return 1; }
-            (( body_bytes >= 5000 )) || { echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)"; rm -f "$headers" "$body"; return 1; }
-            (( title_count >= 1 )) || { echo "FAIL: $url title missing"; rm -f "$headers" "$body"; return 1; }
-            (( h1_count >= 1 )) || { echo "FAIL: $url H1 missing"; rm -f "$headers" "$body"; return 1; }
-            grep -Fqi -- "$expected_marker" "$body" || { echo "FAIL: $url visible content marker missing: $expected_marker"; rm -f "$headers" "$body"; return 1; }
+            [[ "$code" == "200" ]] || { echo "FAIL: $url returned HTTP $code" >&2; rm -f "$headers" "$body"; return 1; }
+            [[ "${content_type,,}" == text/html* ]] || { echo "FAIL: $url returned unexpected Content-Type" >&2; rm -f "$headers" "$body"; return 1; }
+            [[ "${robots,,}" != *"noindex"* ]] || { echo "FAIL: $url returned X-Robots-Tag noindex" >&2; rm -f "$headers" "$body"; return 1; }
+            ! grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$body" || { echo "FAIL: $url contains meta robots noindex" >&2; rm -f "$headers" "$body"; return 1; }
+            (( body_bytes >= 5000 )) || { echo "FAIL: $url returned unexpectedly small HTML ($body_bytes bytes)" >&2; rm -f "$headers" "$body"; return 1; }
+            (( title_count >= 1 )) || { echo "FAIL: $url title missing" >&2; rm -f "$headers" "$body"; return 1; }
+            (( h1_count >= 1 )) || { echo "FAIL: $url H1 missing" >&2; rm -f "$headers" "$body"; return 1; }
 
             canonical_href="$(canonical_from_body "$body")"
-            [[ -n "$canonical_href" ]] || { echo "FAIL: $url canonical missing"; rm -f "$headers" "$body"; return 1; }
-            [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$expected_canonical")" ]] || { echo "FAIL: $url canonical mismatch: $canonical_href"; rm -f "$headers" "$body"; return 1; }
+            [[ -n "$canonical_href" ]] || { echo "FAIL: $url canonical missing" >&2; rm -f "$headers" "$body"; return 1; }
+            [[ "$(normalize_url "$canonical_href")" == "$(normalize_url "$url")" ]] || { echo "FAIL: $url canonical mismatch: $canonical_href" >&2; rm -f "$headers" "$body"; return 1; }
 
-            echo "PASS: $url canonical=$canonical_href | marker=$expected_marker"
+            echo "PASS: $url canonical=$canonical_href"
             rm -f "$headers" "$body"
             sleep "$REQUEST_DELAY_SECONDS"
           }
 
-          pages=(
-            '/|https://ilkoku.com/|İlk cümle'
-            '/yardim|https://ilkoku.com/yardim|Yardım'
-            '/editorler|https://ilkoku.com/editorler|Editör'
-            '/iletisim|https://ilkoku.com/iletisim|İletişim'
-            '/hakkimizda|https://ilkoku.com/hakkimizda|Hakkımızda'
-            '/nasil-calisir|https://ilkoku.com/nasil-calisir|Nasıl Çalışır'
-            '/editoryal-standartlar|https://ilkoku.com/editoryal-standartlar|Editoryal Standartlar'
-            '/icerik-ve-yas-politikasi|https://ilkoku.com/icerik-ve-yas-politikasi|İçerik ve Yaş Politikası'
-            '/topluluk-kurallari|https://ilkoku.com/topluluk-kurallari|Topluluk Kuralları'
-            '/telif-bildirimi|https://ilkoku.com/telif-bildirimi|Telif Bildirimi'
-            '/yazarlar-icin|https://ilkoku.com/yazarlar-icin|Yazarlar İçin'
-            '/okurlar-icin|https://ilkoku.com/okurlar-icin|Okurluk Okulu'
-            '/editorler-icin|https://ilkoku.com/editorler-icin|Editörler İçin'
-            '/yayinevleri-icin|https://ilkoku.com/yayinevleri-icin|Yayınevleri İçin'
-            '/yasal/kullanim-sartlari|https://ilkoku.com/yasal/kullanim-sartlari|Kullanım Şartları'
-            '/yasal/gizlilik-politikasi|https://ilkoku.com/yasal/gizlilik-politikasi|Gizlilik Politikası'
-            '/yasal/kvkk|https://ilkoku.com/yasal/kvkk|KVKK'
-            '/yasal/cerez-politikasi|https://ilkoku.com/yasal/cerez-politikasi|Çerez Politikası'
-            '/yasal/telif-hakki-politikasi|https://ilkoku.com/yasal/telif-hakki-politikasi|Telif Hakkı Politikası'
-          )
+          sitemap="$(mktemp)"
+          trap 'rm -f "$sitemap"' EXIT
 
-          for entry in "${pages[@]}"; do
-            path="${entry%%|*}"
-            remainder="${entry#*|}"
-            canonical="${remainder%%|*}"
-            marker="${remainder#*|}"
-            check_page "$path" "$canonical" "$marker"
+          sitemap_code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$sitemap" --write-out '%{http_code}' https://ilkoku.com/sitemap.xml || true)"
+          echo "https://ilkoku.com/sitemap.xml -> HTTP $sitemap_code"
+          circuit_break "$sitemap_code" "https://ilkoku.com/sitemap.xml"
+          [[ "$sitemap_code" == "200" ]]
+
+          mapfile -t sitemap_urls < <(grep -Eo '<loc>[^<]+</loc>' "$sitemap" | sed -E 's#</?loc>##g')
+          (( ${#sitemap_urls[@]} > 0 )) || { echo "FAIL: sitemap contains no URLs" >&2; exit 1; }
+
+          echo "Current public sitemap URLs: ${#sitemap_urls[@]}"
+
+          for url in "${sitemap_urls[@]}"; do
+            [[ "$url" == https://ilkoku.com/* ]] || { echo "FAIL: unexpected sitemap origin: $url" >&2; exit 1; }
+            check_page "$url"
           done
 
-          echo "PASS: explicitly requested 19/19 crawler compatibility diagnostic completed without edge throttling."
+          echo "PASS: current-sitemap crawler compatibility diagnostic completed for ${#sitemap_urls[@]} URL(s)."

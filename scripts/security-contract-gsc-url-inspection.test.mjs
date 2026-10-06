@@ -51,69 +51,68 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.match(script, /sitemap URL\(s\)/u);
   assert.match(script, /editorler-icin\/egitim\/editorluge-baslama/u);
   assert.match(script, /okurlar-icin\/okumaya-baslama/u);
-  assert.match(script, /site-haritasi/u);
-  assert.match(script, /en-cok-satanlar/u);
+  assert.match(script, /hakkimizda/u);
+  assert.match(script, /yayinevleri-icin/u);
+  assert.doesNotMatch(script, /site-haritasi/u);
+  assert.doesNotMatch(script, /en-cok-satanlar/u);
   assert.match(script, /discoveredSitemapUrls/u);
   assert.match(script, /lastDownloaded/u);
   assert.match(script, /Diagnostic only/u);
   assert.doesNotMatch(script, /requestIndexing|indexing\.googleapis\.com/u);
 });
 
-test("default inspection samples every public cohort without confusing the cohort with sitemap coverage", () => {
+test("default inspection samples the current focused index cohort", () => {
   const sitemapUrls = [
-    "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/kitap/ornek-eser",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
+    "https://ilkoku.com/yazarlar-icin/kurgu",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+    "https://ilkoku.com/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
   ];
 
   assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/kitap/ornek-eser",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
   ]);
 });
 
-test("default inspection fills an unused cohort slot from the sitemap", () => {
+test("default inspection never reintroduces retired noindex discovery families", () => {
   const sitemapUrls = [
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
     "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/yasal/kullanim-sartlari",
   ];
 
-  assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
-    "https://ilkoku.com/",
-    "https://ilkoku.com/nasil-calisir",
-    "https://ilkoku.com/yazarlar-icin",
-    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
-    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
-  ]);
+  const selected = selectDefaultInspectionUrls(sitemapUrls);
+  assert.equal(selected.includes("https://ilkoku.com/site-haritasi"), false);
+  assert.equal(selected.includes("https://ilkoku.com/en-cok-satanlar/dunya"), false);
+  assert.equal(selected.includes("https://ilkoku.com/yasal/kullanim-sartlari"), false);
 });
 
 test("package and docs expose the official diagnostic path", () => {
@@ -145,7 +144,13 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
 
 test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
   assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
-  assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+push:/u);
+  assert.match(
+    sitemapSubmitWorkflow,
+    /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u,
+  );
+  assert.match(sitemapSubmitWorkflow, /src\/lib\/soft-launch-search-policy\.ts/u);
+  assert.match(sitemapSubmitWorkflow, /src\/lib\/seo\/sitemap-data\.ts/u);
+  assert.match(sitemapSubmitWorkflow, /if: github\.event_name == 'workflow_dispatch'/u);
   assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+schedule:/u);
   assert.match(sitemapSubmitWorkflow, /SUBMIT-GSC-SITEMAP/u);
   assert.match(sitemapSubmitWorkflow, /permissions:\s*\n\s+contents: read/u);
@@ -158,9 +163,13 @@ test("GSC sitemap submit is manual-only, separately authorized, and narrowly sco
   assert.match(sitemapSubmitScript, /method: "PUT"/u);
   assert.match(sitemapSubmitScript, /\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps\/\$\{encodeURIComponent\(SITEMAP_URL\)\}/u);
   assert.match(sitemapSubmitScript, /DISCOVERY_TARGETS/u);
+  assert.match(sitemapSubmitScript, /nasil-calisir/u);
+  assert.match(sitemapSubmitScript, /hakkimizda/u);
+  assert.match(sitemapSubmitScript, /yazarlar-icin\/kurgu\/roman/u);
+  assert.match(sitemapSubmitScript, /okurlar-icin\/okumaya-baslama/u);
   assert.match(sitemapSubmitScript, /editorler-icin\/egitim\/editorluge-baslama/u);
-  assert.match(sitemapSubmitScript, /en-cok-satanlar\/dunya/u);
-  assert.match(sitemapSubmitScript, /yasal\/kullanim-sartlari/u);
+  assert.doesNotMatch(sitemapSubmitScript, /en-cok-satanlar\/dunya/u);
+  assert.doesNotMatch(sitemapSubmitScript, /yasal\/kullanim-sartlari/u);
   assert.match(sitemapSubmitScript, /grantedScopes\.includes\(WRITE_SCOPE\)/u);
   assert.doesNotMatch(sitemapSubmitScript, /indexing\.googleapis\.com|requestIndexing/u);
   assert.doesNotMatch(sitemapSubmitScript, /console\.log\([^\n]*accessToken/u);

@@ -88,10 +88,15 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
     "searchIndexable ? (",
     "overview structured data stays off during soft launch",
   );
-  contains(
+  notContains(
     overview,
-    "showInsightPages={context.gate.canPublish}",
-    "overview hides unpublished trend links during soft launch",
+    "showInsightPages=",
+    "overview no longer renders a duplicate trend-card surface",
+  );
+  notContains(
+    overview,
+    "getBookIndexInsights(",
+    "overview no longer fetches trend data only for duplicate cards",
   );
 
   contains(
@@ -166,10 +171,15 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented public rank heading");
   notContains(`${view}\n${rankTable}`, "Kaynak Sayısı", "no composite source-count column");
   contains(rankTable, "rowMovementLabel(row)", "movement uses verified source snapshot history");
-  contains(
+  notContains(
     view,
-    "showInsightPages && publishedInsightPages.length",
-    "trend links render only after the full publication gate passes",
+    'id="insight-pages-heading"',
+    "overview duplicate trends section stays removed",
+  );
+  notContains(
+    view,
+    "getPublishedBookIndexInsightPages",
+    "overview no longer materializes duplicate trend cards",
   );
 
   contains(

@@ -96,6 +96,16 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(megaCss, /\.public-site-header__mobile-track\[data-detail="true"\]/);
   assert.match(header, /getPublishedHeaderNavigation\(\)/);
   assert.match(header, /resolveHeaderNavigation\(navigation\.payload,\s*navigation\.pages\)/);
+  assert.match(header, /isSoftLaunchSearchExcludedPath/);
+  assert.match(header, /function withSoftLaunchCrawlFocus/);
+  assert.match(
+    header,
+    /links: group\.links\.filter\([\s\S]*!isSoftLaunchSearchExcludedPath\(item\.href\)/,
+  );
+  assert.match(
+    header,
+    /withSoftLaunchCrawlFocus\([\s\S]*withBookIndexMenu\([\s\S]*resolveHeaderNavigation/,
+  );
   assert.match(config, /SITE_MAP_PAGES/);
   assert.match(config, /defaultHeaderNavigation/);
   assert.match(config, /WRITING_CATEGORY_HUBS/);

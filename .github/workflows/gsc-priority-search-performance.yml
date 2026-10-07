@@ -1,0 +1,53 @@
+name: Priority search cohort performance
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-priority-search-performance.yml"
+      - "scripts/gsc-priority-search-performance.mjs"
+      - "scripts/seo-priority-query-cohort.mjs"
+  schedule:
+    - cron: "20 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: priority-search-cohort-performance
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Compare priority query groups in Google Search
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Validate Search Console OAuth secrets
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
+          test -n "$GSC_OAUTH_REFRESH_TOKEN" || { echo "Missing GSC_OAUTH_REFRESH_TOKEN" >&2; exit 1; }
+
+      - name: Report shared Yandex/Google query cohort
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+        run: node scripts/gsc-priority-search-performance.mjs

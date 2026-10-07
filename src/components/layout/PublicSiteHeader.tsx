@@ -6,6 +6,7 @@ import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigati
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
+import { isSoftLaunchSearchPriorityPath } from "@/lib/soft-launch-search-policy";
 
 import "./public-site-header.css";
 import "./public-site-header-terminal.css";
@@ -154,6 +155,17 @@ export async function PublicSiteHeader() {
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
   );
+  const crawlPriorityHrefs = [
+    ...new Set(
+      publicMenus.flatMap((menu) =>
+        menu.groups.flatMap((group) =>
+          group.links
+            .filter((link) => isSoftLaunchSearchPriorityPath(link.href))
+            .map((link) => link.href),
+        ),
+      ),
+    ),
+  ];
 
   return (
     <header className="public-site-header">
@@ -203,7 +215,7 @@ export async function PublicSiteHeader() {
 
       <div className="public-site-header__nav-band">
         <div className="public-site-header__nav-inner">
-          <PublicHeaderNavigation menus={publicMenus} />
+          <PublicHeaderNavigation menus={publicMenus} crawlPriorityHrefs={crawlPriorityHrefs} />
         </div>
       </div>
     </header>

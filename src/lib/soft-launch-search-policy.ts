@@ -67,6 +67,11 @@ function normalizePublicPath(value: string) {
   return path || "/";
 }
 
+export function isSoftLaunchSearchPriorityPath(value: string) {
+  const path = normalizePublicPath(value);
+  return SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path);
+}
+
 export function isSoftLaunchSearchExcludedPath(value: string) {
   const path = normalizePublicPath(value);
 

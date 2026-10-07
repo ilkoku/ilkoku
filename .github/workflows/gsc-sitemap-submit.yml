@@ -45,17 +45,29 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate Search Console write OAuth secrets
+      - name: Check Search Console write OAuth availability
+        id: gsc_oauth
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
-          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
-          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || { echo "Missing GSC_OAUTH_WRITE_REFRESH_TOKEN" >&2; exit 1; }
+          available=true
+          test -n "$GSC_OAUTH_CLIENT_ID" || available=false
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || available=false
+          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || available=false
+          echo "available=$available" >> "$GITHUB_OUTPUT"
+          if [[ "$available" == "false" ]]; then
+            echo "::notice::GSC sitemap submit skipped because Search Console write OAuth is incomplete."
+            if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+              echo "Manual sitemap submission requires complete Search Console write OAuth secrets." >&2
+              exit 1
+            fi
+          fi
 
       - name: Submit live sitemap
+        if: steps.gsc_oauth.outputs.available == 'true'
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}

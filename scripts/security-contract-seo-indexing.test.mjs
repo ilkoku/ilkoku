@@ -258,6 +258,7 @@ test("soft-launch search gate keeps every page live while focusing the indexable
     "/yazarlar-icin/kurgu/fantastik",
     "/yazarlar-icin/kurgu/bilim-kurgu",
     "/yazarlar-icin/kurgu/distopya",
+    "/yazarlar-icin/kurgu/dedektif",
     "/yazarlar-icin/edebiyat/siir",
     "/okurlar-icin/okumaya-baslama",
     "/editorler-icin/egitim/editorluge-baslama",
@@ -430,6 +431,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   for (const changedFile of [
     "src/app/sitemap.xml/route.ts",
     "src/lib/seo/sitemap-data.ts",
+    "src/lib/soft-launch-search-policy.ts",
     "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
     "src/components/content/PublicCmsHydrator.tsx",
@@ -460,6 +462,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");
   assertContains(workflow, '"src/features/homepage/**"', "homepage feature IndexNow trigger");
   assertContains(workflow, '"src/lib/public-site-navigation.ts"', "global navigation IndexNow trigger");
+  assertContains(workflow, '"src/lib/soft-launch-search-policy.ts"', "soft-launch cohort IndexNow trigger");
   assertContains(workflow, '"src/components/content/PublicCmsHydrator.tsx"', "shared public layout IndexNow trigger");
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });

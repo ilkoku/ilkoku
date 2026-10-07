@@ -161,7 +161,7 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
       groups: [
         { id: "writer-discover", title: "Yazarlığı keşfet", links: [link("writers-home", true), link("writer-register"), link("how-it-works")] },
         { id: "writer-school", title: "Yazarlık Okulu", links: WRITING_CATEGORY_HUBS.map((hub) => link(`writer-hub:${hub.slug}`)) },
-        { id: "writer-featured", title: "Öne Çıkan Türler", links: ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya"].map((slug) => link(`writer-genre:${slug}`)) },
+        { id: "writer-featured", title: "Öne Çıkan Türler", links: ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "siir"].map((slug) => link(`writer-genre:${slug}`)) },
       ],
     },
     {

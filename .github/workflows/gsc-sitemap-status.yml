@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/gsc-sitemap-status.yml"
       - "scripts/gsc-sitemap-status.mjs"
+      - "src/lib/soft-launch-search-policy.ts"
+      - "src/lib/seo/sitemap-data.ts"
   workflow_dispatch:
 
 permissions:

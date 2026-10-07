@@ -7,6 +7,8 @@ on:
     paths:
       - ".github/workflows/gsc-full-index-census.yml"
       - "scripts/gsc-full-index-census.mjs"
+      - "src/lib/soft-launch-search-policy.ts"
+      - "src/lib/seo/sitemap-data.ts"
   workflow_dispatch:
 
 permissions:

@@ -6,6 +6,7 @@ import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigati
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 import "./public-site-header.css";
 import "./public-site-header-terminal.css";
@@ -128,6 +129,25 @@ function withBookIndexMenu(
   ];
 }
 
+
+function withSoftLaunchCrawlFocus(
+  menus: ResolvedHeaderMenu[],
+): ResolvedHeaderMenu[] {
+  return menus.flatMap((menu) => {
+    const groups = menu.groups
+      .map((group) => ({
+        ...group,
+        links: group.links.filter(
+          (item) => !isSoftLaunchSearchExcludedPath(item.href),
+        ),
+      }))
+      .filter((group) => group.links.length > 0);
+
+    if (groups.length === 0) return [];
+    return [{ ...menu, groups }];
+  });
+}
+
 function AccountIcon() {
   return (
     <svg
@@ -151,8 +171,10 @@ export async function PublicSiteHeader() {
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
   ]);
-  const publicMenus = withBookIndexMenu(
-    resolveHeaderNavigation(navigation.payload, navigation.pages),
+  const publicMenus = withSoftLaunchCrawlFocus(
+    withBookIndexMenu(
+      resolveHeaderNavigation(navigation.payload, navigation.pages),
+    ),
   );
 
   return (

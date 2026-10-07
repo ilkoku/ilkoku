@@ -23,7 +23,7 @@ test("writer header features every focused genre needed for sitewide discovery",
 
   assert.match(
     navigation,
-    /links: \["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "siir"\]\.map/u,
+    /links: \["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "siir", "dedektif"\]\.map/u,
   );
 });
 

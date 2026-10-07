@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SITE_ORIGIN = "https://ilkoku.com";
@@ -181,7 +182,7 @@ export async function runYandexCleanup() {
   await submitToYandex(key, keyLocation);
 }
 
-const invokedPath = process.argv[1] ? new URL(`file://${process.argv[1]}`).pathname : "";
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : "";
 if (invokedPath === fileURLToPath(import.meta.url)) {
   runYandexCleanup().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));

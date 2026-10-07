@@ -696,6 +696,36 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
     assertContains(submit, route, route + " GSC sitemap submit cohort");
   }
 
+  for (const route of [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
+    "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
+    "https://ilkoku.com/yazarlar-icin/kurgu",
+    "https://ilkoku.com/yazarlar-icin/edebiyat",
+    "https://ilkoku.com/yazarlar-icin/akademik",
+    "https://ilkoku.com/yazarlar-icin/bilgilendirici",
+    "https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne",
+    "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik",
+    "https://ilkoku.com/yazarlar-icin/cizgi-anlati",
+    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
+    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+    "https://ilkoku.com/yazarlar-icin/kurgu/fantastik",
+    "https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu",
+    "https://ilkoku.com/yazarlar-icin/kurgu/distopya",
+    "https://ilkoku.com/yazarlar-icin/edebiyat/siir",
+    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
+    "https://ilkoku.com/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+    "https://ilkoku.com/editorler-icin/egitim/metin-degerlendirme",
+  ]) {
+    assertContains(smoke, route, route + " full soft-launch smoke cohort");
+  }
+
   for (const staleTarget of [
     '"https://ilkoku.com/en-cok-satanlar"',
     '"https://ilkoku.com/en-cok-satanlar/dunya"',

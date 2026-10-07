@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { BookIndexPublicReadModel } from "@/lib/book-index/public-read-model";
 import {
   getBookIndexInsightItems,
-  getPublishedBookIndexInsightPages,
   type BookIndexInsightPageDefinition,
 } from "@/lib/book-index/insight-pages";
 import type {
@@ -43,19 +42,14 @@ function formattedObservedAt(value: Date | null) {
 
 export function BookIndexOverviewView({
   model,
-  insights,
-  showInsightPages,
   showGlobalPreview = false,
 }: {
   model: BookIndexPublicReadModel;
-  insights: BookIndexInsights;
-  showInsightPages: boolean;
   showGlobalPreview?: boolean;
 }) {
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
-  const publishedInsightPages = getPublishedBookIndexInsightPages(insights);
   const turkeySourceCount = new Set(
     model.turkey.items.flatMap((row) =>
       row.sources.map((source) => source.sourceCode),
@@ -120,35 +114,6 @@ export function BookIndexOverviewView({
       </section>
 
       <BookIndexSectionNav current="overview" showPrimary={false} />
-
-      {showInsightPages && publishedInsightPages.length ? (
-        <section className={styles.section} aria-labelledby="insight-pages-heading">
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.eyebrow}>Trendler</span>
-              <h2 id="insight-pages-heading">Çok satan kitap trendleri</h2>
-              <p>
-                Snapshot geçmişinden türetilen yeni giriş, yükseliş, çoklu
-                kitap satış kanalı görünürlüğü ve uzun dönem sinyallerini ayrı ayrı inceleyin.
-              </p>
-            </div>
-          </div>
-          <div className={styles.cards}>
-            {publishedInsightPages.map((page) => (
-              <Link
-                className={styles.card}
-                href={`/en-cok-satanlar/${page.slug}`}
-                key={page.slug}
-              >
-                <span>{page.eyebrow}</span>
-                <strong>{page.searchTitle}</strong>
-                <small>{page.description}</small>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
 
       <section className={styles.section} id="turkey-preview">
         <div className={styles.sectionHeading}>

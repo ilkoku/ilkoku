@@ -46,6 +46,17 @@ test("Yandex cleanup remains a narrow IndexNow notification workflow", () => {
 
   assert.match(workflow, /workflow_dispatch:/u);
   assert.match(workflow, /push:/u);
+  for (const path of [
+    "src/lib/soft-launch-search-policy.ts",
+    "src/lib/public-page-metadata.ts",
+    "src/app/robots.ts",
+    "src/app/editorler/**",
+    "src/app/en-cok-satanlar/turkiye/karsilastirma/**",
+    "src/app/yardim/**",
+    "next.config.ts",
+  ]) {
+    assert.ok(workflow.includes(`- "${path}"`), `${path} must retrigger Yandex cleanup validation`);
+  }
   assert.doesNotMatch(workflow, /schedule:/u);
   assert.doesNotMatch(workflow, /GSC_OAUTH/u);
 });

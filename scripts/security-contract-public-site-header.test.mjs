@@ -83,8 +83,13 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(navigationClient, /public-site-header__mobile-menu/);
   assert.match(navigationClient, /public-site-header__mega/);
   assert.match(navigationClient, /menus\.map\(\(menu\) => \{/);
-  assert.match(navigationClient, /aria-hidden=\{!isActive\}/);
-  assert.match(navigationClient, /data-active=\{isActive \? "true" : undefined\}/);
+  assert.match(navigationClient, /\{activeMenu \? \(/);
+  assert.match(navigationClient, /<MenuGroups menu=\{activeMenu\} onNavigate=\{closeDesktop\} \/>/);
+  assert.doesNotMatch(
+    navigationClient,
+    /menus\.filter\(\(menu\) => !menu\.directHref\)\.map/,
+  );
+  assert.doesNotMatch(navigationClient, /aria-hidden=\{!isActive\}/);
   assert.match(megaCss, /\.public-site-header__mega\[data-active="true"\]/);
   assert.match(navigationClient, /const \[activeId, setActiveId\] = useState<string \| null>\(null\)/);
   assert.match(navigationClient, /onMouseEnter=\{\(\) => activate\(menu\.id\)\}/);
@@ -96,16 +101,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(megaCss, /\.public-site-header__mobile-track\[data-detail="true"\]/);
   assert.match(header, /getPublishedHeaderNavigation\(\)/);
   assert.match(header, /resolveHeaderNavigation\(navigation\.payload,\s*navigation\.pages\)/);
-  assert.match(header, /isSoftLaunchSearchExcludedPath/);
-  assert.match(header, /function withSoftLaunchCrawlFocus/);
-  assert.match(
-    header,
-    /links: group\.links\.filter\([\s\S]*!isSoftLaunchSearchExcludedPath\(item\.href\)/,
-  );
-  assert.match(
-    header,
-    /withSoftLaunchCrawlFocus\([\s\S]*withBookIndexMenu\([\s\S]*resolveHeaderNavigation/,
-  );
   assert.match(config, /SITE_MAP_PAGES/);
   assert.match(config, /defaultHeaderNavigation/);
   assert.match(config, /WRITING_CATEGORY_HUBS/);

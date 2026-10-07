@@ -53,7 +53,6 @@ export default function robots(): MetadataRoute.Robots {
           "/yayinevi/",
           "/yayinevleri$",
           "/yayinevleri/",
-          "/editörler",
           "/yorumlarim",
           "/api",
           "/auth",
@@ -62,6 +61,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: [`${baseUrl}/sitemap.xml`, `${baseUrl}/recent-updates.atom`],
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

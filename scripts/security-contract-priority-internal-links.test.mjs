@@ -18,6 +18,21 @@ test("priority writing links strengthen the focused cohort without hiding the fu
   assert.match(category, /\{priorityGenres\.map\(\(genre\) => \(/u);
 });
 
+test("writer header features every focused genre needed for sitewide discovery", () => {
+  const navigation = source("src/lib/cms-header-navigation.ts");
+
+  for (const slug of [
+    "roman",
+    "oyku",
+    "fantastik",
+    "bilim-kurgu",
+    "distopya",
+    "siir",
+  ]) {
+    assert.match(navigation, new RegExp(`writer-genre:${slug}`, "u"));
+  }
+});
+
 test("editor hub points directly to the three focused editor education routes", () => {
   const editors = source("src/app/editorler-icin/page.tsx");
 

@@ -269,6 +269,14 @@ test("soft-launch search gate keeps every page live while focusing the indexable
   }
 
   for (const route of [
+    "/yazarlar-icin/kurgu/korku",
+    "/yazarlar-icin/kurgu/tarihi-roman",
+    "/okurlar-icin/elestirel-okuma",
+  ]) {
+    assertNotContains(policy, `"${route}"`, `${route} must remain outside the controlled indexable pilot cohort`);
+  }
+
+  for (const route of [
     "/yardim",
     "/iletisim",
     "/site-haritasi",

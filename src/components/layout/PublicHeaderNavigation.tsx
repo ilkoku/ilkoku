@@ -31,33 +31,20 @@ const CLOSE_DELAY_MS = 140;
 function MenuGroups({
   menu,
   onNavigate,
-  priorityHrefSet,
-  priorityOnly = false,
 }: {
   menu: PublicHeaderMenu;
   onNavigate?: () => void;
-  priorityHrefSet?: ReadonlySet<string>;
-  priorityOnly?: boolean;
 }) {
-  const groups = priorityOnly
-    ? menu.groups
-        .map((group) => ({
-          ...group,
-          links: group.links.filter((link) => priorityHrefSet?.has(link.href)),
-        }))
-        .filter((group) => group.links.length > 0)
-    : menu.groups;
+  if (menu.groups.length === 0) return null;
 
-  if (groups.length === 0) return null;
-
-  const columns = Math.min(groups.length, 3);
+  const columns = Math.min(menu.groups.length, 3);
 
   return (
     <div
       className="public-site-header__mega-grid"
       style={{ "--mega-columns": columns } as CSSProperties}
     >
-      {groups.map((group) => (
+      {menu.groups.map((group) => (
         <section className="public-site-header__mega-group" key={`${menu.id}-${group.id}`}>
           <h2>{group.title}</h2>
           <div className="public-site-header__mega-links">
@@ -80,10 +67,8 @@ function MenuGroups({
 
 export function PublicHeaderNavigation({
   menus,
-  crawlPriorityHrefs,
 }: {
   menus: PublicHeaderMenu[];
-  crawlPriorityHrefs: string[];
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -92,7 +77,6 @@ export function PublicHeaderNavigation({
 
   const activeMenu = menus.find((menu) => menu.id === activeId) ?? null;
   const mobileMenu = menus.find((menu) => menu.id === mobileMenuId) ?? null;
-  const crawlPriorityHrefSet = new Set(crawlPriorityHrefs);
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) {
@@ -199,33 +183,6 @@ export function PublicHeaderNavigation({
             );
           })}
         </nav>
-
-        {menus
-          .filter(
-            (menu) =>
-              !menu.directHref &&
-              menu.id !== activeId &&
-              menu.groups.some((group) =>
-                group.links.some((link) => crawlPriorityHrefSet.has(link.href)),
-              ),
-          )
-          .map((menu) => (
-            <div
-              aria-hidden="true"
-              aria-label={`${menu.label} menüsü`}
-              className="public-site-header__mega"
-              data-crawl-priority="true"
-              id={`public-site-header-mega-panel-${menu.id}`}
-              key={`desktop-priority-panel-${menu.id}`}
-              role="region"
-            >
-              <MenuGroups
-                menu={menu}
-                priorityHrefSet={crawlPriorityHrefSet}
-                priorityOnly
-              />
-            </div>
-          ))}
 
         {activeMenu ? (
           <div

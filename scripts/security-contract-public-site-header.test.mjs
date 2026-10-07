@@ -13,7 +13,6 @@ const headerWorkbenchPath = "src/components/content/HeaderNavigationWorkbench.ts
 const navigationActionsPath = "src/features/cms/navigation-actions.ts";
 const menuCmsPath = "src/app/icerik/menuler/page.tsx";
 const identityPath = "src/lib/site-identity.ts";
-const softLaunchPolicyPath = "src/lib/soft-launch-search-policy.ts";
 const framePath = "src/components/layout/PublicSiteFrame.tsx";
 const frameCssPath = "src/components/layout/public-site-frame.css";
 const publicPageTemplatePath = "src/components/layout/PublicPageTemplate.tsx";
@@ -78,21 +77,14 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   const config = read(headerConfigPath);
   const server = read(headerServerPath);
   const identity = read(identityPath);
-  const softLaunchPolicy = read(softLaunchPolicyPath);
 
   assert.match(header, /<PublicHeaderNavigation menus=\{publicMenus\}/);
   assert.match(navigationClient, /public-site-header__navigation/);
   assert.match(navigationClient, /public-site-header__mobile-menu/);
   assert.match(navigationClient, /public-site-header__mega/);
   assert.match(navigationClient, /menus\.map\(\(menu\) => \{/);
-  assert.match(navigationClient, /crawlPriorityHrefs: string\[\]/);
-  assert.match(navigationClient, /const crawlPriorityHrefSet = new Set\(crawlPriorityHrefs\)/);
-  assert.match(navigationClient, /data-crawl-priority="true"/);
-  assert.match(navigationClient, /priorityHrefSet=\{crawlPriorityHrefSet\}/);
-  assert.match(navigationClient, /priorityOnly/);
   assert.match(navigationClient, /\{activeMenu \? \(/);
   assert.match(navigationClient, /<MenuGroups menu=\{activeMenu\} onNavigate=\{closeDesktop\} \/>/);
-  assert.match(navigationClient, /aria-hidden="true"/);
   assert.doesNotMatch(navigationClient, /aria-hidden=\{!isActive\}/);
   assert.match(megaCss, /\.public-site-header__mega\[data-active="true"\]/);
   assert.match(navigationClient, /const \[activeId, setActiveId\] = useState<string \| null>\(null\)/);
@@ -105,17 +97,9 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(megaCss, /\.public-site-header__mobile-track\[data-detail="true"\]/);
   assert.match(header, /getPublishedHeaderNavigation\(\)/);
   assert.match(header, /resolveHeaderNavigation\(navigation\.payload,\s*navigation\.pages\)/);
-  assert.match(header, /isSoftLaunchSearchPriorityPath/);
-  assert.match(header, /const crawlPriorityHrefs = \[/);
-  assert.match(
-    header,
-    /<PublicHeaderNavigation menus=\{publicMenus\} crawlPriorityHrefs=\{crawlPriorityHrefs\} \/>/,
-  );
-  assert.match(softLaunchPolicy, /export function isSoftLaunchSearchPriorityPath/);
-  assert.match(
-    softLaunchPolicy,
-    /SOFT_LAUNCH_INDEXABLE_EXACT_PATHS\.has\(path\)/,
-  );
+  assert.match(header, /<PublicHeaderNavigation menus=\{publicMenus\} \/>/);
+  assert.doesNotMatch(navigationClient, /crawlPriorityHrefs|crawlPriorityHrefSet|data-crawl-priority|priorityHrefSet|priorityOnly|desktop-priority-panel/);
+  assert.doesNotMatch(header, /isSoftLaunchSearchPriorityPath|crawlPriorityHrefs/);
   assert.match(config, /SITE_MAP_PAGES/);
   assert.match(config, /defaultHeaderNavigation/);
   assert.match(config, /WRITING_CATEGORY_HUBS/);

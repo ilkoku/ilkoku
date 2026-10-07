@@ -57,7 +57,11 @@ test("robots is not used as the deindex mechanism for paused discovery", () => {
   }
 
   assert.match(robots, /\$\{baseUrl\}\/sitemap\.xml/u);
-  assert.match(robots, /\$\{baseUrl\}\/recent-updates\.atom/u);
+  assert.doesNotMatch(
+    robots,
+    /\$\{baseUrl\}\/recent-updates\.atom/u,
+    "Atom feed stays a WebSub surface instead of a robots sitemap directive",
+  );
 });
 
 test("route inventory documents the gated-product search boundary", () => {

@@ -138,8 +138,20 @@ test("robots mirrors private and protected route inventories without shadowing p
     "/yayinevi",
     "/yayinevleri",
   ]);
+  const crawlableRedirectRoots = new Set([
+    "/editörler",
+  ]);
 
   for (const route of privateRoots) {
+    if (crawlableRedirectRoots.has(route)) {
+      assertNotContains(
+        robots,
+        `"${route}"`,
+        `legacy redirect ${route} must stay crawlable so crawlers can observe its canonical redirect`,
+      );
+      continue;
+    }
+
     if (exactPrefixRoots.has(route)) {
       assertContains(robots, `"${route}$"`, `exact private crawl boundary ${route}`);
       assertContains(robots, `"${route}/"`, `private descendants crawl boundary ${route}`);

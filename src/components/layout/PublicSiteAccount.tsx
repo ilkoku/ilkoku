@@ -104,6 +104,7 @@ export function PublicSiteAccount() {
             ? `${account.fullName} hesap menüsünü aç`
             : "Hesap menüsünü aç"
         }
+        data-account-label={account.signedIn ? account.fullName : "GİRİŞ YAP"}
       >
         <AccountIcon />
       </summary>

@@ -29,6 +29,7 @@ const globalImpactFiles = new Set([
   "src/content/navigation.ts",
   "src/lib/public-brand.ts",
   "src/lib/public-page-metadata.ts",
+  "src/lib/soft-launch-search-policy.ts",
   "src/lib/public-site-navigation.ts",
   "src/lib/site-contact.ts",
 ]);

@@ -7,7 +7,7 @@ import { useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
-  adminNavigation,
+  adminNavigationGroups,
   SYSTEM_MANAGEMENT_PATH,
   type AdminNavItem,
 } from "@/lib/admin-navigation";
@@ -151,23 +151,52 @@ export function AdminShell({
         </div>
 
         <nav aria-label="Sistem yönetimi menüsü">
-          {adminNavigation.map((item) => {
-            const active =
+          {adminNavigationGroups.map((group) => {
+            const groupActive = group.items.some((item) =>
               item.href === SYSTEM_MANAGEMENT_PATH
                 ? pathname === item.href
-                : pathname.startsWith(item.href);
+                : pathname.startsWith(item.href),
+            );
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={active ? "is-active" : ""}
-                onClick={() => setOpen(false)}
+              <details
+                className="admin-nav-group"
+                key={group.id}
+                open={group.id === "overview" || groupActive}
               >
-                <Icon name={item.icon} />
-                <span>{item.label}</span>
-                {item.badge && <b>{item.badge}</b>}
-              </Link>
+                <summary>
+                  <span className="admin-nav-group__icon">
+                    <Icon name={group.icon} />
+                  </span>
+                  <span className="admin-nav-group__copy">
+                    <strong>{group.label}</strong>
+                    <small>{group.description}</small>
+                  </span>
+                  <span className="admin-nav-group__chevron" aria-hidden="true">⌄</span>
+                </summary>
+
+                <div className="admin-nav-group__items">
+                  {group.items.map((item) => {
+                    const active =
+                      item.href === SYSTEM_MANAGEMENT_PATH
+                        ? pathname === item.href
+                        : pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={active ? "is-active" : ""}
+                        onClick={() => setOpen(false)}
+                      >
+                        <Icon name={item.icon} />
+                        <span>{item.label}</span>
+                        {item.badge && <b>{item.badge}</b>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
             );
           })}
         </nav>

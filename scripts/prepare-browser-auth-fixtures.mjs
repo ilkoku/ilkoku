@@ -83,6 +83,21 @@ try {
     userIds[role] = userId;
   }
 
+  const adminLogoutToken = randomBytes(32).toString("base64url");
+  await client.execute(
+    `INSERT INTO \`Session\`
+      (id, tokenHash, userId, expiresAt, createdAt)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      randomUUID(),
+      hashToken(adminLogoutToken),
+      userIds.admin,
+      expiresAt,
+      now,
+    ],
+  );
+  sessions.adminLogout = adminLogoutToken;
+
   const cmsManagerId = randomUUID();
   const cmsManagerToken = randomBytes(32).toString("base64url");
   const cmsManagerTokenHash = hashToken(cmsManagerToken);

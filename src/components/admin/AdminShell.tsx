@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
@@ -130,13 +130,12 @@ export function AdminShell({
   user,
 }: AdminShellProps) {
   const pathname = usePathname();
-  const [clientPathname, setClientPathname] = useState("");
+  const navigationPathname = pathname.replace(
+    /^\/admin(?=\/|$)/,
+    SYSTEM_MANAGEMENT_PATH,
+  );
   const [open, setOpen] = useState(false);
   const initials = getInitials(user.fullName);
-
-  useEffect(() => {
-    setClientPathname(pathname);
-  }, [pathname]);
 
   return (
     <div className="admin-shell">
@@ -159,8 +158,8 @@ export function AdminShell({
           {adminNavigationGroups.map((group) => {
             const groupActive = group.items.some((item) =>
               item.href === SYSTEM_MANAGEMENT_PATH
-                ? clientPathname === item.href
-                : clientPathname.startsWith(item.href),
+                ? navigationPathname === item.href
+                : navigationPathname.startsWith(item.href),
             );
 
             return (
@@ -184,8 +183,8 @@ export function AdminShell({
                   {group.items.map((item) => {
                     const active =
                       item.href === SYSTEM_MANAGEMENT_PATH
-                        ? clientPathname === item.href
-                        : clientPathname.startsWith(item.href);
+                        ? navigationPathname === item.href
+                        : navigationPathname.startsWith(item.href);
 
                     return (
                       <Link

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { logoutAction } from "@/features/auth/actions";
 import {
   adminNavigationGroups,
@@ -131,6 +132,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const initials = getInitials(user.fullName);
 
   return (
@@ -158,45 +160,73 @@ export function AdminShell({
                 : pathname.startsWith(item.href),
             );
 
+            const expanded = expandedGroups[group.id] ?? (group.id === "overview" || groupActive);
+
             return (
-              <details
-                className="admin-nav-group"
+              <section
+                className={`admin-nav-group ${groupActive ? "is-active" : ""}`}
                 key={group.id}
-                open={group.id === "overview" || groupActive}
               >
-                <summary>
-                  <span className="admin-nav-group__icon">
-                    <Icon name={group.icon} />
-                  </span>
-                  <span className="admin-nav-group__copy">
-                    <strong>{group.label}</strong>
-                    <small>{group.description}</small>
-                  </span>
-                  <span className="admin-nav-group__chevron" aria-hidden="true">⌄</span>
-                </summary>
+                <div className="admin-nav-group__header">
+                  <Link
+                    className="admin-nav-group__landing"
+                    href={group.landingHref}
+                    onClick={() => setOpen(false)}
+                  >
+                    <span className="admin-nav-group__icon">
+                      <Icon name={group.icon} />
+                    </span>
+                    <span className="admin-nav-group__copy">
+                      <strong>{group.label}</strong>
+                      <small>{group.description}</small>
+                    </span>
+                  </Link>
 
-                <div className="admin-nav-group__items">
-                  {group.items.map((item) => {
-                    const active =
-                      item.href === SYSTEM_MANAGEMENT_PATH
-                        ? pathname === item.href
-                        : pathname.startsWith(item.href);
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={active ? "is-active" : ""}
-                        onClick={() => setOpen(false)}
-                      >
-                        <Icon name={item.icon} />
-                        <span>{item.label}</span>
-                        {item.badge && <b>{item.badge}</b>}
-                      </Link>
-                    );
-                  })}
+                  <button
+                    aria-expanded={expanded}
+                    aria-label={`${group.label} alt menüsünü ${expanded ? "kapat" : "aç"}`}
+                    className="admin-nav-group__toggle"
+                    onClick={() =>
+                      setExpandedGroups((current) => ({
+                        ...current,
+                        [group.id]: !current[group.id],
+                      }))
+                    }
+                    type="button"
+                  >
+                    <span
+                      className={`admin-nav-group__chevron ${expanded ? "is-open" : ""}`}
+                      aria-hidden="true"
+                    >
+                      ⌄
+                    </span>
+                  </button>
                 </div>
-              </details>
+
+                {expanded ? (
+                  <div className="admin-nav-group__items">
+                    {group.items.map((item) => {
+                      const active =
+                        item.href === SYSTEM_MANAGEMENT_PATH
+                          ? pathname === item.href
+                          : pathname.startsWith(item.href);
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={active ? "is-active" : ""}
+                          onClick={() => setOpen(false)}
+                        >
+                          <Icon name={item.icon} />
+                          <span>{item.label}</span>
+                          {item.badge && <b>{item.badge}</b>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </section>
             );
           })}
         </nav>
@@ -271,7 +301,14 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="admin-content">{children}</main>
+        <main className="admin-content">
+          {pathname !== SYSTEM_MANAGEMENT_PATH ? (
+            <div className="admin-return-row">
+              <AdminReturnLink />
+            </div>
+          ) : null}
+          {children}
+        </main>
       </section>
     </div>
   );

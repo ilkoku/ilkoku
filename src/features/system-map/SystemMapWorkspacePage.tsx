@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { IntegrityControlPanel } from "./IntegrityControlPanel";
 import { RuntimeInfrastructurePanel } from "./RuntimeInfrastructurePanel";
 import { SystemMapArchitecturePanel } from "./SystemMapArchitecturePanel";
@@ -113,6 +114,7 @@ export async function SystemMapWorkspacePage({ workspace }: { workspace: SystemM
 
   return (
     <main className="system-map-page">
+      <div style={{ marginBottom: "1rem" }}><AdminReturnLink /></div>
       {workspace === "overview" ? (
         <header className="system-map-hero">
           <div>

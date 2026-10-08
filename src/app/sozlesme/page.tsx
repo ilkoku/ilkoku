@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { ContractSendWorkbench } from "@/features/contracts/ContractSendWorkbench";
 import {
   listAdminUserContracts,
@@ -76,6 +77,7 @@ export default async function ContractManagementPage({
 
   return (
     <main className="contract-admin-page">
+      <div style={{ marginBottom: "1rem" }}><AdminReturnLink /></div>
       <header className="contract-admin-hero">
         <div>
           <p className="contract-eyebrow">İLKOKU MERKEZİ YÖNETİM</p>

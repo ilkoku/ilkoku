@@ -7,6 +7,10 @@ const read = (path) => readFileSync(path, "utf8");
 const navigation = read("src/lib/admin-navigation.ts");
 const shell = read("src/components/admin/AdminShell.tsx");
 const dashboard = read("src/components/admin/AdminDashboard.tsx");
+const returnLink = read("src/components/admin/AdminReturnLink.tsx");
+const contentCenter = read("src/app/icerik/page.tsx");
+const systemMap = read("src/features/system-map/SystemMapWorkspacePage.tsx");
+const contracts = read("src/app/sozlesme/page.tsx");
 
 test("system management keeps every admin destination behind seven grouped navigation areas", () => {
   for (const label of [
@@ -51,9 +55,23 @@ test("system management keeps every admin destination behind seven grouped navig
   }
 
   assert.match(shell, /adminNavigationGroups\.map/);
-  assert.match(shell, /className="admin-nav-group"/);
-  assert.match(shell, /group\.id === "overview" \|\| groupActive/);
+  assert.match(shell, /admin-nav-group__landing/);
+  assert.match(shell, /href=\{group\.landingHref\}/);
+  assert.match(shell, /admin-nav-group__toggle/);
+  assert.match(shell, /aria-expanded=\{expanded\}/);
   assert.match(shell, /group\.items\.map/);
+
+  for (const landing of [
+    'landingHref: systemPath()',
+    'landingHref: systemPath("/kullanicilar")',
+    'landingHref: systemPath("/eserler")',
+    'landingHref: systemPath("/odeme-sistemi")',
+    'landingHref: "/sozlesme"',
+    'landingHref: "/harita"',
+    'landingHref: systemPath("/arsiv")',
+  ]) {
+    assert.ok(navigation.includes(landing), `${landing} must remain a real group landing route`);
+  }
 });
 
 test("general admin dashboard exposes the six operational control centers before detail metrics", () => {
@@ -71,4 +89,16 @@ test("general admin dashboard exposes the six operational control centers before
   assert.match(dashboard, /Nereye gitmek istiyorsun\?/);
   assert.match(dashboard, /managementCenters\.map/);
   assert.match(dashboard, /admin-control-centers__grid/);
+});
+
+
+test("admin subpages and external management centers expose a consistent return path", () => {
+  assert.match(returnLink, /href="\/sistem-yonetimi"/);
+  assert.match(returnLink, /Genel Yönetim Paneline Dön/);
+  assert.match(shell, /pathname !== SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /<AdminReturnLink \/>/);
+
+  for (const source of [contentCenter, systemMap, contracts]) {
+    assert.match(source, /<AdminReturnLink \/>/);
+  }
 });

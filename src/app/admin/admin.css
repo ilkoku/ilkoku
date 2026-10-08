@@ -187,3 +187,73 @@
   background: linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.11));
   box-shadow: inset 2px 0 #8b5cf6;
 }
+
+
+/* ADMIN NAVIGATION INTERACTION FIX — 2026-10-08 */
+.admin-nav-group__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.7rem;
+  align-items: stretch;
+}
+
+.admin-sidebar nav a.admin-nav-group__landing {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: .75rem;
+  min-height: 3.45rem;
+  padding: .7rem .55rem .7rem .8rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #c6ccda;
+}
+
+.admin-sidebar nav a.admin-nav-group__landing:hover {
+  background: rgba(255,255,255,.035);
+  color: #fff;
+  transform: none;
+}
+
+.admin-nav-group.is-active {
+  border-color: rgba(129,140,248,.22);
+  background: rgba(99,102,241,.045);
+}
+
+.admin-nav-group.is-active .admin-nav-group__landing {
+  color: #fff;
+}
+
+.admin-nav-group__toggle {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 0;
+  border-left: 1px solid rgba(148,163,184,.07);
+  background: transparent;
+  color: #7f889c;
+  cursor: pointer;
+}
+
+.admin-nav-group__toggle:hover {
+  background: rgba(255,255,255,.045);
+  color: #fff;
+}
+
+.admin-nav-group__toggle:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: -2px;
+}
+
+.admin-nav-group__chevron {
+  transition: transform 160ms ease;
+}
+
+.admin-nav-group__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.admin-return-row {
+  display: flex;
+  align-items: center;
+  margin: 0 0 1rem;
+}

@@ -338,6 +338,38 @@ test("authenticated admin control panel click matrix: every visible dashboard li
 
 
 
+test("authenticated admin global search submits to the canonical works route", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {
+    waitUntil: "domcontentloaded",
+  });
+
+  const search = page.getByRole("searchbox", {
+    name: "Sistem yönetiminde eser ara",
+  });
+  await expect(search).toBeVisible();
+  await search.fill("CI Browser");
+  await search.press("Enter");
+
+  await page.waitForURL(/\/sistem-yonetimi\/eserler\?q=CI(?:\+|%20)Browser$/);
+  await expect(page).not.toHaveURL(/\/giris(?:\?|$)/);
+  await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+});
+
+
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

@@ -9,6 +9,7 @@ const headerAccountPath = "src/components/layout/PublicSiteAccount.tsx";
 const headerAccountRoutePath = "src/app/api/public-account/route.ts";
 const headerNavigationClientPath = "src/components/layout/PublicHeaderNavigation.tsx";
 const headerMegaCssPath = "src/components/layout/public-site-mega-menu.css";
+const headerTerminalCssPath = "src/components/layout/public-site-header-terminal.css";
 const headerConfigPath = "src/lib/cms-header-navigation.ts";
 const headerServerPath = "src/lib/cms-header-navigation-server.ts";
 const headerWorkbenchPath = "src/components/content/HeaderNavigationWorkbench.tsx";
@@ -78,6 +79,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   const headerAccountRoute = read(headerAccountRoutePath);
   const navigationClient = read(headerNavigationClientPath);
   const megaCss = read(headerMegaCssPath);
+  const terminalCss = read(headerTerminalCssPath);
   const config = read(headerConfigPath);
   const server = read(headerServerPath);
   const identity = read(identityPath);
@@ -192,6 +194,9 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(headerAccount, /public-site-header__account/);
   assert.match(headerAccount, /public-site-header__identity/);
   assert.match(headerAccount, /fetch\("\/api\/public-account"/);
+  assert.match(headerAccount, /data-account-label=\{account\.signedIn \? account\.fullName : "GİRİŞ YAP"\}/);
+  assert.match(terminalCss, /content:\s*"> "\s*attr\(data-account-label\)/);
+  assert.doesNotMatch(terminalCss, /content:\s*"> HESABIM"/);
   assert.match(headerAccount, /href="\/giris"/);
   assert.match(headerAccount, /href="\/kayit"/);
   assert.match(headerAccount, /href="\/hesabim"/);

@@ -253,6 +253,92 @@ for (const scenario of authenticatedCases) {
 }
 
 
+
+
+test("authenticated admin control panel click matrix: every visible dashboard link navigates successfully", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "İlkOku Genel Durumu" })).toBeVisible();
+
+  const groupSummaries = page.locator(".admin-nav-group > summary");
+  const groupCount = await groupSummaries.count();
+  expect(groupCount).toBeGreaterThan(0);
+
+  for (let index = 0; index < groupCount; index += 1) {
+    const summary = groupSummaries.nth(index);
+    await summary.scrollIntoViewIfNeeded();
+    await summary.click();
+    await expect(summary.locator("xpath=..")).toHaveJSProperty("open", true);
+  }
+
+  const hrefs = await page
+    .locator(".admin-sidebar a[href], .admin-content a[href], .admin-topbar a[href]")
+    .evaluateAll((links) =>
+      [...new Set(
+        links
+          .map((link) => link.getAttribute("href"))
+          .filter((href) => typeof href === "string" && href.startsWith("/")),
+      )],
+    );
+
+  expect(hrefs.length, "Admin dashboard should expose clickable internal links").toBeGreaterThan(10);
+
+  for (const href of hrefs) {
+    if (href === "/") continue;
+
+    await page.goto("/sistem-yonetimi", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
+
+    const locator = page.locator(`a[href="${href.replaceAll('"', '\\"')}"]`).first();
+    await expect(locator, `Missing visible admin link for ${href}`).toBeVisible();
+
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (candidate) =>
+          candidate.request().isNavigationRequest() &&
+          candidate.frame() === page.mainFrame(),
+        { timeout: 10_000 },
+      ).catch(() => null),
+      locator.click(),
+    ]);
+
+    await page.waitForLoadState("domcontentloaded");
+
+    expect(
+      page.url(),
+      `Admin link did not navigate away from dashboard: ${href}`,
+    ).not.toMatch(/\/sistem-yonetimi\/?$/);
+
+    expect(
+      response?.status() ?? 200,
+      `Admin link returned an error response: ${href} -> ${page.url()}`,
+    ).toBeLessThan(400);
+
+    await expect(page, `Admin link redirected to login: ${href}`).not.toHaveURL(/\/giris(?:\?|$)/);
+    await expect(page, `Admin link redirected to access denied: ${href}`).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    await expect(page.locator("body")).not.toContainText("Sayfa bulunamadı.");
+  }
+});
+
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

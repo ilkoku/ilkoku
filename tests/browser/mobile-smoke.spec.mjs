@@ -283,9 +283,17 @@ test("authenticated admin control panel click matrix: every visible dashboard li
 
   for (let index = 0; index < groupCount; index += 1) {
     const summary = groupSummaries.nth(index);
+    const details = summary.locator("xpath=..");
+    const wasOpen = await details.evaluate((element) => element.open);
+
     await summary.scrollIntoViewIfNeeded();
     await summary.click();
-    await expect(summary.locator("xpath=..")).toHaveJSProperty("open", true);
+    await expect(details).toHaveJSProperty("open", !wasOpen);
+
+    if (!wasOpen) {
+      await summary.click();
+      await expect(details).toHaveJSProperty("open", false);
+    }
   }
 
   const hrefs = await page

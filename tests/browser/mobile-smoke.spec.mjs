@@ -316,7 +316,7 @@ test("authenticated admin control panel click matrix: every visible dashboard li
     });
     await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
 
-    const locator = page.locator(`a[href="${href.replaceAll('"', '\\"')}"]`).first();
+    const locator = page.locator(`a[href="${href.replaceAll('"', '\\\"')}"]:visible`).first();
     await expect(locator, `Missing visible admin link for ${href}`).toBeVisible();
 
     const [response] = await Promise.all([

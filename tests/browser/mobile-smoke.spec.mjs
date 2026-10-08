@@ -253,6 +253,50 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("authenticated admin sidebar group navigation and return path work", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+
+  const peopleLanding = page.locator('a.admin-nav-group__landing[href="/sistem-yonetimi/kullanicilar"]');
+  await expect(peopleLanding).toBeVisible();
+  await peopleLanding.click();
+  await page.waitForURL(/\/sistem-yonetimi\/kullanicilar$/);
+
+  const returnLink = page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first();
+  await expect(returnLink).toBeVisible();
+  await returnLink.click();
+  await page.waitForURL(/\/sistem-yonetimi$/);
+
+  const peopleToggle = page.getByRole("button", { name: /Kullanıcı & Roller alt menüsünü/ });
+  await expect(peopleToggle).toHaveAttribute("aria-expanded", "false");
+  await peopleToggle.click();
+  await expect(peopleToggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator('.admin-nav-group__items a[href="/sistem-yonetimi/kullanicilar"]')).toBeVisible();
+
+  await page.goto("/icerik", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
+
+  await page.goto("/harita", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
+
+  await page.goto("/sozlesme", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
+});
+
+
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

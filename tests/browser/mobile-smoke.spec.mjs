@@ -294,7 +294,7 @@ test("authenticated system management control panel interactions work through th
   ]) {
     const summary = page.locator(".admin-sidebar summary").filter({ hasText: groupLabel }).first();
     await expect(summary).toBeVisible();
-    const details = summary.locator("..");
+    const details = summary.locator("xpath=..");
     const wasOpen = await details.evaluate((element) => element.hasAttribute("open"));
     await summary.click();
     await expect.poll(async () => details.evaluate((element) => element.hasAttribute("open"))).toBe(!wasOpen);

@@ -329,6 +329,18 @@ test("authenticated system management control panel interactions work through th
   await search.press("Enter");
   await expect(page).toHaveURL(/\/sistem-yonetimi\/eserler\?q=roman$/);
 
+  const logoutToken = authFixture.sessions?.adminLogout;
+  expect(logoutToken, "Missing isolated admin logout session fixture").toBeTruthy();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: logoutToken,
+      url: authCookieUrl,
+    },
+  ]);
+
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Çıkış yap" }).click();
   await expect(page).toHaveURL(/\/$/);

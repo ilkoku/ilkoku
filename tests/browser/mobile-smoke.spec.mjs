@@ -310,10 +310,6 @@ test("authenticated system management control panel interactions work through th
   for (const href of dashboardHrefs) {
     await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
 
-    const link = page.locator(".admin-main a[href]").filter({
-      has: page.locator(`xpath=.//*[@href="${href}"]`),
-    });
-
     const exactLink = page.locator(`.admin-main a[href="${href.replaceAll('"', '\\"')}"]`).first();
     await expect(exactLink, `Missing dashboard link for ${href}`).toBeVisible();
     await exactLink.click();

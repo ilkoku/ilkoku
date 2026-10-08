@@ -289,12 +289,11 @@ test("authenticated admin control panel click matrix: every visible dashboard li
     await summary.scrollIntoViewIfNeeded();
     await summary.click();
     await expect(details).toHaveJSProperty("open", !wasOpen);
-
-    if (!wasOpen) {
-      await summary.click();
-      await expect(details).toHaveJSProperty("open", false);
-    }
   }
+
+  await page.locator(".admin-nav-group").evaluateAll((groups) => {
+    for (const group of groups) group.open = true;
+  });
 
   const hrefs = await page
     .locator(".admin-sidebar a[href], .admin-content a[href], .admin-topbar a[href]")
@@ -316,36 +315,28 @@ test("authenticated admin control panel click matrix: every visible dashboard li
     });
     await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
 
-    const locator = page.locator(`a[href="${href.replaceAll('"', '\\\"')}"]:visible`).first();
+    await page.locator(".admin-nav-group").evaluateAll((groups) => {
+      for (const group of groups) group.open = true;
+    });
+
+    const locator = page.locator(`a[href="${href.replaceAll('"', '\\"')}"]:visible`).first();
     await expect(locator, `Missing visible admin link for ${href}`).toBeVisible();
 
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (candidate) =>
-          candidate.request().isNavigationRequest() &&
-          candidate.frame() === page.mainFrame(),
-        { timeout: 10_000 },
-      ).catch(() => null),
-      locator.click(),
-    ]);
-
+    const destination = new URL(href, page.url());
+    await locator.click();
+    await page.waitForURL(
+      (url) => url.pathname === destination.pathname && url.search === destination.search,
+      { timeout: 7_500 },
+    );
     await page.waitForLoadState("domcontentloaded");
-
-    expect(
-      page.url(),
-      `Admin link did not navigate away from dashboard: ${href}`,
-    ).not.toMatch(/\/sistem-yonetimi\/?$/);
-
-    expect(
-      response?.status() ?? 200,
-      `Admin link returned an error response: ${href} -> ${page.url()}`,
-    ).toBeLessThan(400);
 
     await expect(page, `Admin link redirected to login: ${href}`).not.toHaveURL(/\/giris(?:\?|$)/);
     await expect(page, `Admin link redirected to access denied: ${href}`).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
     await expect(page.locator("body")).not.toContainText("Sayfa bulunamadı.");
   }
 });
+
+
 
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");

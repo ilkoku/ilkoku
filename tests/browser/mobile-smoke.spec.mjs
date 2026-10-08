@@ -253,6 +253,104 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("authenticated system management control panel interactions work through the public rewrite", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  test.setTimeout(90_000);
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+
+  const hydrationErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /hydration|hydrated|server rendered html/i.test(message.text())) {
+      hydrationErrors.push(message.text());
+    }
+  });
+
+  await page.goto("/sistem-yonetimi", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "İlkOku Genel Durumu" })).toBeVisible();
+  await expect(page.getByText("Nereye gitmek istiyorsun?", { exact: true })).toBeVisible();
+
+  for (const groupLabel of [
+    "Kullanıcı & Roller",
+    "Eser & İçerik",
+    "Ticaret & Finans",
+    "İletişim & Sözleşmeler",
+    "Güvenlik & Sistem",
+    "Arşiv & Ayarlar",
+  ]) {
+    const summary = page.locator(".admin-sidebar summary").filter({ hasText: groupLabel }).first();
+    await expect(summary).toBeVisible();
+    const details = summary.locator("xpath=..");
+    const wasOpen = await details.evaluate((element) => element.hasAttribute("open"));
+    await summary.click();
+    await expect.poll(async () => details.evaluate((element) => element.hasAttribute("open"))).toBe(!wasOpen);
+    await summary.click();
+  }
+
+  const dashboardHrefs = await page.locator(".admin-main a[href]").evaluateAll((anchors) =>
+    [...new Set(anchors.map((anchor) => anchor.getAttribute("href")).filter(Boolean))],
+  );
+
+  expect(dashboardHrefs.length).toBeGreaterThanOrEqual(15);
+
+  for (const href of dashboardHrefs) {
+    await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+
+    const exactLink = page.locator(`.admin-main a[href="${href.replaceAll('"', '\\"')}"]`).first();
+    await expect(exactLink, `Missing dashboard link for ${href}`).toBeVisible();
+    await exactLink.click();
+
+    const expectedUrl = new URL(href, authCookieUrl);
+    await expect
+      .poll(() => {
+        const current = new URL(page.url());
+        return `${current.pathname}${current.search}`;
+      }, { message: `Dashboard link did not navigate: ${href}` })
+      .toBe(`${expectedUrl.pathname}${expectedUrl.search}`);
+  }
+
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+  const search = page.getByRole("searchbox", { name: "Sistem yönetiminde eser ara" });
+  await search.fill("roman");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/sistem-yonetimi\/eserler\?q=roman$/);
+
+  const logoutToken = authFixture.sessions?.adminLogout;
+  expect(logoutToken, "Missing isolated admin logout session fixture").toBeTruthy();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: logoutToken,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Çıkış yap" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/giris(?:\?|$)/);
+
+  expect(hydrationErrors, `Hydration errors: ${hydrationErrors.join("\n")}`).toEqual([]);
+});
+
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

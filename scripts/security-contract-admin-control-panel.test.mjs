@@ -52,6 +52,11 @@ test("system management keeps every admin destination behind seven grouped navig
 
   assert.match(shell, /adminNavigationGroups\.map/);
   assert.match(shell, /className="admin-nav-group"/);
+  assert.match(shell, /const navigationPathname = pathname\.replace\(/);
+  assert.match(shell, /\^\\\/admin\(\?=\\\/\|\$\)/);
+  assert.match(shell, /SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /navigationPathname === item\.href/);
+  assert.match(shell, /navigationPathname\.startsWith\(item\.href\)/);
   assert.match(shell, /group\.id === "overview" \|\| groupActive/);
   assert.match(shell, /group\.items\.map/);
 });

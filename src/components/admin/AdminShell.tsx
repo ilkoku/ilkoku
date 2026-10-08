@@ -130,6 +130,10 @@ export function AdminShell({
   user,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const navigationPathname = pathname.replace(
+    /^\/admin(?=\/|$)/,
+    SYSTEM_MANAGEMENT_PATH,
+  );
   const [open, setOpen] = useState(false);
   const initials = getInitials(user.fullName);
 
@@ -154,8 +158,8 @@ export function AdminShell({
           {adminNavigationGroups.map((group) => {
             const groupActive = group.items.some((item) =>
               item.href === SYSTEM_MANAGEMENT_PATH
-                ? pathname === item.href
-                : pathname.startsWith(item.href),
+                ? navigationPathname === item.href
+                : navigationPathname.startsWith(item.href),
             );
 
             return (
@@ -179,8 +183,8 @@ export function AdminShell({
                   {group.items.map((item) => {
                     const active =
                       item.href === SYSTEM_MANAGEMENT_PATH
-                        ? pathname === item.href
-                        : pathname.startsWith(item.href);
+                        ? navigationPathname === item.href
+                        : navigationPathname.startsWith(item.href);
 
                     return (
                       <Link

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
+import { PublicSiteAccount } from "@/components/layout/PublicSiteAccount";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
@@ -128,24 +129,6 @@ function withBookIndexMenu(
   ];
 }
 
-function AccountIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
-    </svg>
-  );
-}
-
 export async function PublicSiteHeader() {
   const [identity, navigation] = await Promise.all([
     getPublicSiteIdentity(),
@@ -187,17 +170,7 @@ export async function PublicSiteHeader() {
         </span>
 
         <div className="public-site-header__tools">
-          <details className="public-site-header__account">
-            <summary aria-label="Hesap menüsünü aç">
-              <AccountIcon />
-            </summary>
-
-            <div className="public-site-header__account-menu">
-              <Link href="/hesabim">Hesabım</Link>
-              <Link href="/giris">Giriş Yap</Link>
-              <Link href="/kayit">Üye Ol</Link>
-            </div>
-          </details>
+          <PublicSiteAccount />
         </div>
       </div>
 

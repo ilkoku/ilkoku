@@ -7,6 +7,7 @@ import type {
   WorkStatus,
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { SYSTEM_MANAGEMENT_PATH } from "@/lib/admin-navigation";
 
 const auditActionLabels: Record<AuditAction, string> = {
   email_test_sent: "Admin test e-postası gönderdi",
@@ -66,6 +67,70 @@ const workStatusLabels: Record<WorkStatus, string> = {
   published: "Yayında",
   archived: "Arşivde",
 };
+
+const managementCenters = [
+  {
+    title: "Kullanıcı & Roller",
+    description: "Kullanıcıları, rol başvurularını ve topluluk operasyonlarını tek alanda yönet.",
+    href: `${SYSTEM_MANAGEMENT_PATH}/kullanicilar`,
+    links: [
+      { label: "Kullanıcılar", href: `${SYSTEM_MANAGEMENT_PATH}/kullanicilar` },
+      { label: "Başvurular", href: `${SYSTEM_MANAGEMENT_PATH}/basvurular` },
+      { label: "Rol & Yetkiler", href: `${SYSTEM_MANAGEMENT_PATH}/roller` },
+      { label: "Yorumlar", href: `${SYSTEM_MANAGEMENT_PATH}/yorumlar` },
+    ],
+  },
+  {
+    title: "Eser & İçerik",
+    description: "Eser yönetimi, CMS yayınları ve Kitap Endeksi operasyonlarını aç.",
+    href: `${SYSTEM_MANAGEMENT_PATH}/eserler`,
+    links: [
+      { label: "Eserler", href: `${SYSTEM_MANAGEMENT_PATH}/eserler` },
+      { label: "İçerik Merkezi", href: "/icerik" },
+      { label: "Kitap Endeksi", href: `${SYSTEM_MANAGEMENT_PATH}/kitap-endeksi` },
+    ],
+  },
+  {
+    title: "Ticaret & Finans",
+    description: "Ödeme altyapısı, siparişler, gelirler ve finans kayıtlarına ulaş.",
+    href: `${SYSTEM_MANAGEMENT_PATH}/odeme-sistemi`,
+    links: [
+      { label: "Ödeme Sistemi", href: `${SYSTEM_MANAGEMENT_PATH}/odeme-sistemi` },
+      { label: "Finans & Gelirler", href: `${SYSTEM_MANAGEMENT_PATH}/finans-gelirler` },
+    ],
+  },
+  {
+    title: "İletişim & Sözleşmeler",
+    description: "Sözleşme, e-posta ve operasyonel iletişim akışlarını yönet.",
+    href: "/sozlesme",
+    links: [
+      { label: "Sözleşmeler", href: "/sozlesme" },
+      { label: "E-postalar", href: `${SYSTEM_MANAGEMENT_PATH}/epostalar` },
+      { label: "E-posta Operasyonları", href: `${SYSTEM_MANAGEMENT_PATH}/eposta-operasyonlari` },
+    ],
+  },
+  {
+    title: "Güvenlik & Sistem",
+    description: "Sistem haritası, güvenlik sinyalleri ve audit kayıtlarını kontrol et.",
+    href: "/harita",
+    links: [
+      { label: "Sistem Haritası", href: "/harita" },
+      { label: "Okuma Güvenliği", href: `${SYSTEM_MANAGEMENT_PATH}/okuma-guvenligi` },
+      { label: "Audit Log", href: `${SYSTEM_MANAGEMENT_PATH}/audit-log` },
+    ],
+  },
+  {
+    title: "Arşiv & Ayarlar",
+    description: "Arşivleme, silme, demo verisi ve sistem ayarlarını tek noktada tut.",
+    href: `${SYSTEM_MANAGEMENT_PATH}/arsiv`,
+    links: [
+      { label: "Arşiv", href: `${SYSTEM_MANAGEMENT_PATH}/arsiv` },
+      { label: "Silme Merkezi", href: `${SYSTEM_MANAGEMENT_PATH}/silme-merkezi` },
+      { label: "Demo Veri", href: `${SYSTEM_MANAGEMENT_PATH}/demo` },
+      { label: "Ayarlar", href: `${SYSTEM_MANAGEMENT_PATH}/ayarlar` },
+    ],
+  },
+] as const;
 
 const quickLinks = [
   {
@@ -570,6 +635,39 @@ export async function AdminDashboard() {
         >
           Sistem hareketlerini aç
         </Link>
+      </section>
+
+      <section className="admin-control-centers" aria-labelledby="admin-control-centers-title">
+        <div className="admin-dashboard-section__heading">
+          <div>
+            <span>Yönetim merkezleri</span>
+            <h2 id="admin-control-centers-title">Nereye gitmek istiyorsun?</h2>
+          </div>
+          <small>6 ana operasyon alanı</small>
+        </div>
+
+        <div className="admin-control-centers__grid">
+          {managementCenters.map((center) => (
+            <article className="admin-control-center" key={center.title}>
+              <div>
+                <span>{center.title}</span>
+                <p>{center.description}</p>
+              </div>
+
+              <nav aria-label={`${center.title} hızlı bağlantıları`}>
+                {center.links.map((item) => (
+                  <Link href={item.href} key={item.href}>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <Link className="admin-control-center__primary" href={center.href}>
+                Merkezi aç <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="admin-dashboard-section">

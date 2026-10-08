@@ -79,3 +79,111 @@
     max-height: 100dvh;
   }
 }
+
+
+/* GENERAL CONTROL PANEL NAVIGATION — 2026-10-08 */
+.admin-sidebar nav {
+  align-content: start;
+  gap: .55rem;
+}
+
+.admin-nav-group {
+  border: 1px solid rgba(148,163,184,.08);
+  border-radius: .9rem;
+  background: rgba(255,255,255,.018);
+  overflow: hidden;
+}
+
+.admin-nav-group[open] {
+  border-color: rgba(129,140,248,.14);
+  background: rgba(255,255,255,.026);
+}
+
+.admin-nav-group > summary {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0,1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  min-height: 3.45rem;
+  padding: .7rem .8rem;
+  cursor: pointer;
+  list-style: none;
+  color: #c6ccda;
+  user-select: none;
+}
+
+.admin-nav-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-nav-group > summary:hover {
+  background: rgba(255,255,255,.035);
+  color: #fff;
+}
+
+.admin-nav-group__icon {
+  display: grid;
+  place-items: center;
+  color: #a78bfa;
+}
+
+.admin-nav-group__icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.admin-nav-group__copy {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.admin-nav-group__copy strong {
+  color: inherit;
+  font-size: .78rem;
+  line-height: 1.2;
+}
+
+.admin-nav-group__copy small {
+  overflow: hidden;
+  color: #687287;
+  font-size: .58rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-nav-group__chevron {
+  color: #697287;
+  font-size: .75rem;
+  transition: transform 160ms ease;
+}
+
+.admin-nav-group[open] .admin-nav-group__chevron {
+  transform: rotate(180deg);
+}
+
+.admin-nav-group__items {
+  display: grid;
+  gap: .18rem;
+  padding: 0 .42rem .48rem;
+  border-top: 1px solid rgba(148,163,184,.055);
+}
+
+.admin-sidebar nav .admin-nav-group__items a {
+  min-height: 2.55rem;
+  padding: .56rem .68rem;
+  border-radius: .65rem;
+  font-size: .76rem;
+}
+
+.admin-sidebar nav .admin-nav-group__items a svg {
+  width: 1rem;
+  height: 1rem;
+  opacity: .82;
+}
+
+.admin-sidebar nav .admin-nav-group__items a.is-active {
+  background: linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.11));
+  box-shadow: inset 2px 0 #8b5cf6;
+}

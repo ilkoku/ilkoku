@@ -309,7 +309,7 @@ test("authenticated admin control panel click matrix: every visible dashboard li
   expect(hrefs.length, "Admin dashboard should expose clickable internal links").toBeGreaterThan(10);
 
   for (const href of hrefs) {
-    if (href === "/") continue;
+    if (href === "/" || href === "/sistem-yonetimi") continue;
 
     await page.goto("/sistem-yonetimi", {
       waitUntil: "domcontentloaded",

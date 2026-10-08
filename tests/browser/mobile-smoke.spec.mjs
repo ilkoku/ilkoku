@@ -331,6 +331,9 @@ test("authenticated system management control panel interactions work through th
 
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Çıkış yap" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/giris(?:\?|$)/);
 
   expect(hydrationErrors, `Hydration errors: ${hydrationErrors.join("\n")}`).toEqual([]);

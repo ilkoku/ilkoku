@@ -253,6 +253,123 @@ for (const scenario of authenticatedCases) {
 }
 
 
+
+
+test("authenticated admin control panel click matrix: every visible dashboard link navigates successfully", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {
+    waitUntil: "domcontentloaded",
+  });
+
+  await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "İlkOku Genel Durumu" })).toBeVisible();
+
+  const groupSummaries = page.locator(".admin-nav-group > summary");
+  const groupCount = await groupSummaries.count();
+  expect(groupCount).toBeGreaterThan(0);
+
+  for (let index = 0; index < groupCount; index += 1) {
+    const summary = groupSummaries.nth(index);
+    const details = summary.locator("xpath=..");
+    const wasOpen = await details.evaluate((element) => element.open);
+
+    await summary.scrollIntoViewIfNeeded();
+    await summary.click();
+    await expect(details).toHaveJSProperty("open", !wasOpen);
+  }
+
+  await page.locator(".admin-nav-group").evaluateAll((groups) => {
+    for (const group of groups) group.open = true;
+  });
+
+  const hrefs = await page
+    .locator(".admin-sidebar a[href], .admin-content a[href], .admin-topbar a[href]")
+    .evaluateAll((links) =>
+      [...new Set(
+        links
+          .map((link) => link.getAttribute("href"))
+          .filter((href) => typeof href === "string" && href.startsWith("/")),
+      )],
+    );
+
+  expect(hrefs.length, "Admin dashboard should expose clickable internal links").toBeGreaterThan(10);
+
+  for (const href of hrefs) {
+    if (href === "/" || href === "/sistem-yonetimi") continue;
+
+    await page.goto("/sistem-yonetimi", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page).toHaveURL(/\/sistem-yonetimi(?:\?|$)/);
+
+    await page.locator(".admin-nav-group").evaluateAll((groups) => {
+      for (const group of groups) group.open = true;
+    });
+
+    const locator = page.locator(`a[href="${href.replaceAll('"', '\\"')}"]:visible`).first();
+    await expect(locator, `Missing visible admin link for ${href}`).toBeVisible();
+
+    const destination = new URL(href, page.url());
+    await locator.click();
+    await page.waitForURL(
+      (url) => url.pathname === destination.pathname && url.search === destination.search,
+      { timeout: 7_500 },
+    );
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(page, `Admin link redirected to login: ${href}`).not.toHaveURL(/\/giris(?:\?|$)/);
+    await expect(page, `Admin link redirected to access denied: ${href}`).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+    await expect(page.locator("body")).not.toContainText("Sayfa bulunamadı.");
+  }
+});
+
+
+
+test("authenticated admin global search submits to the canonical works route", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+
+  await page.context().addCookies([
+    {
+      name: authFixture.cookieName,
+      value: token,
+      url: authCookieUrl,
+    },
+  ]);
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {
+    waitUntil: "domcontentloaded",
+  });
+
+  const search = page.getByRole("searchbox", {
+    name: "Sistem yönetiminde eser ara",
+  });
+  await expect(search).toBeVisible();
+  await search.fill("CI Browser");
+  await search.press("Enter");
+
+  await page.waitForURL(/\/sistem-yonetimi\/eserler\?q=CI(?:\+|%20)Browser$/);
+  await expect(page).not.toHaveURL(/\/giris(?:\?|$)/);
+  await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+});
+
+
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

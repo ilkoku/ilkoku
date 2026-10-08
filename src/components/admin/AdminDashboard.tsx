@@ -134,35 +134,35 @@ const managementCenters = [
 
 const quickLinks = [
   {
-    href: "/admin/kullanicilar",
+    href: `${SYSTEM_MANAGEMENT_PATH}/kullanicilar`,
     label: "Bütün kullanıcıları görüntüle",
   },
   {
-    href: "/admin/eserler",
+    href: `${SYSTEM_MANAGEMENT_PATH}/eserler`,
     label: "Eserleri incele",
   },
   {
-    href: "/admin/editorler",
+    href: `${SYSTEM_MANAGEMENT_PATH}/editorler`,
     label: "Editörleri görüntüle",
   },
   {
-    href: "/admin/yayinevleri",
+    href: `${SYSTEM_MANAGEMENT_PATH}/yayinevleri`,
     label: "Yayınevlerini görüntüle",
   },
   {
-    href: "/admin/okuyucular",
+    href: `${SYSTEM_MANAGEMENT_PATH}/okuyucular`,
     label: "Okuyucuları görüntüle",
   },
   {
-    href: "/admin/yorumlar",
+    href: `${SYSTEM_MANAGEMENT_PATH}/yorumlar`,
     label: "Yorumları incele",
   },
   {
-    href: "/admin/arsiv",
+    href: `${SYSTEM_MANAGEMENT_PATH}/arsiv`,
     label: "Arşiv Merkezini aç",
   },
   {
-    href: "/admin/audit-log",
+    href: `${SYSTEM_MANAGEMENT_PATH}/audit-log`,
     label: "Sistem hareketlerini incele",
   },
 ] as const;
@@ -544,61 +544,61 @@ export async function AdminDashboard() {
       label: "Yeni üye",
       value: newUsersToday,
       detail: "Bugün kaydolan kullanıcı",
-      href: "/admin/kullanicilar",
+      href: `${SYSTEM_MANAGEMENT_PATH}/kullanicilar`,
     },
     {
       label: "Yeni eser",
       value: newWorksToday,
       detail: "Bugün oluşturulan eser",
-      href: "/admin/eserler",
+      href: `${SYSTEM_MANAGEMENT_PATH}/eserler`,
     },
     {
       label: "Yayımlanan eser",
       value: publishedToday,
       detail: "Bugün yayına alınan",
-      href: "/admin/eserler?durum=published",
+      href: `${SYSTEM_MANAGEMENT_PATH}/eserler?durum=published`,
     },
     {
       label: "Bugünkü yorum",
       value: commentsToday,
       detail: "Bugün yapılan yorum",
-      href: "/admin/yorumlar",
+      href: `${SYSTEM_MANAGEMENT_PATH}/yorumlar`,
     },
     {
       label: "Aktif okuyucu",
       value: readersTodayRows.length,
       detail: "Bugün okuma hareketi olan",
-      href: "/admin/okuyucular",
+      href: `${SYSTEM_MANAGEMENT_PATH}/okuyucular`,
     },
     {
       label: "Okunan eser",
       value: readWorksTodayRows.length,
       detail: "Bugün okuma hareketi alan",
-      href: "/admin/eserler",
+      href: `${SYSTEM_MANAGEMENT_PATH}/eserler`,
     },
     {
       label: "Başlanan inceleme",
       value: startedReviewsToday,
       detail: "Editörün bugün başladığı",
-      href: "/admin/editorler",
+      href: `${SYSTEM_MANAGEMENT_PATH}/editorler`,
     },
     {
       label: "Tamamlanan inceleme",
       value: completedReviewsToday,
       detail: "Editörün bugün tamamladığı",
-      href: "/admin/editorler",
+      href: `${SYSTEM_MANAGEMENT_PATH}/editorler`,
     },
     {
       label: "Yayınevi başvurusu",
       value: publisherSubmissionsToday,
       detail: "Bugün gönderilen",
-      href: "/admin/yayinevleri",
+      href: `${SYSTEM_MANAGEMENT_PATH}/yayinevleri`,
     },
     {
       label: "Arşivlenen eser",
       value: archivedToday,
       detail: "Bugün arşive taşınan",
-      href: "/admin/arsiv",
+      href: `${SYSTEM_MANAGEMENT_PATH}/arsiv`,
     },
   ] as const;
 
@@ -631,7 +631,7 @@ export async function AdminDashboard() {
 
         <Link
           className="admin-button admin-button--primary"
-          href="/admin/audit-log"
+          href={`${SYSTEM_MANAGEMENT_PATH}/audit-log`}
         >
           Sistem hareketlerini aç
         </Link>
@@ -857,7 +857,7 @@ export async function AdminDashboard() {
               <span>Audit Log</span>
               <h2>Son sistem hareketleri</h2>
             </div>
-            <Link href="/admin/audit-log">
+            <Link href={`${SYSTEM_MANAGEMENT_PATH}/audit-log`}>
               Tümünü gör
             </Link>
           </div>

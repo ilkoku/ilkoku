@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { logoutAction } from "@/features/auth/actions";
@@ -132,38 +132,8 @@ export function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(
-      adminNavigationGroups.map((group) => [
-        group.id,
-        group.id === "overview" ||
-          group.items.some((item) =>
-            item.href === SYSTEM_MANAGEMENT_PATH
-              ? pathname === item.href
-              : pathname.startsWith(item.href),
-          ),
-      ]),
-    ),
-  );
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const initials = getInitials(user.fullName);
-
-  useEffect(() => {
-    const activeGroup = adminNavigationGroups.find((group) =>
-      group.items.some((item) =>
-        item.href === SYSTEM_MANAGEMENT_PATH
-          ? pathname === item.href
-          : pathname.startsWith(item.href),
-      ),
-    );
-
-    if (!activeGroup) return;
-
-    setExpandedGroups((current) =>
-      current[activeGroup.id]
-        ? current
-        : { ...current, [activeGroup.id]: true },
-    );
-  }, [pathname]);
 
   return (
     <div className="admin-shell">
@@ -190,7 +160,7 @@ export function AdminShell({
                 : pathname.startsWith(item.href),
             );
 
-            const expanded = Boolean(expandedGroups[group.id]);
+            const expanded = expandedGroups[group.id] ?? (group.id === "overview" || groupActive);
 
             return (
               <section

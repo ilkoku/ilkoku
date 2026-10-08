@@ -309,15 +309,22 @@ test("authenticated system management control panel interactions work through th
 
   for (const href of dashboardHrefs) {
     await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
-    const target = page.locator(".admin-main a[href]").filter({ has: page.locator("xpath=.") });
-    const link = page.locator(`.admin-main a[href="${href.replaceAll('"', '\\"')}"]`).first();
-    await expect(link, `Missing dashboard link for ${href}`).toBeVisible();
-    await link.click();
 
-    const expectedPath = href.split("?")[0];
-    await expect(page, `Dashboard link did not navigate: ${href}`).toHaveURL(
-      new RegExp(`${expectedPath.replace(/[.*+?^\${}()|[\]\\]/g, "\\test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {")}(?:\\?|$)`),
-    );
+    const link = page.locator(".admin-main a[href]").filter({
+      has: page.locator(`xpath=.//*[@href="${href}"]`),
+    });
+
+    const exactLink = page.locator(`.admin-main a[href="${href.replaceAll('"', '\\"')}"]`).first();
+    await expect(exactLink, `Missing dashboard link for ${href}`).toBeVisible();
+    await exactLink.click();
+
+    const expectedUrl = new URL(href, authCookieUrl);
+    await expect
+      .poll(() => {
+        const current = new URL(page.url());
+        return `${current.pathname}${current.search}`;
+      }, { message: `Dashboard link did not navigate: ${href}` })
+      .toBe(`${expectedUrl.pathname}${expectedUrl.search}`);
   }
 
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });

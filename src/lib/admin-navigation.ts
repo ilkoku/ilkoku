@@ -29,6 +29,7 @@ export type AdminNavGroup = {
   label: string;
   description: string;
   icon: AdminNavItem["icon"];
+  landingHref: string;
   items: readonly AdminNavItem[];
 };
 
@@ -44,6 +45,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Genel Bakış",
     description: "Platform özeti ve ana yönetim ekranı",
     icon: "dashboard",
+    landingHref: systemPath(),
     items: [
       { href: systemPath(), label: "Kontrol Merkezi", icon: "dashboard" },
     ],
@@ -53,6 +55,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Kullanıcı & Roller",
     description: "Üyeler, roller, başvurular ve topluluk",
     icon: "users",
+    landingHref: systemPath("/kullanicilar"),
     items: [
       { href: systemPath("/kullanicilar"), label: "Kullanıcılar", icon: "users" },
       { href: systemPath("/yazarlar"), label: "Yazarlar", icon: "authors" },
@@ -69,6 +72,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Eser & İçerik",
     description: "Eserler, CMS ve kitap veri alanları",
     icon: "works",
+    landingHref: systemPath("/eserler"),
     items: [
       { href: systemPath("/eserler"), label: "Eserler", icon: "works" },
       { href: "/icerik", label: "İçerik Yönetimi", icon: "works" },
@@ -80,6 +84,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Ticaret & Finans",
     description: "Ödeme, gelir ve finans operasyonları",
     icon: "applications",
+    landingHref: systemPath("/odeme-sistemi"),
     items: [
       { href: systemPath("/odeme-sistemi"), label: "Ödeme Sistemi", icon: "applications" },
       { href: systemPath("/finans-gelirler"), label: "Finans & Gelirler", icon: "audit" },
@@ -90,6 +95,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "İletişim & Sözleşmeler",
     description: "Sözleşme ve e-posta operasyonları",
     icon: "email",
+    landingHref: "/sozlesme",
     items: [
       { href: "/sozlesme", label: "Sözleşme Yönetimi", icon: "applications" },
       { href: systemPath("/epostalar"), label: "E-postalar", icon: "email" },
@@ -101,6 +107,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Güvenlik & Sistem",
     description: "Sistem sağlığı, denetim ve güvenlik",
     icon: "audit",
+    landingHref: "/harita",
     items: [
       { href: "/harita", label: "Sistem Haritası", icon: "audit" },
       { href: systemPath("/okuma-guvenligi"), label: "Okuma Güvenliği", icon: "audit" },
@@ -112,6 +119,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     label: "Arşiv & Ayarlar",
     description: "Arşiv, silme, demo verisi ve sistem ayarları",
     icon: "settings",
+    landingHref: systemPath("/arsiv"),
     items: [
       { href: systemPath("/arsiv"), label: "Arşiv Merkezi", icon: "audit" },
       { href: systemPath("/silme-merkezi"), label: "Silme Merkezi", icon: "audit" },

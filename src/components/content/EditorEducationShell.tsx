@@ -19,6 +19,31 @@ import {
   type EditorEducationTextOverrides,
 } from "@/lib/editor-education-text";
 
+// Contextual learning hand-offs on the three indexable editor lessons only.
+// The full category menu already provides generic navigation; these links explain
+// why this particular next lesson answers the question raised by the current one.
+const EDITOR_EDUCATION_CONTEXTUAL_STEPS: Readonly<Record<string, {
+  href: string;
+  label: string;
+  reason: string;
+}>> = {
+  "editorluge-baslama": {
+    href: "/editorler-icin/egitim/metin-degerlendirme",
+    label: "Metin Değerlendirme eğitimine geç",
+    reason: "Editörün görev ve yetki sınırını netleştirdiysen, sıradaki adım bir eseri ilk okumadan kanıta dayalı değerlendirme raporuna götürmek.",
+  },
+  "metin-degerlendirme": {
+    href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+    label: "Dil ve Anlatım Editörlüğü eğitimine geç",
+    reason: "Önce metindeki güçlü yönü ve temel sorunu belirledin. Şimdi cümle, paragraf, tekrar ve üslup üzerinde çalışırken yazarın sesini nasıl koruyacağını öğren.",
+  },
+  "dil-ve-anlatim-editorlugu": {
+    href: "/editorler-icin/egitim/metin-degerlendirme",
+    label: "Metin Değerlendirme temellerini gözden geçir",
+    reason: "Cümle düzeyinde müdahaleden önce sorunun yapıdan mı, anlatımdan mı kaynaklandığını ayırman gerekiyorsa değerlendirme yöntemine geri dön.",
+  },
+};
+
 type EditorEducationShellProps = {
   children: ReactNode;
   activeCategory: EditorEducationCategory;
@@ -43,6 +68,7 @@ export async function EditorEducationShell({
     ? publishedText?.overrides ?? {}
     : textOverrides;
   const renderedChildren = applyEditorEducationTextOverrides(children, effectiveOverrides);
+  const contextualStep = !previewMode ? EDITOR_EDUCATION_CONTEXTUAL_STEPS[activeCategory.slug] : null;
 
   return (
     <>
@@ -108,6 +134,15 @@ export async function EditorEducationShell({
 
           <div className="min-w-0">
             {renderedChildren}
+            {contextualStep ? (
+              <nav aria-label="İlgili editörlük eğitimi" className="mt-6 rounded-[1.6rem] border border-[#6b52c7]/15 bg-[#efebff] p-6 sm:p-8">
+                <h2 className="font-serif text-2xl font-semibold text-[#211746]">Bu çalışmayı bir sonraki eğitimle bağla</h2>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#51496b]">{contextualStep.reason}</p>
+                <Link className="mt-5 inline-flex rounded-full bg-[#211746] px-5 py-3 text-sm font-extrabold text-white" href={contextualStep.href}>
+                  {contextualStep.label} <span aria-hidden="true">→</span>
+                </Link>
+              </nav>
+            ) : null}
             <EditorialTrustNote context="editing" />
           </div>
         </div>

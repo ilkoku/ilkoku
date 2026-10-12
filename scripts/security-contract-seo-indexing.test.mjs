@@ -80,6 +80,26 @@ test("robots isolates private content management without blocking the public con
 });
 
 
+
+test("robots limits private reading rules without blocking public Okurluk Okulu", () => {
+  const robots = source("src/app/robots.ts");
+  const readingRules = [...robots.matchAll(/^\s+"(\/oku(?:\$|\/)?)",?$/gmu)].map((match) => match[1]);
+
+  assert.deepEqual(readingRules, ["/oku$", "/oku/"], "private reader crawl rules remain narrowly scoped");
+
+  const blocksReading = (route) => readingRules.some((rule) =>
+    rule.endsWith("$") ? route === rule.slice(0, -1) : route.startsWith(rule),
+  );
+
+  for (const publicRoute of ["/okurlar-icin", "/okurlar-icin/okumaya-baslama"]) {
+    assert.equal(blocksReading(publicRoute), false, `public reading education must be crawlable: ${publicRoute}`);
+  }
+
+  for (const privateRoute of ["/oku", "/oku/", "/oku/bolum-1"]) {
+    assert.equal(blocksReading(privateRoute), true, `private reading must remain blocked: ${privateRoute}`);
+  }
+});
+
 test("public auth entry pages stay crawlable noindex-follow while private workspaces stay protected", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");
@@ -134,6 +154,7 @@ test("robots mirrors private and protected route inventories without shadowing p
   const exactPrefixRoots = new Set([
     "/icerik",
     "/editor",
+    "/oku",
     "/yazar",
     "/yayinevi",
     "/yayinevleri",

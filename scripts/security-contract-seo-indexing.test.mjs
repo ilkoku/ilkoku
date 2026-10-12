@@ -919,3 +919,25 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
     "full GSC census must summarize robots state",
   );
 });
+
+test("Madde 14 writer hub links directly to five approved indexable priority guides", () => {
+  const writerHub = source("src/components/content/ForWritersExperience.tsx");
+  const searchPolicy = source("src/lib/soft-launch-search-policy.ts");
+  const styles = source("src/app/yazarlar-icin/education-hub.css");
+  const links = [
+    "/yazarlar-icin/kurgu/oyku",
+    "/yazarlar-icin/kurgu/fantastik",
+    "/yazarlar-icin/kurgu/bilim-kurgu",
+    "/yazarlar-icin/kurgu/distopya",
+    "/yazarlar-icin/edebiyat/siir",
+  ];
+
+  for (const path of links) {
+    assertContains(writerHub, `href: "${path}"`, `writer hub priority link ${path}`);
+    assertContains(searchPolicy, `"${path}"`, `indexable URL retained ${path}`);
+  }
+  assertContains(writerHub, 'aria-label="Doğrudan yazarlık rehberleri"', "accessible quick links");
+  assertContains(writerHub, "priorityWritingGuideLinks.map((guide)", "SSR-rendered real link list");
+  assertContains(writerHub, "<Link href={guide.href}", "crawler-visible href anchors");
+  assertContains(styles, ".writers-education__shortcuts-links", "responsive link styling");
+});

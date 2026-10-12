@@ -96,7 +96,7 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
 function HowItWorksHeroTitle({ title }: { title: string }) {
   const match = title.trim().match(/^(İlkOku Nasıl)\s+(Çalışır\??)$/u);
   if (!match) return <>{title}</>;
-  return <><span>{match[1]}</span><span>{match[2]}</span></>;
+  return <><span>{match[1]}{" "}</span><span>{match[2]}</span></>;
 }
 
 function GenericSection({ section, tone }: { section: ContentSection; tone?: "night" | "soft" }) {
@@ -156,6 +156,25 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
       {parsed.intro ? <section className="how-truth how-container" aria-label="İlkOku eser ekosistemi"><span><JourneyIcon name="passport" /></span><div><strong>Bir fikri; okur, editör ve yayınevi keşfine bağlayan tek eser yolculuğu.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       {sectionMap.get("İlkOku nedir?") ? <section className="how-definition how-container"><div><SectionHeading eyebrow="Platformun temeli" title="Eser yalnız son hâliyle değil, yolculuğuyla değer kazanır." /><EditorialBody body={sectionMap.get("İlkOku nedir?")!.body} /></div><aside><JourneyIcon name="publish" /><strong>Aynı eser, dört farklı değer</strong><p>Yazar geliştirir, okur keşfeder, editör güçlendirir, yayınevi yeni yeteneği fark eder.</p></aside></section> : null}
+
+      <section className="how-extras how-container" aria-label="İlkOku hızlı başlangıç">
+        <article className="how-editorial-card how-editorial-card--soft" id="ilkokuya-nasil-baslanir">
+          <h2>İlkOku'ya nasıl başlanır?</h2>
+          <EditorialBody body={
+            "1. Yazar: Yazar hesabını oluştur, eserine başlık ve tür belirle, ilk bölümünü taslak olarak kaydet. Eserin ne zaman yayımlanacağına sen karar verirsin.\\n" +
+            "2. Okur: Okur hesabıyla katıl. Sana bağlantısı paylaşılan herkese açık eser vitrininin bilgilerini inceleyebilir; yayımlanmış bölümlere giriş ve erişim koşullarına göre ulaşabilirsin.\\n" +
+            "3. Editör: Editör hesabını ve uygun profilini oluştur. Yetkin kapsamında açılan inceleme görevlerinde, belirli bir eser sürümü için gerekçeli değerlendirme hazırlayabilirsin.\\n" +
+            "4. Yayınevi: Yayınevi rolüyle başvur. Kurumsal erişim yetkisi verildiğinde, değerlendirmeye açılmış uygun eserleri kendi ölçütlerinle inceleyebilirsin."
+          } />
+          <p>Genel eser ve yazar katalogları henüz herkese açık gezinmeye açılmadı; eseri yayımlamak veya editör incelemesi istemek de otomatik basım garantisi vermez.</p>
+          <nav className="how-hero__actions" aria-label="Rolüne göre kaydol">
+            <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla</Link>
+            <Link className="how-button how-button--secondary" href="/kayit?rol=reader">Okur olarak başla</Link>
+            <Link className="how-button how-button--secondary" href="/kayit?rol=editor">Editör olarak başla</Link>
+            <Link className="how-button how-button--secondary" href="/kayit?rol=publisher">Yayınevi olarak başla</Link>
+          </nav>
+        </article>
+      </section>
 
       {journey ? <section className="how-journey" id={headingId(journey.title)}><div className="how-container"><SectionHeading eyebrow="Fikirden keşfe tek akış" title={journey.title} description="Her adım bir öncekini büyütür; eser yazıldıkça, okundukça ve değerlendirildikçe yeni keşif fırsatları oluşur." />{journeyContent.intro ? <div className="how-section-intro"><EditorialBody body={journeyContent.intro} /></div> : null}<div className="how-journey__grid">{journeyParts.map((part, index) => <article className={index === 7 ? "how-step how-step--passport" : "how-step"} key={part.title} id={headingId(part.title)}><div className="how-step__top"><span className="how-step__icon"><JourneyIcon name={iconForStep(index)} /></span></div><h3>{part.title.replace(/^\d+\.\s*/, "")}</h3><EditorialBody body={part.body} />{index === 7 ? <div className="how-step__passport-line"><i /><span>Oluşturma</span><i /><span>Sürümler</span><i /><span>İnceleme</span></div> : null}</article>)}</div></div></section> : null}
 

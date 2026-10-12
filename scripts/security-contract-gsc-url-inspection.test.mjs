@@ -229,3 +229,14 @@ test("Madde 14 read-only diagnostic inspects exactly the 11 priority URLs in two
   assert.match(cohort, /permissions:\s*\n\s+contents: read/u);
   assert.doesNotMatch(cohort, /indexing\.googleapis\.com|SUBMIT-GSC-SITEMAP/u, "never submit pages or request indexing from this diagnostic");
 });
+
+test("Madde 14 discovery workflow is daily, read-only, and retains manual confirmation", () => {
+  const cohort = fs.readFileSync(".github/workflows/gsc-m14-discovery-cohort.yml", "utf8");
+  assert.match(cohort, /schedule:\s*\n\s+- cron: "47 5 \* \* \*"/u, "once daily at approximately 08:47 Türkiye time");
+  assert.match(cohort, /workflow_dispatch:/u, "manual fallback remains available");
+  assert.match(cohort, /if: github\.event_name == 'workflow_dispatch'/u, "manual run requires confirmation");
+  assert.match(cohort, /RUN-GSC-M14/u);
+  assert.match(cohort, /permissions:\s*\n\s+contents: read/u, "token cannot write to repository");
+  assert.equal((cohort.match(/run: node scripts\/gsc-url-inspection\.mjs/gu) || []).length, 2, "11 URLs divided into ten and one");
+  assert.doesNotMatch(cohort, /indexing\.googleapis\.com|GSC_OAUTH_WRITE_REFRESH_TOKEN|method: "PUT"/u, "no indexing request or write OAuth");
+});

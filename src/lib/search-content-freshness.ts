@@ -16,6 +16,9 @@ const PRIORITY_EDUCATION_INTENT_UPDATED_AT = new Date("2026-10-06T08:04:59Z");
 const PRIORITY_CATEGORY_SCHEMA_UPDATED_AT = new Date("2026-10-06T08:33:10Z");
 const PRIORITY_EDITOR_SCHEMA_UPDATED_AT = new Date("2026-10-06T09:14:20Z");
 
+// Targeted explanatory lesson hand-offs were added on three public editor school guides (Oct 12).
+const EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT = new Date("2026-10-12T15:16:36Z");
+
 // Substantive Oct 12 reading hub guidance and seven unique writing-category practice cases.
 const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:07Z");
 
@@ -42,9 +45,9 @@ const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
   ["/yazarlar-icin/cizgi-anlati", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/okurlar-icin", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
 
-  ["/editorler-icin/egitim/editorluge-baslama", PRIORITY_EDITOR_SCHEMA_UPDATED_AT],
-  ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", PRIORITY_EDITOR_SCHEMA_UPDATED_AT],
-  ["/editorler-icin/egitim/metin-degerlendirme", PRIORITY_EDITOR_SCHEMA_UPDATED_AT],
+  ["/editorler-icin/egitim/editorluge-baslama", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+  ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+  ["/editorler-icin/egitim/metin-degerlendirme", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
 ]);
 
 function normalizeSearchPath(value: string) {

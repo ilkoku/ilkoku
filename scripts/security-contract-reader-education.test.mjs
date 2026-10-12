@@ -104,10 +104,12 @@ test("reader education keeps eight live categories while search indexability fol
 });
 
 
-test("reader education exposes Article and breadcrumb structured data", () => {
+test("reader education exposes Article and one shared breadcrumb structured data", () => {
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
+  const readerShell = source("src/components/content/ReaderEducationShell.tsx");
   assertContains(publicRoute, '"@type": "Article"', "reader Article schema");
-  assertContains(publicRoute, '"@type": "BreadcrumbList"', "reader breadcrumb schema");
+  assert.equal(publicRoute.includes('"@type": "BreadcrumbList"'), false, "reader route must not duplicate shell breadcrumbs");
+  assertContains(readerShell, '"@type": "BreadcrumbList"', "reader breadcrumb schema is preserved in shell");
   assertContains(publicRoute, 'mainEntityOfPage: canonical', "reader canonical schema binding");
   assertContains(publicRoute, 'publisher: { "@type": "Organization", name: "İlkOku"', "reader publisher schema");
 });

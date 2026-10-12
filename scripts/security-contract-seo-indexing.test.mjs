@@ -367,7 +367,10 @@ test("Article structured data uses the real public Open Graph image on reader an
   assertContains(reader, 'images: [{ url: socialImage }]', "reader OG image matches Article image");
   assertContains(editor, 'import { publicBrandSocialImage } from "@/lib/public-brand";', "editor uses the same canonical art");
   assertContains(editor, 'image: `${siteUrl}${publicBrandSocialImage}`', "editor Article image resolves to an absolute HTTPS URL");
-  assertContains(reader, '"@type": "BreadcrumbList"', "reader breadcrumb markup remains in place");
+  const readerShell = source("src/components/content/ReaderEducationShell.tsx");
+  assertNotContains(reader, '"@type": "BreadcrumbList"', "reader lesson route avoids duplicate breadcrumb schema");
+  assertContains(readerShell, '"@type": "BreadcrumbList"', "reader lesson shell retains one breadcrumb schema");
+  assertContains(readerShell, 'item: new URL(item.url, BASE_URL).toString()', "breadcrumb items retain absolute canonical URLs");
   assertContains(editor, '"@type": "BreadcrumbList"', "editor breadcrumb markup remains in place");
 });
 

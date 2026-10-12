@@ -79,7 +79,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
               <form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form>
             </> : <>
               <Link href="/giris">Giriş Yap</Link>
-              <a href="#roller">Üye Ol</a>
+              <Link href="/#roller">Üye Ol</Link>
               <Link href="/sifremi-unuttum">Şifremi Unuttum</Link>
             </>}
           </div>

@@ -339,6 +339,14 @@ test("SEO internal-links phase 11 gives three indexable editor lessons contextua
   assert.equal(targets.length, 3, "exactly three useful lesson handoffs, not a sitewide SEO link cloud");
 });
 
+test("public footer signup resolves to homepage role section from nested routes", () => {
+  const footer = source("src/features/homepage/live-footer.tsx");
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+  assertContains(footer, '<Link href="/#roller">Üye Ol</Link>', "footer signup targets the role selector on every public route");
+  assertNotContains(footer, '<a href="#roller">Üye Ol</a>', "nested pages must not link to missing local section");
+  assertContains(homepage, 'id="roller"', "homepage role selector is a real target");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

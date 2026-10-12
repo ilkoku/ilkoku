@@ -159,7 +159,7 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
 
       <section className="how-extras how-container" aria-label="İlkOku hızlı başlangıç">
         <article className="how-editorial-card how-editorial-card--soft" id="ilkokuya-nasil-baslanir">
-          <h2>İlkOku'ya nasıl başlanır?</h2>
+          <h2>İlkOku&apos;ya nasıl başlanır?</h2>
           <EditorialBody body={
             "1. Yazar: Yazar hesabını oluştur, eserine başlık ve tür belirle, ilk bölümünü taslak olarak kaydet. Eserin ne zaman yayımlanacağına sen karar verirsin.\n" +
             "2. Okur: Okur hesabıyla katıl. Sana bağlantısı paylaşılan herkese açık eser vitrininin bilgilerini inceleyebilir; yayımlanmış bölümlere giriş ve erişim koşullarına göre ulaşabilirsin.\n" +

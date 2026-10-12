@@ -251,6 +251,23 @@ test("CMS trust/legal defaults remain stable while sitemap applies route-level s
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
+test("how-it-works headline, actionable onboarding and truthful update date remain visible", () => {
+  const experience = source("src/components/content/HowItWorksExperience.tsx");
+  const page = source("src/app/nasil-calisir/page.tsx");
+  const freshness = source("src/lib/search-content-freshness.ts");
+
+  assertContains(experience, 'return <><span>{match[1]}{" "}</span><span>{match[2]}</span></>;', "readable split H1 spacing");
+  assertContains(experience, "İlkOku&apos;ya nasıl başlanır?", "first-time visitor quick-start instructions");
+  assertContains(experience, "Genel eser ve yazar katalogları henüz", "honest catalogue availability");
+  for (const role of ["writer", "reader", "editor", "publisher"]) {
+    assertContains(experience, `href="/kayit?rol=${role}"`, `direct role-specific onboarding for ${role}`);
+  }
+  assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "route-only content freshness");
+  assertContains(page, 'getSearchCodeFreshness("/nasil-calisir")', "structured data uses actual route freshness");
+  assertContains(page, "dateModified: updatedAt.toISOString()", "WebPage dateModified matches visible content update");
+  assertContains(page, "updatedAt={updatedAt}", "visible last-updated label matches changed content");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

@@ -7,6 +7,7 @@ import { PriorityGuideIntentPanel } from "@/components/content/PriorityGuideInte
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
+import { isSoftLaunchSearchPriorityPath } from "@/lib/soft-launch-search-policy";
 
 const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   roman: "/yazarlar-icin/kurgu/roman",
@@ -115,13 +116,23 @@ export function WritingGuideShell({
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
   const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
   const activeGenreIndex = genres.findIndex((genre) => genre.slug === activeGenreSlug);
-  const relatedGenres = activeGenreIndex >= 0
-    ? [activeGenreIndex - 1, activeGenreIndex + 1, 0, genres.length - 1]
+  const relatedGenreCandidates = activeGenreIndex >= 0
+    ? [activeGenreIndex - 1, activeGenreIndex + 1, 0, genres.length - 1, ...genres.map((_, index) => index)]
         .map((index) => genres[index])
         .filter((genre): genre is (typeof genres)[number] => Boolean(genre) && genre.slug !== activeGenreSlug)
         .filter((genre, index, all) => all.findIndex((candidate) => candidate.slug === genre.slug) === index)
-        .slice(0, 3)
     : [];
+  // Keep all existing genre routes available in the sidebar. Give the small
+  // contextual handoff priority to the current public search cohort, and keep
+  // other related genres as a fallback when no indexable sibling exists.
+  const relatedGenres = [
+    ...relatedGenreCandidates.filter((genre) =>
+      isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? ""),
+    ),
+    ...relatedGenreCandidates.filter((genre) =>
+      !isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? ""),
+    ),
+  ].slice(0, 3);
 
   return (
     <>

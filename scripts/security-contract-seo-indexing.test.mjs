@@ -347,6 +347,17 @@ test("public footer signup resolves to homepage role section from nested routes"
   assertContains(homepage, 'id="roller"', "homepage role selector is a real target");
 });
 
+test("contextual writing guide handoffs favor indexable siblings", () => {
+  const shell = source("src/components/content/WritingGuideShell.tsx");
+  assertContains(shell, 'import { isSoftLaunchSearchPriorityPath } from "@/lib/soft-launch-search-policy";', "reuse search-cohort policy");
+  assertContains(shell, "...genres.map((_, index) => index)", "find relevant siblings beyond adjacent genres");
+  assertContains(shell, "const relatedGenreCandidates =", "include available genre link candidates");
+  assertContains(shell, 'isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? "")', "prioritize indexable links");
+  assertContains(shell, '!isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? "")', "preserve unindexed-genre fallback");
+  assertContains(shell, "].slice(0, 3);", "keep contextual links limited");
+  assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "maintain related link navigation");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

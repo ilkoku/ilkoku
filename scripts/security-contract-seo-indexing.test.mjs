@@ -320,6 +320,25 @@ test("SEO content-depth phase 9 adds seven useful category examples and a reader
   assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "unrelated flagship freshness remains unchanged");
 });
 
+test("SEO internal-links phase 11 gives three indexable editor lessons contextual onward learning", () => {
+  const shell = source("src/components/content/EditorEducationShell.tsx");
+  const freshness = source("src/lib/search-content-freshness.ts");
+  const livePolicy = source("src/lib/soft-launch-search-policy.ts");
+  for (const slug of ["editorluge-baslama", "metin-degerlendirme", "dil-ve-anlatim-editorlugu"]) {
+    assertContains(shell, `"${slug}": {`, `contextual education step exists for ${slug}`);
+    assertContains(freshness, `["/editorler-icin/egitim/${slug}", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT]`, `route-specific lastmod for ${slug}`);
+    assertContains(livePolicy, `"/editorler-icin/egitim/${slug}"`, `destination remains in intended indexable cohort ${slug}`);
+  }
+  assertContains(shell, 'aria-label="İlgili editörlük eğitimi"', "accessible contextual learning nav");
+  assertContains(shell, "href={contextualStep.href}", "actual href-based crawlable Next Link");
+  assertContains(shell, "contextualStep.reason", "natural-language reason before link");
+  assertContains(shell, "!previewMode ? EDITOR_EDUCATION_CONTEXTUAL_STEPS[activeCategory.slug] : null", "non-published preview doesn't show contextual navigation");
+  assertContains(shell, 'href: "/editorler-icin/egitim/metin-degerlendirme"', "path to evaluation lesson");
+  assertContains(shell, 'href: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu"', "path to line edit lesson");
+  const targets = [...shell.matchAll(/href: "(\/editorler-icin\/egitim\/[^"]+)"/g)].map((match) => match[1]);
+  assert.equal(targets.length, 3, "exactly three useful lesson handoffs, not a sitewide SEO link cloud");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

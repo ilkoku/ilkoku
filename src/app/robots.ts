@@ -36,6 +36,7 @@ export default function robots(): MetadataRoute.Robots {
           "/geri-bildirimler",
           "/hesabim",
           "/kesfet",
+          "/yazar-kesfet",
           "/okumaya-devam",
           "/okuyucu",
           "/oku$",

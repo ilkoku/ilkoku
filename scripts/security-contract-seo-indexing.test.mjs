@@ -154,6 +154,7 @@ test("robots mirrors private and protected route inventories without shadowing p
   const exactPrefixRoots = new Set([
     "/icerik",
     "/editor",
+    "/oku",
     "/yazar",
     "/yayinevi",
     "/yayinevleri",

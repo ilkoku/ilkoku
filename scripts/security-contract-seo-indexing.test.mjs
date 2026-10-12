@@ -268,6 +268,15 @@ test("how-it-works headline, actionable onboarding and truthful update date rema
   assertContains(page, "updatedAt={updatedAt}", "visible last-updated label matches changed content");
 });
 
+test("public pillar split hero headings keep semantic spaces without changing line-break design", () => {
+  const standards = source("src/components/content/EditorialStandardsExperience.tsx");
+  const publishers = source("src/components/content/ForPublishersExperience.tsx");
+  assertContains(standards, '{index > 0 ? " " : null}{word}</span>', "editorial standards heading inserts text separation");
+  assertContains(publishers, '{index > 0 ? " " : null}{word}</span>', "publisher heading inserts text separation");
+  assertNotContains(standards, '<span key={word}>{word}</span>', "standards heading avoids concatenated words");
+  assertNotContains(publishers, '<span key={`${word}-${index}`}>{word}</span>', "publisher heading avoids concatenated words");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

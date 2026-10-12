@@ -155,7 +155,7 @@ export default function ReadersHomePage() {
               Okuma ihtiyacını belirle, sonra doğru çalışmayı seç.
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">
-              Okurluk Okulu'nda tek bir doğru başlangıç yok. Yeni bir okuma düzeni kurmak, okuduğunu daha iyi hatırlamak ve metin üzerine gerekçeli yorum yazmak farklı becerilerdir. Önce en çok zorlandığın anı seç; bir eğitimin çıktısını denedikten sonra diğerine geç.
+              Okurluk Okulu’nda tek bir doğru başlangıç yok. Yeni bir okuma düzeni kurmak, okuduğunu daha iyi hatırlamak ve metin üzerine gerekçeli yorum yazmak farklı becerilerdir. Önce en çok zorlandığın anı seç; bir eğitimin çıktısını denedikten sonra diğerine geç.
             </p>
             <div className="mt-7 grid gap-4 md:grid-cols-3">
               <article className="rounded-[1.5rem] bg-[#f7f4ee] p-5">

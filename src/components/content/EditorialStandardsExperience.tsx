@@ -130,7 +130,7 @@ export function EditorialStandardsExperience({ body, summary, title, updatedAt }
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">Eseri geliştiren profesyonel ikinci bakış</span>
-            <h1>{titleWords.map((word) => <span key={word}>{word}</span>)}</h1>
+            <h1>{titleWords.map((word, index) => <span key={`${word}-${index}`}>{index > 0 ? " " : null}{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/editorler-icin">Editör olarak katkı ver <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="#degerlendirme-olcutleri">Standartları incele</Link></div>
             <div className="how-hero__proof"><span><strong>8</strong> değerlendirme ölçütü</span><span><strong>2</strong> bağımsız görüş</span><span><strong>1</strong> yaratıcı karar sahibi</span></div>

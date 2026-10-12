@@ -941,3 +941,11 @@ test("Madde 14 writer hub links directly to five approved indexable priority gui
   assertContains(writerHub, "<Link href={guide.href}", "crawler-visible href anchors");
   assertContains(styles, ".writers-education__shortcuts-links", "responsive link styling");
 });
+
+test("Madde 14 writer hub sitemap lastmod reflects the actual five-guide link release", () => {
+  const freshness = source("src/lib/search-content-freshness.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  assertContains(freshness, 'WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z")', "accurate PR #1673 release timestamp");
+  assertContains(freshness, '["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT]', "route-specific freshness");
+  assertContains(sitemap, "applySearchCodeFreshness(", "dynamic sitemap honors changed route timestamp");
+});

@@ -22,10 +22,14 @@ const EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT = new Date("2026-10-12T15:16:36Z");
 // Substantive Oct 12 reading hub guidance and seven unique writing-category practice cases.
 const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:07Z");
 
+// Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
+const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
+
 // Visible, CMS-independent quick-start guidance and corrected headline on the how-it-works page (Oct 12).
 const HOW_IT_WORKS_QUICK_START_UPDATED_AT = new Date("2026-10-12T13:20:00Z");
 
 const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
+  ["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT],
   ["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT],
   ["/yazarlar-icin/kurgu/roman", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/oyku", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],

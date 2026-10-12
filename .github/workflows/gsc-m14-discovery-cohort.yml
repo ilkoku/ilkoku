@@ -1,0 +1,82 @@
+name: GSC Madde 14 discovery cohort
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/gsc-m14-discovery-cohort.yml"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Run this read-only 11 URL diagnostic: RUN-GSC-M14"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gsc-m14-discovery-cohort
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect 11 priority discovery URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate manual confirmation
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: test "$CONFIRMATION" = "RUN-GSC-M14"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Validate read-only GSC OAuth configuration
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_REFRESH_TOKEN"
+
+      # Two batches keep the existing ten-URL-per-run safety contract intact.
+      # Explicit URLs bypass live sitemap fetching, which may return 403 to Actions.
+      - name: Inspect discovery cohort A (10 URLs)
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+          GSC_INSPECTION_URLS: |
+          https://ilkoku.com/yayinevleri-icin
+          https://ilkoku.com/okurlar-icin
+          https://ilkoku.com/hakkimizda
+          https://ilkoku.com/editoryal-standartlar
+          https://ilkoku.com/yazarlar-icin/cizgi-anlati
+          https://ilkoku.com/yazarlar-icin/kurgu/oyku
+          https://ilkoku.com/yazarlar-icin/kurgu/fantastik
+          https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu
+          https://ilkoku.com/yazarlar-icin/kurgu/distopya
+          https://ilkoku.com/yazarlar-icin/edebiyat/siir
+        run: node scripts/gsc-url-inspection.mjs
+
+      - name: Inspect discovery cohort B (1 URL)
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+          GSC_INSPECTION_URLS: |
+          https://ilkoku.com/editorler-icin/egitim/editorluge-baslama
+        run: node scripts/gsc-url-inspection.mjs

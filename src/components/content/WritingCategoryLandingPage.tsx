@@ -118,6 +118,22 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
           </div>
         </section>
 
+        <section
+          className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-white px-7 py-9 shadow-[0_14px_44px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11"
+          aria-labelledby={`${hub.slug}-uygulamali-ornek`}
+        >
+          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Uygulamalı tür karşılaştırması</span>
+          <h2 id={`${hub.slug}-uygulamali-ornek`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl">
+            {hub.workedExample.heading}
+          </h2>
+          <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">{hub.workedExample.scenario}</p>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-[#625b6d]">{hub.workedExample.comparison}</p>
+          <div className="mt-6 rounded-[1.5rem] bg-[#efebff] p-6">
+            <h3 className="text-lg font-extrabold text-[#211746]">Kendi taslağında dene</h3>
+            <p className="mt-3 text-sm leading-7 text-[#51496b]">{hub.workedExample.assignment}</p>
+          </div>
+        </section>
+
         {priorityGenres.length > 0 ? (
           <section
             className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-9 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-11"

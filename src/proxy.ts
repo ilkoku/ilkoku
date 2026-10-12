@@ -210,6 +210,7 @@ export const config = {
     "/favorilerim/:path*",
     "/bildirimler/:path*",
     "/kesfet/:path*",
+    "/yazar-kesfet/:path*",
     "/okuyucu/:path*",
     "/okumaya-devam/:path*",
     "/oku/:path*",

@@ -249,11 +249,12 @@ jobs:
           check_body "https://ilkoku.com/recent-updates.atom" "https://pubsubhubbub.appspot.com/" "<feed" "<entry>"
           check_body "https://ilkoku.com/site-haritasi" "/okurlar-icin" "/yazarlar-icin/kurgu/roman" "/okurlar-icin/okumaya-baslama" "/editorler-icin/egitim/editorluge-baslama"
           check_redirect_and_noindex "https://ilkoku.com/hesabim" "/giris"
+          check_redirect_and_noindex "https://ilkoku.com/yazar-kesfet" "/giris"
           check_status "https://ilkoku.com/eserler" "404"
           check_status "https://ilkoku.com/en-cok-satanlar/cok-satanlara-yeni-girenler" "200"
 
           if [[ "$REQUESTED_MODE" != "deep" ]]; then
-            echo "PASS: low-impact production smoke completed with 9 requests."
+            echo "PASS: low-impact production smoke completed with 10 requests."
             exit 0
           fi
 

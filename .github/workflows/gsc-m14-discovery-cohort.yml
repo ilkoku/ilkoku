@@ -59,16 +59,16 @@ jobs:
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
           GSC_INSPECTION_URLS: |
-          https://ilkoku.com/yayinevleri-icin
-          https://ilkoku.com/okurlar-icin
-          https://ilkoku.com/hakkimizda
-          https://ilkoku.com/editoryal-standartlar
-          https://ilkoku.com/yazarlar-icin/cizgi-anlati
-          https://ilkoku.com/yazarlar-icin/kurgu/oyku
-          https://ilkoku.com/yazarlar-icin/kurgu/fantastik
-          https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu
-          https://ilkoku.com/yazarlar-icin/kurgu/distopya
-          https://ilkoku.com/yazarlar-icin/edebiyat/siir
+            https://ilkoku.com/yayinevleri-icin
+            https://ilkoku.com/okurlar-icin
+            https://ilkoku.com/hakkimizda
+            https://ilkoku.com/editoryal-standartlar
+            https://ilkoku.com/yazarlar-icin/cizgi-anlati
+            https://ilkoku.com/yazarlar-icin/kurgu/oyku
+            https://ilkoku.com/yazarlar-icin/kurgu/fantastik
+            https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu
+            https://ilkoku.com/yazarlar-icin/kurgu/distopya
+            https://ilkoku.com/yazarlar-icin/edebiyat/siir
         run: node scripts/gsc-url-inspection.mjs
 
       - name: Inspect discovery cohort B (1 URL)
@@ -78,5 +78,5 @@ jobs:
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
           GSC_INSPECTION_URLS: |
-          https://ilkoku.com/editorler-icin/egitim/editorluge-baslama
+            https://ilkoku.com/editorler-icin/egitim/editorluge-baslama
         run: node scripts/gsc-url-inspection.mjs

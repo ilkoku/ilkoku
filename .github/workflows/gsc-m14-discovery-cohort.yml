@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - ".github/workflows/gsc-m14-discovery-cohort.yml"
+  # 05:47 UTC = 08:47 Türkiye (UTC+3). Scheduled jobs may start late.
+  schedule:
+    - cron: "47 5 * * *"
   workflow_dispatch:
     inputs:
       confirmation:

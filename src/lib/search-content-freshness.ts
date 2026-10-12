@@ -16,7 +16,11 @@ const PRIORITY_EDUCATION_INTENT_UPDATED_AT = new Date("2026-10-06T08:04:59Z");
 const PRIORITY_CATEGORY_SCHEMA_UPDATED_AT = new Date("2026-10-06T08:33:10Z");
 const PRIORITY_EDITOR_SCHEMA_UPDATED_AT = new Date("2026-10-06T09:14:20Z");
 
+// Visible, CMS-independent quick-start guidance and corrected headline on the how-it-works page (Oct 12).
+const HOW_IT_WORKS_QUICK_START_UPDATED_AT = new Date("2026-10-12T13:20:00Z");
+
 const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
+  ["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT],
   ["/yazarlar-icin/kurgu/roman", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/oyku", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/fantastik", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],

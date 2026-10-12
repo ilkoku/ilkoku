@@ -69,6 +69,7 @@ export default async function ReaderEducationRoute({ params }: PageProps) {
       description: guide.summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonical,
+      image: "https://ilkoku.com/og/ilkoku-social-selected-2026.webp",
       author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
     },

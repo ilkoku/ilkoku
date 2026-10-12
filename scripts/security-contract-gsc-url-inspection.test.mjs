@@ -265,7 +265,7 @@ test("Madde 14 full census repeats daily without write access or changing indexe
   assert.match(workflow, /workflow_dispatch:/u, "manual fallback remains available");
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "1"/u);
-  assert.match(script, /"cohortSource"/u);
+  assert.match(script, /cohortSource: censusCohortSource/u);
   assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);
 });

@@ -203,3 +203,29 @@ test("Book Index Search performance report is weekly and read-only", () => {
   assert.match(performanceScript, /position/u);
   assert.doesNotMatch(performanceScript, /indexing\.googleapis\.com|requestIndexing/u);
 });
+
+test("Madde 14 read-only diagnostic inspects exactly the 11 priority URLs in two safe batches", () => {
+  const cohort = fs.readFileSync(".github/workflows/gsc-m14-discovery-cohort.yml", "utf8");
+  const expected = [
+      "yayinevleri-icin",
+      "okurlar-icin",
+      "hakkimizda",
+      "editoryal-standartlar",
+      "yazarlar-icin/cizgi-anlati",
+      "yazarlar-icin/kurgu/oyku",
+      "yazarlar-icin/kurgu/fantastik",
+      "yazarlar-icin/kurgu/bilim-kurgu",
+      "yazarlar-icin/kurgu/distopya",
+      "yazarlar-icin/edebiyat/siir",
+      "editorler-icin/egitim/editorluge-baslama"
+  ];
+  const urlLines = [...cohort.matchAll(/^\s+https:\/\/ilkoku\.com\/([a-z0-9/-]+)\s*$/gmu)].map((match) => match[1]);
+
+  assert.deepEqual(urlLines, expected, "all 11 discovery paths must be inspected once, in agreed order");
+  assert.equal((cohort.match(/GSC_INSPECTION_URLS: \|/gu) || []).length, 2, "two URL groups preserve the ten-URL limit");
+  assert.equal((cohort.match(/run: node scripts\/gsc-url-inspection\.mjs/gu) || []).length, 2, "reuse existing read-only API client twice");
+  assert.match(cohort, /workflow_dispatch:/u);
+  assert.match(cohort, /RUN-GSC-M14/u);
+  assert.match(cohort, /permissions:\s*\n\s+contents: read/u);
+  assert.doesNotMatch(cohort, /indexing\.googleapis\.com|SUBMIT-GSC-SITEMAP/u, "never submit pages or request indexing from this diagnostic");
+});

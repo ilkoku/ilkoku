@@ -257,3 +257,15 @@ test("Madde 14 full census HTTP 403 fallback is explicit, bounded and honestly l
   assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "1"/u);
   assert.doesNotMatch(full, /GSC_OAUTH_WRITE_REFRESH_TOKEN|indexing\.googleapis\.com|method: "PUT"/u);
 });
+
+test("Madde 14 full census repeats daily without write access or changing indexed inventory", () => {
+  const workflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
+  const script = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
+  assert.match(workflow, /schedule:\s*\n\s+- cron: "17 7 \* \* \*"/u);
+  assert.match(workflow, /workflow_dispatch:/u, "manual fallback remains available");
+  assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
+  assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "1"/u);
+  assert.match(script, /"cohortSource"/u);
+  assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
+  assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);
+});

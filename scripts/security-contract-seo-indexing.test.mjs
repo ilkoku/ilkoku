@@ -358,6 +358,19 @@ test("contextual writing guide handoffs favor indexable siblings", () => {
   assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "maintain related link navigation");
 });
 
+test("Article structured data uses the real public Open Graph image on reader and editor lessons", () => {
+  const reader = source("src/app/okurlar-icin/[slug]/page.tsx");
+  const editor = source("src/components/content/EditorEducationStructuredData.tsx");
+  const brand = source("src/lib/public-brand.ts");
+  assertContains(brand, 'publicBrandSocialImage = "/og/ilkoku-social-selected-2026.webp"', "published canonical image path");
+  assertContains(reader, 'image: "https://ilkoku.com/og/ilkoku-social-selected-2026.webp"', "reader article image is actually published");
+  assertContains(reader, 'images: [{ url: socialImage }]', "reader OG image matches Article image");
+  assertContains(editor, 'import { publicBrandSocialImage } from "@/lib/public-brand";', "editor uses the same canonical art");
+  assertContains(editor, 'image: `${siteUrl}${publicBrandSocialImage}`', "editor Article image resolves to an absolute HTTPS URL");
+  assertContains(reader, '"@type": "BreadcrumbList"', "reader breadcrumb markup remains in place");
+  assertContains(editor, '"@type": "BreadcrumbList"', "editor breadcrumb markup remains in place");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

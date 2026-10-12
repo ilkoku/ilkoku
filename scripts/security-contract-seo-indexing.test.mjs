@@ -277,6 +277,14 @@ test("public pillar split hero headings keep semantic spaces without changing li
   assertNotContains(publishers, '<span key={`${word}-${index}`}>{word}</span>', "publisher heading avoids concatenated words");
 });
 
+test("writer and editor split hero titles retain accessible word boundaries", () => {
+  for (const page of ["ForWritersExperience", "ForEditorsExperience"]) {
+    const experience = source(`src/components/content/${page}.tsx`);
+    assertContains(experience, '{index > 0 ? " " : null}{word}</span>', `${page} adds semantic text spacing`);
+    assertNotContains(experience, '<span key={`${word}-${index}`}>{word}</span>', `${page} must not concatenate words`);
+  }
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

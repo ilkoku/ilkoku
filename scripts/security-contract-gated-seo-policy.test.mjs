@@ -95,3 +95,25 @@ test("indexable public experiences never render links into paused discovery fami
     );
   }
 });
+
+test("private reader author discovery is protected at every SEO and access-control layer", () => {
+  const page = source("src/app/yazar-kesfet/page.tsx");
+  const routeSecurity = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const config = source("next.config.ts");
+  const robots = source("src/app/robots.ts");
+
+  assert.match(page, /redirect\("\/giris\?sonraki=\/yazar-kesfet"\)/u, "anonymous requests redirect to login");
+  assert.ok(routeSecurity.includes('"/yazar-kesfet"'), "protected path requires an active session");
+  assert.ok(proxy.includes('"/yazar-kesfet/:path*"'), "request-time proxy enforces login");
+  assert.ok(config.includes('"/yazar-kesfet/:path*"'), "private X-Robots-Tag response covers route");
+  assert.ok(robots.includes('"/yazar-kesfet"'), "private crawl path is disallowed");
+
+  for (const guide of ["/yazarlar-icin", "/yazarlar-icin/kurgu"]) {
+    assert.equal(
+      robots.includes('"' + guide + '"'),
+      false,
+      "public writing guides must not be blocked by the private route rule",
+    );
+  }
+});

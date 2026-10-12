@@ -16,6 +16,9 @@ const PRIORITY_EDUCATION_INTENT_UPDATED_AT = new Date("2026-10-06T08:04:59Z");
 const PRIORITY_CATEGORY_SCHEMA_UPDATED_AT = new Date("2026-10-06T08:33:10Z");
 const PRIORITY_EDITOR_SCHEMA_UPDATED_AT = new Date("2026-10-06T09:14:20Z");
 
+// Substantive Oct 12 reading hub guidance and seven unique writing-category practice cases.
+const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:07Z");
+
 // Visible, CMS-independent quick-start guidance and corrected headline on the how-it-works page (Oct 12).
 const HOW_IT_WORKS_QUICK_START_UPDATED_AT = new Date("2026-10-12T13:20:00Z");
 
@@ -30,14 +33,14 @@ const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
 
   ["/okurlar-icin/okumaya-baslama", PRIORITY_EDUCATION_INTENT_UPDATED_AT],
 
-  ["/yazarlar-icin/kurgu", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/edebiyat", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/akademik", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/bilgilendirici", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/senaryo-ve-sahne", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/cocuk-ve-genclik", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/yazarlar-icin/cizgi-anlati", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
-  ["/okurlar-icin", PRIORITY_CATEGORY_SCHEMA_UPDATED_AT],
+  ["/yazarlar-icin/kurgu", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/edebiyat", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/akademik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/bilgilendirici", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/senaryo-ve-sahne", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/cocuk-ve-genclik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/cizgi-anlati", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/okurlar-icin", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
 
   ["/editorler-icin/egitim/editorluge-baslama", PRIORITY_EDITOR_SCHEMA_UPDATED_AT],
   ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", PRIORITY_EDITOR_SCHEMA_UPDATED_AT],

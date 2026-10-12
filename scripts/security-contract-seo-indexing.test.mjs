@@ -285,6 +285,41 @@ test("writer and editor split hero titles retain accessible word boundaries", ()
   }
 });
 
+test("SEO content-depth phase 9 adds seven useful category examples and a reader choice guide", () => {
+  const hubs = source("src/lib/writing-category-hubs.ts");
+  const landing = source("src/components/content/WritingCategoryLandingPage.tsx");
+  const readers = source("src/app/okurlar-icin/page.tsx");
+  const freshness = source("src/lib/search-content-freshness.ts");
+
+  const caseHeadings = [...hubs.matchAll(/workedExample: \{\s+heading: "([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(caseHeadings.length, 7, "each of seven public writing category hubs has a distinct practical case");
+  assert.equal(new Set(caseHeadings).size, 7, "avoid repetitive SEO filler disguised as distinct lessons");
+  for (const key of ["scenario", "comparison", "assignment"]) {
+    assertContains(landing, `hub.workedExample.${key}`, `worked case renders ${key} accessibly`);
+  }
+  assertContains(landing, 'Uygulamalı tür karşılaştırması', "real genre comparison shown to visitors");
+  assertContains(landing, 'Kendi taslağında dene', "visitors get an actual task");
+  assertContains(readers, 'id="okur-ihtiyacini-belirle"', "reading school provides a search-intent-led selector");
+  assertContains(readers, 'Kitaplara başlayıp yarım bırakıyorum.', "reading habit decision path");
+  assertContains(readers, 'Okuyorum ama ayrıntıları unutuyorum.', "active reading decision path");
+  assertContains(readers, 'Beğendim diyorum, nedenini açıklayamıyorum.', "literary reading decision path");
+  assertContains(readers, 'On beş dakikalık okuma kararı', "realistic quick start case");
+
+  for (const route of [
+    "/okurlar-icin",
+    "/yazarlar-icin/kurgu",
+    "/yazarlar-icin/edebiyat",
+    "/yazarlar-icin/akademik",
+    "/yazarlar-icin/bilgilendirici",
+    "/yazarlar-icin/senaryo-ve-sahne",
+    "/yazarlar-icin/cocuk-ve-genclik",
+    "/yazarlar-icin/cizgi-anlati",
+  ]) {
+    assertContains(freshness, `["${route}", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT]`, `material update is tracked for ${route}`);
+  }
+  assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "unrelated flagship freshness remains unchanged");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

@@ -1,3 +1,5 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
+
 const siteUrl = "https://ilkoku.com";
 
 type EditorEducationStructuredDataProps = {
@@ -29,6 +31,7 @@ export function EditorEducationStructuredData({
         "@type": "WebPage",
         "@id": pageUrl,
       },
+      image: `${siteUrl}${publicBrandSocialImage}`,
       author: {
         "@type": "Organization",
         "@id": `${siteUrl}/#organization`,

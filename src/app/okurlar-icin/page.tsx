@@ -149,6 +149,34 @@ export default function ReadersHomePage() {
             </div>
           </section>
 
+          <section className="mt-8 rounded-[2.2rem] border border-black/[0.07] bg-white px-7 py-9 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:px-10 sm:py-11" aria-labelledby="okur-ihtiyacini-belirle">
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Hangi eğitimden başlamalı?</span>
+            <h2 id="okur-ihtiyacini-belirle" className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+              Okuma ihtiyacını belirle, sonra doğru çalışmayı seç.
+            </h2>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">
+              Okurluk Okulu'nda tek bir doğru başlangıç yok. Yeni bir okuma düzeni kurmak, okuduğunu daha iyi hatırlamak ve metin üzerine gerekçeli yorum yazmak farklı becerilerdir. Önce en çok zorlandığın anı seç; bir eğitimin çıktısını denedikten sonra diğerine geç.
+            </p>
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <article className="rounded-[1.5rem] bg-[#f7f4ee] p-5">
+                <h3 className="text-lg font-extrabold text-[#211746]">Kitaplara başlayıp yarım bırakıyorum.</h3>
+                <p className="mt-3 text-sm leading-7 text-[#665f70]">Okumaya Başlama ile hedefini, zamanını ve eser seçme ölçütünü belirle. İlk haftanın sonunda kaç sayfa bitirdiğini değil, hangi koşulda okumaya devam edebildiğini not et.</p>
+              </article>
+              <article className="rounded-[1.5rem] bg-[#f7f4ee] p-5">
+                <h3 className="text-lg font-extrabold text-[#211746]">Okuyorum ama ayrıntıları unutuyorum.</h3>
+                <p className="mt-3 text-sm leading-7 text-[#665f70]">Aktif Okuma eğitiminde her bölümden sonra bir olay, bir soru ve bir dikkat çekici ayrıntı yaz. Notlarını metnin yerine geçecek uzun özetler hâline getirme.</p>
+              </article>
+              <article className="rounded-[1.5rem] bg-[#f7f4ee] p-5">
+                <h3 className="text-lg font-extrabold text-[#211746]">Beğendim diyorum, nedenini açıklayamıyorum.</h3>
+                <p className="mt-3 text-sm leading-7 text-[#665f70]">Edebi Okuma ile anlatıcıyı, temayı ve tekrarları araştır. Bir yorumunu destekleyen iki somut metin ayrıntısı bul; görüşünle metnin söylediğini birbirinden ayır.</p>
+              </article>
+            </div>
+            <div className="mt-6 rounded-[1.5rem] border border-[#6b52c7]/15 bg-[#efebff] px-6 py-6">
+              <h3 className="text-lg font-extrabold text-[#211746]">Örnek: On beş dakikalık okuma kararı</h3>
+              <p className="mt-3 text-sm leading-7 text-[#625b6d]">Yalnızca akşamları on beş dakikan olduğunu düşün. Uzun bir kitaba hemen söz vermek yerine iki eserin ilk sayfalarına bak; hangisinin dili şu anki dikkatine uyuyor, hangisi merakını canlı tutuyor? Birini seç, üç akşam dene ve her okuma sonunda tek cümle yaz: Bugün hangi soru aklımda kaldı? Sonunda eserini ve okuma zamanını sürdürüp sürdürmeyeceğine bu küçük kayıtlara bakarak karar ver.</p>
+            </div>
+          </section>
+
           <section className="mt-8 rounded-[2.2rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-8 sm:px-10 sm:py-10">
             <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5b35dd]">
               İlk adım

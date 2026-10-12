@@ -9,6 +9,10 @@ on:
       - "scripts/gsc-full-index-census.mjs"
       - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/seo/sitemap-data.ts"
+  # Full 25-URL index census: once daily, staggered after the 11-URL cohort.
+  # GitHub schedule may run later than the nominal time.
+  schedule:
+    - cron: "17 7 * * *"
   workflow_dispatch:
 
 permissions:

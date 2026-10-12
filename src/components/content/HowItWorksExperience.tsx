@@ -161,9 +161,9 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
         <article className="how-editorial-card how-editorial-card--soft" id="ilkokuya-nasil-baslanir">
           <h2>İlkOku'ya nasıl başlanır?</h2>
           <EditorialBody body={
-            "1. Yazar: Yazar hesabını oluştur, eserine başlık ve tür belirle, ilk bölümünü taslak olarak kaydet. Eserin ne zaman yayımlanacağına sen karar verirsin.\\n" +
-            "2. Okur: Okur hesabıyla katıl. Sana bağlantısı paylaşılan herkese açık eser vitrininin bilgilerini inceleyebilir; yayımlanmış bölümlere giriş ve erişim koşullarına göre ulaşabilirsin.\\n" +
-            "3. Editör: Editör hesabını ve uygun profilini oluştur. Yetkin kapsamında açılan inceleme görevlerinde, belirli bir eser sürümü için gerekçeli değerlendirme hazırlayabilirsin.\\n" +
+            "1. Yazar: Yazar hesabını oluştur, eserine başlık ve tür belirle, ilk bölümünü taslak olarak kaydet. Eserin ne zaman yayımlanacağına sen karar verirsin.\n" +
+            "2. Okur: Okur hesabıyla katıl. Sana bağlantısı paylaşılan herkese açık eser vitrininin bilgilerini inceleyebilir; yayımlanmış bölümlere giriş ve erişim koşullarına göre ulaşabilirsin.\n" +
+            "3. Editör: Editör hesabını ve uygun profilini oluştur. Yetkin kapsamında açılan inceleme görevlerinde, belirli bir eser sürümü için gerekçeli değerlendirme hazırlayabilirsin.\n" +
             "4. Yayınevi: Yayınevi rolüyle başvur. Kurumsal erişim yetkisi verildiğinde, değerlendirmeye açılmış uygun eserleri kendi ölçütlerinle inceleyebilirsin."
           } />
           <p>Genel eser ve yazar katalogları henüz herkese açık gezinmeye açılmadı; eseri yayımlamak veya editör incelemesi istemek de otomatik basım garantisi vermez.</p>

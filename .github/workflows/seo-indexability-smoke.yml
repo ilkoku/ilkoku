@@ -53,6 +53,26 @@ jobs:
             fi
           }
 
+          # One bounded retry for transient Cloudflare/origin failures; never bypass a 403/429.
+          fetch_with_origin_retry() {
+            local url="$1" headers="$2" body="$3"
+            local attempt code ray
+            for attempt in 1 2; do
+              : > "$headers"
+              : > "$body"
+              code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+              case "$code" in
+                520|522|524|000)
+                  ray="$(awk 'BEGIN{IGNORECASE=1} /^cf-ray:/{sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print}' "$headers" | tail -1)"
+                  echo "TRANSIENT ORIGIN FAILURE: HTTP $code URL $url attempt=$attempt/2 cf-ray=${ray:-unavailable}" >&2
+                  if [[ "$attempt" == "1" ]]; then sleep 6; continue; fi
+                  ;;
+              esac
+              break
+            done
+            printf '%s' "$code"
+          }
+
           check_page() {
             local path="$1"
             local expected_canonical="$2"
@@ -60,7 +80,7 @@ jobs:
             local headers body code robots canonical raw_bytes gzip_bytes
             headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            code="$(fetch_with_origin_retry "$url" "$headers" "$body")"
             echo "$url -> HTTP $code"
             raw_bytes="$(wc -c < "$body" | tr -d ' ')"
             gzip_bytes="$(gzip -c "$body" | wc -c | tr -d ' ')"
@@ -84,7 +104,7 @@ jobs:
             local headers body code robots canonical
             headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            code="$(fetch_with_origin_retry "$url" "$headers" "$body")"
             echo "$url -> HTTP $code (expected noindex, follow)"
             circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
@@ -105,7 +125,10 @@ jobs:
             local url="$1"
             local file="$2"
             local code
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --output "$file" --write-out '%{http_code}' "$url" || true)"
+            local headers
+            headers="$(mktemp)"
+            code="$(fetch_with_origin_retry "$url" "$headers" "$file")"
+            rm -f "$headers"
             echo "$url -> HTTP $code"
             circuit_break "$code" "$url"
             [[ "$code" == "200" ]]
@@ -135,7 +158,7 @@ jobs:
             'https://ilkoku.com/api/site-content/footer-navigation' \
             'https://ilkoku.com/api/public-announcements'; do
             headers="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 25 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$public_resource" || true)"
+            code="$(fetch_with_origin_retry "$public_resource" "$headers" /dev/null)"
             echo "$public_resource -> HTTP $code"
             circuit_break "$code" "$public_resource"
             [[ "$code" == "200" ]]

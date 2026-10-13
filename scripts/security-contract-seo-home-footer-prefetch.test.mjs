@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const footer = readFileSync("src/features/homepage/live-footer.tsx", "utf8");
+const consent = readFileSync("src/components/privacy/SiteConsentBanner.tsx", "utf8");
 const homepage = readFileSync("src/app/page.tsx", "utf8");
 const workflow = readFileSync(".github/workflows/seo-mobile-lighthouse-baseline.yml", "utf8");
 
@@ -21,7 +22,14 @@ test("All homepage footer links stay crawlable without eager route prefetch", ()
 
 test("A single mobile Lighthouse retest runs when this precise footer changes", () => {
   assert.match(workflow, /src\/features\/homepage\/live-footer\.tsx/u);
+  assert.match(workflow, /src\/components\/privacy\/SiteConsentBanner\.tsx/u);
   assert.match(workflow, /--form-factor=mobile/u);
   assert.match(workflow, /--only-categories=performance/u);
   assert.doesNotMatch(workflow, /schedule:|workflow_run:/u);
+});
+
+test("Visible cookie consent policy link does not prefetch the legal route", () => {
+  assert.match(consent, /<Link prefetch=\\{false\\} href=\\{settings\\.policyPath\\}>Gizlilik ve çerez bilgileri<\\/Link>/u);
+  assert.match(consent, /updateConsentMode/u);
+  assert.match(consent, /dispatchChoice/u);
 });

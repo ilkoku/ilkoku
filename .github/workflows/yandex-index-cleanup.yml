@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/yandex-index-cleanup.yml"
       - "scripts/yandex-index-cleanup.mjs"
+      - "scripts/yandex-index-cleanup.test.mjs"
       - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/public-page-metadata.ts"
       - "src/app/robots.ts"
@@ -14,6 +15,11 @@ on:
       - "src/app/en-cok-satanlar/turkiye/karsilastirma/**"
       - "src/app/yardim/**"
       - "next.config.ts"
+  pull_request:
+    paths:
+      - ".github/workflows/yandex-index-cleanup.yml"
+      - "scripts/yandex-index-cleanup.mjs"
+      - "scripts/yandex-index-cleanup.test.mjs"
   workflow_dispatch:
 
 permissions:
@@ -38,7 +44,11 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Test cleanup candidate policy and payload safety
+        run: node --test scripts/yandex-index-cleanup.test.mjs
+
       - name: Validate live states and submit Yandex IndexNow cleanup
+        if: github.event_name != 'pull_request'
         env:
           INDEXNOW_KEY: "f4c33493caf6550560462af5a424980e"
         run: node scripts/yandex-index-cleanup.mjs

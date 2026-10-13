@@ -12,31 +12,7 @@ const MAX_URLS = 500;
 const MIN_EXPECTED_SITEMAP_URLS = Number.parseInt(process.env.GSC_CENSUS_MIN_URLS || "0", 10);
 const CONCURRENCY = 6;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
-const ALLOW_SOURCE_FALLBACK = process.env.GSC_CENSUS_ALLOW_SOURCE_FALLBACK === "1";
-let censusCohortSource = "live-sitemap";
-
-// Last-resort 25-URL soft-launch cohort for GitHub-hosted requests that receive
-// an HTTP 403 from the origin. This is NOT the current live sitemap: dynamic
-// published works or CMS URLs cannot be inferred from a checked-in policy file.
-function loadSourcePolicyFallbackUrls() {
-  const policy = fs.readFileSync("src/lib/soft-launch-search-policy.ts", "utf8");
-  const exact = policy.match(
-    /const SOFT_LAUNCH_INDEXABLE_EXACT_PATHS:[^\n]*= new Set\(\[([\s\S]*?)\]\s+as const\);/u,
-  );
-  if (!exact) throw new Error("Cannot locate the explicit soft-launch indexable path set.");
-
-  const paths = [...exact[1].matchAll(/^\s+"(\/[a-z0-9/-]+)",\s*$/gmu)].map((match) => match[1]);
-  const unique = [...new Set(paths)];
-  // Exact count and full parse are intentional guards against silently
-  // treating an outdated, partial source extract as a complete live census.
-  if (paths.length !== 24 || unique.length !== paths.length) {
-    throw new Error(`Cannot safely form the 25-URL priority cohort: found ${paths.length} paths / ${unique.length} unique.`);
-  }
-  censusCohortSource = "source-policy-fallback-25-priority-only";
-  const urls = [BASE_URL + "/", ...unique.map((path) => BASE_URL + path)];
-  console.log("WARNING: Origin returned HTTP 403 to GitHub; inspecting only the 25 source-policy priority URLs, NOT the live sitemap. Dynamic public URLs may be absent.");
-  return urls;
-}
+const censusCohortSource = "live-sitemap";
 
 function requireSecret(name, value) {
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -60,9 +36,6 @@ async function loadSitemapUrls() {
   });
 
   if (!response.ok) {
-    if (response.status === 403 && ALLOW_SOURCE_FALLBACK) {
-      return loadSourcePolicyFallbackUrls();
-    }
     throw new Error(`Sitemap fetch failed: HTTP ${response.status}`);
   }
 

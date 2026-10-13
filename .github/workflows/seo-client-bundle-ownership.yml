@@ -1,0 +1,93 @@
+name: SEO client bundle ownership audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/seo-client-bundle-ownership.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-client-bundle-ownership
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: Analyze Next.js client/server imports on disposable GitHub runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ilkoku_bundle_audit
+          MARIADB_USER: bundle_audit
+          MARIADB_PASSWORD: bundle_audit_password
+          MARIADB_ROOT_PASSWORD: bundle_audit_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: "mysql://bundle_audit:bundle_audit_password@127.0.0.1:3306/ilkoku_bundle_audit"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SITE_URL: "http://localhost:3000"
+      EMAIL_DELIVERY_MODE: "local"
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact repository dependencies
+        run: npm ci
+
+      - name: Recover isolated disposable database
+        env:
+          RECOVERY_CONFIRM_EMPTY_DATABASE: "YES"
+        run: npm run db:recover:fresh
+
+      - name: Generate Prisma types locally
+        run: npx prisma generate
+
+      - name: Create route-aware module import graph with built-in Next.js analyzer
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npx next experimental-analyze --output
+          test -d .next/diagnostics/analyze || {
+            echo "::error::Next.js failed to write module analysis"; exit 1;
+          }
+          count="$(find .next/diagnostics/analyze -type f | wc -l)"
+          echo "ANALYZE_FILES=$count"
+          if [[ "$count" -lt 1 ]]; then
+            echo "::error::Bundle analyzer has no report files"; exit 1
+          fi
+          find .next/diagnostics/analyze -type f -printf 'ANALYZE_FILE %P %s bytes\n' | head -40
+          {
+            echo "## Next.js 16 client bundle/module attribution"
+            echo ""
+            echo "Generated on a disposable GitHub runner, without origin traffic."
+            echo ""
+            echo "Artifacts: .next/diagnostics/analyze — client/server import chains, including homepage dependencies."
+            echo ""
+            echo "Important: This analyzer uses Turbopack; production currently builds with Webpack. Compare import owners, not exact Webpack chunk byte identities."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve traceable client/server import chain report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-next16-bundle-ownership
+          path: .next/diagnostics/analyze
+          if-no-files-found: warn
+          retention-days: 14

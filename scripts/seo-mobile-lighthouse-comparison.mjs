@@ -6,6 +6,17 @@ const LEGACY = {
   "global-error": "d488dd9a7b97f67c",
 };
 
+const LEGACY_HOMEPAGE_CSS = [
+  "2ab030001ec78daa.css",
+  "616c93a03e23480b.css",
+  "93eae98f85f26c45.css",
+  "e18276ad93330b4b.css",
+  "bf00e15a432f2fe1.css",
+  "06d1af4e11fd8a11.css",
+];
+
+const PREVIOUS_THREE_RUN_CSS_MEDIAN = 65199;
+
 const BASELINE = {
   score: 35,
   tbtMs: 3156,
@@ -36,7 +47,12 @@ function fingerprint(htmlFile) {
   if (error.includes(LEGACY.error) || globalError.includes(LEGACY["global-error"])) {
     throw new Error("DEPLOY_OLD: Homepage still references one or both original #1693-prechange error chunks. Defer measurements.");
   }
-  const result = {status: "NEW_ERROR_CHUNKS", error, globalError, baseline: LEGACY};
+  const cssLinks = [...new Set([...html.matchAll(/\/_next\/static\/css\/[a-f0-9]+\.css/g)].map((match) => match[0]))];
+  if (cssLinks.length === 0) throw new Error("DEPLOY_NOT_VERIFIABLE: Homepage has no CSS fingerprint.");
+  if (LEGACY_HOMEPAGE_CSS.every((name) => cssLinks.some((url) => url.endsWith(name)))) {
+    throw new Error("DEPLOY_OLD_CSS: Homepage still uses all six pre-PR #1697 stylesheet hashes.");
+  }
+  const result = {status: "NEW_CSS_AND_ERROR_CHUNKS", error, globalError, cssLinks, baseline: LEGACY};
   fs.writeFileSync("/tmp/ilkoku-mobile-deployment-fingerprint.json", JSON.stringify(result, null, 2));
   process.stdout.write("DEPLOYMENT_FINGERPRINT=" + JSON.stringify(result) + "\n");
 }
@@ -54,6 +70,7 @@ function parseLhr(file) {
   const items = doc.audits["network-requests"]?.details?.items;
   if (!Array.isArray(items)) throw new Error("Missing Lighthouse network request data");
   const scripts = items.filter((item) => item.resourceType === "Script");
+  const styles = items.filter((item) => item.resourceType === "Stylesheet");
   const breakdown = doc.audits["mainthread-work-breakdown"]?.details?.items || [];
   const scriptEval = breakdown.find((item) => item.group === "scriptEvaluation");
   const errorAssets = scripts.map((item) => item.url).filter((url) => /\/app\/(?:error|global-error)-/.test(url));
@@ -66,6 +83,9 @@ function parseLhr(file) {
     cls: round(metric("cumulative-layout-shift"), 4),
     jsTransferBytes: Math.round(scripts.reduce((total, item) => total + (item.transferSize || 0), 0)),
     jsRequests: scripts.length,
+    cssTransferBytes: Math.round(styles.reduce((total, item) => total + (item.transferSize || 0), 0)),
+    cssResourceBytes: Math.round(styles.reduce((total, item) => total + (item.resourceSize || 0), 0)),
+    cssRequests: styles.length,
     rscRequests: items.filter((item) => item.url && item.url.includes("_rsc=")).length,
     scriptExecutionMs: round(metric("bootup-time")),
     mainThreadMs: round(metric("mainthread-work-breakdown")),
@@ -78,17 +98,19 @@ function report(files) {
   assert.equal(files.length, 3, "Three separate Lighthouse runs required");
   const fingerprint = JSON.parse(fs.readFileSync("/tmp/ilkoku-mobile-deployment-fingerprint.json", "utf8"));
   const runs = files.map(parseLhr);
-  const fields = ["score", "tbtMs", "lcpMs", "fcpMs", "cls", "jsTransferBytes", "jsRequests", "rscRequests", "scriptExecutionMs", "mainThreadMs"];
+  const fields = ["score", "tbtMs", "lcpMs", "fcpMs", "cls", "jsTransferBytes", "jsRequests", "cssTransferBytes", "cssResourceBytes", "cssRequests", "rscRequests", "scriptExecutionMs", "mainThreadMs"];
   const medians = Object.fromEntries(fields.map((name) => [name, median(runs.map((run) => run[name]))]));
   const markdown = [
-    "## İlkOku — post-PR #1693 mobile Lighthouse (three lab runs)",
+    "## İlkOku — mobile Lighthouse after scoped authentication CSS (#1697)",
     "",
     "Deployment evidence: new homepage error chunks: " + fingerprint.error + ", " + fingerprint.globalError,
     "",
-    "| Run | Score | TBT ms | LCP ms | FCP ms | CLS | Transferred JS bytes | _rsc | Script CPU ms |",
-    "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
-    ...runs.map((run, i) => "| " + (i+1) + " | " + [run.score,run.tbtMs,run.lcpMs,run.fcpMs,run.cls,run.jsTransferBytes,run.rscRequests,run.scriptExecutionMs].join(" | ") + " |"),
-    "| **Median** | **" + [medians.score,medians.tbtMs,medians.lcpMs,medians.fcpMs,medians.cls,medians.jsTransferBytes,medians.rscRequests,medians.scriptExecutionMs].join("** | **") + "** |",
+    "| Run | Score | TBT ms | LCP ms | FCP ms | CLS | CSS transfer bytes | CSS raw bytes | CSS requests | JS transfer bytes | _rsc | Script CPU ms |",
+    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ...runs.map((run, i) => "| " + (i+1) + " | " + [run.score,run.tbtMs,run.lcpMs,run.fcpMs,run.cls,run.cssTransferBytes,run.cssResourceBytes,run.cssRequests,run.jsTransferBytes,run.rscRequests,run.scriptExecutionMs].join(" | ") + " |"),
+    "| **Median** | **" + [medians.score,medians.tbtMs,medians.lcpMs,medians.fcpMs,medians.cls,medians.cssTransferBytes,medians.cssResourceBytes,medians.cssRequests,medians.jsTransferBytes,medians.rscRequests,medians.scriptExecutionMs].join("** | **") + "** |",
+    "",
+    "CSS transfer (previous #1694 three-run median vs new three-run median): " + PREVIOUS_THREE_RUN_CSS_MEDIAN + " vs " + medians.cssTransferBytes + " bytes; change " + (medians.cssTransferBytes - PREVIOUS_THREE_RUN_CSS_MEDIAN) + " bytes.",
     "",
     "Historical comparison (single 2026-10-13 baseline run, not a before-median):",
     "",

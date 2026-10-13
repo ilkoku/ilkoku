@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import type { Metadata } from "next";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -320,18 +321,9 @@ export default async function OykuYazarlikRehberiPage() {
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
-      author: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
-      publisher: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
     },
     {
       "@context": "https://schema.org",

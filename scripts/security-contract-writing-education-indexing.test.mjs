@@ -391,16 +391,25 @@ test("all writing guide renderers expose organization-authored Article structure
   const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
   const story = source("src/app/yazarlar-icin/kurgu/oyku/page.tsx");
 
+  const layout = source("src/app/layout.tsx");
+  assertContains(layout, '"@id": `${baseUrl}/#organization`', "root defines the complete Organization entity");
+  assertContains(layout, "name: publicBrandName", "root organization retains a declared name");
+
   for (const [label, guide] of [
     ["batched education", education],
     ["batched fiction", fiction],
     ["story", story],
   ]) {
     assertContains(guide, '"@type": "Article"', `${label} Article schema`);
-    assertContains(guide, 'name: "İlkOku"', `${label} organization author name`);
     assertContains(guide, 'author: {', `${label} author relation`);
     assertContains(guide, 'publisher: {', `${label} publisher relation`);
     assertContains(guide, '"@id": "https://ilkoku.com/#organization"', `${label} organization identity`);
+    if (label === "batched fiction") {
+      assertContains(guide, 'name: "İlkOku"', "untouched batched fiction author remains explicit");
+    } else {
+      assertContains(guide, 'author: { "@id": "https://ilkoku.com/#organization" }', `${label} author refers to root entity`);
+      assertContains(guide, 'publisher: { "@id": "https://ilkoku.com/#organization" }', `${label} publisher refers to root entity`);
+    }
   }
 
   assertContains(education, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "education WebPage to Article relation");

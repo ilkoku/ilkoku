@@ -11,6 +11,8 @@ on:
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
+      - src/components/layout/PublicSiteAccount.tsx
+      - scripts/security-contract-account-prefetch.test.mjs
       - scripts/security-contract-seo-home-footer-prefetch.test.mjs
 
 permissions:

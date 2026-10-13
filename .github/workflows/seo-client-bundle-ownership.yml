@@ -72,7 +72,8 @@ jobs:
           if [[ "$count" -lt 1 ]]; then
             echo "::error::Bundle analyzer has no report files"; exit 1
           fi
-          find .next/diagnostics/analyze -type f -printf 'ANALYZE_FILE %P %s bytes\n' | head -40
+          find .next/diagnostics/analyze -type f -printf 'ANALYZE_FILE %P %s bytes\n' > /tmp/ilkoku-analyze-file-list.txt
+          sed -n '1,40p' /tmp/ilkoku-analyze-file-list.txt
           {
             echo "## Next.js 16 client bundle/module attribution"
             echo ""

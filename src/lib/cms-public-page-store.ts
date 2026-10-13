@@ -60,6 +60,9 @@ const alwaysIndexPublicTrustSlugs = new Set([
   "editorler-icin",
   "yayinevleri-icin",
   "editoryal-standartlar",
+  "icerik-ve-yas-politikasi",
+  "topluluk-kurallari",
+  "telif-bildirimi",
 ]);
 
 const legacyTrustCopyBySlug: Partial<Record<string, LegacyTrustCopyBridge>> = {

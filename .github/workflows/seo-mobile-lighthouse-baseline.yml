@@ -1,0 +1,81 @@
+name: SEO mobile Lighthouse baseline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/seo-mobile-lighthouse-baseline.yml
+      - scripts/seo-mobile-lighthouse-report.mjs
+      - scripts/security-contract-seo-mobile-lighthouse.test.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-mobile-lighthouse-baseline
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Single-run mobile performance lab
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Check baseline report contracts offline
+        run: node --test scripts/security-contract-seo-mobile-lighthouse.test.mjs
+
+      - name: Verify public site is reachable and stop on WAF blocks
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          head_file="$(mktemp)"
+          trap 'rm -f "$head_file"' EXIT
+          code="$(curl --silent --show-error --connect-timeout 8 --max-time 20 \
+            -A "IlkOku-Mobile-Lighthouse/1.0" -D "$head_file" \
+            -o /dev/null -w '%{http_code}' https://ilkoku.com/ || true)"
+          ray="$(grep -i '^cf-ray:' "$head_file" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+          echo "PRECHECK HTTP=$code ray=$ray UTC=$(date -u +%FT%TZ)"
+          if [[ "$code" == "403" || "$code" == "429" ]]; then
+            echo "::error::WAF circuit breaker; do not run Lighthouse"; exit 1
+          fi
+          if [[ "$code" != "200" ]]; then
+            echo "::error::Public homepage unavailable; no performance score is valid"; exit 1
+          fi
+
+      - name: Measure once with Lighthouse mobile simulation on a GitHub runner
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if command -v google-chrome >/dev/null 2>&1; then
+            export CHROME_PATH="$(command -v google-chrome)"
+          elif command -v google-chrome-stable >/dev/null 2>&1; then
+            export CHROME_PATH="$(command -v google-chrome-stable)"
+          else
+            echo "::error::Chrome is unavailable on the GitHub runner"; exit 1
+          fi
+          npx --yes lighthouse@12.8.2 https://ilkoku.com/ \
+            --only-categories=performance \
+            --form-factor=mobile \
+            --throttling-method=simulate \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --output=json --output-path=/tmp/ilkoku-mobile-lighthouse.json \
+            --quiet
+          node scripts/seo-mobile-lighthouse-report.mjs /tmp/ilkoku-mobile-lighthouse.json
+
+      - name: Preserve single-run evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-mobile-lighthouse-baseline
+          path: |
+            /tmp/ilkoku-mobile-lighthouse-summary.json
+            /tmp/ilkoku-mobile-lighthouse.json
+          if-no-files-found: warn
+          retention-days: 14

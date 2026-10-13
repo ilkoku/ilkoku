@@ -37,6 +37,13 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Guard against obsolete 25 URL census
+        run: |
+          node --check scripts/gsc-full-index-census.mjs
+          if grep -Eq "loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25" scripts/gsc-full-index-census.mjs; then
+            echo "::error::Obsolete partial census fallback is forbidden"; exit 1
+          fi
+
       - name: Validate Search Console OAuth secrets
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
@@ -53,7 +60,6 @@ jobs:
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
-          GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "0"
           GSC_CENSUS_MIN_URLS: "128"
         run: node scripts/gsc-full-index-census.mjs
 

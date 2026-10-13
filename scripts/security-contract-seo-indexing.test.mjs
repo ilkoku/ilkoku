@@ -866,20 +866,25 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
     "RUN-19-URL-CRAWLER-DIAGNOSTIC",
     "crawler confirmation must not freeze an obsolete URL count",
   );
-  assertContains(
+  assertNotContains(
     submitWorkflow,
     "  push:",
-    "GSC sitemap submit must refresh when the focused sitemap pipeline changes",
+    "GSC submit must not silently skip an automatic submission",
   );
-  assertContains(
+  assertNotContains(
     submitWorkflow,
     '"src/lib/soft-launch-search-policy.ts"',
-    "focused cohort policy changes trigger GSC sitemap resubmission",
+    "policy changes no longer trigger duplicate GSC submissions",
+  );
+  assertNotContains(
+    submitWorkflow,
+    '"src/lib/seo/sitemap-data.ts"',
+    "sitemap changes are read by GSC without duplicate automatic submissions",
   );
   assertContains(
     submitWorkflow,
-    '"src/lib/seo/sitemap-data.ts"',
-    "sitemap inventory changes trigger GSC sitemap resubmission",
+    "Require Search Console write OAuth",
+    "manual GSC submission fails visibly when write credentials are absent",
   );
   assertContains(
     submitWorkflow,

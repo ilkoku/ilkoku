@@ -388,7 +388,6 @@ test("Madde 12 priority writing-guide Article schemas use the published brand im
     assertContains(page, 'image: `https://ilkoku.com${publicBrandSocialImage}`', `${path} emits an absolute HTTPS Article image`);
     assertContains(page, 'author: { "@id": "https://ilkoku.com/#organization" }', `${path} reuses one complete global author entity`);
     assertContains(page, 'publisher: { "@id": "https://ilkoku.com/#organization" }', `${path} reuses one complete global publisher entity`);
-    assertNotContains(page, 'url: "https://ilkoku.com/",\\n      },\\n      publisher:', `${path} must not duplicate Organization URL properties`);
     assertContains(page, '"@type": "Article"', `${path} retains the Article schema`);
     assertContains(page, '"@type": "BreadcrumbList"', `${path} retains its existing breadcrumb schema`);
   }

@@ -129,7 +129,8 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.match(censusWorkflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u);
   assert.match(censusWorkflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(censusWorkflow, /gsc-full-index-census\.mjs/u);
-  assert.match(censusWorkflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "0"/u);
+  assert.doesNotMatch(censusWorkflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK/u);
+  assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
   assert.match(censusWorkflow, /GSC_CENSUS_MIN_URLS: "128"/u);
   assert.match(censusScript, /Incomplete live census:/u);
   assert.match(censusWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
@@ -147,12 +148,10 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
 
 test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
   assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
-  assert.match(
-    sitemapSubmitWorkflow,
-    /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u,
-  );
-  assert.match(sitemapSubmitWorkflow, /src\/lib\/soft-launch-search-policy\.ts/u);
-  assert.match(sitemapSubmitWorkflow, /src\/lib\/seo\/sitemap-data\.ts/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /\n  push:\n/u);
+  assert.match(sitemapSubmitWorkflow, /- name: Require Search Console write OAuth/u);
+  assert.match(sitemapSubmitWorkflow, /::error::Missing GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /if: steps\.gsc_oauth\.outputs\.available/u);
   assert.match(sitemapSubmitWorkflow, /if: github\.event_name == 'workflow_dispatch'/u);
   assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+schedule:/u);
   assert.match(sitemapSubmitWorkflow, /SUBMIT-GSC-SITEMAP/u);

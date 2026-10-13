@@ -1,0 +1,96 @@
+name: Runtime origin health
+
+on:
+  # One low-load sample each hour. GitHub schedules may run late.
+  schedule:
+    - cron: "58 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: runtime-origin-health
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    name: Inspect authenticated process uptime and edge reachability
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read private Node process snapshot
+        shell: bash
+        env:
+          OIDC_AUDIENCE: ilkoku-runtime-origin-health
+        run: |
+          set -Eeuo pipefail
+          body="$(mktemp)"
+          headers="$(mktemp)"
+          trap 'rm -f "$body" "$headers"' EXIT
+          identity="$(curl --fail-with-body --silent --show-error --max-time 10 \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$OIDC_AUDIENCE")"
+          token="$(IDENTITY="$identity" node -e 'process.stdout.write(JSON.parse(process.env.IDENTITY).value ?? "")')"
+          test -n "$token" || { echo "::error::Missing GitHub OIDC token"; exit 1; }
+          code="$(curl --silent --show-error --connect-timeout 8 --max-time 20 \
+            -A "IlkOku-Origin-Health/1.0" \
+            -H "X-IlkOku-GitHub-OIDC: $token" \
+            -H "Cache-Control: no-store" --dump-header "$headers" \
+            --output "$body" --write-out '%{http_code}' \
+            https://ilkoku.com/api/internal/runtime-origin-health || true)"
+          ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+          echo "PROBE private-runtime HTTP=$code ray=$ray UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          if [[ "$code" != "200" ]]; then
+            echo "::error::Runtime snapshot unavailable: HTTP $code ray=$ray"
+            exit 1
+          fi
+          node - "$body" <<'NODE'
+          const fs = require("node:fs");
+          const obj = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (obj.ok !== true || !Number.isInteger(obj.pid) ||
+              !Number.isFinite(obj.uptimeSeconds) || !Number.isFinite(obj.rssBytes) ||
+              Number.isNaN(Date.parse(obj.processStartedAt))) {
+            throw new Error("Runtime health payload invalid");
+          }
+          const snapshot = {
+            observedAt: obj.observedAt,
+            pid: obj.pid,
+            startedAt: obj.processStartedAt,
+            uptimeSeconds: obj.uptimeSeconds,
+            rssMiB: Math.round(obj.rssBytes / 1048576),
+          };
+          console.log("PROCESS_SNAPSHOT " + JSON.stringify(snapshot));
+          if (process.env.GITHUB_STEP_SUMMARY) {
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### Node.js runtime observation\n\n" +
+              "| UTC observed | PID | Node process start UTC | Uptime sec | RSS MiB |\n" +
+              "| --- | ---: | --- | ---: | ---: |\n" +
+              "| " + snapshot.observedAt + " | " + snapshot.pid + " | " +
+              snapshot.startedAt + " | " + snapshot.uptimeSeconds +
+              " | " + snapshot.rssMiB + " |\n");
+          }
+          NODE
+
+      - name: Sample two important public routes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          result=0
+          for path in /iletisim /sitemap.xml; do
+            headers="$(mktemp)"
+            code="$(curl --silent --show-error --connect-timeout 8 --max-time 20 \
+              -A "IlkOku-Origin-Health/1.0" --dump-header "$headers" \
+              --output /dev/null --write-out '%{http_code}' \
+              "https://ilkoku.com$path" || true)"
+            ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            rm -f "$headers"
+            echo "PROBE public path=$path HTTP=$code ray=$ray UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              echo "::error::Circuit breaker: HTTP $code"; exit 1
+            fi
+            if [[ "$code" != "200" ]]; then result=1; fi
+            sleep 2
+          done
+          test "$result" -eq 0 || { echo "::error::Public endpoint probe failed"; exit 1; }

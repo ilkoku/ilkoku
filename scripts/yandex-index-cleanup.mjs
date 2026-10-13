@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const SITE_ORIGIN = "https://ilkoku.com";
 const YANDEX_INDEXNOW_ENDPOINT = "https://yandex.com/indexnow";
+const GLOBAL_INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 
 export const YANDEX_DELETED_URLS = [
   `${SITE_ORIGIN}/puan-durumu`,
@@ -143,19 +144,27 @@ async function submitToYandex(key, keyLocation, validatedNoindexUrls) {
   };
 
   let response;
-  try {
-    response = await fetch(YANDEX_INDEXNOW_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "user-agent": "IlkOku-Yandex-Index-Cleanup/1.0",
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(60_000),
-  });
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Yandex IndexNow POST network failure at ${YANDEX_INDEXNOW_ENDPOINT}: ${reason}`);
+  let acceptedEndpoint = YANDEX_INDEXNOW_ENDPOINT;
+  for (const endpoint of [YANDEX_INDEXNOW_ENDPOINT, GLOBAL_INDEXNOW_ENDPOINT]) {
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "user-agent": "IlkOku-Yandex-Index-Cleanup/1.0",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(60_000),
+      });
+      acceptedEndpoint = endpoint;
+      break;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      if (endpoint === GLOBAL_INDEXNOW_ENDPOINT) {
+        throw new Error(`IndexNow POST network failure at ${endpoint}: ${reason}`);
+      }
+      console.warn(`WARN: ${endpoint} network failure (${reason}); retrying via global IndexNow endpoint`);
+    }
   }
 
   const body = await response.text();
@@ -163,7 +172,7 @@ async function submitToYandex(key, keyLocation, validatedNoindexUrls) {
   console.log(
     JSON.stringify({
       yandexIndexNowCleanup: {
-        endpoint: YANDEX_INDEXNOW_ENDPOINT,
+        endpoint: acceptedEndpoint,
         status: response.status,
         deleted: YANDEX_DELETED_URLS,
         noindex: validatedNoindexUrls,
@@ -174,12 +183,12 @@ async function submitToYandex(key, keyLocation, validatedNoindexUrls) {
 
   if (![200, 202].includes(response.status)) {
     throw new Error(
-      `Yandex IndexNow cleanup failed: HTTP ${response.status} ${body.trim()}`,
+      `IndexNow cleanup failed at ${acceptedEndpoint}: HTTP ${response.status} ${body.trim()}`,
     );
   }
 
   console.log(
-    `PASS: Yandex accepted ${submittedUrls.length} validated cleanup/refresh URLs via IndexNow.`,
+    `PASS: ${acceptedEndpoint} accepted ${submittedUrls.length} validated cleanup/refresh URLs via IndexNow.`,
   );
 }
 

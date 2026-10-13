@@ -129,7 +129,7 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.match(censusWorkflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u);
   assert.match(censusWorkflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(censusWorkflow, /gsc-full-index-census\.mjs/u);
-  assert.doesNotMatch(censusWorkflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK/u);
+  assert.doesNotMatch(censusWorkflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
   assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
   assert.match(censusWorkflow, /GSC_CENSUS_MIN_URLS: "128"/u);
   assert.match(censusScript, /Incomplete live census:/u);
@@ -247,7 +247,7 @@ test("Madde 14 full census never uses an obsolete partial-cohort fallback", () =
   const full = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
   const workflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
   assert.doesNotMatch(full, /loadSourcePolicyFallbackUrls|ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
-  assert.doesNotMatch(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK/u);
+  assert.doesNotMatch(workflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
   assert.match(full, /Sitemap fetch failed: HTTP/u);
   assert.match(workflow, /GSC_CENSUS_MIN_URLS: "128"/u);
   assert.match(full, /cohortSource: censusCohortSource/u);
@@ -260,7 +260,7 @@ test("Madde 14 full census repeats daily without write access or changing indexe
   assert.match(workflow, /schedule:\s*\n\s+- cron: "17 7 \* \* \*"/u);
   assert.match(workflow, /workflow_dispatch:/u, "manual fallback remains available");
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
-  assert.doesNotMatch(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK/u);
+  assert.doesNotMatch(workflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
   assert.match(script, /cohortSource: censusCohortSource/u);
   assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);

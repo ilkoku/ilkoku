@@ -265,3 +265,16 @@ test("Madde 14 full census repeats daily without write access or changing indexe
   assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);
 });
+
+test("Transient Cloudflare failures receive only a bounded origin retry and remain visible", () => {
+  const smokeWorkflow = fs.readFileSync(".github/workflows/seo-indexability-smoke.yml", "utf8");
+  assert.match(censusScript, /RETRYABLE_SITEMAP_STATUSES = new Set\(\[520, 522, 524\]\)/u);
+  assert.match(censusScript, /SITEMAP_FETCH_ATTEMPTS = 2/u);
+  assert.match(censusScript, /cf-ray/u);
+  assert.match(censusScript, /Sitemap fetch failed: HTTP/u);
+  assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|source-policy-fallback-25/u);
+  assert.match(smokeWorkflow, /fetch_with_origin_retry\(\)/u);
+  assert.match(smokeWorkflow, /520\|522\|524\|000/u);
+  assert.match(smokeWorkflow, /TRANSIENT ORIGIN FAILURE:/u);
+  assert.match(smokeWorkflow, /circuit_break "\$code" "\$url"/u);
+});

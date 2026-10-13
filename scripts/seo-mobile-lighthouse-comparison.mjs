@@ -7,7 +7,7 @@ const LEGACY = {
 };
 
 const LEGACY_HOMEPAGE_CSS = [
-  "2ab030001ec78daa.css",
+  "728ad4a8d248521d.css",
   "616c93a03e23480b.css",
   "93eae98f85f26c45.css",
   "e18276ad93330b4b.css",
@@ -15,7 +15,7 @@ const LEGACY_HOMEPAGE_CSS = [
   "06d1af4e11fd8a11.css",
 ];
 
-const PREVIOUS_THREE_RUN_CSS_MEDIAN = 65199;
+const PREVIOUS_THREE_RUN_CSS_MEDIAN = 63167;
 
 const BASELINE = {
   score: 35,
@@ -50,7 +50,7 @@ function fingerprint(htmlFile) {
   const cssLinks = [...new Set([...html.matchAll(/\/_next\/static\/css\/[a-f0-9]+\.css/g)].map((match) => match[0]))];
   if (cssLinks.length === 0) throw new Error("DEPLOY_NOT_VERIFIABLE: Homepage has no CSS fingerprint.");
   if (LEGACY_HOMEPAGE_CSS.every((name) => cssLinks.some((url) => url.endsWith(name)))) {
-    throw new Error("DEPLOY_OLD_CSS: Homepage still uses all six pre-PR #1697 stylesheet hashes.");
+    throw new Error("DEPLOY_OLD_CSS: Homepage still uses all six pre-PR #1698 stylesheet hashes.");
   }
   const result = {status: "NEW_CSS_AND_ERROR_CHUNKS", error, globalError, cssLinks, baseline: LEGACY};
   fs.writeFileSync("/tmp/ilkoku-mobile-deployment-fingerprint.json", JSON.stringify(result, null, 2));
@@ -101,7 +101,7 @@ function report(files) {
   const fields = ["score", "tbtMs", "lcpMs", "fcpMs", "cls", "jsTransferBytes", "jsRequests", "cssTransferBytes", "cssResourceBytes", "cssRequests", "rscRequests", "scriptExecutionMs", "mainThreadMs"];
   const medians = Object.fromEntries(fields.map((name) => [name, median(runs.map((run) => run[name]))]));
   const markdown = [
-    "## İlkOku — mobile Lighthouse after scoped authentication CSS (#1697)",
+    "## İlkOku — mobile Lighthouse after scoped book-showcase CSS (#1698)",
     "",
     "Deployment evidence: new homepage error chunks: " + fingerprint.error + ", " + fingerprint.globalError,
     "",

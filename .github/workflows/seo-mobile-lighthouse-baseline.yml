@@ -10,6 +10,7 @@ on:
       - scripts/seo-mobile-lighthouse-report.mjs
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
       - src/features/homepage/live-footer.tsx
+      - src/components/privacy/SiteConsentBanner.tsx
       - scripts/security-contract-seo-home-footer-prefetch.test.mjs
 
 permissions:

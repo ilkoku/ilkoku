@@ -374,6 +374,26 @@ test("Article structured data uses the real public Open Graph image on reader an
   assertContains(editor, '"@type": "BreadcrumbList"', "editor breadcrumb markup remains in place");
 });
 
+test("Madde 12 priority writing-guide Article schemas use the published brand image", () => {
+  const brand = source("src/lib/public-brand.ts");
+  assertContains(brand, 'publicBrandSocialImage = "/og/ilkoku-social-selected-2026.webp"', "real public artwork is shared");
+
+  for (const path of [
+    "src/components/content/WritingGuideStructuredData.tsx",
+    "src/app/yazarlar-icin/kurgu/oyku/page.tsx",
+    "src/components/content/BatchedEducationGuidePage.tsx",
+  ]) {
+    const page = source(path);
+    assertContains(page, 'import { publicBrandSocialImage } from "@/lib/public-brand";', `${path} uses the existing asset`);
+    assertContains(page, 'image: `https://ilkoku.com${publicBrandSocialImage}`', `${path} emits an absolute HTTPS Article image`);
+    assertContains(page, '"@type": "Article"', `${path} retains the Article schema`);
+    assertContains(page, '"@type": "BreadcrumbList"', `${path} retains its existing breadcrumb schema`);
+  }
+
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, 'image: `https://ilkoku.com${romanVisuals.hero}`', "already-valid Roman page keeps its own image");
+});
+
 test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");

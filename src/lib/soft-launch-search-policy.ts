@@ -25,26 +25,15 @@ const SOFT_LAUNCH_INDEXABLE_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/editorler-icin/egitim/metin-degerlendirme",
 ] as const);
 
+// Only routes that are not yet ready for Google publication remain excluded.
+// Writing, reading, editorial, trust, utility and Turkish legal pages are public.
 const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
-  "/yardim",
-  "/iletisim",
-  "/site-haritasi",
-  "/topluluk-kurallari",
-  "/icerik-ve-yas-politikasi",
-  "/telif-bildirimi",
-  "/yasal/kullanim-sartlari",
-  "/yasal/gizlilik-politikasi",
-  "/yasal/kvkk",
-  "/yasal/cerez-politikasi",
-  "/yasal/telif-hakki-politikasi",
   "/yeni-cikanlar",
 ] as const);
 
+// Book Index stays gated until its independent readiness/publication checks pass.
 const SOFT_LAUNCH_NOINDEX_PREFIXES = [
   "/en-cok-satanlar",
-  "/yazarlar-icin",
-  "/okurlar-icin",
-  "/editorler-icin/egitim",
 ] as const;
 
 function normalizePublicPath(value: string) {

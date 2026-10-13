@@ -229,6 +229,12 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     priority: 0.7,
   },
   {
+    // Published registration agreement is already public and self-canonical.
+    url: `${baseUrl}/uyelik-sozlesmesi`,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  },
+  {
     url: `${baseUrl}/en-cok-satanlar/dunya`,
     changeFrequency: "daily",
     priority: 0.82,

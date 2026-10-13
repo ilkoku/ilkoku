@@ -15,14 +15,14 @@ function notContains(text, fragment, label) {
   assert.equal(text.includes(fragment), false, `${label} must not contain ${JSON.stringify(fragment)}`);
 }
 
-test("contact stays public and canonical but noindex during soft launch", () => {
+test("contact remains canonical and indexable under the complete public SEO policy", () => {
   const page = source("src/app/iletisim/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const technical = source("src/app/icerik/seo/SeoTechnicalAudit.tsx");
   const publicSeoRoutes = source("src/lib/public-seo-routes.ts");
 
   contains(page, 'canonical: "/iletisim"', "contact self canonical");
-  contains(page, "robots: { index: false, follow: true }", "contact soft-launch noindex policy");
+  contains(page, "robots: { index: true, follow: true }", "public contact index/follow policy");
   contains(page, "openGraph:", "contact Open Graph metadata");
   contains(page, "twitter:", "contact Twitter metadata");
   contains(page, 'const socialImage = "/opengraph-image"', "contact social image fallback");
@@ -32,7 +32,7 @@ test("contact stays public and canonical but noindex during soft launch", () => 
   contains(
     publicSeoRoutes,
     "(route) => !isSoftLaunchSearchExcludedPath(route)",
-    "soft-launch policy filters contact from the temporary index-target inventory",
+    "public SEO inventory still uses central policy filtering for paused product routes",
   );
 });
 

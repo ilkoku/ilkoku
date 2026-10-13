@@ -175,21 +175,7 @@ jobs:
           done
 
           for excluded in \
-            'https://ilkoku.com/yardim' \
-            'https://ilkoku.com/iletisim' \
-            'https://ilkoku.com/site-haritasi' \
-            'https://ilkoku.com/topluluk-kurallari' \
-            'https://ilkoku.com/icerik-ve-yas-politikasi' \
-            'https://ilkoku.com/telif-bildirimi' \
-            'https://ilkoku.com/yasal/kullanim-sartlari' \
-            'https://ilkoku.com/yasal/gizlilik-politikasi' \
-            'https://ilkoku.com/yasal/kvkk' \
-            'https://ilkoku.com/yasal/cerez-politikasi' \
-            'https://ilkoku.com/yasal/telif-hakki-politikasi' \
-            'https://ilkoku.com/yeni-cikanlar' \
-            'https://ilkoku.com/yazarlar-icin/kurgu/gerilim' \
-            'https://ilkoku.com/okurlar-icin/aktif-okuma' \
-            'https://ilkoku.com/editorler-icin/egitim/yapisal-editorluk'; do
+            'https://ilkoku.com/yeni-cikanlar'; do
             ! grep -Fq "<loc>${excluded}</loc>" "$sitemap"
           done
           ! grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar' "$sitemap"
@@ -221,13 +207,19 @@ jobs:
           check_page '/editorler-icin/egitim/dil-ve-anlatim-editorlugu' 'https://ilkoku.com/editorler-icin/egitim/dil-ve-anlatim-editorlugu'
           check_page '/editorler-icin/egitim/metin-degerlendirme' 'https://ilkoku.com/editorler-icin/egitim/metin-degerlendirme'
 
-          check_noindex_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
-          check_noindex_page '/topluluk-kurallari' 'https://ilkoku.com/topluluk-kurallari'
-          check_noindex_page '/telif-bildirimi' 'https://ilkoku.com/telif-bildirimi'
-          check_noindex_page '/yardim' 'https://ilkoku.com/yardim'
-          check_noindex_page '/iletisim' 'https://ilkoku.com/iletisim'
-          check_noindex_page '/site-haritasi' 'https://ilkoku.com/site-haritasi'
-          check_noindex_page '/yasal/kvkk' 'https://ilkoku.com/yasal/kvkk'
+          # The public education, trust, help and legal routes are now indexable.
+          check_page '/icerik-ve-yas-politikasi' 'https://ilkoku.com/icerik-ve-yas-politikasi'
+          check_page '/topluluk-kurallari' 'https://ilkoku.com/topluluk-kurallari'
+          check_page '/telif-bildirimi' 'https://ilkoku.com/telif-bildirimi'
+          check_page '/yardim' 'https://ilkoku.com/yardim'
+          check_page '/iletisim' 'https://ilkoku.com/iletisim'
+          check_page '/site-haritasi' 'https://ilkoku.com/site-haritasi'
+          check_page '/yasal/kvkk' 'https://ilkoku.com/yasal/kvkk'
+          check_page '/uyelik-sozlesmesi' 'https://ilkoku.com/uyelik-sozlesmesi'
+          check_page '/yazarlar-icin/kurgu/gerilim' 'https://ilkoku.com/yazarlar-icin/kurgu/gerilim'
+          check_page '/okurlar-icin/aktif-okuma' 'https://ilkoku.com/okurlar-icin/aktif-okuma'
+          check_page '/editorler-icin/egitim/yapisal-editorluk' 'https://ilkoku.com/editorler-icin/egitim/yapisal-editorluk'
+
           check_noindex_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'
           check_noindex_page '/yeni-cikanlar' 'https://ilkoku.com/yeni-cikanlar'
 

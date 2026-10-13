@@ -1,0 +1,118 @@
+name: SEO mobile post-merge three-run comparison
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/seo-mobile-lighthouse-comparison.yml
+      - scripts/seo-mobile-lighthouse-comparison.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-mobile-lighthouse-comparison
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Fingerprint production then three isolated mobile labs
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Validate comparison reporter
+        run: node --check scripts/seo-mobile-lighthouse-comparison.mjs
+
+      - name: Confirm new PR 1693 JavaScript is LIVE before any Lighthouse traffic
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in 1 2 3 4 5; do
+            headers="$(mktemp)"
+            status="$(curl --silent --show-error --location --compressed --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-Mobile-Lighthouse-Compare/1.0' \
+              --dump-header "$headers" --output /tmp/ilkoku-post-merge-home.html \
+              --write-out '%{http_code}' https://ilkoku.com/ || true)"
+            ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            rm -f "$headers"
+            echo "FINGERPRINT_ATTEMPT=$attempt HTTP=$status CF_RAY=$ray"
+            if [[ "$status" == "403" || "$status" == "429" ]]; then
+              echo "::error::WAF circuit breaker: do not retry or run Lighthouse."
+              exit 1
+            fi
+            if [[ "$status" != "200" ]]; then
+              echo "::error::Origin is not healthy ($status): do not run Lighthouse."
+              exit 1
+            fi
+            if node scripts/seo-mobile-lighthouse-comparison.mjs fingerprint /tmp/ilkoku-post-merge-home.html; then
+              echo "NEW_PR_1693_JS_CONFIRMED"
+              break
+            fi
+            if [[ "$attempt" == "5" ]]; then
+              echo "::error::New JS assets could not be verified. No Lighthouse comparison was made."
+              exit 1
+            fi
+            echo "New frontend fingerprint not visible. Retrying one lightweight HTML request after 60s."
+            sleep 60
+          done
+
+      - name: Measure three mobile lab runs with spacing and origin/WAF guard
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if command -v google-chrome >/dev/null 2>&1; then
+            export CHROME_PATH="$(command -v google-chrome)"
+          elif command -v google-chrome-stable >/dev/null 2>&1; then
+            export CHROME_PATH="$(command -v google-chrome-stable)"
+          else
+            echo "::error::No Chrome on runner"; exit 1
+          fi
+          for i in 1 2 3; do
+            headers="$(mktemp)"
+            status="$(curl --silent --show-error --location --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-Mobile-Lighthouse-Compare/1.0' \
+              --dump-header "$headers" --output /dev/null \
+              --write-out '%{http_code}' https://ilkoku.com/ || true)"
+            ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            rm -f "$headers"
+            echo "RUN_$i PRECHECK HTTP=$status CF_RAY=$ray"
+            if [[ "$status" == "403" || "$status" == "429" ]]; then
+              echo "::error::WAF circuit breaker"; exit 1
+            fi
+            if [[ "$status" != "200" ]]; then
+              echo "::error::Homepage unavailable"; exit 1
+            fi
+            npx --yes lighthouse@12.8.2 https://ilkoku.com/ \
+              --only-categories=performance --form-factor=mobile \
+              --throttling-method=simulate \
+              --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+              --output=json --output-path="/tmp/ilkoku-mobile-after-1693-$i.json" --quiet
+            if [[ "$i" != "3" ]]; then sleep 30; fi
+          done
+
+      - name: Compare all three runs and preserve raw evidence
+        run: |
+          node scripts/seo-mobile-lighthouse-comparison.mjs report \
+            /tmp/ilkoku-mobile-after-1693-1.json \
+            /tmp/ilkoku-mobile-after-1693-2.json \
+            /tmp/ilkoku-mobile-after-1693-3.json
+
+      - name: Upload raw Lighthouse and fingerprint outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-mobile-1693-three-run
+          path: |
+            /tmp/ilkoku-mobile-after-1693-*.json
+            /tmp/ilkoku-mobile-deployment-fingerprint.json
+            /tmp/ilkoku-mobile-three-run-comparison.json
+            /tmp/ilkoku-mobile-three-run-comparison.md
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,44 @@
+name: SEO redirect chain audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/seo-redirect-chain-audit.yml
+      - scripts/seo-redirect-chain-audit.mjs
+      - scripts/security-contract-seo-redirect-chain.test.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-redirect-chain-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Inspect low-impact live HTTP Location chains
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Verify offline redirect parser contracts
+        run: node --test scripts/security-contract-seo-redirect-chain.test.mjs
+
+      - name: Probe bounded first-party raw redirect chains
+        run: node scripts/seo-redirect-chain-audit.mjs
+
+      - name: Preserve raw status, Location and CF-Ray evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-m18-redirect-chain-results
+          path: /tmp/ilkoku-seo-redirect-chain-report.json
+          if-no-files-found: warn
+          retention-days: 14

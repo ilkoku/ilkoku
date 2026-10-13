@@ -110,7 +110,7 @@ function report(files) {
     ...runs.map((run, i) => "| " + (i+1) + " | " + [run.score,run.tbtMs,run.lcpMs,run.fcpMs,run.cls,run.cssTransferBytes,run.cssResourceBytes,run.cssRequests,run.jsTransferBytes,run.rscRequests,run.scriptExecutionMs].join(" | ") + " |"),
     "| **Median** | **" + [medians.score,medians.tbtMs,medians.lcpMs,medians.fcpMs,medians.cls,medians.cssTransferBytes,medians.cssResourceBytes,medians.cssRequests,medians.jsTransferBytes,medians.rscRequests,medians.scriptExecutionMs].join("** | **") + "** |",
     "",
-    "CSS transfer (previous #1694 three-run median vs new three-run median): " + PREVIOUS_THREE_RUN_CSS_MEDIAN + " vs " + medians.cssTransferBytes + " bytes; change " + (medians.cssTransferBytes - PREVIOUS_THREE_RUN_CSS_MEDIAN) + " bytes.",
+    "CSS transfer (previous #1697 three-run median vs new three-run median): " + PREVIOUS_THREE_RUN_CSS_MEDIAN + " vs " + medians.cssTransferBytes + " bytes; change " + (medians.cssTransferBytes - PREVIOUS_THREE_RUN_CSS_MEDIAN) + " bytes.",
     "",
     "Historical comparison (single 2026-10-13 baseline run, not a before-median):",
     "",

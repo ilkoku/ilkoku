@@ -24,18 +24,8 @@ export function WritingGuideStructuredData({
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
       image: `https://ilkoku.com${publicBrandSocialImage}`,
-      author: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
-      publisher: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
     },
     {
       "@context": "https://schema.org",

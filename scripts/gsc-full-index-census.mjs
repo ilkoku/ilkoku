@@ -26,18 +26,43 @@ function validateUrl(value) {
   return url.toString();
 }
 
-async function loadSitemapUrls() {
-  const response = await fetch(SITEMAP_URL, {
-    headers: {
-      accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-      "user-agent": "IlkOku-GSC-Census/1.0",
-    },
-    signal: AbortSignal.timeout(20_000),
-  });
+const RETRYABLE_SITEMAP_STATUSES = new Set([520, 522, 524]);
+const SITEMAP_FETCH_ATTEMPTS = 2;
 
-  if (!response.ok) {
-    throw new Error(`Sitemap fetch failed: HTTP ${response.status}`);
+async function fetchSitemapWithRetry() {
+  for (let attempt = 1; attempt <= SITEMAP_FETCH_ATTEMPTS; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(SITEMAP_URL, {
+        headers: {
+          accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "IlkOku-GSC-Census/1.0",
+        },
+        signal: AbortSignal.timeout(20_000),
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(`Sitemap transport error attempt ${attempt}/${SITEMAP_FETCH_ATTEMPTS}: ${reason}`);
+      if (attempt === SITEMAP_FETCH_ATTEMPTS) {
+        throw new Error(`Sitemap fetch failed after ${attempt} attempt(s): ${reason}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 6_000));
+      continue;
+    }
+
+    if (response.ok) return response;
+    const rayId = response.headers.get("cf-ray") || "unavailable";
+    console.warn(`Sitemap HTTP ${response.status}, attempt ${attempt}/${SITEMAP_FETCH_ATTEMPTS}, cf-ray=${rayId}`);
+    if (!RETRYABLE_SITEMAP_STATUSES.has(response.status) || attempt === SITEMAP_FETCH_ATTEMPTS) {
+      throw new Error(`Sitemap fetch failed: HTTP ${response.status}, cf-ray=${rayId}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 6_000));
   }
+  throw new Error("Sitemap fetch attempts exhausted");
+}
+
+async function loadSitemapUrls() {
+  const response = await fetchSitemapWithRetry();
 
   const xml = await response.text();
   const bytes = Buffer.byteLength(xml, "utf8");

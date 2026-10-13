@@ -581,7 +581,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
 
-test("public HTML site map remains a crawlable noindex discovery graph", () => {
+test("public HTML site map remains a canonical indexable discovery graph", () => {
   const page = source("src/app/site-haritasi/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
@@ -589,7 +589,7 @@ test("public HTML site map remains a crawlable noindex discovery graph", () => {
   const smoke = source(".github/workflows/production-smoke.yml");
 
   assertContains(page, 'alternates: { canonical: "/site-haritasi" }', "site map self canonical");
-  assertContains(page, "robots: { index: false, follow: true }", "site map noindex/follow");
+  assertContains(page, "robots: { index: true, follow: true }", "public site map index/follow");
   assertContains(page, "SITE_MAP_PAGES", "code-owned public route inventory");
   assertContains(page, "loadPublishedCmsSiteMapPages()", "published CMS discovery links");
   assertContains(page, "prisma.work.findMany", "published public work discovery links");
@@ -601,10 +601,10 @@ test("public HTML site map remains a crawlable noindex discovery graph", () => {
   assertContains(page, "Kitap Endeksi", "site map copy names the current Book Index surface");
   assertNotContains(page, "public içerik yüzeyini", "site map avoids internal technical wording");
   assertContains(navigation, '{ href: "/site-haritasi", label: "Site Haritası" }', "site map footer/support link");
-  assertContains(sitemap, "filterSoftLaunchSitemapEntries", "XML sitemap filters the noindex HTML site map");
+  assertContains(sitemap, "filterSoftLaunchSitemapEntries", "XML sitemap still filters paused product routes");
 
-  assertNotContains(indexNow, "https://ilkoku.com/site-haritasi", "IndexNow does not wait for soft-launch noindex site map");
-  assertContains(smoke, "https://ilkoku.com/site-haritasi", "production smoke still verifies live noindex site map");
+  assertNotContains(indexNow, "https://ilkoku.com/site-haritasi", "IndexNow changed-file selection remains independent of sitemap inclusion");
+  assertContains(smoke, "https://ilkoku.com/site-haritasi", "production smoke verifies live indexable site map");
 
   for (const cohort of [
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",

@@ -69,3 +69,47 @@ test("only live noindex candidates enter the IndexNow payload", async () => {
     else process.env.INDEXNOW_KEY = previousKey;
   }
 });
+
+
+test("retries the standard IndexNow endpoint only after a Yandex network failure", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousKey = process.env.INDEXNOW_KEY;
+  let accepted = null;
+  let primaryCalls = 0;
+
+  globalThis.fetch = async (requestUrl, options = {}) => {
+    const url = String(requestUrl);
+    if (url === "https://yandex.com/indexnow") {
+      primaryCalls += 1;
+      throw new Error("fetch failed");
+    }
+    if (url === "https://api.indexnow.org/indexnow") {
+      accepted = JSON.parse(String(options.body));
+      return new Response("", { status: 200 });
+    }
+    if (url === "https://ilkoku.com/test-indexnow-key.txt") {
+      return new Response("test-indexnow-key", { status: 200 });
+    }
+    if (YANDEX_DELETED_URLS.includes(url)) {
+      return new Response("", { status: 404 });
+    }
+    if (YANDEX_REFRESH_URLS.includes(url)) {
+      return new Response('<link rel="canonical" href="' + url + '">', { status: 200 });
+    }
+    if (YANDEX_NOINDEX_URLS.includes(url)) {
+      return new Response('<meta name="robots" content="noindex, follow">', { status: 200 });
+    }
+    throw new Error("Unexpected fetch: " + url);
+  };
+  process.env.INDEXNOW_KEY = "test-indexnow-key";
+  try {
+    await runYandexCleanup();
+    assert.equal(primaryCalls, 1);
+    assert.ok(accepted);
+    assert.equal(accepted.urlList.length, YANDEX_CLEANUP_URLS.length);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey === undefined) delete process.env.INDEXNOW_KEY;
+    else process.env.INDEXNOW_KEY = previousKey;
+  }
+});

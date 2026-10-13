@@ -137,7 +137,7 @@ export function SiteConsentBanner() {
           <strong>Gizlilik ve çerez tercihleri</strong>
           <p>
             İlkOku, sitenin çalışması için gerekli teknik saklamayı kullanır. Analitik ve pazarlama kategorileri yalnız izin verirseniz etkinleşir. {" "}
-            <Link href={settings.policyPath}>Gizlilik ve çerez bilgileri</Link>
+            <Link prefetch={false} href={settings.policyPath}>Gizlilik ve çerez bilgileri</Link>
           </p>
         </div>
 

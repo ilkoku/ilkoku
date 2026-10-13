@@ -29,7 +29,7 @@ test("A single mobile Lighthouse retest runs when this precise footer changes", 
 });
 
 test("Visible cookie consent policy link does not prefetch the legal route", () => {
-  assert.match(consent, /<Link prefetch=\\{false\\} href=\\{settings\\.policyPath\\}>Gizlilik ve çerez bilgileri<\\/Link>/u);
+  assert.ok(consent.includes('<Link prefetch={false} href={settings.policyPath}>Gizlilik ve çerez bilgileri</Link>'));
   assert.match(consent, /updateConsentMode/u);
   assert.match(consent, /dispatchChoice/u);
 });

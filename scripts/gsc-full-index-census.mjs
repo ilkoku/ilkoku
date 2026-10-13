@@ -9,6 +9,7 @@ const BASE_URL = "https://ilkoku.com";
 const SITEMAP_URL = `${BASE_URL}/sitemap.xml`;
 const OUTPUT_PATH = "/tmp/ilkoku-gsc-full-index-census.json";
 const MAX_URLS = 500;
+const MIN_EXPECTED_SITEMAP_URLS = Number.parseInt(process.env.GSC_CENSUS_MIN_URLS || "0", 10);
 const CONCURRENCY = 6;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 const ALLOW_SOURCE_FALLBACK = process.env.GSC_CENSUS_ALLOW_SOURCE_FALLBACK === "1";
@@ -82,6 +83,13 @@ async function loadSitemapUrls() {
   const unique = [...new Set(locations)];
   if (unique.length !== locations.length) {
     throw new Error(`Sitemap contains ${locations.length - unique.length} duplicate URL(s)`);
+  }
+
+  if (!Number.isInteger(MIN_EXPECTED_SITEMAP_URLS) || MIN_EXPECTED_SITEMAP_URLS < 0) {
+    throw new Error("Invalid GSC_CENSUS_MIN_URLS value");
+  }
+  if (unique.length < MIN_EXPECTED_SITEMAP_URLS) {
+    throw new Error(`Incomplete live census: expected at least ${MIN_EXPECTED_SITEMAP_URLS} URLs, found ${unique.length}`);
   }
 
   console.log(`Census sitemap: ${unique.length} URL(s), ${bytes} byte(s)`);

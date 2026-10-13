@@ -129,6 +129,9 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.match(censusWorkflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u);
   assert.match(censusWorkflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(censusWorkflow, /gsc-full-index-census\.mjs/u);
+  assert.match(censusWorkflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "0"/u);
+  assert.match(censusWorkflow, /GSC_CENSUS_MIN_URLS: "128"/u);
+  assert.match(censusScript, /Incomplete live census:/u);
   assert.match(censusWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
   assert.doesNotMatch(censusWorkflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
 
@@ -241,7 +244,7 @@ test("Madde 14 discovery workflow is daily, read-only, and retains manual confir
   assert.doesNotMatch(cohort, /indexing\.googleapis\.com|GSC_OAUTH_WRITE_REFRESH_TOKEN|method: "PUT"/u, "no indexing request or write OAuth");
 });
 
-test("Madde 14 full census HTTP 403 fallback is explicit, bounded and honestly labeled", () => {
+test("Madde 14 legacy fallback is explicit in source but disabled in the full census", () => {
   const full = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
   const policy = fs.readFileSync("src/lib/soft-launch-search-policy.ts", "utf8");
   const workflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
@@ -254,7 +257,7 @@ test("Madde 14 full census HTTP 403 fallback is explicit, bounded and honestly l
   assert.match(full, /source-policy-fallback-25-priority-only/u);
   assert.match(full, /NOT the live sitemap/u);
   assert.match(full, /censusCohortSource/u);
-  assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "1"/u);
+  assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "0"/u);
   assert.doesNotMatch(full, /GSC_OAUTH_WRITE_REFRESH_TOKEN|indexing\.googleapis\.com|method: "PUT"/u);
 });
 
@@ -264,7 +267,7 @@ test("Madde 14 full census repeats daily without write access or changing indexe
   assert.match(workflow, /schedule:\s*\n\s+- cron: "17 7 \* \* \*"/u);
   assert.match(workflow, /workflow_dispatch:/u, "manual fallback remains available");
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
-  assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "1"/u);
+  assert.match(workflow, /GSC_CENSUS_ALLOW_SOURCE_FALLBACK: "0"/u);
   assert.match(script, /cohortSource: censusCohortSource/u);
   assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);

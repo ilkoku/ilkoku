@@ -8,6 +8,8 @@ on:
     paths:
       - .github/workflows/seo-mobile-lighthouse-comparison.yml
       - scripts/seo-mobile-lighthouse-comparison.mjs
+      - src/app/globals.css
+      - src/features/auth/components/AuthShell.tsx
 
 permissions:
   contents: read

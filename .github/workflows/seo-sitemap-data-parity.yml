@@ -1,0 +1,98 @@
+name: SEO sitemap DB parity
+
+on:
+  workflow_run:
+    workflows:
+      - Production smoke
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: seo-sitemap-db-parity
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    name: Compare live XML to published production inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Fetch independent production DB inventory with OIDC
+        shell: bash
+        env:
+          OIDC_AUDIENCE: ilkoku-seo-sitemap-parity
+        run: |
+          set -Eeuo pipefail
+          identity="$(curl --fail-with-body --silent --show-error --max-time 12 \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$OIDC_AUDIENCE")"
+          token="$(IDENTITY="$identity" node -e 'process.stdout.write(JSON.parse(process.env.IDENTITY).value ?? "")')"
+          test -n "$token" || { echo "::error::Missing OIDC token"; exit 1; }
+          headers="$(mktemp)"
+          trap 'rm -f "$headers"' EXIT
+          for attempt in 1 2 3 4; do
+            status="$(curl --silent --show-error --connect-timeout 8 --max-time 25 \
+              -A "IlkOku-Sitemap-DB-Parity/1.0" \
+              -H "X-IlkOku-GitHub-OIDC: $token" \
+              -H "Cache-Control: no-store" -D "$headers" \
+              -o /tmp/ilkoku-sitemap-inventory.json -w '%{http_code}' \
+              https://ilkoku.com/api/internal/seo-sitemap-inventory || true)"
+            ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            echo "DB_INVENTORY attempt=$attempt HTTP=$status ray=$ray UTC=$(date -u +%FT%TZ)"
+            if [[ "$status" == "200" ]]; then break; fi
+            if [[ "$status" == "403" || "$status" == "429" || "$status" == "401" ]]; then
+              echo "::error::Authorization or rate-limit rejection"; exit 1
+            fi
+            if [[ "$attempt" == "4" ]]; then
+              echo "::error::Production DB inventory unavailable HTTP=$status"; exit 1
+            fi
+            sleep 25
+          done
+
+      - name: Fetch current live sitemap with bounded retry
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          headers="$(mktemp)"
+          trap 'rm -f "$headers"' EXIT
+          for attempt in 1 2; do
+            status="$(curl --silent --show-error --connect-timeout 8 --max-time 25 \
+              -A "IlkOku-Sitemap-DB-Parity/1.0" -D "$headers" \
+              -o /tmp/ilkoku-live-sitemap.xml -w '%{http_code}' \
+              https://ilkoku.com/sitemap.xml || true)"
+            ray="$(grep -i '^cf-ray:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            echo "LIVE_SITEMAP attempt=$attempt HTTP=$status ray=$ray UTC=$(date -u +%FT%TZ)"
+            if [[ "$status" == "200" ]]; then break; fi
+            if [[ "$status" == "403" || "$status" == "429" ]]; then
+              echo "::error::Circuit breaker: HTTP $status"; exit 1
+            fi
+            if [[ "$attempt" == "2" ]]; then
+              echo "::error::Live XML unavailable HTTP=$status"; exit 1
+            fi
+            sleep 6
+          done
+
+      - name: Compare independently fetched DB inventory and XML
+        run: node scripts/seo-sitemap-data-parity.mjs /tmp/ilkoku-sitemap-inventory.json /tmp/ilkoku-live-sitemap.xml
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: seo-sitemap-db-parity
+          path: /tmp/ilkoku-sitemap-parity-report.json
+          if-no-files-found: warn
+          retention-days: 14

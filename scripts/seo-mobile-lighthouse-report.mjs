@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const REQUIRED = ["first-contentful-paint", "largest-contentful-paint", "total-blocking-time", "cumulative-layout-shift", "speed-index"];
-
 function metric(audits, id) {
   const audit = audits?.[id];
   if (!audit || typeof audit.numericValue !== "number" || !Number.isFinite(audit.numericValue)) {

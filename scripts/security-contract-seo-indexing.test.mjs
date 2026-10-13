@@ -184,20 +184,19 @@ test("robots mirrors private and protected route inventories without shadowing p
   }
 });
 
-test("Madde 13 paused public trust routes keep noindex/follow without losing pages", () => {
+test("public trust pages are indexable after explicit full-public policy expansion", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");
   const alwaysIndexBlock = publicStore.split("const alwaysIndexPublicTrustSlugs = new Set([")[1]?.split("]);", 1)[0] ?? "";
-
+  const noindexBlock = policy.split("const SOFT_LAUNCH_NOINDEX_EXACT_PATHS")[1]?.split("]);", 1)[0] ?? "";
   for (const route of ["icerik-ve-yas-politikasi", "topluluk-kurallari", "telif-bildirimi"]) {
     const canonical = `/${route}`;
     const page = source(`src/app/${route}/page.tsx`);
-    assertContains(policy, `"${canonical}"`, `${route} remains in the central soft-launch exclusion list`);
-    assertContains(page, 'import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";', `${route} imports the central gate`);
-    assertContains(page, `robots: page.noIndex || isSoftLaunchSearchExcludedPath("${canonical}")`, `${route} honors the gate even if CMS noIndex is false`);
-    assertContains(page, "follow: true", `${route} retains follow for discoverability`);
-    assertContains(page, "alternates: { canonical: page.canonical }", `${route} preserves existing canonical`);
-    assertNotContains(alwaysIndexBlock, `"${route}"`, `${route} must not bypass the central gate in CMS state`);
+    assertNotContains(noindexBlock, `"${canonical}"`, `${route} no longer soft-launch excluded`);
+    assertContains(alwaysIndexBlock, `"${route}"`, `${route} cannot be held noindex by old CMS flag`);
+    assertContains(page, `robots: page.noIndex || isSoftLaunchSearchExcludedPath("${canonical}")`, `${route} CMS plus policy metadata`);
+    assertContains(page, "follow: true", `${route} keeps public links crawlable`);
+    assertContains(page, "alternates: { canonical: page.canonical }", `${route} self canonical intact`);
   }
 });
 
@@ -410,104 +409,42 @@ test("Madde 12 priority writing-guide Article schemas use the published brand im
   assertContains(roman, 'image: `https://ilkoku.com${romanVisuals.hero}`', "already-valid Roman page keeps its own image");
 });
 
-test("soft-launch search gate keeps every page live while focusing the indexable cohort", () => {
+test("full public sitemap policy indexes education and trust but preserves private and Book Index gates", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
-  const robots = source("src/app/robots.ts");
   const metadata = source("src/lib/public-page-metadata.ts");
-  const readerLesson = source("src/app/okurlar-icin/[slug]/page.tsx");
   const productionSmoke = source(".github/workflows/production-smoke.yml");
-
+  const noindexBlock = policy.split("const SOFT_LAUNCH_NOINDEX_EXACT_PATHS")[1]?.split("]);", 1)[0] ?? "";
+  const prefixBlock = policy.split("const SOFT_LAUNCH_NOINDEX_PREFIXES")[1]?.split("] as const", 1)[0] ?? "";
   for (const route of [
-    "/nasil-calisir",
-    "/hakkimizda",
-    "/yazarlar-icin",
-    "/okurlar-icin",
-    "/editorler-icin",
-    "/yayinevleri-icin",
-    "/editoryal-standartlar",
-    "/yazarlar-icin/kurgu",
-    "/yazarlar-icin/edebiyat",
-    "/yazarlar-icin/akademik",
-    "/yazarlar-icin/bilgilendirici",
-    "/yazarlar-icin/senaryo-ve-sahne",
-    "/yazarlar-icin/cocuk-ve-genclik",
-    "/yazarlar-icin/cizgi-anlati",
-    "/yazarlar-icin/kurgu/roman",
-    "/yazarlar-icin/kurgu/oyku",
-    "/yazarlar-icin/kurgu/fantastik",
-    "/yazarlar-icin/kurgu/bilim-kurgu",
-    "/yazarlar-icin/kurgu/distopya",
-    "/yazarlar-icin/edebiyat/siir",
-    "/okurlar-icin/okumaya-baslama",
-    "/editorler-icin/egitim/editorluge-baslama",
-    "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
-    "/editorler-icin/egitim/metin-degerlendirme",
+    "/yardim", "/iletisim", "/site-haritasi",
+    "/topluluk-kurallari", "/icerik-ve-yas-politikasi", "/telif-bildirimi",
+    "/yasal/kullanim-sartlari", "/yasal/gizlilik-politikasi", "/yasal/kvkk",
+    "/yasal/cerez-politikasi", "/yasal/telif-hakki-politikasi",
   ]) {
-    assertContains(policy, `"${route}"`, `${route} focused index cohort`);
+    assertNotContains(noindexBlock, `"${route}"`, `${route} public information no longer soft-launch excluded`);
   }
-
-  for (const route of [
-    "/yardim",
-    "/iletisim",
-    "/site-haritasi",
-    "/topluluk-kurallari",
-    "/icerik-ve-yas-politikasi",
-    "/telif-bildirimi",
-    "/yasal/kullanim-sartlari",
-    "/yasal/gizlilik-politikasi",
-    "/yasal/kvkk",
-    "/yasal/cerez-politikasi",
-    "/yasal/telif-hakki-politikasi",
-    "/yeni-cikanlar",
+  for (const path of [
+    "src/app/yardim/page.tsx",
+    "src/app/iletisim/page.tsx",
+    "src/app/site-haritasi/page.tsx",
   ]) {
-    assertContains(policy, `"${route}"`, `${route} exact noindex route`);
-    assertNotContains(robots, `"${route}"`, `${route} remains crawlable and available on site`);
+    assertContains(source(path), "robots: { index: true, follow: true }", `${path} public utility metadata`);
   }
-
-  for (const prefix of [
-    "/en-cok-satanlar",
-    "/yazarlar-icin",
-    "/okurlar-icin",
-    "/editorler-icin/egitim",
-  ]) {
-    assertContains(policy, `"${prefix}"`, `${prefix} focused noindex prefix`);
+  for (const route of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin/egitim"]) {
+    assertNotContains(prefixBlock, `"${route}"`, `${route} education family opens`);
   }
-
-  assertContains(policy, "SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path)", "explicit indexable routes override family noindex prefixes");
-  assertContains(policy, "path.startsWith(`${prefix}/`)", "descendants inherit exclusion unless explicitly indexable");
-  assertContains(policy, "filterSoftLaunchSitemapEntries", "central sitemap soft-launch filter");
-  assertContains(sitemap, 'import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";', "sitemap imports soft-launch filter");
-  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([", "database-backed sitemap is filtered and freshness-aware");
-  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap is filtered and freshness-aware");
-  assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "shared public metadata applies focused search policy");
-  assertContains(readerLesson, "const noIndex = isSoftLaunchSearchExcludedPath(canonical);", "reader lesson metadata applies focused search policy");
-
-  for (const pagePath of [
-    "src/app/nasil-calisir/page.tsx",
-    "src/app/yazarlar-icin/page.tsx",
-    "src/app/editorler-icin/page.tsx",
-    "src/app/yayinevleri-icin/page.tsx",
-    "src/app/editoryal-standartlar/page.tsx",
-  ]) {
-    const page = source(pagePath);
-    assertContains(page, "isSoftLaunchSearchExcludedPath", `${pagePath} soft-launch metadata gate`);
-    assertContains(page, "const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);", `${pagePath} CMS plus soft-launch noindex`);
-  }
-
-  const legal = source("src/app/yasal/[slug]/page.tsx");
-  assertContains(legal, "Boolean(cms?.noIndex) || isSoftLaunchSearchExcludedPath(canonical)", "legal pages combine CMS and soft-launch noindex");
-
-  assertContains(productionSmoke, "check_soft_launch_sitemap", "production smoke uses the focused sitemap contract");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/nasil-calisir</loc>'", "production smoke requires how-it-works pillar");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin</loc>'", "production smoke requires writer pillar");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/editorler-icin</loc>'", "production smoke requires editor pillar");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yayinevleri-icin</loc>'", "production smoke requires publisher pillar");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>'", "production smoke forbids non-cohort long-tail writing route");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/en-cok-satanlar'", "production smoke forbids the Book Index sitemap family");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/'", "production smoke forbids legal utility sitemap family");
+  assertContains(prefixBlock, '"/en-cok-satanlar"', "Book Index remains gate protected");
+  assertContains(noindexBlock, '"/yeni-cikanlar"', "new releases stays gated");
+  assertContains(policy, "filterSoftLaunchSitemapEntries", "same central policy filters XML");
+  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([", "DB-backed sitemap still filtered and freshness-aware");
+  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap stays safe");
+  assertContains(sitemap, `url: \`${baseUrl}/uyelik-sozlesmesi\``, "active public registration agreement included");
+  assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "metadata and XML use same policy");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>'", "long-tail guide required by live sitemap smoke");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/kvkk</loc>'", "public legal included by smoke");
+  assertContains(productionSmoke, "'<loc>https://ilkoku.com/en-cok-satanlar'", "Book Index remains excluded until ready");
 });
-
 
 test("active public help surfaces expose canonical social metadata", () => {
   for (const [path, canonical] of [

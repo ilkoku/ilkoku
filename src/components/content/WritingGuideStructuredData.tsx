@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 type WritingGuideStructuredDataProps = {
   canonicalUrl: string;
   title: string;
@@ -22,6 +23,7 @@ export function WritingGuideStructuredData({
       description,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: {
         "@type": "Organization",
         "@id": "https://ilkoku.com/#organization",

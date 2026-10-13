@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
@@ -313,6 +314,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: {
         "@type": "Organization",
         "@id": "https://ilkoku.com/#organization",

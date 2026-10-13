@@ -140,11 +140,6 @@ jobs:
               '<loc>https://ilkoku.com/yazarlar-icin/kurgu/roman</loc>' \
               '<loc>https://ilkoku.com/yazarlar-icin/edebiyat/siir</loc>' \
               '<loc>https://ilkoku.com/okurlar-icin/okumaya-baslama</loc>' \
-              '<loc>https://ilkoku.com/editorler-icin/egitim/editorluge-baslama</loc>'; do
-              grep -Fq "$required" "$body" || { echo "Eksik sitemap hedefi: $required" >&2; rm -f "$body"; return 1; }
-            done
-
-            for forbidden in \
               '<loc>https://ilkoku.com/icerik-ve-yas-politikasi</loc>' \
               '<loc>https://ilkoku.com/topluluk-kurallari</loc>' \
               '<loc>https://ilkoku.com/telif-bildirimi</loc>' \
@@ -154,7 +149,13 @@ jobs:
               '<loc>https://ilkoku.com/yardim</loc>' \
               '<loc>https://ilkoku.com/iletisim</loc>' \
               '<loc>https://ilkoku.com/site-haritasi</loc>' \
-              '<loc>https://ilkoku.com/yasal/' \
+              '<loc>https://ilkoku.com/yasal/kvkk</loc>' \
+              '<loc>https://ilkoku.com/uyelik-sozlesmesi</loc>' \
+              '<loc>https://ilkoku.com/editorler-icin/egitim/editorluge-baslama</loc>'; do
+              grep -Fq "$required" "$body" || { echo "Eksik sitemap hedefi: $required" >&2; rm -f "$body"; return 1; }
+            done
+
+            for forbidden in \
               '<loc>https://ilkoku.com/en-cok-satanlar' \
               '<loc>https://ilkoku.com/yeni-cikanlar</loc>'; do
               if grep -Fq "$forbidden" "$body"; then

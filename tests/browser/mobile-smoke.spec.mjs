@@ -79,6 +79,28 @@ for (const scenario of publicCases) {
   });
 }
 
+// This published work is created by prepare-browser-auth-fixtures.mjs.
+// Check that moving showcase CSS out of globals does not erase book detail styling.
+for (const scenario of [
+  { label: "390px published book showcase", viewport: viewports.phone390 },
+  { label: "desktop published book showcase", viewport: viewports.desktop },
+]) {
+  test(`book showcase route CSS: ${scenario.label}`, async ({ page }) => {
+    await page.setViewportSize(scenario.viewport);
+    const response = await page.goto("/kitap/ci-browser-zero-total-work", {
+      waitUntil: "domcontentloaded",
+    });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator(".showcase-page")).toBeVisible();
+    await expect(page.locator(".showcase-hero")).toBeVisible();
+    const heroDisplay = await page.locator(".showcase-hero").evaluate(
+      (element) => getComputedStyle(element).display,
+    );
+    expect(heroDisplay, "BookShowcase CSS must load on its public detail route").toBe("grid");
+    await expectResponsiveDocument(page);
+  });
+}
+
 const protectedCases = [
   {
     label: "reader workspace",

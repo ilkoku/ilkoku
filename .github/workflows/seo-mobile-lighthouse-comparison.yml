@@ -10,6 +10,7 @@ on:
       - scripts/seo-mobile-lighthouse-comparison.mjs
       - src/app/globals.css
       - src/features/auth/components/AuthShell.tsx
+      - src/features/showcase/components/BookShowcase.tsx
 
 permissions:
   contents: read
@@ -31,6 +32,21 @@ jobs:
 
       - name: Validate comparison reporter
         run: node --check scripts/seo-mobile-lighthouse-comparison.mjs
+
+      - name: Enforce route-only book showcase CSS ownership
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const global = fs.readFileSync('src/app/globals.css','utf8');
+          const book = fs.readFileSync('src/features/showcase/components/BookShowcase.tsx','utf8');
+          const detail = fs.readFileSync('src/app/kitap/[slug]/page.tsx','utf8');
+          const css = fs.readFileSync('src/features/showcase/book-showcase.css','utf8');
+          if (global.includes('features/showcase/book-showcase.css')) throw Error('Showcase CSS is still global');
+          if (!book.includes('import "../book-showcase.css"')) throw Error('BookShowcase lost local CSS import');
+          if (!detail.includes('BookShowcase')) throw Error('Book detail route no longer uses BookShowcase');
+          if (!css.includes('.showcase-page') || !css.includes('.showcase-hero')) throw Error('Missing showcase CSS core styles');
+          console.log('PASS: BookShowcase styles are retained and no longer globally imported');
+          NODE
 
       - name: Confirm new PR 1693 JavaScript is LIVE before any Lighthouse traffic
         shell: bash

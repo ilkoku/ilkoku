@@ -21,6 +21,7 @@ import {
   workContentWarningDetails,
 } from "@/lib/work-content-classification";
 
+import "../book-showcase.css";
 import { BookCover } from "./BookCover";
 
 function formatDate(value: string | Date | null) {

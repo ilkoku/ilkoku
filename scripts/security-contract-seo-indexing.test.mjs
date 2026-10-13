@@ -439,7 +439,7 @@ test("full public sitemap policy indexes education and trust but preserves priva
   assertContains(policy, "filterSoftLaunchSitemapEntries", "same central policy filters XML");
   assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([", "DB-backed sitemap still filtered and freshness-aware");
   assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap stays safe");
-  assertContains(sitemap, `url: \`${baseUrl}/uyelik-sozlesmesi\``, "active public registration agreement included");
+  assertContains(sitemap, 'url: `${baseUrl}/uyelik-sozlesmesi`', "active public registration agreement included");
   assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "metadata and XML use same policy");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>'", "long-tail guide required by live sitemap smoke");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/kvkk</loc>'", "public legal included by smoke");

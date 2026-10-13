@@ -315,18 +315,8 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
       image: `https://ilkoku.com${publicBrandSocialImage}`,
-      author: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
-      publisher: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
       about: [
         { "@type": "Thing", name: definition.label },
         { "@type": "Thing", name: `${definition.category} yazarlığı` },

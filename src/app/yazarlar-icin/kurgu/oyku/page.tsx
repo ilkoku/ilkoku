@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import type { Metadata } from "next";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -320,6 +321,7 @@ export default async function OykuYazarlikRehberiPage() {
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: {
         "@type": "Organization",
         "@id": "https://ilkoku.com/#organization",

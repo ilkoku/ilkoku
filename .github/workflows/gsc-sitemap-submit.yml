@@ -1,14 +1,6 @@
 name: GSC sitemap submit
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/gsc-sitemap-submit.yml"
-      - "scripts/gsc-sitemap-submit.mjs"
-      - "src/lib/soft-launch-search-policy.ts"
-      - "src/lib/seo/sitemap-data.ts"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -45,29 +37,17 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Check Search Console write OAuth availability
-        id: gsc_oauth
+      - name: Require Search Console write OAuth
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
-          available=true
-          test -n "$GSC_OAUTH_CLIENT_ID" || available=false
-          test -n "$GSC_OAUTH_CLIENT_SECRET" || available=false
-          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || available=false
-          echo "available=$available" >> "$GITHUB_OUTPUT"
-          if [[ "$available" == "false" ]]; then
-            echo "::notice::GSC sitemap submit skipped because Search Console write OAuth is incomplete."
-            if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-              echo "Manual sitemap submission requires complete Search Console write OAuth secrets." >&2
-              exit 1
-            fi
-          fi
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "::error::Missing GSC_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "::error::Missing GSC_OAUTH_CLIENT_SECRET"; exit 1; }
+          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || { echo "::error::Missing GSC_OAUTH_WRITE_REFRESH_TOKEN"; exit 1; }
 
       - name: Submit live sitemap
-        if: steps.gsc_oauth.outputs.available == 'true'
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}

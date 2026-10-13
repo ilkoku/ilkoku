@@ -184,6 +184,23 @@ test("robots mirrors private and protected route inventories without shadowing p
   }
 });
 
+test("Madde 13 paused public trust routes keep noindex/follow without losing pages", () => {
+  const policy = source("src/lib/soft-launch-search-policy.ts");
+  const publicStore = source("src/lib/cms-public-page-store.ts");
+  const alwaysIndexBlock = publicStore.split("const alwaysIndexPublicTrustSlugs = new Set([")[1]?.split("]);", 1)[0] ?? "";
+
+  for (const route of ["icerik-ve-yas-politikasi", "topluluk-kurallari", "telif-bildirimi"]) {
+    const canonical = `/${route}`;
+    const page = source(`src/app/${route}/page.tsx`);
+    assertContains(policy, `"${canonical}"`, `${route} remains in the central soft-launch exclusion list`);
+    assertContains(page, 'import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";', `${route} imports the central gate`);
+    assertContains(page, `robots: page.noIndex || isSoftLaunchSearchExcludedPath("${canonical}")`, `${route} honors the gate even if CMS noIndex is false`);
+    assertContains(page, "follow: true", `${route} retains follow for discoverability`);
+    assertContains(page, "alternates: { canonical: page.canonical }", `${route} preserves existing canonical`);
+    assertNotContains(alwaysIndexBlock, `"${route}"`, `${route} must not bypass the central gate in CMS state`);
+  }
+});
+
 test("CMS trust/legal defaults remain stable while sitemap applies route-level soft-launch filtering", () => {
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const publicStore = source("src/lib/cms-public-page-store.ts");
@@ -213,9 +230,6 @@ test("CMS trust/legal defaults remain stable while sitemap applies route-level s
     "editorler-icin",
     "yayinevleri-icin",
     "editoryal-standartlar",
-    "icerik-ve-yas-politikasi",
-    "topluluk-kurallari",
-    "telif-bildirimi",
   ]) {
     assertContains(publicStore, `"${slug}"`, `${slug} always-index public trust policy`);
   }

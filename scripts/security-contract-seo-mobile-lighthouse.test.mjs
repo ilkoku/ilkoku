@@ -235,3 +235,29 @@ test("Lab audit runs once, outside Hostinger, never load-tests or modifies SEO p
   assert.match(src, /MOBILE_LIGHTHOUSE/u);
   assert.match(src, /Lighthouse simulated mobile lab run/u);
 });
+
+test("Reader and editor-specific CSS never ships from the public global stylesheet", () => {
+  const shared = fs.readFileSync("src/app/globals.css", "utf8");
+  const readerLayout = fs.readFileSync("src/app/oku/layout.tsx", "utf8");
+  const editorLayout = fs.readFileSync("src/app/editorler/layout.tsx", "utf8");
+  const readerStyles = fs.readFileSync("src/features/reading/reading.css", "utf8");
+  const editorStyles = fs.readFileSync("src/features/editors/editors.css", "utf8");
+  for (const cssPath of ["features/reading/reading.css", "features/editors/editors.css"]) {
+    assert.ok(!shared.includes(cssPath), cssPath + " must not load on the public homepage");
+  }
+  assert.ok(readerLayout.includes('import "@/features/reading/reading.css";'), "All /oku routes keep reader styling");
+  assert.ok(editorLayout.includes('import "@/features/editors/editors.css";'), "Editor directory/profile routes keep styling");
+  assert.ok(editorLayout.includes('import "./public-editors.css";'), "Public editor additions remain loaded");
+  for (const selector of [".reading-page", ".reader-topbar", ".reading-layout", ".reading-cover"]) {
+    assert.ok(readerStyles.includes(selector), selector + " must remain present");
+  }
+  for (const selector of [".editors-page", ".editors-topbar", ".editor-profile-hero", ".editor-directory"]) {
+    assert.ok(editorStyles.includes(selector), selector + " must remain present");
+  }
+  for (const route of ["src/app/oku/[slug]/[chapterSlug]/page.tsx", "src/app/oku/[slug]/sayfa/[itemId]/page.tsx", "src/app/editorler/page.tsx", "src/app/editorler/[slug]/page.tsx"]) {
+    assert.ok(fs.existsSync(route), route + " must be covered by its route layout");
+  }
+  for (const path of ["src/app/globals.css", "src/app/oku/layout.tsx", "src/app/editorler/layout.tsx"]) {
+    assert.ok(workflow.includes(path), "CSS relocation must trigger main Lighthouse: " + path);
+  }
+});

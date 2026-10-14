@@ -11,6 +11,8 @@ on:
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
       - src/app/layout.tsx
       - src/app/globals.css
+      - src/app/oku/layout.tsx
+      - src/app/editorler/layout.tsx
       - src/features/feedback/components/FeedbackWorkspace.tsx
       - src/features/writer/components/NewWorkFlow.tsx
       - src/components/layout/AppShell.tsx

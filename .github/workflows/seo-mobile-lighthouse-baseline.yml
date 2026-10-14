@@ -9,6 +9,9 @@ on:
       - .github/workflows/seo-mobile-lighthouse-baseline.yml
       - scripts/seo-mobile-lighthouse-report.mjs
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
+      - src/app/layout.tsx
+      - src/app/page.tsx
+      - src/app/landing-*.css
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/components/layout/PublicSiteAccount.tsx

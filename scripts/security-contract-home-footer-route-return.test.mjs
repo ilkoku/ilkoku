@@ -136,5 +136,8 @@ test("offscreen footer CMS fetch and DOM rebuild wait until footer enters viewpo
   assert.match(source, /controller\.signal\.aborted/);
   assert.match(source, /typeof IntersectionObserver === "undefined"/);
   assert.match(source, /pathname === "\/iletisim"/);
-  assert.match(source, /document\.querySelector\("\.public-trust-footer"\)/);\n  assert.match(source, /new MutationObserver/);\n  assert.match(source, /mountObserver\.observe\(document\.body/);\n  assert.match(source, /mountObserver\?\.disconnect\(\)/);
+  assert.match(source, /document\.querySelector\("\.public-trust-footer"\)/);
+  assert.match(source, /new MutationObserver/);
+  assert.match(source, /mountObserver\.observe\(document\.body/);
+  assert.match(source, /mountObserver\?\.disconnect\(\)/);
 });

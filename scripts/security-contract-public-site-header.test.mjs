@@ -214,13 +214,13 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
 
 test("public header loads independent CMS reads concurrently without losing safe fallback", () => {
   const server = read(headerServerPath);
-  assert.match(server, /const \\[cmsPages, row\\] = await Promise\\.all\\(\\[/u, "CMS page and menu queries must begin together");
-  assert.match(server, /loadPublishedCmsSiteMapPages\\(\\)/u, "Published CMS page set must be preserved");
-  assert.match(server, /loadPublishedHeaderRow\\(\\)/u, "Published menu settings must be preserved");
-  assert.match(server, /return rows\\[0\\] \\?\\? null/u, "Missing menu settings safely fall back");
-  assert.match(server, /if \\(!row \\|\\| row\\.status !== "published"\\)/u, "Draft navigation never leaks");
-  assert.match(server, /parseHeaderNavigation\\(row\\.valueJson, pages\\) \\?\\? defaultHeaderNavigation/u, "Invalid menus still fall back to safe default");
-  assert.match(server, /catch \\{[\\s\\S]*payload: defaultHeaderNavigation/u, "Parse errors retain public default");
+  assert.match(server, /const \[cmsPages, row\] = await Promise\.all\(\[/u, "CMS page and menu queries must begin together");
+  assert.match(server, /loadPublishedCmsSiteMapPages\(\)/u, "Published CMS page set must be preserved");
+  assert.match(server, /loadPublishedHeaderRow\(\)/u, "Published menu settings must be preserved");
+  assert.match(server, /return rows\[0\] \?\? null/u, "Missing menu settings safely fall back");
+  assert.match(server, /if \(!row \|\| row\.status !== "published"\)/u, "Draft navigation never leaks");
+  assert.match(server, /parseHeaderNavigation\(row\.valueJson, pages\) \?\? defaultHeaderNavigation/u, "Invalid menus still fall back to safe default");
+  assert.match(server, /catch \{[\s\S]*payload: defaultHeaderNavigation/u, "Parse errors retain public default");
 });
 
 test("CMS menu management stores page ids in a safe draft before publishing to the shared header", () => {

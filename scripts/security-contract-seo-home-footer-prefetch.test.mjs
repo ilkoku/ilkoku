@@ -38,8 +38,8 @@ test("Visible cookie consent policy link does not prefetch the legal route", () 
 
 test("Public homepage streams exactly one real footer without duplicated fallback markup", () => {
   assert.ok(experience.includes("<Suspense fallback={null}>"), "Suspense boundary should keep stream nonblocking");
-  assert.equal((experience.match(/<HomepageFooterSection\\b/gu) || []).length, 1, "One server-driven footer");
-  assert.equal((experience.match(/<LiveHomepageFooter\\b/gu) || []).length, 1, "Only footer component owner renders a live footer");
+  assert.equal(experience.split("<HomepageFooterSection").length - 1, 1, "One server-driven footer");
+  assert.equal(experience.split("<LiveHomepageFooter").length - 1, 1, "Only footer component owner renders a live footer");
   assert.ok(experience.includes("bookIndexPublished={Boolean(bookIndexContext)}"), "Book Index publication visibility unchanged");
   assert.ok(experience.includes("slogan={footer?.slogan"), "Homepage CMS footer copy unchanged");
 });

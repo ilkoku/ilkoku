@@ -45,12 +45,12 @@ test("No speculative Next.js route prefetch on homepage marketing and guarded na
   const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
   const header = fs.readFileSync("src/components/layout/PublicSiteHeader.tsx", "utf8");
   const navigation = fs.readFileSync("src/components/layout/PublicHeaderNavigation.tsx", "utf8");
-  assert.match(homepage, /<Link\\s+prefetch=\\{false\\}\\s+href=\\{role\\.href\\}/u, "Role registration cards do not prefetch");
-  assert.match(homepage, /<Link prefetch=\\{false\\} href=\\{primaryHref\\}/u, "Hero primary CTA does not prefetch");
-  assert.match(homepage, /<Link prefetch=\\{false\\} href=\\{secondaryHref\\}/u, "Hero secondary CTA does not prefetch");
-  assert.match(header, /<Link\\s+prefetch=\\{false\\}\\s+className="public-site-header__brand"/u, "Home logo does not prefetch current route");
-  assert.match(navigation, /<Link\\s+prefetch=\\{false\\}\\s+className="public-site-header__menu-trigger"/u, "Direct public menu links do not prefetch guarded routes");
-  assert.match(navigation, /<Link\\s+prefetch=\\{false\\}\\s+className="public-site-header__mobile-category"/u, "Mobile menu links do not prefetch guarded routes");
+  assert.match(homepage, /<Link\s+prefetch=\{false\}\s+href=\{role\.href\}/u, "Role registration cards do not prefetch");
+  assert.match(homepage, /<Link prefetch=\{false\} href=\{primaryHref\}/u, "Hero primary CTA does not prefetch");
+  assert.match(homepage, /<Link prefetch=\{false\} href=\{secondaryHref\}/u, "Hero secondary CTA does not prefetch");
+  assert.match(header, /<Link\s+prefetch=\{false\}\s+className="public-site-header__brand"/u, "Home logo does not prefetch current route");
+  assert.match(navigation, /<Link\s+prefetch=\{false\}\s+className="public-site-header__menu-trigger"/u, "Direct public menu links do not prefetch guarded routes");
+  assert.match(navigation, /<Link\s+prefetch=\{false\}\s+className="public-site-header__mobile-category"/u, "Mobile menu links do not prefetch guarded routes");
 });
 
 test("Homepage-only legacy landing CSS is route-scoped instead of loaded on every public page", () => {

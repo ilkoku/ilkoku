@@ -261,3 +261,23 @@ test("Reader and editor-specific CSS never ships from the public global styleshe
     assert.ok(workflow.includes(path), "CSS relocation must trigger main Lighthouse: " + path);
   }
 });
+
+
+test("Author workspace CSS is route-scoped to both authenticated writing layouts", () => {
+  const globalCss = fs.readFileSync("src/app/globals.css", "utf8");
+  const worksLayout = fs.readFileSync("src/app/eserlerim/layout.tsx", "utf8");
+  const writingLayout = fs.readFileSync("src/app/yazmaya-devam/layout.tsx", "utf8");
+  const workspaceCss = fs.readFileSync("src/features/works/works-workspace.css", "utf8");
+  assert.ok(!globalCss.includes("features/works/works-workspace.css"),
+    "Public homepage must not load private works workspace styles");
+  for (const [route, layout] of [["/eserlerim", worksLayout], ["/yazmaya-devam", writingLayout]]) {
+    assert.ok(layout.startsWith('import "@/features/works/works-workspace.css";'),
+      route + " loads shared author workspace CSS ahead of its writer theme overrides");
+  }
+  for (const selector of [".works-workspace", ".workspace-work-card", ".workspace-cover-upload", ".continue-writing"]) {
+    assert.ok(workspaceCss.includes(selector), selector + " must remain styled");
+  }
+  for (const changed of ["src/app/globals.css", "src/app/eserlerim/layout.tsx", "src/app/yazmaya-devam/layout.tsx"]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger post-deploy Lighthouse");
+  }
+});

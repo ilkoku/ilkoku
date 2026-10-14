@@ -21,22 +21,25 @@ jobs:
   observe:
     name: Capture Cloudflare origin failures
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
       - name: Check out passive trap
         uses: actions/checkout@v4
 
-      - name: Wait for Hostinger deployment window on code push
-        if: github.event_name == 'push'
-        run: sleep 75
+      - name: Validate sampling script
+        run: bash -n scripts/origin-incident-trap.sh
 
-      - name: Sample uncached edge responses
+      - name: Capture deployment and Cloudflare edge responses
         id: probe
         shell: bash
+        env:
+          SAMPLE_COUNT: ${{ github.event_name == 'push' && '50' || '4' }}
+          SAMPLE_INTERVAL: ${{ github.event_name == 'push' && '6' || '15' }}
+          EXPECTED_COMMIT_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
         run: bash scripts/origin-incident-trap.sh
 
       - name: Save incident evidence
-        if: steps.probe.outputs.incident == 'true' || steps.probe.outputs.blocked == 'true'
+        if: steps.probe.outputs.incident == 'true' || steps.probe.outputs.blocked == 'true' || (github.event_name == 'push' && steps.probe.outputs.cutover_observed != 'true')
         uses: actions/upload-artifact@v4
         with:
           name: origin-incident-${{ github.run_id }}-${{ github.run_attempt }}

@@ -182,7 +182,7 @@ export default async function HomepageExperience() {
         <div className="nx-shell nx-hero__layout">
           <div className="nx-hero__copy">
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</p>
-            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : <span>{heroTitle}</span>}</h1>
+            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{index > 0 ? " " : null}{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
             <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>

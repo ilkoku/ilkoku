@@ -213,16 +213,7 @@ export default async function HomepageExperience() {
         <div className="nx-shell"><header className="nx-section-heading"><p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p><h2>{why?.title || "Neden İlkOku?"}</h2></header><div className="nx-benefit-grid">{benefits.map((benefit, index) => <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}><span className="nx-benefit__icon" aria-hidden="true" /><h3>{benefit.title}</h3><p>{benefit.description}</p></article>)}</div>{stats.length > 0 ? <div className="nx-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat, index) => <div className={`nx-stat nx-stat--${index + 1}`} key={`${stat.label}-${stat.icon}`}><span className="nx-stat__icon" aria-hidden="true" /><strong>{stat.value}</strong><small>{stat.label}</small></div>)}</div> : null}</div>
       </section>
 
-      <Suspense
-        fallback={
-          <LiveHomepageFooter
-            signedIn={false}
-            bookIndexPublished={false}
-            slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
-            copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
-          />
-        }
-      >
+      <Suspense fallback={null}>
         <HomepageFooterSection
           slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
           copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}

@@ -50,6 +50,7 @@ function MenuGroups({
           <div className="public-site-header__mega-links">
             {group.links.map((link) => (
               <Link
+                prefetch={false}
                 href={link.href}
                 data-primary={link.primary ? "true" : undefined}
                 key={`${menu.id}-${group.id}-${link.pageId}`}

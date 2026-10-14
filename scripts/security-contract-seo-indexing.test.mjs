@@ -290,6 +290,37 @@ test("public pillar split hero headings keep semantic spaces without changing li
   assertNotContains(publishers, '<span key={`${word}-${index}`}>{word}</span>', "publisher heading avoids concatenated words");
 });
 
+test("homepage H1 text retains natural spaces across visual spans", () => {
+  const home = source("src/features/homepage/HomepageExperience.tsx");
+  assertContains(home, '{index > 0 ? " " : null}{line}', "homepage SSR hero H1 must separate split text lines");
+  assertNotContains(home, '<span key={`${index}-${line}`}>{line}</span>', "homepage must not concatenate H1 lines");
+});
+
+test("HTML sitemap links to the published indexable registration agreement", () => {
+  const htmlSiteMap = source("src/app/site-haritasi/page.tsx");
+  const registrationAgreement = source("src/app/uyelik-sozlesmesi/page.tsx");
+  const sitemapData = source("src/lib/seo/sitemap-data.ts");
+  assertContains(htmlSiteMap, '{ href: "/uyelik-sozlesmesi", label: "Üyelik Sözleşmesi" }', "HTML legal sitemap links public registration agreement");
+  assertContains(htmlSiteMap, "...siteMapLegalLinks.map((link) => link.href)", "CMS sitemap deduplication includes the registration agreement");
+  assertContains(htmlSiteMap, "{siteMapLegalLinks.map((link) => (", "HTML legal section renders the added link");
+  assertContains(registrationAgreement, 'robots: { index: true, follow: true }', "registration agreement remains indexable");
+  assertContains(registrationAgreement, 'alternates: { canonical: "/uyelik-sozlesmesi" }', "registration agreement self-canonical");
+  assertContains(sitemapData, 'url: `${baseUrl}/uyelik-sozlesmesi`', "XML sitemap retains registration agreement");
+});
+
+test("public trust hero headings preserve semantic word boundaries", () => {
+  for (const file of [
+    "src/components/content/ContentAgePolicyExperience.tsx",
+    "src/components/content/CommunityRulesExperience.tsx",
+    "src/components/content/CopyrightNoticeExperience.tsx",
+  ]) {
+    const component = source(file);
+    assertContains(component, '{index > 0 ? " " : null}{word}', file + " must separate H1 words in SSR HTML");
+    assertNotContains(component, '<span key={word}>{word}</span>', file + " must not join words");
+    assertNotContains(component, '<span key={`${word}-${index}`}>{word}</span>', file + " must not join words");
+  }
+});
+
 test("writer and editor split hero titles retain accessible word boundaries", () => {
   for (const page of ["ForWritersExperience", "ForEditorsExperience"]) {
     const experience = source(`src/components/content/${page}.tsx`);

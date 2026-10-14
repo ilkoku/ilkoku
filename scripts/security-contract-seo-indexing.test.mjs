@@ -290,6 +290,19 @@ test("public pillar split hero headings keep semantic spaces without changing li
   assertNotContains(publishers, '<span key={`${word}-${index}`}>{word}</span>', "publisher heading avoids concatenated words");
 });
 
+test("public trust hero headings preserve semantic word boundaries", () => {
+  for (const file of [
+    "src/components/content/ContentAgePolicyExperience.tsx",
+    "src/components/content/CommunityRulesExperience.tsx",
+    "src/components/content/CopyrightNoticeExperience.tsx",
+  ]) {
+    const component = source(file);
+    assertContains(component, '{index > 0 ? " " : null}{word}', file + " must separate H1 words in SSR HTML");
+    assertNotContains(component, '<span key={word}>{word}</span>', file + " must not join words");
+    assertNotContains(component, '<span key={`${word}-${index}`}>{word}</span>', file + " must not join words");
+  }
+});
+
 test("writer and editor split hero titles retain accessible word boundaries", () => {
   for (const page of ["ForWritersExperience", "ForEditorsExperience"]) {
     const experience = source(`src/components/content/${page}.tsx`);

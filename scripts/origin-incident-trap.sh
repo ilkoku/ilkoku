@@ -9,8 +9,10 @@ SAMPLE_COUNT="${SAMPLE_COUNT:-4}"
 SAMPLE_INTERVAL="${SAMPLE_INTERVAL:-15}"
 INCIDENT=false
 BLOCKED=false
+CUTOVER_OBSERVED=false
+EXPECTED_COMMIT_SHA="${EXPECTED_COMMIT_SHA:-}"
 TSV="$EVIDENCE_DIR/probes.tsv"
-printf 'observed_utc\tpath\thttp_code\tcf_ray\tcurl_exit\tremote_ip\tdns_sec\ttcp_sec\ttls_sec\tttfb_sec\ttotal_sec\n' > "$TSV"
+printf 'observed_utc\tpath\thttp_code\tcf_ray\tcurl_exit\tremote_ip\tdns_sec\ttcp_sec\ttls_sec\tttfb_sec\ttotal_sec\tserved_commit_sha\n' > "$TSV"
 
 header_value() {
   local name="$1" path="$2"
@@ -19,7 +21,7 @@ header_value() {
 
 probe() {
   local path="$1" count="$2"
-  local utc headers body curl_err raw ec code ip dns tcp tls ttfb total ray
+  local utc headers body curl_err raw ec code ip dns tcp tls ttfb total ray served_commit
   utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
   headers="$EVIDENCE_DIR/headers-${count}.txt"
   body="$EVIDENCE_DIR/body-${count}.txt"
@@ -35,10 +37,27 @@ probe() {
   IFS=$'\t' read -r code ip dns tcp tls ttfb total <<< "$raw"
   code="${code:-000}"
   ray="$(header_value 'cf-ray' "$headers")"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  served_commit="unknown"
+  if [[ "$code" == '200' && "$path" == '/api/build-info' ]]; then
+    served_commit="$(node - "$body" 2>/dev/null <<'NODE' || true
+const fs = require("node:fs");
+try {
+  const parsed = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+  if (typeof parsed.commitSha === "string" && /^[0-9a-f]{40}$/.test(parsed.commitSha)) {
+    process.stdout.write(parsed.commitSha);
+  }
+} catch {}
+NODE
+)"
+    served_commit="${served_commit:-unknown}"
+    if [[ -n "$EXPECTED_COMMIT_SHA" && "$served_commit" == "$EXPECTED_COMMIT_SHA" ]]; then
+      CUTOVER_OBSERVED=true
+    fi
+  fi
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$utc" "$path" "$code" "${ray:-none}" "$ec" "${ip:-none}" \
-    "${dns:-n/a}" "${tcp:-n/a}" "${tls:-n/a}" "${ttfb:-n/a}" "${total:-n/a}" >> "$TSV"
-  echo "TRAP_SAMPLE UTC=$utc path=$path HTTP=$code curl_exit=$ec ray=${ray:-none} remote_ip=${ip:-none} total_sec=${total:-n/a}"
+    "${dns:-n/a}" "${tcp:-n/a}" "${tls:-n/a}" "${ttfb:-n/a}" "${total:-n/a}" "$served_commit" >> "$TSV"
+  echo "TRAP_SAMPLE UTC=$utc path=$path HTTP=$code curl_exit=$ec ray=${ray:-none} served_commit=$served_commit total_sec=${total:-n/a}"
   # Public repo: retain only vetted edge headers; never publish response bodies or Set-Cookie.
   grep -iE '^(HTTP/|cf-ray:|server:|cf-cache-status:|retry-after:|content-type:)' "$headers" > "$headers.safe" || true
   mv "$headers.safe" "$headers"
@@ -66,13 +85,17 @@ for (( n=1; n<=SAMPLE_COUNT; n++ )); do
   if (( n < SAMPLE_COUNT )); then sleep "$SAMPLE_INTERVAL"; fi
 done
 
+if [[ -n "$EXPECTED_COMMIT_SHA" && "$CUTOVER_OBSERVED" != true ]]; then
+  echo "::warning::Expected new deployment commit not observed within the capture window (not by itself an origin incident)."
+fi
+
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   {
     echo '### İlkOku Cloudflare edge incident trap'
     echo
-    echo "Result: incident=${INCIDENT}; blocked=${BLOCKED}"
+    echo "Result: incident=${INCIDENT}; blocked=${BLOCKED}; cutover_observed=${CUTOVER_OBSERVED}; expected_commit=${EXPECTED_COMMIT_SHA:-n/a}"
     echo 'Scheduler: every 5 minutes (GitHub may delay scheduled runs).'
-    echo 'Sampling: four dynamic requests spaced 15 seconds apart, plus one sitemap request.'
+    echo "Sampling: ${SAMPLE_COUNT} dynamic requests spaced ${SAMPLE_INTERVAL} seconds apart, plus one sitemap request."
     echo 'A passing sample does not prove zero outages between probes.'
     echo
     echo '~~~text'
@@ -84,6 +107,7 @@ fi
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   echo "incident=${INCIDENT}" >> "$GITHUB_OUTPUT"
   echo "blocked=${BLOCKED}" >> "$GITHUB_OUTPUT"
+  echo "cutover_observed=${CUTOVER_OBSERVED}" >> "$GITHUB_OUTPUT"
 fi
 
 if [[ "$BLOCKED" == true ]]; then

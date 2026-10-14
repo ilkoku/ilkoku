@@ -122,3 +122,19 @@ test("CMS affiliate editor validates code, previews safely and persists structur
   assert.match(route, /ON DUPLICATE KEY UPDATE/);
   assert.match(route, /revalidatePath\("\/"\)/);
 });
+
+test("offscreen footer CMS fetch and DOM rebuild wait until footer enters viewport proximity", () => {
+  const observerIndex = source.indexOf("new IntersectionObserver((entries) => {");
+  const hydrateIndex = source.indexOf("function hydrateVisibleFooter()");
+  const fetchIndex = source.indexOf('fetch("/api/site-content/footer-navigation"');
+  assert.ok(hydrateIndex > -1 && fetchIndex > hydrateIndex, "CMS load remains in deferred footer handler");
+  assert.ok(observerIndex > fetchIndex, "IntersectionObserver gates the handler until nearing footer");
+  assert.match(source, /rootMargin: "800px 0px"/);
+  assert.match(source, /observer\.observe\(target\)/);
+  assert.match(source, /observer\?\.disconnect\(\)/);
+  assert.match(source, /controller\.abort\(\)/);
+  assert.match(source, /controller\.signal\.aborted/);
+  assert.match(source, /if \(!target \|\| typeof IntersectionObserver === "undefined"\)/);
+  assert.match(source, /pathname === "\/iletisim"/);
+  assert.match(source, /document\.querySelector\("\.public-trust-footer"\)/);
+});

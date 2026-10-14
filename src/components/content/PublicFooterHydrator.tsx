@@ -315,32 +315,71 @@ export function PublicFooterHydrator() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const trustSupport = findPublicTrustSupportColumn();
-    ensureFooterContactBlock(trustSupport);
+    let active = true;
+    const controller = new AbortController();
+    let observer: IntersectionObserver | null = null;
 
-    if (pathname === "/iletisim") ensureContactPageBlock();
-    if (pathname !== "/") return;
+    function hydrateVisibleFooter() {
+      if (!active) return;
 
-    const footer = document.querySelector<HTMLElement>(".landing-footer");
-    if (!footer) return;
+      const trustSupport = findPublicTrustSupportColumn();
+      ensureFooterContactBlock(trustSupport);
 
-    ensureLegalBar(footer, {});
-    rebuildPlatformColumn(findColumn(footer, "Platform"), {});
-    rebuildTrustColumn(footer);
-    rebuildSupportColumn(findColumn(footer, "Destek"), {});
-    ensureFooterContactBlock(findColumn(footer, "Destek"));
+      if (pathname === "/iletisim") ensureContactPageBlock();
+      if (pathname !== "/") return;
 
-    void fetch("/api/site-content/footer-navigation", { cache: "no-store", credentials: "same-origin" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        const content = (payload?.content ?? {}) as FooterContent;
-        ensureLegalBar(footer, content);
-        rebuildPlatformColumn(findColumn(footer, "Platform"), content);
-        rebuildTrustColumn(footer);
-        rebuildSupportColumn(findColumn(footer, "Destek"), content);
-        ensureFooterContactBlock(findColumn(footer, "Destek"));
+      const footer = document.querySelector<HTMLElement>(".landing-footer");
+      if (!footer) return;
+
+      ensureLegalBar(footer, {});
+      rebuildPlatformColumn(findColumn(footer, "Platform"), {});
+      rebuildTrustColumn(footer);
+      rebuildSupportColumn(findColumn(footer, "Destek"), {});
+      ensureFooterContactBlock(findColumn(footer, "Destek"));
+
+      void fetch("/api/site-content/footer-navigation", {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: controller.signal,
       })
-      .catch(() => {});
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          if (!active || controller.signal.aborted) return;
+          const content = (payload?.content ?? {}) as FooterContent;
+          ensureLegalBar(footer, content);
+          rebuildPlatformColumn(findColumn(footer, "Platform"), content);
+          rebuildTrustColumn(footer);
+          rebuildSupportColumn(findColumn(footer, "Destek"), content);
+          ensureFooterContactBlock(findColumn(footer, "Destek"));
+        })
+        .catch(() => {});
+    }
+
+    // Footer HTML and canonical links already exist in SSR. The optional
+    // CMS/contact DOM enhancement is unnecessary during the first viewport
+    // paint; run it before the visitor reaches the footer instead.
+    const target = pathname === "/"
+      ? document.querySelector(".landing-footer")
+      : pathname === "/iletisim"
+        ? document.querySelector(".contact-page .contact-section__intro")
+        : document.querySelector(".public-trust-footer");
+
+    if (!target || typeof IntersectionObserver === "undefined") {
+      hydrateVisibleFooter();
+    } else {
+      observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer?.disconnect();
+        hydrateVisibleFooter();
+      }, { rootMargin: "800px 0px" });
+      observer.observe(target);
+    }
+
+    return () => {
+      active = false;
+      observer?.disconnect();
+      controller.abort();
+    };
   }, [pathname]);
 
   return null;

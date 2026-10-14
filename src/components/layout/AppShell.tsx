@@ -18,6 +18,7 @@ import "@/features/writer/writer-dashboard-hero-border.css";
 import "@/features/reader/reader-role-gold-frame.css";
 import "@/features/writer/writer-role-gold-frame.css";
 import "@/features/writer/writer-role-gold-frame-extra.css";
+import "@/features/editor-workspace/editor-workspace.css";
 
 type AppShellProps = {
   breadcrumbLabels?: Record<string, string>;

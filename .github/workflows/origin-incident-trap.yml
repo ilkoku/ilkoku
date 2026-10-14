@@ -1,0 +1,81 @@
+name: Origin incident trap
+
+on:
+  schedule:
+    # Minimum GitHub Actions cron cadence; GitHub may delay scheduled jobs.
+    - cron: "*/5 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  actions: write
+
+concurrency:
+  group: origin-incident-trap
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    name: Capture Cloudflare origin failures
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check out passive trap
+        uses: actions/checkout@v4
+
+      - name: Wait for Hostinger deployment window on code push
+        if: github.event_name == 'push'
+        run: sleep 75
+
+      - name: Sample uncached edge responses
+        id: probe
+        shell: bash
+        run: bash scripts/origin-incident-trap.sh
+
+      - name: Save incident evidence
+        if: steps.probe.outputs.incident == 'true' || steps.probe.outputs.blocked == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: origin-incident-${{ github.run_id }}-${{ github.run_attempt }}
+          path: origin-trap-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Open or update GitHub incident and request PID snapshot
+        if: steps.probe.outputs.incident == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          incident_time="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          body="$(printf 'Incident detected at %s UTC.\n\nEvidence and Cloudflare Ray IDs: %s\n\n~~~text\n%s\n~~~\n\nFor Hostinger process supervisor and reverse proxy logs, use exact UTC timestamp and Ray ID.\n' \
+            "$incident_time" "$run_url" "$(cat origin-trap-evidence/probes.tsv)")"
+          title='[Origin incident trap] Open edge connection investigation'
+          issue="$(gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&per_page=100" \
+            --jq ".[] | select(.pull_request == null and .title == \"${title}\") | .number" | head -n1 || true)"
+          if [[ -n "$issue" ]]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${issue}/comments" -f body="$body" >/dev/null \
+              || echo '::warning::Could not append incident details'
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues" -f title="$title" -f body="$body" >/dev/null \
+              || echo '::warning::Could not open incident issue'
+          fi
+          # Existing OIDC-protected workflow can collect the live PID after recovery.
+          gh workflow run runtime-origin-health.yml --ref main \
+            || echo '::warning::Could not dispatch correlated private PID check'
+
+      - name: Fail if incident captured or monitoring blocked
+        if: steps.probe.outputs.incident == 'true' || steps.probe.outputs.blocked == 'true'
+        shell: bash
+        run: |
+          if [[ '${{ steps.probe.outputs.blocked }}' == 'true' ]]; then
+            echo '::error::Monitoring blocked by 403/429; stopped production requests.'
+          else
+            echo '::error::Origin incident captured; review GitHub Issue and evidence artifact.'
+          fi
+          exit 1

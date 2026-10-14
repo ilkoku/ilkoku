@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -36,4 +37,24 @@ test("Monitoring is hourly, read-only, and fail closed", () => {
   assert.match(workflow, /\/iletisim \/sitemap\.xml/u);
   assert.match(workflow, /Circuit breaker/u);
   assert.doesNotMatch(workflow, /npm run|k6 |prisma|git push|workflow_run:/u);
+});
+
+test("Origin incident trap captures deploy cutover while preserving safe bounded probes", () => {
+  const trap = readFileSync("scripts/origin-incident-trap.sh", "utf8");
+  const trapWorkflow = readFileSync(".github/workflows/origin-incident-trap.yml", "utf8");
+
+  // Syntax must be valid before triggering any network request in Actions.
+  execFileSync("bash", ["-n", "scripts/origin-incident-trap.sh"]);
+
+  assert.doesNotMatch(trapWorkflow, /sleep 75/u);
+  assert.match(trapWorkflow, /SAMPLE_COUNT:.*'push'.*'50'/u);
+  assert.match(trapWorkflow, /SAMPLE_INTERVAL:.*'push'.*'6'/u);
+  assert.match(trapWorkflow, /EXPECTED_COMMIT_SHA:/u);
+  assert.match(trapWorkflow, /timeout-minutes: 8/u);
+  assert.match(trap, /served_commit_sha/u);
+  assert.match(trap, /parsed\.commitSha/u);
+  assert.match(trap, /CUTOVER_OBSERVED=true/u);
+  assert.match(trap, /cutover_observed=/u);
+  assert.match(trap, /TRAP_RESULT MONITOR_BLOCKED/u);
+  assert.match(trap, /rm -f "\\$body"/u);
 });

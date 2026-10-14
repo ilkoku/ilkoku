@@ -49,17 +49,17 @@ test("LCP hero is the only prioritized image; visible site logo remains eager", 
   assert.match(hero, /fill priority fetchPriority="high"/u, "LCP illustration retains preload and high priority");
 });
 
-test("Mobile LCP hero uses the smaller responsive image without losing priority", () => {
+test("Mobile LCP hero uses a lighter responsive image without losing priority", () => {
   const hero = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
   const nextConfig = fs.readFileSync("next.config.ts", "utf8");
-  assert.match(hero, /fill priority fetchPriority="high" quality=\\{45\\}/u,
-    "Mobile hero preserves high priority with a lighter generated variant");
-  assert.match(hero, /sizes="\\(max-width: 480px\\) 82vw, \\(max-width: 900px\\) 100vw, 48vw"/u,
-    "Mobile hero should not request desktop-scale image width");
-  assert.match(nextConfig, /qualities: \\[45, 60, 75\\]/u,
-    "Optimized images must allow the requested quality in Next.js");
+  assert.ok(hero.includes('fill priority fetchPriority="high" quality={45}'),
+    "The mobile hero retains priority with a lighter generated variant");
+  assert.ok(hero.includes('sizes="(max-width: 480px) 82vw, (max-width: 900px) 100vw, 48vw"'),
+    "Mobile hero must request an appropriately sized image");
+  assert.ok(nextConfig.includes('qualities: [45, 60, 75]'),
+    "Next.js image optimization must permit the selected quality");
   for (const changed of ["next.config.ts", "src/features/homepage/HomepageExperience.tsx"]) {
-    assert.ok(workflow.includes(changed), changed + " must trigger a live Lighthouse sample");
+    assert.ok(workflow.includes(changed), changed + " must trigger Lighthouse on main");
   }
 });
 

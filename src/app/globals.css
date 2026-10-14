@@ -2,7 +2,6 @@
 @import "../styles/tokens.css";
 @import "../styles/components.css";
 @import "../styles/layout.css";
-@import "../features/works/works-workspace.css";
 
 * {
   box-sizing: border-box;

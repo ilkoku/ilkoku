@@ -12,6 +12,8 @@ on:
       - src/app/layout.tsx
       - src/app/globals.css
       - src/app/oku/layout.tsx
+      - src/app/eserlerim/layout.tsx
+      - src/app/yazmaya-devam/layout.tsx
       - src/app/editorler/layout.tsx
       - src/features/feedback/components/FeedbackWorkspace.tsx
       - src/features/writer/components/NewWorkFlow.tsx

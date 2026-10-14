@@ -87,7 +87,7 @@
   color: #6847e8;
 }
 
-.homepage-live .nx-hero .nx-eyebrow::before {
+.homepage-live .nx-hero .nx-eyebrow > svg {
   filter: drop-shadow(0 0.2rem 0.3rem rgba(72, 45, 160, 0.12));
 }
 

@@ -130,11 +130,11 @@ test("offscreen footer CMS fetch and DOM rebuild wait until footer enters viewpo
   assert.ok(hydrateIndex > -1 && fetchIndex > hydrateIndex, "CMS load remains in deferred footer handler");
   assert.ok(observerIndex > fetchIndex, "IntersectionObserver gates the handler until nearing footer");
   assert.match(source, /rootMargin: "800px 0px"/);
-  assert.match(source, /observer\.observe\(target\)/);
+  assert.match(source, /observer\.observe\(element\)/);
   assert.match(source, /observer\?\.disconnect\(\)/);
   assert.match(source, /controller\.abort\(\)/);
   assert.match(source, /controller\.signal\.aborted/);
-  assert.match(source, /if \(!target \|\| typeof IntersectionObserver === "undefined"\)/);
+  assert.match(source, /typeof IntersectionObserver === "undefined"/);
   assert.match(source, /pathname === "\/iletisim"/);
-  assert.match(source, /document\.querySelector\("\.public-trust-footer"\)/);
+  assert.match(source, /document\.querySelector\("\.public-trust-footer"\)/);\n  assert.match(source, /new MutationObserver/);\n  assert.match(source, /mountObserver\.observe\(document\.body/);\n  assert.match(source, /mountObserver\?\.disconnect\(\)/);
 });

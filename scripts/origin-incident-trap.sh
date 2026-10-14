@@ -39,6 +39,10 @@ probe() {
     "$utc" "$path" "$code" "${ray:-none}" "$ec" "${ip:-none}" \
     "${dns:-n/a}" "${tcp:-n/a}" "${tls:-n/a}" "${ttfb:-n/a}" "${total:-n/a}" >> "$TSV"
   echo "TRAP_SAMPLE UTC=$utc path=$path HTTP=$code curl_exit=$ec ray=${ray:-none} remote_ip=${ip:-none} total_sec=${total:-n/a}"
+  # Public repo: retain only vetted edge headers; never publish response bodies or Set-Cookie.
+  grep -iE '^(HTTP/|cf-ray:|server:|cf-cache-status:|retry-after:|content-type:)' "$headers" > "$headers.safe" || true
+  mv "$headers.safe" "$headers"
+  rm -f "$body"
   if [[ "$code" == '403' || "$code" == '429' ]]; then
     BLOCKED=true
     echo "::warning::Circuit breaker: HTTP $code. Stopping all production probes."

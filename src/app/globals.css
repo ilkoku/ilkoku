@@ -5,7 +5,6 @@
 @import "../features/works/works-workspace.css";
 @import "../features/reading/reading.css";
 @import "../features/editors/editors.css";
-@import "../features/feedback/feedback.css";
 
 * {
   box-sizing: border-box;

@@ -14,12 +14,6 @@ import {
 } from "@/lib/public-brand";
 import { siteContact, siteSocialUrls } from "@/lib/site-contact";
 import "./globals.css";
-import "./landing-theme.css";
-import "./landing-role-icons.css";
-import "./landing-footer-pro.css";
-import "./landing-footer-tight.css";
-import "./landing-header-pro.css";
-import "./landing-account-bubble.css";
 import "./site-contact-links.css";
 import "./public-discovery-paused.css";
 

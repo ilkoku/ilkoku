@@ -40,6 +40,32 @@ test("Fails closed when Lighthouse inspected wrong site, desktop or missing LCP"
   assert.throws(() => makePerformanceSummary({ ...good, runtimeError: { code: "PAGE_HUNG" } }));
 });
 
+
+test("Homepage-only legacy landing CSS is route-scoped instead of loaded on every public page", () => {
+  const layout = fs.readFileSync("src/app/layout.tsx", "utf8");
+  const homepage = fs.readFileSync("src/app/page.tsx", "utf8");
+  const homepageOnly = [
+      "landing-theme.css",
+      "landing-role-icons.css",
+      "landing-footer-pro.css",
+      "landing-footer-tight.css",
+      "landing-header-pro.css",
+      "landing-account-bubble.css"
+  ];
+  for (const filename of homepageOnly) {
+    const importStatement = 'import "./' + filename + '";';
+    assert.ok(homepage.includes(importStatement), filename + " must load on the home route");
+    assert.equal(layout.includes(importStatement), false, filename + " must not be loaded globally");
+    const content = fs.readFileSync("src/app/" + filename, "utf8");
+    assert.match(content, /\.landing-page\b/u, filename + " must remain scoped to the landing surface");
+  }
+  for (const monitored of ["src/app/layout.tsx", "src/app/page.tsx", "src/app/landing-*.css"]) {
+    assert.ok(workflow.includes(monitored), monitored + " must trigger a new one-shot mobile Lighthouse sample after release");
+  }
+  assert.ok(layout.includes('import "./globals.css";'), "Shared CSS stays global");
+  assert.ok(layout.includes('import "./site-contact-links.css";'), "Shared contact CSS stays global");
+});
+
 test("Lab audit runs once, outside Hostinger, never load-tests or modifies SEO policy", () => {
   for (const token of ["workflow_dispatch:", "on:", "npx --yes lighthouse@", "--form-factor=mobile", "--only-categories=performance", "WAF circuit breaker", "if: always()"]) {
     assert.ok(workflow.includes(token), "Expected low-load contract: " + token);

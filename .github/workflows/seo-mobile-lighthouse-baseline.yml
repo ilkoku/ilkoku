@@ -10,6 +10,8 @@ on:
       - scripts/seo-mobile-lighthouse-report.mjs
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
       - src/app/layout.tsx
+      - src/app/globals.css
+      - src/app/yazar/page.tsx
       - src/app/page.tsx
       - src/app/landing-*.css
       - src/features/homepage/HomepageExperience.tsx

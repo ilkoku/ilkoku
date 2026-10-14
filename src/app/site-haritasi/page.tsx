@@ -46,6 +46,12 @@ type LinkGroup = {
   links: Array<{ href: string; label: string }>;
 };
 
+// The published registration agreement is an indexable public legal page.
+const siteMapLegalLinks = [
+  ...publicLegalLinks,
+  { href: "/uyelik-sozlesmesi", label: "Üyelik Sözleşmesi" },
+] as const;
+
 function groupedSitePages(pages: readonly SiteMapPage[]): LinkGroup[] {
   const groups = new Map<string, LinkGroup>();
 
@@ -118,7 +124,7 @@ export default async function PublicSiteMapPage() {
   );
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
-    ...publicLegalLinks.map((link) => link.href),
+    ...siteMapLegalLinks.map((link) => link.href),
   ]);
 
   const cmsOnlyPages = cmsPages
@@ -189,7 +195,7 @@ export default async function PublicSiteMapPage() {
         <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Yasal</h2>
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-            {publicLegalLinks.map((link) => (
+            {siteMapLegalLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"

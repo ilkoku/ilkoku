@@ -57,6 +57,9 @@ test("No speculative Next.js route prefetch on homepage marketing and guarded na
 test("Above-fold hero icons reuse inline SVG without extra role-image downloads", () => {
   const css = fs.readFileSync("src/features/homepage/preview.css", "utf8");
   const home = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  const lightTheme = fs.readFileSync("src/app/home-apple-soft.css", "utf8");
+  assert.ok(lightTheme.includes(".homepage-live .nx-hero .nx-eyebrow > svg"), "Light theme must style the inline hero icon");
+  assert.equal(lightTheme.includes(".homepage-live .nx-hero .nx-eyebrow::before"), false, "No legacy image pseudo-icon styling");
   assert.match(css, /\.nx-hero \.nx-eyebrow > svg \{ display: block;/u);
   assert.match(css, /\.nx-hero__proof svg \{ display: block;/u);
   assert.doesNotMatch(css, /\.nx-hero \.nx-eyebrow::before/u);

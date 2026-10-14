@@ -104,6 +104,33 @@ test("editor workspace styles load only with authenticated AppShell or explicit 
   }
 });
 
+test("Writer creation/editor CSS is owned by NewWorkFlow instead of public global CSS", () => {
+  const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
+  const flow = fs.readFileSync("src/features/writer/components/NewWorkFlow.tsx", "utf8");
+  const writerStyles = fs.readFileSync("src/features/writer/writer-flow.css", "utf8");
+  const dashboard = fs.readFileSync("src/features/dashboard/components/WriterDashboard.tsx", "utf8");
+  const workspace = fs.readFileSync("src/features/works/components/WorksWorkspace.tsx", "utf8");
+  const continuePage = fs.readFileSync("src/app/yazmaya-devam/page.tsx", "utf8");
+  const writerPage = fs.readFileSync("src/app/yazar/page.tsx", "utf8");
+  const worksPage = fs.readFileSync("src/app/eserlerim/page.tsx", "utf8");
+  assert.doesNotMatch(globalStyles, /@import "\.\.\/features\/writer\/writer-flow\.css";/u,
+    "Public routes must not load writer creation, editor or publication styles");
+  assert.match(flow, /import "\.\.\/writer-flow\.css";/u,
+    "All NewWorkFlow consumers load the original stylesheet with their component");
+  for (const selector of [".flow-layer", ".writer-screen", ".writer-toolbar", ".writer-chapters",
+    ".writer-canvas", ".publish-preview", ".publish-success", ".writer-brand"]) {
+    assert.ok(writerStyles.includes(selector), selector + " authoring rules must remain intact");
+  }
+  assert.match(dashboard, /import \{ NewWorkFlow \} from "@\/features\/writer\/components\/NewWorkFlow";/u);
+  assert.match(workspace, /import \{ NewWorkFlow \} from "@\/features\/writer\/components\/NewWorkFlow";/u);
+  assert.match(continuePage, /import \{ NewWorkFlow \} from "@\/features\/writer\/components\/NewWorkFlow";/u);
+  assert.match(writerPage, /<WriterDashboard/u, "Writer home must mount the writer workflow");
+  assert.match(worksPage, /<WorksWorkspace/u, "Works workspace must mount the writer workflow");
+  for (const changed of ["src/app/globals.css", "src/features/writer/components/NewWorkFlow.tsx"]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger post-merge mobile Lighthouse");
+  }
+});
+
 test("private profile stylesheet is loaded by both account pages, not the public global layout", () => {
   const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
   const profileStyles = fs.readFileSync("src/features/profile/profile.css", "utf8");

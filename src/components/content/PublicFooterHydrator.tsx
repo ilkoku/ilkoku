@@ -364,19 +364,40 @@ export function PublicFooterHydrator() {
         ? document.querySelector(".contact-page .contact-section__intro")
         : document.querySelector(".public-trust-footer");
 
-    if (!target || typeof IntersectionObserver === "undefined") {
-      hydrateVisibleFooter();
-    } else {
+    let mountObserver: MutationObserver | null = null;
+
+    function hydrateWhenNear(element: Element) {
+      if (typeof IntersectionObserver === "undefined") {
+        hydrateVisibleFooter();
+        return;
+      }
       observer = new IntersectionObserver((entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         observer?.disconnect();
         hydrateVisibleFooter();
       }, { rootMargin: "800px 0px" });
-      observer.observe(target);
+      observer.observe(element);
+    }
+
+    if (target) {
+      hydrateWhenNear(target);
+    } else if (pathname === "/" && typeof MutationObserver !== "undefined") {
+      // The homepage footer is streamed through a Suspense boundary and may
+      // not exist when the layout-level effect first mounts.
+      mountObserver = new MutationObserver(() => {
+        const streamedFooter = document.querySelector(".landing-footer");
+        if (!streamedFooter) return;
+        mountObserver?.disconnect();
+        hydrateWhenNear(streamedFooter);
+      });
+      mountObserver.observe(document.body, { childList: true, subtree: true });
+    } else {
+      hydrateVisibleFooter();
     }
 
     return () => {
       active = false;
+      mountObserver?.disconnect();
       observer?.disconnect();
       controller.abort();
     };

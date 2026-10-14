@@ -54,6 +54,19 @@ test("No speculative Next.js route prefetch on homepage marketing and guarded na
   assert.match(navigation, /<Link\s+prefetch=\{false\}\s+className="public-site-header__mobile-category"/u, "Mobile menu links do not prefetch guarded routes");
 });
 
+test("Above-fold hero icons reuse inline SVG without extra role-image downloads", () => {
+  const css = fs.readFileSync("src/features/homepage/preview.css", "utf8");
+  const home = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  assert.match(css, /\\.nx-hero \\.nx-eyebrow > svg \\{ display: block;/u);
+  assert.match(css, /\\.nx-hero__proof svg \\{ display: block;/u);
+  assert.doesNotMatch(css, /\\.nx-hero \\.nx-eyebrow::before/u);
+  assert.doesNotMatch(css, /\\.nx-hero__proof span::before/u);
+  assert.match(home, /<LandingIcon name="book" \\/>/u);
+  for (const icon of ["shield", "editor", "publisher"]) {
+    assert.ok(home.includes('<LandingIcon name="' + icon + '" />'), "Hero proof renders inline " + icon + " icon");
+  }
+});
+
 test("Homepage-only legacy landing CSS is route-scoped instead of loaded on every public page", () => {
   const layout = fs.readFileSync("src/app/layout.tsx", "utf8");
   const homepage = fs.readFileSync("src/app/page.tsx", "utf8");

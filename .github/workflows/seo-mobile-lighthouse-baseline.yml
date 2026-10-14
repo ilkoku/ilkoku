@@ -12,6 +12,9 @@ on:
       - src/app/layout.tsx
       - src/app/page.tsx
       - src/app/landing-*.css
+      - src/features/homepage/HomepageExperience.tsx
+      - src/components/layout/PublicSiteHeader.tsx
+      - src/components/layout/PublicHeaderNavigation.tsx
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/components/layout/PublicSiteAccount.tsx

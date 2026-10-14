@@ -105,6 +105,7 @@ async function HomepageRoleSection({
         <div className="nx-role-grid">
           {visibleRoles.map((role) => (
             <Link
+              prefetch={false}
               href={role.href}
               className={`nx-role nx-role--${role.key}`}
               key={role.key}
@@ -184,7 +185,7 @@ export default async function HomepageExperience() {
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</p>
             <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{index > 0 ? " " : null}{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
-            <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
+            <div className="nx-hero__actions"><Link prefetch={false} href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link prefetch={false} href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
           <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={60} sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>

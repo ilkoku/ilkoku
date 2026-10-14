@@ -145,6 +145,25 @@ test("Writer creation/editor CSS is owned by NewWorkFlow instead of public globa
   }
 });
 
+test("Feedback styles load with the private workspace, never the public global CSS", () => {
+  const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
+  const feedbackWorkspace = fs.readFileSync("src/features/feedback/components/FeedbackWorkspace.tsx", "utf8");
+  const feedbackPage = fs.readFileSync("src/app/geri-bildirimler/page.tsx", "utf8");
+  const feedbackCSS = fs.readFileSync("src/features/feedback/feedback.css", "utf8");
+  assert.ok(!globalStyles.includes('features/feedback/feedback.css'),
+    "Public homepage should not ship private feedback styles");
+  assert.ok(feedbackWorkspace.includes('import "../feedback.css";'),
+    "Feedback workspace must load its own dialog and card rules");
+  assert.ok(feedbackPage.includes("<FeedbackWorkspace"),
+    "Private feedback route must mount the styled workspace");
+  for (const selector of [".feedback-workspace", ".feedback-dialog", ".feedback-entry", ".feedback-professional-dialog"]) {
+    assert.ok(feedbackCSS.includes(selector), selector + " must stay styled");
+  }
+  for (const changed of ["src/app/globals.css", "src/features/feedback/components/FeedbackWorkspace.tsx"]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger performance smoke on main");
+  }
+});
+
 test("private profile stylesheet is loaded by both account pages, not the public global layout", () => {
   const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
   const profileStyles = fs.readFileSync("src/features/profile/profile.css", "utf8");

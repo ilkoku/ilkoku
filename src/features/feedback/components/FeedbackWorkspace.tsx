@@ -7,6 +7,7 @@ import {
   useTransition,
 } from "react";
 import { feedbackContent } from "@/content";
+import "../feedback.css";
 import {
   archiveFeedbackAction,
   archiveFeedbackGroupAction,

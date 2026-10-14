@@ -29,6 +29,8 @@ on:
       - src/lib/cms-header-navigation-server.ts
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
+      - src/components/content/PublicFooterHydrator.tsx
+      - scripts/security-contract-home-footer-route-return.test.mjs
       - src/components/layout/PublicSiteAccount.tsx
       - scripts/security-contract-account-prefetch.test.mjs
       - scripts/security-contract-seo-home-footer-prefetch.test.mjs

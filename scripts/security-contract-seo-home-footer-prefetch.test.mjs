@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+const experience = readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
 const footer = readFileSync("src/features/homepage/live-footer.tsx", "utf8");
 const consent = readFileSync("src/components/privacy/SiteConsentBanner.tsx", "utf8");
 const homepage = readFileSync("src/app/page.tsx", "utf8");
@@ -32,4 +33,13 @@ test("Visible cookie consent policy link does not prefetch the legal route", () 
   assert.ok(consent.includes('<Link prefetch={false} href={settings.policyPath}>Gizlilik ve çerez bilgileri</Link>'));
   assert.match(consent, /updateConsentMode/u);
   assert.match(consent, /dispatchChoice/u);
+});
+
+
+test("Public homepage streams exactly one real footer without duplicated fallback markup", () => {
+  assert.ok(experience.includes("<Suspense fallback={null}>"), "Suspense boundary should keep stream nonblocking");
+  assert.equal((experience.match(/<HomepageFooterSection\\b/gu) || []).length, 1, "One server-driven footer");
+  assert.equal((experience.match(/<LiveHomepageFooter\\b/gu) || []).length, 1, "Only footer component owner renders a live footer");
+  assert.ok(experience.includes("bookIndexPublished={Boolean(bookIndexContext)}"), "Book Index publication visibility unchanged");
+  assert.ok(experience.includes("slogan={footer?.slogan"), "Homepage CMS footer copy unchanged");
 });

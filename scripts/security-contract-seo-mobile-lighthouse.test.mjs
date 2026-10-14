@@ -59,6 +59,9 @@ test("Homepage-only legacy landing CSS is route-scoped instead of loaded on ever
     const content = fs.readFileSync("src/app/" + filename, "utf8");
     assert.match(content, /\.landing-page\b/u, filename + " must remain scoped to the landing surface");
   }
+  for (const monitored of ["src/app/layout.tsx", "src/app/page.tsx", "src/app/landing-*.css"]) {
+    assert.ok(workflow.includes(monitored), monitored + " must trigger a new one-shot mobile Lighthouse sample after release");
+  }
   assert.ok(layout.includes('import "./globals.css";'), "Shared CSS stays global");
   assert.ok(layout.includes('import "./site-contact-links.css";'), "Shared contact CSS stays global");
 });

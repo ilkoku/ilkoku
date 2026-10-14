@@ -49,6 +49,20 @@ test("LCP hero is the only prioritized image; visible site logo remains eager", 
   assert.match(hero, /fill priority fetchPriority="high"/u, "LCP illustration retains preload and high priority");
 });
 
+test("Mobile LCP hero uses the smaller responsive image without losing priority", () => {
+  const hero = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  const nextConfig = fs.readFileSync("next.config.ts", "utf8");
+  assert.match(hero, /fill priority fetchPriority="high" quality=\\{45\\}/u,
+    "Mobile hero preserves high priority with a lighter generated variant");
+  assert.match(hero, /sizes="\\(max-width: 480px\\) 82vw, \\(max-width: 900px\\) 100vw, 48vw"/u,
+    "Mobile hero should not request desktop-scale image width");
+  assert.match(nextConfig, /qualities: \\[45, 60, 75\\]/u,
+    "Optimized images must allow the requested quality in Next.js");
+  for (const changed of ["next.config.ts", "src/features/homepage/HomepageExperience.tsx"]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger a live Lighthouse sample");
+  }
+});
+
 test("No speculative Next.js route prefetch on homepage marketing and guarded navigation", () => {
   const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
   const header = fs.readFileSync("src/components/layout/PublicSiteHeader.tsx", "utf8");

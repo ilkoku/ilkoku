@@ -90,7 +90,7 @@ const searchExcludedRouteHeaders = [
 const nextConfig: NextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
   images: {
-    qualities: [60, 75],
+    qualities: [45, 60, 75],
   },
   experimental: {
     serverActions: {

@@ -16,6 +16,7 @@ on:
       - src/features/homepage/preview.css
       - src/components/layout/PublicSiteHeader.tsx
       - src/components/layout/PublicHeaderNavigation.tsx
+      - src/lib/cms-header-navigation-server.ts
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/components/layout/PublicSiteAccount.tsx

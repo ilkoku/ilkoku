@@ -16,6 +16,7 @@ on:
       - src/app/yazar/page.tsx
       - src/app/page.tsx
       - src/app/landing-*.css
+      - next.config.ts
       - src/features/homepage/HomepageExperience.tsx
       - src/features/homepage/preview.css
       - src/components/layout/PublicSiteHeader.tsx

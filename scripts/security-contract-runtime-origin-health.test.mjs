@@ -56,5 +56,5 @@ test("Origin incident trap captures deploy cutover while preserving safe bounded
   assert.match(trap, /CUTOVER_OBSERVED=true/u);
   assert.match(trap, /cutover_observed=/u);
   assert.match(trap, /TRAP_RESULT MONITOR_BLOCKED/u);
-  assert.match(trap, /rm -f "\\$body"/u);
+  assert.ok(trap.includes('rm -f "$body"'));
 });

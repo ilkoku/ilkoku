@@ -79,6 +79,28 @@ test("Above-fold hero icons reuse inline SVG without extra role-image downloads"
 });
 
 
+test("private profile stylesheet is loaded by both account pages, not the public global layout", () => {
+  const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
+  const profileStyles = fs.readFileSync("src/features/profile/profile.css", "utf8");
+  for (const accountPage of [
+    "src/app/hesabim/page.tsx",
+    "src/app/hesabim/log/page.tsx",
+  ]) {
+    const page = fs.readFileSync(accountPage, "utf8");
+    assert.ok(
+      page.includes('import "@/features/profile/profile.css";'),
+      accountPage + " must explicitly import its account styling",
+    );
+  }
+  assert.ok(
+    !globalStyles.includes('@import "../features/profile/profile.css";'),
+    "Public home must not load private account page styles",
+  );
+  assert.ok(profileStyles.includes(".account-shell"), "Original account layout rules stay intact");
+  assert.ok(profileStyles.includes(".profile-page"), "Original profile page rules stay intact");
+  assert.ok(workflow.includes("src/app/globals.css"), "Global CSS modifications must trigger mobile Lighthouse");
+});
+
 test("writer dashboard stylesheet is scoped to authenticated writer route, not public homepage", () => {
   const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
   const writerPage = fs.readFileSync("src/app/yazar/page.tsx", "utf8");

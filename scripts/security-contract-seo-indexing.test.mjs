@@ -290,6 +290,12 @@ test("public pillar split hero headings keep semantic spaces without changing li
   assertNotContains(publishers, '<span key={`${word}-${index}`}>{word}</span>', "publisher heading avoids concatenated words");
 });
 
+test("homepage H1 text retains natural spaces across visual spans", () => {
+  const home = source("src/features/homepage/HomepageExperience.tsx");
+  assertContains(home, '{index > 0 ? " " : null}{line}', "homepage SSR hero H1 must separate split text lines");
+  assertNotContains(home, '<span key={`${index}-${line}`}>{line}</span>', "homepage must not concatenate H1 lines");
+});
+
 test("HTML sitemap links to the published indexable registration agreement", () => {
   const htmlSiteMap = source("src/app/site-haritasi/page.tsx");
   const registrationAgreement = source("src/app/uyelik-sozlesmesi/page.tsx");

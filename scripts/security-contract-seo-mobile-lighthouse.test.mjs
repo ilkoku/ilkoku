@@ -49,6 +49,7 @@ test("No speculative Next.js route prefetch on homepage marketing and guarded na
   assert.match(homepage, /<Link prefetch=\{false\} href=\{primaryHref\}/u, "Hero primary CTA does not prefetch");
   assert.match(homepage, /<Link prefetch=\{false\} href=\{secondaryHref\}/u, "Hero secondary CTA does not prefetch");
   assert.match(header, /<Link\s+prefetch=\{false\}\s+className="public-site-header__brand"/u, "Home logo does not prefetch current route");
+  assert.match(navigation, /<Link\s+prefetch=\{false\}\s+href=\{link\.href\}/u, "Opening mega menu does not prefetch every destination");
   assert.match(navigation, /<Link\s+prefetch=\{false\}\s+className="public-site-header__menu-trigger"/u, "Direct public menu links do not prefetch guarded routes");
   assert.match(navigation, /<Link\s+prefetch=\{false\}\s+className="public-site-header__mobile-category"/u, "Mobile menu links do not prefetch guarded routes");
 });

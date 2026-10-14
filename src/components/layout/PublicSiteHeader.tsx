@@ -151,7 +151,7 @@ export async function PublicSiteHeader() {
             <Image
               src={identity.logoUrl}
               alt={identity.logoAlt}
-              priority
+              loading="eager"
               width={308}
               height={76}
               sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
@@ -160,7 +160,7 @@ export async function PublicSiteHeader() {
             <Image
               src={logo}
               alt={identity.logoAlt}
-              priority
+              loading="eager"
               sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
             />
           )}

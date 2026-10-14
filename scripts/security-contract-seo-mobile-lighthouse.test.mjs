@@ -41,6 +41,14 @@ test("Fails closed when Lighthouse inspected wrong site, desktop or missing LCP"
 });
 
 
+test("LCP hero is the only prioritized image; visible site logo remains eager", () => {
+  const header = fs.readFileSync("src/components/layout/PublicSiteHeader.tsx", "utf8");
+  const hero = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  assert.equal((header.match(/loading="eager"/gu) || []).length, 2, "Both logo sources remain eagerly loaded");
+  assert.doesNotMatch(header, /\bpriority\b/u, "Header logo must not compete with LCP preload");
+  assert.match(hero, /fill priority fetchPriority="high"/u, "LCP illustration retains preload and high priority");
+});
+
 test("No speculative Next.js route prefetch on homepage marketing and guarded navigation", () => {
   const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
   const header = fs.readFileSync("src/components/layout/PublicSiteHeader.tsx", "utf8");

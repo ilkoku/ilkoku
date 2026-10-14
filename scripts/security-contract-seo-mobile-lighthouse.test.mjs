@@ -78,6 +78,23 @@ test("Above-fold hero icons reuse inline SVG without extra role-image downloads"
   }
 });
 
+
+test("writer dashboard stylesheet is scoped to authenticated writer route, not public homepage", () => {
+  const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
+  const writerPage = fs.readFileSync("src/app/yazar/page.tsx", "utf8");
+  const dashboardStyles = fs.readFileSync("src/features/dashboard/dashboard.css", "utf8");
+  assert.doesNotMatch(globalStyles, /@import "\.\.\/features\/dashboard\/dashboard\.css"/u,
+    "Public page CSS must not load authenticated writer dashboard styling");
+  assert.match(writerPage, /import "@\/features\/dashboard\/dashboard\.css";/u,
+    "Writer dashboard continues to receive its original stylesheet");
+  assert.match(writerPage, /<WriterDashboard/u, "CSS scope stays tied to the actual writer dashboard route");
+  assert.match(dashboardStyles, /\.dashboard__main\s*\{/u,
+    "Writer dashboard stylesheet retains its real desktop styles");
+  for (const changed of ["src/app/globals.css", "src/app/yazar/page.tsx"]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger post-merge Lighthouse mobile measurement");
+  }
+});
+
 test("Homepage-only legacy landing CSS is route-scoped instead of loaded on every public page", () => {
   const layout = fs.readFileSync("src/app/layout.tsx", "utf8");
   const homepage = fs.readFileSync("src/app/page.tsx", "utf8");

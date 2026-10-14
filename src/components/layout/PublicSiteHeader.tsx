@@ -142,6 +142,7 @@ export async function PublicSiteHeader() {
     <header className="public-site-header">
       <div className="public-site-header__inner">
         <Link
+          prefetch={false}
           className="public-site-header__brand"
           href="/"
           aria-label="İlkOku ana sayfa"

@@ -154,6 +154,7 @@ export function PublicHeaderNavigation({
             if (menu.directHref) {
               return (
                 <Link
+                  prefetch={false}
                   className="public-site-header__menu-trigger"
                   data-direct="true"
                   href={menu.directHref}
@@ -235,6 +236,7 @@ export function PublicHeaderNavigation({
                     {menus.map((menu) =>
                       menu.directHref ? (
                         <Link
+                          prefetch={false}
                           className="public-site-header__mobile-category"
                           data-direct="true"
                           href={menu.directHref}

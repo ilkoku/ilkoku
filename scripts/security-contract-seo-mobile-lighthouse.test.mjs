@@ -79,6 +79,31 @@ test("Above-fold hero icons reuse inline SVG without extra role-image downloads"
 });
 
 
+
+test("editor workspace styles load only with authenticated AppShell or explicit editor invitation", () => {
+  const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
+  const shell = fs.readFileSync("src/components/layout/AppShell.tsx", "utf8");
+  const invitation = fs.readFileSync("src/app/editor-daveti/[token]/page.tsx", "utf8");
+  const editorStyles = fs.readFileSync("src/features/editor-workspace/editor-workspace.css", "utf8");
+  const route = fs.readFileSync("src/app/editor/incelemeler/page.tsx", "utf8");
+  assert.ok(!globalStyles.includes('@import "../features/editor-workspace/editor-workspace.css";'),
+    "Public routes must not include authenticated editor CSS in global styles");
+  assert.ok(shell.includes('import "@/features/editor-workspace/editor-workspace.css";'),
+    "Authenticated editor workspace remains styled through shared AppShell");
+  assert.ok(invitation.includes('import "@/features/editor-workspace/editor-workspace.css";'),
+    "External second-editor invitation remains styled without AppShell");
+  assert.ok(route.includes("<AppShell"), "Editor review route still uses AppShell");
+  assert.ok(editorStyles.includes(".editor-workspace"), "Editor layout CSS remains intact");
+  assert.ok(editorStyles.includes(".professional-review-tools"),
+    "External invitation and professional review CSS remains intact");
+  for (const changed of [
+    "src/app/globals.css",
+    "src/components/layout/AppShell.tsx",
+  ]) {
+    assert.ok(workflow.includes(changed), changed + " must trigger mobile Lighthouse");
+  }
+});
+
 test("private profile stylesheet is loaded by both account pages, not the public global layout", () => {
   const globalStyles = fs.readFileSync("src/app/globals.css", "utf8");
   const profileStyles = fs.readFileSync("src/features/profile/profile.css", "utf8");

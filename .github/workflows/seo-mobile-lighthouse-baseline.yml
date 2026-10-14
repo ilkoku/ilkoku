@@ -11,6 +11,7 @@ on:
       - scripts/security-contract-seo-mobile-lighthouse.test.mjs
       - src/app/layout.tsx
       - src/app/globals.css
+      - src/components/layout/AppShell.tsx
       - src/app/yazar/page.tsx
       - src/app/page.tsx
       - src/app/landing-*.css

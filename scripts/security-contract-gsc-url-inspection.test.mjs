@@ -278,3 +278,17 @@ test("Transient Cloudflare failures receive only a bounded origin retry and rema
   assert.match(smokeWorkflow, /TRANSIENT ORIGIN FAILURE:/u);
   assert.match(smokeWorkflow, /circuit_break "\$code" "\$url"/u);
 });
+
+test("Full GSC census retries isolated transport timeouts and keeps an honest partial artifact", () => {
+  assert.match(censusScript, /const INSPECTION_TRANSPORT_ATTEMPTS = 2/u);
+  assert.match(censusScript, /async function inspectUrlOnce\(accessToken, inspectionUrl\)/u);
+  assert.match(censusScript, /return await inspectUrlOnce\(accessToken, inspectionUrl\)/u);
+  assert.match(censusScript, /Inspection transport failed after/u);
+  assert.match(censusScript, /results\[index\] = result/u);
+  assert.match(censusScript, /fs\.writeFileSync\(OUTPUT_PATH, JSON\.stringify\(payload, null, 2\)\)/u);
+  assert.match(censusScript, /if \(payload\.summary\.errors > 0\)/u);
+  assert.match(censusScript, /process\.exitCode = 1/u);
+  assert.match(censusWorkflow, /- name: Upload census artifact\s+if: always\(\)/u);
+  assert.match(censusWorkflow, /if-no-files-found: warn/u);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/u);
+});

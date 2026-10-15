@@ -116,7 +116,7 @@ async function getAccessToken() {
   return body.access_token;
 }
 
-async function inspectUrl(accessToken, inspectionUrl) {
+async function inspectUrlOnce(accessToken, inspectionUrl) {
   const response = await fetch(
     "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
     {
@@ -165,6 +165,27 @@ async function inspectUrl(accessToken, inspectionUrl) {
     sitemap: Array.isArray(result.sitemap) ? result.sitemap : [],
     referringUrls: Array.isArray(result.referringUrls) ? result.referringUrls : [],
   };
+}
+
+// Google URL Inspection may occasionally time out for one page. The complete
+// census must still preserve all other URL results, rather than throwing away
+// 128 successful inspections because the 129th request failed.
+const INSPECTION_TRANSPORT_ATTEMPTS = 2;
+
+async function inspectUrl(accessToken, inspectionUrl) {
+  for (let attempt = 1; attempt <= INSPECTION_TRANSPORT_ATTEMPTS; attempt += 1) {
+    try {
+      return await inspectUrlOnce(accessToken, inspectionUrl);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(`GSC inspection transport error for ${inspectionUrl}, attempt ${attempt}/${INSPECTION_TRANSPORT_ATTEMPTS}: ${reason}`);
+      if (attempt === INSPECTION_TRANSPORT_ATTEMPTS) {
+        return { inspectionUrl, error: `Inspection transport failed after ${attempt} attempt(s): ${reason}` };
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+    }
+  }
+  return { inspectionUrl, error: "Inspection transport attempts exhausted" };
 }
 
 async function inspectAll(accessToken, urls) {
@@ -273,6 +294,12 @@ async function main() {
 
   console.log("GSC census summary:");
   console.log(JSON.stringify(payload.summary));
+  if (payload.summary.errors > 0) {
+    // Artifact is written before failing the workflow: never call this a
+    // complete census when one or more URL inspections could not be verified.
+    console.error(`GSC census incomplete: ${payload.summary.errors} URL inspection error(s). Partial report preserved.`);
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

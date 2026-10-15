@@ -11,6 +11,7 @@ const compile = (path) => ts.transpileModule(readFileSync(path, "utf8"), {
 function createRoute() {
   let writes = 0;
   let failWrite = false;
+  const afterCallbacks = [];
   let failNotification = false;
   const notifications = [];
   const helperModule = { exports: {} };
@@ -35,7 +36,7 @@ function createRoute() {
     exports: routeModule.exports, module: routeModule, URL, JSON, String, Date,
     require: (name) => {
       if (name === "node:crypto") return { randomUUID: () => "test-uuid" };
-      if (name === "next/server") return { NextResponse: api };
+      if (name === "next/server") return { NextResponse: api, after: (callback) => afterCallbacks.push(callback) };
       if (name === "@/lib/prisma") return { prisma: {
         $executeRaw: async () => {
           if (failWrite) throw new Error("simulated database unavailable");
@@ -58,6 +59,7 @@ function createRoute() {
     post: routeModule.exports.POST,
     getWrites: () => writes,
     getNotifications: () => notifications,
+    flushBackground: async () => { for (const callback of afterCallbacks.splice(0)) await callback(); },
     setNotificationFailure: (value) => { failNotification = value; },
     setDatabaseFailure: (value) => { failWrite = value; },
   };
@@ -86,6 +88,8 @@ test("valid browser submission survives Cloudflare / internal Node origin differ
   assert.equal(result.status, 303);
   assert.equal(result.location, "https://ilkoku.com/iletisim?durum=alindi");
   assert.equal(route.getWrites(), 1);
+  assert.equal(route.getNotifications().length, 0, "send runs after the response");
+  await route.flushBackground();
   assert.equal(route.getNotifications().length, 1);
   assert.equal(route.getNotifications()[0].email, "test@example.com");
 });
@@ -142,6 +146,8 @@ test("email failure never discards a saved form or reports a false database fail
     assert.equal(result.status, 303);
     assert.equal(result.location, "https://ilkoku.com/iletisim?durum=alindi");
     assert.equal(route.getWrites(), 1);
+    assert.equal(route.getNotifications().length, 0);
+    await route.flushBackground();
     assert.equal(route.getNotifications().length, 1);
   } finally {
     console.error = log;

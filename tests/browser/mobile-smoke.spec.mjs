@@ -79,6 +79,25 @@ for (const scenario of publicCases) {
   });
 }
 
+test("public registration agreement has unique SEO metadata in server HTML head", async ({ page }) => {
+  const response = await page.goto("/uyelik-sozlesmesi", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  const html = await response.text();
+  const serverHead = html.split(/<\\/head>/i)[0];
+  expect(serverHead).toContain("<title>Platform Kullanım ve Gizlilik Taahhüdü | İlkOku</title>");
+  await expect(page).toHaveTitle("Platform Kullanım ve Gizlilik Taahhüdü | İlkOku");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü.",
+  );
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content", "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href", "https://ilkoku.com/uyelik-sozlesmesi",
+  );
+});
+
 // This published work is created by prepare-browser-auth-fixtures.mjs.
 // Check that moving showcase CSS out of globals does not erase book detail styling.
 for (const scenario of [

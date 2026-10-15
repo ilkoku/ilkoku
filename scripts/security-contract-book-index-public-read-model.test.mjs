@@ -173,52 +173,29 @@ test("Turkey public page keeps operational source status out of the visitor UI",
   );
 });
 
-test("Bestseller comparison has a dedicated gated SEO route", () => {
-  const page = source("src/app/en-cok-satanlar/turkiye/karsilastirma/page.tsx");
+test("retired comparison is permanently redirected with no exposed navigation or sitemap", () => {
+  const redirects = source("next.config.ts");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
-  const comparison = source("src/features/book-index/public/BookIndexSourceComparison.tsx");
+  const navigation = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const catalog = source("src/lib/cms-header-navigation.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const fs = source("src/lib/soft-launch-search-policy.ts");
 
-  contains(
-    page,
-    'canonical = "/en-cok-satanlar/turkiye/karsilastirma"',
-    "stable bestseller comparison canonical",
-  );
-  contains(
-    page,
-    'title = "En Çok Satanlar Karşılaştırma | İlkOku"',
-    "comparison SEO title keeps the approved phrase",
-  );
-  contains(
-    page,
-    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
-    "comparison route stays noindex until Book Index publication is approved",
-  );
-  contains(
-    view,
-    "<h1>En Çok Satanlar Karşılaştırma</h1>",
-    "comparison H1 keeps the approved phrase",
-  );
-  contains(
-    view,
-    'href="/en-cok-satanlar/turkiye/karsilastirma"',
-    "overview and Turkey list link to the dedicated comparison route",
-  );
-  notContains(
-    comparison,
-    "Kaynak seç",
-    "public comparison controls avoid technical source wording",
-  );
-  contains(
-    comparison,
-    "Kitap satış kanalı seç",
-    "public comparison controls use book sales channel wording",
-  );
-  contains(
-    sitemap,
-    "/en-cok-satanlar/turkiye/karsilastirma",
-    "comparison route joins the already-gated Book Index sitemap set",
-  );
+  contains(redirects, 'source: "/en-cok-satanlar/turkiye/karsilastirma"', "legacy comparison redirect source");
+  contains(redirects, 'destination: "/en-cok-satanlar/turkiye"', "legacy comparison redirect destination");
+  notContains(view, 'href="/en-cok-satanlar/turkiye/karsilastirma"', "no dead overview comparison card");
+  contains(view, 'href="/en-cok-satanlar/turkiye"', "overview Turkey card uses live page");
+  for (const [content, name] of [
+    [navigation, "section navigation"],
+    [header, "shared header navigation"],
+    [catalog, "CMS menu catalog"],
+    [sitemap, "XML sitemap"],
+  ]) {
+    notContains(content, '"/en-cok-satanlar/turkiye/karsilastirma"', name);
+  }
+  notContains(fs, '"\u002fen-cok-satanlar/turkiye"', "no change to Book Index soft launch gate");
+  contains(fs, '"/en-cok-satanlar"', "Book Index remains noindex until editorial publication gate");
 });
 
 test("New-release read model stays source-native and isolated from generic list publication", () => {
@@ -570,45 +547,17 @@ test("Book Index secondary analysis nav stays inside bestseller routes", () => {
 });
 
 
-test("bestseller full list and comparison use the shared Book Index navigation", () => {
+test("Turkey list keeps primary and analysis navigation without retired comparison", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
-
-  contains(
-    view,
-    '<BookIndexSectionNav current="turkey" showAnalysis={false} />',
-    "Turkey full list keeps primary navigation above the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="turkey" showPrimary={false} />',
-    "Turkey full list uses shared analysis navigation below the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
-    "comparison keeps primary navigation above the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showPrimary={false} />',
-    "comparison uses shared analysis navigation below the hero",
-  );
+  contains(view, '<BookIndexSectionNav current="turkey" showAnalysis={false} />', "Turkey primary navigation");
+  contains(view, '<BookIndexSectionNav current="turkey" showPrimary={false} />', "Turkey analysis navigation");
   contains(nav, 'href: "/en-cok-satanlar/turkiye"', "Turkey dedicated route");
-  contains(
-    nav,
-    'href: "/en-cok-satanlar/turkiye/karsilastirma"',
-    "comparison dedicated route",
-  );
   contains(nav, 'label: "Türkiye"', "Turkey navigation label");
-  contains(nav, 'label: "Karşılaştırma"', "comparison navigation label");
-  notContains(
-    view,
-    "BookIndexViewModeNav",
-    "obsolete two-item view-mode navigation remains removed",
-  );
+  notContains(nav, 'label: "Karşılaştırma"', "retired comparison removed from analysis menu");
+  notContains(view, 'TurkeyBookIndexComparisonView', "retired comparison renderer deleted");
+  notContains(view, "BookIndexViewModeNav", "obsolete two-item view-mode navigation remains removed");
 });
-
 
 test("Kitap Ambari is displayable without gaining a Turkey composite vote", () => {
   const lists = source("src/lib/book-index/lists.ts");

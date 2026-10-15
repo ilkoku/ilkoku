@@ -78,6 +78,11 @@ test("public layout registers one global delegated event tracker", () => {
     assert.match(interaction, new RegExp('"' + channel + '"'));
   }
   assert.match(cms, /data-site-analytics-cta="cms"/);
+  const homepage = readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  for (const selector of [".nx-hero__actions", ".nx-role-grid", ".nx-passport__copy"]) {
+    assert.ok(interaction.includes(selector), `homepage CTA ${selector} must be classified`);
+    assert.ok(homepage.includes(selector.slice(1)), `homepage must still render ${selector}`);
+  }
   assert.match(share, /emitPublicInteraction\("site_share_click", \{ channel: "whatsapp"/);
 });
 

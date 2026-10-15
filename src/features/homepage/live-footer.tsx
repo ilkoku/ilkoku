@@ -11,7 +11,7 @@ import {
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
 
-import "./live-footer.css";
+// The same footer is rendered outside the homepage (including all seven\n// /yazarlar-icin category hubs and their 85 guides). Keep its complete\n// landing-scoped visual styles with the component, not only app/page.tsx.\nimport "@/app/landing-footer-pro.css";\nimport "@/app/landing-footer-tight.css";\nimport "./live-footer.css";
 
 type LiveHomepageFooterProps = {
   signedIn: boolean;

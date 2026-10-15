@@ -21,7 +21,7 @@ function escapeHtml(value: string) {
 
 function recipient() {
   const configured = process.env.SITE_CONTACT_NOTIFICATION_EMAIL?.trim();
-  if (configured && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(configured)) {
+  if (configured && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
     return configured;
   }
   return siteContact.generalEmail;

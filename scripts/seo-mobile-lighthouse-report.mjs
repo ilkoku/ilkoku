@@ -10,6 +10,39 @@ function metric(audits, id) {
   return audit.numericValue;
 }
 
+function collectLcpSelectors(details) {
+  const selectors = new Set();
+  function walk(value, depth = 0) {
+    if (depth > 8 || value === null || typeof value !== "object") return;
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item, depth + 1);
+      return;
+    }
+    if (value.type === "node" && typeof value.selector === "string") {
+      selectors.add(value.selector);
+    }
+    if (value.node && typeof value.node.selector === "string") {
+      selectors.add(value.node.selector);
+    }
+    if (value.items) walk(value.items, depth + 1);
+  }
+  walk(details?.items);
+  return [...selectors].slice(0, 2);
+}
+
+function gatewayFootprint(audits) {
+  const requests = audits?.["network-requests"]?.details?.items ?? [];
+  const gatewayScripts = requests.filter((entry) =>
+    entry?.resourceType === "Script" &&
+    typeof entry.url === "string" &&
+    /^https:\/\/ilkoku\.com\/1q6z(?:\/|[?#]|$)/u.test(entry.url));
+  return {
+    gatewayScriptRequests: gatewayScripts.length,
+    gatewayTransferBytes: gatewayScripts.reduce(
+      (sum, entry) => sum + (Number.isFinite(entry.transferSize) ? entry.transferSize : 0), 0),
+  };
+}
+
 export function makePerformanceSummary(report) {
   assert.equal(report?.finalDisplayedUrl?.replace(/\/+$/u, ""), "https://ilkoku.com",
     "Measurement must be on the production homepage");
@@ -35,9 +68,8 @@ export function makePerformanceSummary(report) {
     .slice(0, 8);
 
   const lcpAudit = audits?.["lcp-breakdown-insight"] ?? audits?.["largest-contentful-paint-element"];
-  const lcpElements = lcpAudit?.details?.items?.slice(0, 2)?.map((item) =>
-    item?.node?.snippet ?? item?.node?.selector ?? item?.element?.snippet ?? null,
-  ).filter(Boolean) ?? [];
+  const lcpElements = collectLcpSelectors(lcpAudit?.details);
+  const gateway = gatewayFootprint(audits);
   return {
     measuredAt: report.fetchTime,
     source: "Lighthouse simulated mobile lab run (not CrUX field data)",
@@ -51,6 +83,7 @@ export function makePerformanceSummary(report) {
     speedIndexMs: Math.round(speedIndex),
     longTasks,
     lcpElements,
+    ...gateway,
     opportunities,
   };
 }
@@ -72,6 +105,7 @@ export function printSummary(summary) {
       ...summary.opportunities.map((x) => "- " + x.title + ": approximately " + x.savingMs + " ms"),
       "",
       "**LCP element clues:** " + (summary.lcpElements.join(" ; ") || "not identified by this Lighthouse version"),
+      "**Gateway JavaScript loaded in lab:** " + summary.gatewayScriptRequests + " requests / " + (summary.gatewayTransferBytes / 1024).toFixed(0) + " KiB. This is not a consent verdict.",
       "",
     ];
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows.join("\n"));

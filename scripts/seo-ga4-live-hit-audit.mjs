@@ -22,7 +22,9 @@ async function auditCase(browser, choice) {
   let started = Date.now();
 
   page.on("request", (request) => {
-    const parsed = classifyGa4Request(request.url());
+    // Read POST only in memory. The classifier persists allowlisted event
+    // names and a public tag ID, never user/session fields or the raw body.
+    const parsed = classifyGa4Request(request.url(), request.postData() || "");
     if (!parsed) return;
     const entry = { phase, atMs: Date.now() - started, ...parsed, method: request.method(), status: null };
     indexed.set(request, entry);

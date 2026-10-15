@@ -116,12 +116,15 @@ export async function GET(request: Request) {
     Link: `<${hubUrl}>; rel="hub", <${feedUrl}>; rel="self"`,
   };
 
-  if (request.headers.get("if-none-match") === etag) {
+  const ifNoneMatch = request.headers.get("if-none-match");
+  if (ifNoneMatch === etag) {
     return new Response(null, { status: 304, headers });
   }
 
   const ifModifiedSince = request.headers.get("if-modified-since");
-  if (ifModifiedSince) {
+  // If-None-Match takes precedence: a stale entity tag must not be overridden
+  // by an unchanged Last-Modified value on an otherwise changed feed.
+  if (!ifNoneMatch && ifModifiedSince) {
     const validatorTime = Date.parse(ifModifiedSince);
     if (Number.isFinite(validatorTime) && validatorTime >= feedUpdated.getTime()) {
       return new Response(null, { status: 304, headers });

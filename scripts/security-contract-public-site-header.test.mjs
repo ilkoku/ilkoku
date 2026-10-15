@@ -134,7 +134,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/site-haritasi",
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -164,7 +163,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   for (const href of [
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",

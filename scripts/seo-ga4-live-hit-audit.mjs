@@ -88,6 +88,23 @@ async function auditCase(browser, choice) {
       await delay(page, 5500);
       navigation = await snapshot();
     }
+
+    // A real browser click on a public, internal CTA. Prevent navigation only
+    // for this QA session; never submit forms, open an external site or inject
+    // gtag/dataLayer events. Observe dataLayer AND actual GA4 network hits.
+    let ctaSnapshot = null;
+    if (choice === "accept") {
+      const safeCta = page.locator(".how-hero__actions a").first();
+      if (await safeCta.count()) {
+        await safeCta.evaluate((anchor) => {
+          anchor.addEventListener("click", (event) => event.preventDefault(), { capture: true, once: true });
+        });
+        phase = "safe-cta-click";
+        await safeCta.click();
+        await delay(page, 3500);
+        ctaSnapshot = await snapshot();
+      }
+    }
     const byPhase = Object.fromEntries([...new Set(requests.map(item => item.phase))].map((key) => [
       key, summarizeHits(requests.filter(item => item.phase === key))
     ]));
@@ -96,6 +113,12 @@ async function auditCase(browser, choice) {
     const afterHits = summarizeHits(requests.filter(item => item.phase === "after-accept")).count;
     const navigationHits = summarizeHits(requests.filter(item => item.phase === "internal-navigation")).count;
     const pageViewCount = requests.filter(item => item.event === "page_view").length;
+    const ctaEvidence = choice === "accept" ? {
+      clickPerformed: Boolean(ctaSnapshot),
+      dataLayerEventPresent: Boolean(ctaSnapshot?.dataLayerEvents.includes("site_cta_click")),
+      ga4HitCount: requests.filter(item =>
+        item.phase === "safe-cta-click" && item.event === "site_cta_click").length,
+    } : null;
 
     const violations = [];
     if (beforeHits > 0) violations.push("GA4_HIT_BEFORE_CONSENT");
@@ -109,7 +132,7 @@ async function auditCase(browser, choice) {
     }
     return {
       choice, passed: violations.length === 0, violations,
-      before, after, navigation,
+      before, after, navigation, ctaEvidence,
       byPhase, pageViewCount, requests
     };
   } finally {
@@ -118,7 +141,7 @@ async function auditCase(browser, choice) {
 }
 
 const report = { checkedAt: new Date().toISOString(), source: "fresh-browser-network",
-  purpose: "Observe actual GA4 collection requests; no synthetic analytics events, forms or outbound clicks",
+  purpose: "Observe real GA4 hits and one safe internal CTA click; no injected analytics events, forms or outbound clicks",
   cases: [] };
 let failed = false;
 let browser;
@@ -136,6 +159,7 @@ try {
           appGtm: result.after.appGtm, appGtmSource: result.after.appGtmSource,
           dataLayerEvents: result.after.dataLayerEvents },
         pageViewHits: result.pageViewCount,
+        ctaEvidence: result.ctaEvidence,
         byPhase: result.byPhase
       }));
     } catch (error) {

@@ -9,6 +9,10 @@ on:
       - scripts/seo-ga4-live-hit-audit.mjs
       - scripts/seo-ga4-live-hit-rules.mjs
       - src/components/privacy/SiteAnalyticsLoader.tsx
+      - src/components/privacy/SiteInteractionAnalytics.tsx
+      - src/lib/site-interaction-events.ts
+      - src/components/content/PublicCmsPageBlocks.tsx
+      - src/features/reading/components/WorkShareActions.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - workers/ilkoku-gtm-gateway/**
 

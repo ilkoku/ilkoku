@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import QRCode from "qrcode";
 
 import mobileLogo from "@/assets/brand/ilkoku-logo-mobile.png";
+import { emitPublicInteraction } from "@/lib/site-interaction-events";
 
 import styles from "./WorkShareActions.module.css";
 
@@ -808,6 +809,10 @@ export function WorkShareActions({
       x:
         `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
     };
+
+    if (channel === "whatsapp") {
+      emitPublicInteraction("site_share_click", { channel: "whatsapp", placement: "work_share" });
+    }
 
     openExternal(
       destinations[channel],

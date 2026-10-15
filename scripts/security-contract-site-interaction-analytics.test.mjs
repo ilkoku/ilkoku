@@ -83,6 +83,9 @@ test("public layout registers one global delegated event tracker", () => {
     assert.ok(interaction.includes(selector), `homepage CTA ${selector} must be classified`);
     assert.ok(homepage.includes(selector.slice(1)), `homepage must still render ${selector}`);
   }
+  const trust = readFileSync("src/components/content/HowItWorksExperience.tsx", "utf8");
+  assert.ok(interaction.includes(".how-hero__actions"));
+  assert.ok(trust.includes("how-button--primary"));
   assert.match(share, /emitPublicInteraction\("site_share_click", \{ channel: "whatsapp"/);
 });
 

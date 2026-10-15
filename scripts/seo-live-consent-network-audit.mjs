@@ -85,6 +85,10 @@ async function runCase(browser, choice) {
     const initialRequests = requests.slice();
     if (initial.hasSavedConsent) throw Error("Fresh context unexpectedly has persisted consent");
     if (initial.appGtm || initial.appGa4) throw Error("App loaded measurement scripts before the visitor granted consent");
+    const gatewayBeforeChoice = initialRequests.filter((request) => request.url.includes("/1q6z/"));
+    if (gatewayBeforeChoice.length > 0) {
+      throw Error("Google Tag Gateway sent " + gatewayBeforeChoice.length + " script/measurement requests before user consent");
+    }
 
     if (choice === "reject") {
       await page.getByRole("button", { name: "Tümünü reddet" }).click();
@@ -94,6 +98,9 @@ async function runCase(browser, choice) {
     await page.waitForTimeout(choice === "accept" ? 3500 : 1600);
     const after = await snapshot();
     const afterRequests = requests.slice(initialRequests.length);
+    if (choice === "reject" && afterRequests.some((request) => request.url.includes("/1q6z/"))) {
+      throw Error("Rejected consent still triggered Google Tag Gateway requests");
+    }
     if (choice === "reject" && (after.appGtm || after.appGa4 || after.consent === "granted")) {
       throw Error("Rejected consent nevertheless loaded first-party GTM/GA4 or marked consent granted");
     }

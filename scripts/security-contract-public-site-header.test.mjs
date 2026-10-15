@@ -134,7 +134,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/site-haritasi",
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -164,7 +163,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   for (const href of [
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -175,7 +173,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
   }
   assert.match(header, /title: "Ana Listeler"/);
-  assert.match(header, /title: "Karşılaştır"/);
+  assert.doesNotMatch(header, /title: "Karşılaştır"/, "retired comparison header group must not reappear");
   assert.match(header, /title: "Çok Satan Analizleri"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);

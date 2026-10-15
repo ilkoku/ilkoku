@@ -142,6 +142,13 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Retired public comparison view: preserve old inbound links without
+        // leaving a 404 or publishing a duplicate book-index URL.
+        source: "/en-cok-satanlar/turkiye/karsilastirma",
+        destination: "/en-cok-satanlar/turkiye",
+        permanent: true,
+      },
+      {
         source: "/en-cok-satanlar/yeni-girisler",
         destination: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
         permanent: true,

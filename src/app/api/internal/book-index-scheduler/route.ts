@@ -90,7 +90,6 @@ const MAX_FORCED_LISTS = 12;
 const BOOK_INDEX_PUBLIC_REVALIDATION_PATHS = [
   "/en-cok-satanlar",
   "/en-cok-satanlar/turkiye",
-  "/en-cok-satanlar/turkiye/karsilastirma",
   "/en-cok-satanlar/dunya",
   "/en-cok-satanlar/cok-satanlara-yeni-girenler",
   "/yeni-cikanlar",

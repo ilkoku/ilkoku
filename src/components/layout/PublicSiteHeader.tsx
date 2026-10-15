@@ -72,18 +72,6 @@ function withBookIndexMenu(
         ],
       },
       {
-        id: "book-index-compare",
-        title: "Karşılaştır",
-        links: [
-          {
-            href: "/en-cok-satanlar/turkiye/karsilastirma",
-            label: "Karşılaştırma",
-            primary: false,
-            pageId: "book-index-comparison",
-          },
-        ],
-      },
-      {
         id: "book-index-trends",
         title: "Çok Satan Analizleri",
         links: [

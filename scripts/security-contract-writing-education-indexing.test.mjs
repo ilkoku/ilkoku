@@ -221,13 +221,23 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    'request.headers.get("if-none-match") === etag',
+    'const ifNoneMatch = request.headers.get("if-none-match");',
     "Atom feed If-None-Match conditional response",
   );
   assertContains(
     recentUpdatesAtom,
     'request.headers.get("if-modified-since")',
     "Atom feed If-Modified-Since conditional response",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "if (!ifNoneMatch && ifModifiedSince)",
+    "Atom must give If-None-Match precedence over If-Modified-Since",
+  );
+  assertNotContains(
+    recentUpdatesAtom,
+    "if (ifModifiedSince) {",
+    "Atom must never emit a stale 304 after a nonmatching ETag",
   );
   assertContains(
     recentUpdatesAtom,

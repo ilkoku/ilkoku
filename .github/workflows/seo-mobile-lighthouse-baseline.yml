@@ -23,6 +23,7 @@ on:
       - src/app/landing-*.css
       - next.config.ts
       - src/features/homepage/HomepageExperience.tsx
+      - src/features/homepage/history-670.tsx
       - src/features/homepage/preview.css
       - src/components/layout/PublicSiteHeader.tsx
       - src/components/layout/PublicHeaderNavigation.tsx

@@ -51,6 +51,20 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
 
+test("reused homepage footer ships its own compact visual CSS on all seven writing categories", () => {
+  const footer = source("src/features/homepage/live-footer.tsx");
+  const hub = source("src/components/content/WritingCategoryLandingPage.tsx");
+  const guide = source("src/components/content/WritingGuideShell.tsx");
+  const pro = source("src/app/landing-footer-pro.css");
+  const tight = source("src/app/landing-footer-tight.css");
+  has(footer, 'import "@/app/landing-footer-pro.css";', "shared footer must load background and image dimensions");
+  has(footer, 'import "@/app/landing-footer-tight.css";', "shared footer must load responsive five-column layout");
+  has(hub, "<LiveHomepageFooter", "each category hub uses shared styled footer");
+  has(guide, "<LiveHomepageFooter", "85 guides use shared styled footer");
+  has(pro, ".landing-page .landing-footer .landing-logo--footer img", "explicit brand size in reused footer");
+  has(tight, "@media (max-width: 27rem)", "one-column small device footer guard");
+});
+
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
   const liveFooter = source("src/features/homepage/live-footer.tsx");

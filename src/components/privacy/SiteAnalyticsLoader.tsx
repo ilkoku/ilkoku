@@ -219,20 +219,12 @@ function loadGa4(id: string, debugMode: boolean) {
  * GA4 destination directly with send_page_view:false and without changing
  * the existing GTM pageview wiring.
  */
-function loadGa4EventOnly() {
-  const existing = document.getElementById(GA4_EVENT_ONLY_SCRIPT_ID);
-  if (existing) return;
-  ensureDataLayer();
-  const script = document.createElement("script");
-  script.id = GA4_EVENT_ONLY_SCRIPT_ID;
-  script.async = true;
-  script.dataset.analyticsState = "loading";
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ILKOKU_GA4_ID)}`;
-  document.documentElement.dataset.ilkokuAnalyticsEventTag = "loading";
-  script.onload = () => {
-    // Consent may have been revoked during the download. Never initialize
-    // collection until consent has been checked again.
-    if (!readAnalyticsConsent()) {
+function loadGa4EventOnly(consentRequired: boolean) {
+  const existing = document.getElementById(GA4_EVENT_ONLY_SCRIPT_ID) as HTMLScriptElement | null;
+
+  function initialize(script: HTMLScriptElement) {
+    if (script.dataset.analyticsState === "loaded") return;
+    if (consentRequired && !readAnalyticsConsent()) {
       script.dataset.analyticsState = "consent-pending";
       document.documentElement.dataset.ilkokuAnalyticsEventTag = "consent-pending";
       return;
@@ -247,7 +239,20 @@ function loadGa4EventOnly() {
     script.dataset.analyticsState = "loaded";
     document.documentElement.dataset.ilkokuAnalyticsEventTag = "loaded";
     window.dispatchEvent(new Event("ilkoku:analytics-event-tag-ready"));
-  };
+  }
+
+  if (existing) {
+    if (existing.dataset.analyticsState === "consent-pending") initialize(existing);
+    return;
+  }
+  ensureDataLayer();
+  const script = document.createElement("script");
+  script.id = GA4_EVENT_ONLY_SCRIPT_ID;
+  script.async = true;
+  script.dataset.analyticsState = "loading";
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ILKOKU_GA4_ID)}`;
+  document.documentElement.dataset.ilkokuAnalyticsEventTag = "loading";
+  script.onload = () => initialize(script);
   script.onerror = () => {
     script.dataset.analyticsState = "error";
     document.documentElement.dataset.ilkokuAnalyticsEventTag = "error";
@@ -267,7 +272,7 @@ function loadProviders(settings: SiteAnalyticsSettings) {
   // Only add this event-only tag in the existing GTM-only configuration.
   // The ordinary direct GA4 provider, if enabled, already owns gtag.js.
   if (settings.gtmEnabled && settings.gtmId && !settings.ga4Enabled) {
-    loadGa4EventOnly();
+    loadGa4EventOnly(settings.consentRequired);
   }
 }
 

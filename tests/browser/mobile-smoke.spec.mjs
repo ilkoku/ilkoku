@@ -83,7 +83,7 @@ test("public registration agreement has unique SEO metadata in server HTML head"
   const response = await page.goto("/uyelik-sozlesmesi", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   const html = await response.text();
-  const serverHead = html.split(/<\\/head>/i)[0];
+  const serverHead = html.split("</head>")[0];
   expect(serverHead).toContain("<title>Platform Kullanım ve Gizlilik Taahhüdü | İlkOku</title>");
   await expect(page).toHaveTitle("Platform Kullanım ve Gizlilik Taahhüdü | İlkOku");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(

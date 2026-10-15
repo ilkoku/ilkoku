@@ -63,4 +63,7 @@ test("Browser GA4 audit does not submit forms, inject synthetic hits or log raw 
   assert.doesNotMatch(script, /\.fill\(|\.submit\(|gtag\("event"|api\/debug|localStorage\.setItem/);
   assert.match(script, /GA4_HIT_BEFORE_CONSENT/);
   assert.match(script, /NO_GA4_HITS_AFTER_ACCEPT/);
+  assert.match(script, /safe-cta-click/);
+  assert.match(script, /ctaEvidence/);
+  assert.match(script, /preventDefault\(\)/);
 });

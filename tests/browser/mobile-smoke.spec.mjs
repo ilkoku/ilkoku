@@ -98,6 +98,41 @@ test("public registration agreement has unique SEO metadata in server HTML head"
   );
 });
 
+for (const scenario of [
+  { name: "Kurgu desktop", path: "/yazarlar-icin/kurgu", viewport: { width: 1440, height: 900 } },
+  { name: "Kurgu mobile", path: "/yazarlar-icin/kurgu", viewport: { width: 390, height: 844 } },
+  { name: "Roman guide mobile", path: "/yazarlar-icin/kurgu/roman", viewport: { width: 390, height: 844 } },
+]) {
+  test(`writing education footer has bounded logo and full dark grid: ${scenario.name}`, async ({ page }) => {
+    await page.setViewportSize(scenario.viewport);
+    const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    const footer = page.locator(".nx-live-footer-scope .landing-footer");
+    await expect(footer).toBeVisible();
+    const logo = footer.locator(".landing-logo--footer img");
+    await expect(logo).toBeVisible();
+    const metrics = await footer.evaluate((element) => {
+      const image = element.querySelector(".landing-logo--footer img");
+      const grid = element.querySelector(".landing-footer__grid");
+      return {
+        logoWidth: image?.getBoundingClientRect().width ?? 0,
+        logoHeight: image?.getBoundingClientRect().height ?? 0,
+        gridDisplay: grid ? getComputedStyle(grid).display : "",
+        backgroundImage: getComputedStyle(element).backgroundImage,
+        footerHeight: element.getBoundingClientRect().height,
+      };
+    });
+    expect(metrics.logoWidth, JSON.stringify(metrics)).toBeGreaterThan(75);
+    expect(metrics.logoWidth, JSON.stringify(metrics)).toBeLessThan(210);
+    expect(metrics.logoHeight, JSON.stringify(metrics)).toBeLessThan(230);
+    expect(metrics.gridDisplay).toBe("grid");
+    expect(metrics.backgroundImage).not.toBe("none");
+    expect(metrics.footerHeight, JSON.stringify(metrics)).toBeLessThan(2400);
+    await expect(footer.getByRole("heading", { name: "Platform" })).toBeVisible();
+    await expect(footer.getByRole("heading", { name: "Destek" })).toBeVisible();
+  });
+}
+
 // This published work is created by prepare-browser-auth-fixtures.mjs.
 // Check that moving showcase CSS out of globals does not erase book detail styling.
 for (const scenario of [

@@ -55,7 +55,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
         <div className="landing-container landing-footer__grid">
           <div>
             <Link prefetch={false} className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa">
-              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" />
+              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" style={{ width: "156px", maxWidth: "100%", height: "auto" }} />
             </Link>
             <p><FooterSlogan value={slogan} /></p>
           </div>

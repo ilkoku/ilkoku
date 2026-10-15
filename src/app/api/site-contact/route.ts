@@ -1,15 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginRequest, sameOriginRequestUrl } from "@/lib/same-origin";
 
 function clean(value: FormDataEntryValue | null, max: number) {
   return String(value ?? "").trim().slice(0, max);
 }
 
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  const expectedOrigin = new URL(request.url).origin;
-  if (origin && origin !== expectedOrigin) {
+  // The request URL can reference the internal Node origin behind a proxy.
+  // Match the browser's origin against our shared public/proxy-aware allowlist
+  // instead; never trust an arbitrary Origin or Referer value.
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
 
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
   const message = clean(form.get("message"), 4000);
 
   if (!name || !email || !message || !email.includes("@")) {
-    return NextResponse.redirect(new URL("/iletisim?durum=eksik", request.url), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/iletisim?durum=eksik"), 303);
   }
 
   const id = randomUUID();
@@ -37,8 +39,8 @@ export async function POST(request: Request) {
       )
     `;
   } catch {
-    return NextResponse.redirect(new URL("/iletisim?durum=hata", request.url), 303);
+    return NextResponse.redirect(sameOriginRequestUrl(request, "/iletisim?durum=hata"), 303);
   }
 
-  return NextResponse.redirect(new URL("/iletisim?durum=alindi", request.url), 303);
+  return NextResponse.redirect(sameOriginRequestUrl(request, "/iletisim?durum=alindi"), 303);
 }

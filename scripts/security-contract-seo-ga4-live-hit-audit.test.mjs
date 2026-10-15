@@ -32,8 +32,13 @@ test("Third-party GA4 requests count but arbitrary domains cannot", () => {
   assert.equal(classifyGa4Request("garbage"), null);
 });
 
-test("Tag config and health are not incorrectly reported as GA4 events", () => {
-  assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/ag/g/c?x=1").type, "tag-configuration");
+test("Gateway GA4 hit paths are measured; health and JS resources are not", () => {
+  assert.deepEqual(
+    classifyGa4Request("https://ilkoku.com/ilkgtm/ag/g/c?v=2",
+      "en=page_view&tid=G-MCF2YN9SL8&cid=PRIVATE"),
+    { type: "ga4-hit", firstParty: true, event: "page_view", measurement: "G-MCF2YN9SL8" }
+  );
+  assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/ga/g/c").type, "ga4-hit");
   assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/healthy").type, "gateway-health");
   assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/tyfn-random"), null);
 });
@@ -43,7 +48,7 @@ test("Aggregate only GA4 collection endpoints and successful HTTP response count
     { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=page_view"), status: 204 },
     { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=page_view"), status: 200 },
     { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=click"), status: 503 },
-    { type: "tag-configuration", status: 200 }
+    { type: "gateway-health", status: 200 }
   ];
   assert.deepEqual(summarizeHits(example), {
     count: 3, events: { page_view: 2, click: 1 }, firstPartyCount: 3, status2xx: 2

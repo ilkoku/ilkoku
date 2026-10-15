@@ -34,6 +34,8 @@ function ctaPlacement(anchor: HTMLAnchorElement) {
   if (anchor.closest(".nx-passport__copy") && anchor.classList.contains("nx-action")) return "home_passport";
   if (anchor.closest(".landing-header__actions")) return "home_header";
   if (anchor.closest(".landing-cta")) return "home_join";
+  if (anchor.closest(".how-hero__actions")) return "trust_hero";
+  if (anchor.classList.contains("how-button")) return "trust_cta";
   if (anchor.closest(".contact-route-card__links")) return "contact_quick_links";
   if (anchor.closest(".contact-direct-card")) return "contact_direct";
   return null;

@@ -99,16 +99,6 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      // Scoped proof: determine whether asking the CDN not to transform HTML
-      // prevents unexpected pre-consent Google Tag Gateway injection.
-      // Do not apply globally without live-browser evidence and perf analysis.
-      {
-        source: "/yardim",
-        headers: [
-          { key: "Cache-Control", value: "private, no-cache, no-transform" },
-          { key: "X-IlkOku-Edge-Probe", value: "consent-transform-opt-out-v1" },
-        ],
-      },
       ...publicAuthNoindexRouteHeaders.map((source) => ({
         source,
         headers: [

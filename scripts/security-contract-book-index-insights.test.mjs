@@ -151,21 +151,7 @@ test("Book Index trend pages expose source-level evidence instead of summary-onl
     '<BookIndexViewModeNav current="list" />',
     "Turkey list no longer renders the obsolete two-item view menu",
   );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
-    "comparison keeps only the primary nav above the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showPrimary={false} />',
-    "comparison uses the shared analysis nav below the hero",
-  );
-  notContains(
-    view,
-    '<BookIndexViewModeNav current="comparison" />',
-    "comparison no longer renders the obsolete two-item view menu",
-  );
+  notContains(view, 'current="comparison"', "retired comparison nav does not render");
   contains(view, "Yeni giriş yapılan kitap satış kanalı", "new-entry summary metric");
   contains(view, "kitap satış kanalına yeni girdi", "new-entry row wording is explicit");
   contains(view, "Toplam ${item.currentSourceCount} kitap satış kanalında yer alıyor", "new-entry row total visibility wording");

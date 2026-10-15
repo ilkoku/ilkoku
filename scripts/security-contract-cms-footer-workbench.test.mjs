@@ -51,18 +51,21 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
   has(workbench, "Boşsa güvenli fallback kullanılır", "link fallback guidance");
 });
 
-test("reused homepage footer ships its own compact visual CSS on all seven writing categories", () => {
+test("all seven writing category hubs and 85 guides load the compact homepage footer styles from their route layout", () => {
   const footer = source("src/features/homepage/live-footer.tsx");
+  const writersLayout = source("src/app/yazarlar-icin/layout.tsx");
   const hub = source("src/components/content/WritingCategoryLandingPage.tsx");
   const guide = source("src/components/content/WritingGuideShell.tsx");
   const pro = source("src/app/landing-footer-pro.css");
   const tight = source("src/app/landing-footer-tight.css");
-  has(footer, 'import "@/app/landing-footer-pro.css";', "shared footer must load background and image dimensions");
-  has(footer, 'import "@/app/landing-footer-tight.css";', "shared footer must load responsive five-column layout");
-  has(hub, "<LiveHomepageFooter", "each category hub uses shared styled footer");
-  has(guide, "<LiveHomepageFooter", "85 guides use shared styled footer");
-  has(pro, ".landing-page .landing-footer .landing-logo--footer img", "explicit brand size in reused footer");
-  has(tight, "@media (max-width: 27rem)", "one-column small device footer guard");
+  has(writersLayout, 'import "../landing-footer-pro.css";', "writer route loads dark footer background and logo sizing");
+  has(writersLayout, 'import "../landing-footer-tight.css";', "writer route loads responsive footer grid");
+  has(footer, 'style={{ width: "156px", maxWidth: "100%", height: "auto" }}', "logo has independent hard sizing even if CSS is absent");
+  has(footer, 'import "./live-footer.css";', "shared footer keeps its own supplemental footer styles");
+  has(hub, "<LiveHomepageFooter", "category hub uses footer");
+  has(guide, "<LiveHomepageFooter", "all 85 guides use footer");
+  has(pro, ".landing-page .landing-footer .landing-logo--footer img", "compact image CSS guard");
+  has(tight, "@media (max-width: 27rem)", "mobile grid CSS guard");
 });
 
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {

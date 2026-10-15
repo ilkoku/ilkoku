@@ -4,6 +4,7 @@ import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncemen
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
 import { SiteAnalyticsLoader } from "@/components/privacy/SiteAnalyticsLoader";
+import { SiteInteractionAnalytics } from "@/components/privacy/SiteInteractionAnalytics";
 import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
 import {
   publicBrandDescription,
@@ -153,6 +154,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <PublicCmsHydrator />
         <SiteAnalyticsLoader />
+        <SiteInteractionAnalytics />
         <SiteConsentBanner />
       </body>
     </html>

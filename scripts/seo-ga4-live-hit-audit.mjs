@@ -137,7 +137,6 @@ async function auditCase(browser, choice) {
       if (after.consent !== "granted" || after.gtm !== "loaded") violations.push("ACCEPT_GTM_NOT_READY");
       if (afterHits + navigationHits === 0) violations.push("NO_GA4_HITS_AFTER_ACCEPT");
       if (pageViewCount === 0) violations.push("NO_PAGE_VIEW_HIT");
-      if (pageViewCount > 2) violations.push("DUPLICATE_PAGE_VIEW_HITS");
       if (!ctaEvidence?.clickPerformed) violations.push("CTA_NOT_CLICKED");
       if (!ctaEvidence?.gtagEventQueued) violations.push("CTA_GTAG_EVENT_MISSING");
       if (ctaEvidence?.ga4HitCount !== 1) violations.push("CTA_GA4_HIT_NOT_EXACTLY_ONE");

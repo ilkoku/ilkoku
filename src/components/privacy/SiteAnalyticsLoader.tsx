@@ -24,7 +24,6 @@ const CONSENT_STORAGE_KEY = "ilkoku:consent:v1";
 const GTM_SCRIPT_ID = "ilkoku-gtm-script";
 const GA4_DYNAMIC_SCRIPT_ID = "ilkoku-ga4-script";
 const GA4_HEAD_SCRIPT_ID = "ilkoku-ga4-head-script";
-const GA4_EVENT_ONLY_SCRIPT_ID = "ilkoku-ga4-event-only-script";
 const MANUAL_GTM_PATH = "/ilkgtm/";
 const MANUAL_GTM_HEALTH_URL = "/ilkgtm/healthy";
 let pendingGtmLoad: Promise<void> | null = null;
@@ -213,53 +212,6 @@ function loadGa4(id: string, debugMode: boolean) {
   document.head.appendChild(script);
 }
 
-/**
- * Dedicated post-consent GA4 event runtime. The published GTM container can
- * produce pageviews but has no custom-event tag. Initialize the same known
- * GA4 destination directly with send_page_view:false and without changing
- * the existing GTM pageview wiring.
- */
-function loadGa4EventOnly(consentRequired: boolean) {
-  const existing = document.getElementById(GA4_EVENT_ONLY_SCRIPT_ID) as HTMLScriptElement | null;
-
-  function initialize(script: HTMLScriptElement) {
-    if (script.dataset.analyticsState === "loaded") return;
-    if (consentRequired && !readAnalyticsConsent()) {
-      script.dataset.analyticsState = "consent-pending";
-      document.documentElement.dataset.ilkokuAnalyticsEventTag = "consent-pending";
-      return;
-    }
-    ensureDataLayer();
-    window.gtag?.("js", new Date());
-    window.gtag?.("config", ILKOKU_GA4_ID, {
-      send_page_view: false,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-    });
-    script.dataset.analyticsState = "loaded";
-    document.documentElement.dataset.ilkokuAnalyticsEventTag = "loaded";
-    window.dispatchEvent(new Event("ilkoku:analytics-event-tag-ready"));
-  }
-
-  if (existing) {
-    if (existing.dataset.analyticsState === "consent-pending") initialize(existing);
-    return;
-  }
-  ensureDataLayer();
-  const script = document.createElement("script");
-  script.id = GA4_EVENT_ONLY_SCRIPT_ID;
-  script.async = true;
-  script.dataset.analyticsState = "loading";
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ILKOKU_GA4_ID)}`;
-  document.documentElement.dataset.ilkokuAnalyticsEventTag = "loading";
-  script.onload = () => initialize(script);
-  script.onerror = () => {
-    script.dataset.analyticsState = "error";
-    document.documentElement.dataset.ilkokuAnalyticsEventTag = "error";
-  };
-  document.head.appendChild(script);
-}
-
 function loadProviders(settings: SiteAnalyticsSettings) {
   if (!settings.enabled) return;
 
@@ -268,12 +220,6 @@ function loadProviders(settings: SiteAnalyticsSettings) {
 
   if (settings.ga4Enabled && settings.ga4MeasurementId) loadGa4(settings.ga4MeasurementId, settings.debugMode);
   else setRuntimeState("ga4", "disabled");
-
-  // Only add this event-only tag in the existing GTM-only configuration.
-  // The ordinary direct GA4 provider, if enabled, already owns gtag.js.
-  if (settings.gtmEnabled && settings.gtmId && !settings.ga4Enabled) {
-    loadGa4EventOnly(settings.consentRequired);
-  }
 }
 
 export function SiteAnalyticsLoader() {

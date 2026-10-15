@@ -14,7 +14,6 @@ const share = readFileSync("src/features/reading/components/WorkShareActions.tsx
 function createEmitter(consent = "denied", gtm = "loaded", ga4 = "disabled") {
   const sent = [];
   const direct = [];
-  const listeners = new Map();
   const sandbox = {
     exports: {},
     require: (name) => {
@@ -25,20 +24,17 @@ function createEmitter(consent = "denied", gtm = "loaded", ga4 = "disabled") {
       ilkokuAnalyticsConsent: consent,
       ilkokuAnalyticsGtm: gtm,
       ilkokuAnalyticsGa4: ga4,
-      ilkokuAnalyticsEventTag: "loaded",
     } } },
     window: {
       dataLayer: sent,
       gtag: (...args) => direct.push(args),
-      addEventListener: (name, callback) => listeners.set(name, callback),
     },
   };
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   vm.runInNewContext(compiled, sandbox, { timeout: 1000 });
-  return { sent, direct, ...sandbox.exports, dataset: sandbox.document.documentElement.dataset,
-    fire: (name) => listeners.get(name)?.() };
+  return { sent, direct, ...sandbox.exports, dataset: sandbox.document.documentElement.dataset };
 }
 
 test("site events never send before consent and remain blocked after revocation", () => {
@@ -84,44 +80,6 @@ test("unknown attributes and arbitrary link or visitor values never leave the pa
   assert.equal(api.emitPublicInteraction("site_form_success", { form: "invalid" }), false);
   assert.equal(api.emitPublicInteraction("site_share_click", { channel: "whatsapp" }), false);
   assert.equal(api.direct.length, 0);
-});
-
-test("loading event-only tag buffers categorical hits until ready, then sends once", () => {
-  const api = createEmitter("granted", "loaded", "disabled");
-  api.dataset.ilkokuAnalyticsEventTag = "loading";
-  assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "trust_hero" }), true);
-  assert.equal(api.direct.length, 0);
-  api.dataset.ilkokuAnalyticsEventTag = "loaded";
-  api.fire("ilkoku:analytics-event-tag-ready");
-  assert.equal(api.direct.length, 1);
-  assert.equal(api.direct[0][1], "site_cta_click");
-  api.fire("ilkoku:analytics-event-tag-ready");
-  assert.equal(api.direct.length, 1);
-});
-
-test("revocation discards pending events and prevents later emission", () => {
-  const api = createEmitter("granted", "loaded", "disabled");
-  api.dataset.ilkokuAnalyticsEventTag = "loading";
-  api.emitPublicInteraction("site_contact_click", { channel: "phone" });
-  api.dataset.ilkokuAnalyticsConsent = "denied";
-  api.fire("ilkoku:consent-changed");
-  api.dataset.ilkokuAnalyticsConsent = "granted";
-  api.dataset.ilkokuAnalyticsEventTag = "loaded";
-  api.fire("ilkoku:analytics-event-tag-ready");
-  assert.equal(api.direct.length, 0);
-});
-
-test("event-only runtime uses consent, private-mode-safe pageview suppression and recovery", () => {
-  const loader = readFileSync("src/components/privacy/SiteAnalyticsLoader.tsx", "utf8");
-  assert.match(loader, /GA4_EVENT_ONLY_SCRIPT_ID/);
-  assert.match(loader, /loadGa4EventOnly\(settings\.consentRequired\)/);
-  assert.match(loader, /settings\.gtmEnabled && settings\.gtmId && !settings\.ga4Enabled/);
-  assert.match(loader, /consentRequired && !readAnalyticsConsent\(\)/);
-  assert.match(loader, /send_page_view: false/);
-  assert.match(loader, /allow_google_signals: false/);
-  assert.match(loader, /"ilkoku:analytics-event-tag-ready"/);
-  assert.match(loader, /existing\.dataset\.analyticsState === "consent-pending"/);
-  assert.match(loader, /document\.head\.appendChild\(script\)/);
 });
 
 test("public layout registers one global delegated event tracker", () => {

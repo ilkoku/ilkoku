@@ -31,6 +31,7 @@ on:
       - src/features/homepage/live-footer.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/components/content/PublicFooterHydrator.tsx
+      - src/components/content/PublicCmsHydrator.tsx
       - scripts/security-contract-home-footer-route-return.test.mjs
       - src/components/layout/PublicSiteAccount.tsx
       - scripts/security-contract-account-prefetch.test.mjs

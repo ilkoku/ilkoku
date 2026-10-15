@@ -11,9 +11,11 @@ export function classifyGa4Request(rawUrl, postBody = "") {
   const firstParty = url.hostname === "ilkoku.com" && path.startsWith("/ilkgtm/");
   const googleHost = analyticsHosts.test(url.hostname);
   if (firstParty && path === "/ilkgtm/healthy") return { type: "gateway-health" };
-  if (firstParty && /^\/ilkgtm\/ag\/g\/c$/i.test(path)) return { type: "tag-configuration" };
+  // Google Tag Gateway routes GA4 event hits to /ag/g/c (Google
+  // signals) or /ga/g/c. These are actual measurement calls, not config!
+  const gatewayCollect = firstParty && /^\/ilkgtm\/(?:ag|ga)\/g\/c$/i.test(path);
   if (!firstParty && !googleHost) return null;
-  if (!hitPath.test(path)) return null;
+  if (!gatewayCollect && !hitPath.test(path)) return null;
   // GA4 sometimes sends URL-encoded events in POST bodies. Inspect only
   // event name + public measurement ID in memory; discard all other values.
   // One request may hold a batch of newline-separated events.

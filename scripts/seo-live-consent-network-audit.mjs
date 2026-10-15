@@ -130,6 +130,43 @@ async function runCase(browser, choice) {
   }
 }
 
+// Diagnostic only: prove whether a narrowly scoped no-transform response
+// avoids an edge-injected gateway script. This does NOT modify visitor consent.
+async function probeNoTransformHelpRoute(browser) {
+  const context = await browser.newContext({ locale: "tr-TR", serviceWorkers: "block" });
+  const page = await context.newPage();
+  const gatewayRequests = [];
+  page.on("request", (request) => {
+    if (/\/1q6z(?:\/|$)/i.test(new URL(request.url()).pathname)) {
+      gatewayRequests.push({ type: request.resourceType(), url: normalizeUrl(request.url()) });
+    }
+  });
+  try {
+    const response = await page.goto("https://ilkoku.com/yardim", {
+      waitUntil: "domcontentloaded",
+      timeout: 35_000,
+    });
+    const httpStatus = response?.status() || 0;
+    if (httpStatus === 403 || httpStatus === 429) throw Error("WAF circuit breaker");
+    if (httpStatus !== 200) throw Error("Help route HTTP " + httpStatus);
+    await page.waitForTimeout(1800);
+    const cacheControl = response?.headers()["cache-control"] || "";
+    const probeHeader = response?.headers()["x-ilkoku-edge-probe"] || "";
+    const appGtm = await page.evaluate(() => Boolean(document.getElementById("ilkoku-gtm-script")));
+    const result = {
+      path: "/yardim", httpStatus, cacheControl, probeHeader, appGtm,
+      gatewayRequestCount: gatewayRequests.length, gatewayRequests,
+      passed: probeHeader === "consent-transform-opt-out-v1" &&
+        cacheControl.includes("no-transform") && gatewayRequests.length === 0 && !appGtm,
+    };
+    if (!result.passed) console.error("EDGE_NO_TRANSFORM_PROBE_FAILED " + JSON.stringify(result));
+    else console.log("EDGE_NO_TRANSFORM_PROBE_PASSED " + JSON.stringify(result));
+    return result;
+  } finally {
+    await context.close();
+  }
+}
+
 const report = {
   checkedAt: new Date().toISOString(),
   page: pageUrl,
@@ -159,6 +196,14 @@ try {
       // Inspect reject and accept independently: one failure must not hide
       // the second consent scenario's initiators and requests.
     }
+  }
+  try {
+    report.noTransformProbe = await probeNoTransformHelpRoute(browser);
+    if (!report.noTransformProbe.passed) failed = true;
+  } catch (error) {
+    failed = true;
+    report.noTransformProbe = { passed: false, error: String(error) };
+    console.error("EDGE_NO_TRANSFORM_PROBE_ERROR " + String(error));
   }
 } catch (error) {
   failed = true;

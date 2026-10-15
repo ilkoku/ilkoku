@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { prisma } from "@/lib/prisma";
 
 import {
@@ -280,9 +282,13 @@ async function loadLongSellers(limit: number) {
     .slice(0, limit);
 }
 
-export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsights> {
-  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
-  const snapshots = await loadSourceSnapshots();
+// Page and generateMetadata request the same evidence. Compute it once per
+// request, while running the independent snapshot and history SQL in parallel.
+const getBookIndexInsightsForLimit = cache(async (safeLimit: number): Promise<BookIndexInsights> => {
+  const [snapshots, longSellers] = await Promise.all([
+    loadSourceSnapshots(),
+    loadLongSellers(safeLimit),
+  ]);
 
   const currentSourcesByBook = new Map<string, Set<string>>();
   const currentIndependenceGroupsByBook = new Map<string, Set<string>>();
@@ -489,6 +495,11 @@ export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsight
     newEntries,
     risers,
     everywhereSellers,
-    longSellers: await loadLongSellers(safeLimit),
+    longSellers,
   };
+});
+
+export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsights> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+  return getBookIndexInsightsForLimit(safeLimit);
 }

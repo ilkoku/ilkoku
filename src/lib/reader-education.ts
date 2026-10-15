@@ -309,7 +309,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Seçtiğin eserin türünü belirle ve yalnız o türe özgü dört sinyal çıkar.",
       steps: ["Ana tür ve varsa alt türü yaz.", "Türün okura verdiği temel vaadi tek cümlede tanımla.", "Dört türe özgü sinyal bul.", "Eserin beklentiyi karşıladığı veya kırdığı bir anı gerekçelendir."],
     },
-    application: { heading: "Türünü seç, okuma merceğini değiştir.", text: "İlkOku’da farklı türlere göz at ve aynı okuma yöntemini her esere uygulamak yerine türün kendi sorularıyla okumaya başla.", href: "/turler", label: "Türleri keşfet" },
+    application: { heading: "Türünü seç, okuma merceğini değiştir.", text: "Açık olan kurgu türleri rehberlerinde roman, polisiye, fantastik ve diğer anlatı biçimlerinin farklarını karşılaştır. Okuduğun eseri türün kendi sorularıyla incelemeye başla.", href: "/yazarlar-icin/kurgu", label: "Kurgu türlerini incele" },
   },
   {
     slug: "elestirel-okuma",

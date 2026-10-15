@@ -64,9 +64,10 @@ jobs:
         run: node scripts/gsc-full-index-census.mjs
 
       - name: Upload census artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: gsc-full-index-census
           path: /tmp/ilkoku-gsc-full-index-census.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14

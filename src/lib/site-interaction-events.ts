@@ -47,6 +47,33 @@ function permittedPayload(event: PublicInteractionEvent, attributes: Record<stri
   return attributes;
 }
 
+type PendingEvent = { event: PublicInteractionEvent; attributes: Record<string, string> };
+const pending: PendingEvent[] = [];
+let readyListenerRegistered = false;
+
+function sendToGa4(event: PublicInteractionEvent, attributes: Record<string, string>) {
+  window.gtag?.("event", event, { ...attributes, send_to: ILKOKU_GA4_ID });
+}
+
+function flushPendingEvents() {
+  if (!publicAnalyticsConsentGranted()) {
+    pending.splice(0);
+    return;
+  }
+  const state = document.documentElement.dataset;
+  if (state.ilkokuAnalyticsEventTag !== "loaded" && state.ilkokuAnalyticsGa4 !== "loaded") return;
+  for (const item of pending.splice(0)) sendToGa4(item.event, item.attributes);
+}
+
+function registerReadyListener() {
+  if (readyListenerRegistered) return;
+  readyListenerRegistered = true;
+  window.addEventListener("ilkoku:analytics-event-tag-ready", flushPendingEvents);
+  window.addEventListener("ilkoku:consent-changed", () => {
+    if (!publicAnalyticsConsentGranted()) pending.splice(0);
+  });
+}
+
 export function emitPublicInteraction(
   event: PublicInteractionEvent,
   attributes: Record<string, string> = {},
@@ -56,15 +83,18 @@ export function emitPublicInteraction(
   const payload = permittedPayload(event, attributes);
   if (!payload) return false;
   const state = document.documentElement.dataset;
-  const gtmReady = ["loading", "loaded", "fallback-loading", "present"]
-    .includes(state.ilkokuAnalyticsGtm || "");
-  const ga4Ready = state.ilkokuAnalyticsGa4 === "loaded";
-  if (!gtmReady && !ga4Ready) return false;
-
-  // The existing GTM container already delivers page_view to this GA4 stream.
-  // gtag('event') with explicit send_to uses that Google tag directly,
-  // never pushes a duplicate GTM custom-event object, and never adds an
-  // independent gtag.js script or config page_view call.
-  window.gtag("event", event, { ...payload, send_to: ILKOKU_GA4_ID });
-  return true;
+  if (state.ilkokuAnalyticsEventTag === "loaded" ||
+      state.ilkokuAnalyticsGa4 === "loaded") {
+    sendToGa4(event, payload);
+    return true;
+  }
+  if (state.ilkokuAnalyticsEventTag === "loading" ||
+      state.ilkokuAnalyticsEventTag === "consent-pending") {
+    // Buffer only category-only events while the consent-approved Google
+    // event runtime initializes. No identifiers, storage or network calls.
+    registerReadyListener();
+    if (pending.length < 20) pending.push({ event, attributes: payload });
+    return true;
+  }
+  return false;
 }

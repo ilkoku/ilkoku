@@ -140,6 +140,7 @@ async function inspectUrlOnce(accessToken, inspectionUrl) {
     return {
       inspectionUrl,
       error: message,
+      httpStatus: response.status,
     };
   }
 
@@ -170,12 +171,17 @@ async function inspectUrlOnce(accessToken, inspectionUrl) {
 // Google URL Inspection may occasionally time out for one page. The complete
 // census must still preserve all other URL results, rather than throwing away
 // 128 successful inspections because the 129th request failed.
-const INSPECTION_TRANSPORT_ATTEMPTS = 2;
+const INSPECTION_TRANSPORT_ATTEMPTS = 3;
+const RETRYABLE_INSPECTION_HTTP = new Set([429, 500, 502, 503, 504]);
 
 async function inspectUrl(accessToken, inspectionUrl) {
   for (let attempt = 1; attempt <= INSPECTION_TRANSPORT_ATTEMPTS; attempt += 1) {
     try {
-      return await inspectUrlOnce(accessToken, inspectionUrl);
+      const result = await inspectUrlOnce(accessToken, inspectionUrl);
+      if (!result.error || !RETRYABLE_INSPECTION_HTTP.has(result.httpStatus) ||
+          attempt === INSPECTION_TRANSPORT_ATTEMPTS) return result;
+      console.warn(`GSC inspection transient HTTP ${result.httpStatus} for ${inspectionUrl}; attempt ${attempt}/${INSPECTION_TRANSPORT_ATTEMPTS}`);
+      await new Promise((resolve) => setTimeout(resolve, attempt * 3_000));
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       console.warn(`GSC inspection transport error for ${inspectionUrl}, attempt ${attempt}/${INSPECTION_TRANSPORT_ATTEMPTS}: ${reason}`);

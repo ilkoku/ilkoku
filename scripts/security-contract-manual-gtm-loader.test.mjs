@@ -24,6 +24,10 @@ test("Worker failure falls back to Google's existing direct script after consent
   assert.match(src, /response\.ok && \(await response\.text\(\)\)\.trim\(\) === "ok"/u);
   assert.ok(src.includes("return " + String.fromCharCode(96) + "$" + "{MANUAL_GTM_PATH}?id="));
   assert.match(src, /window\.clearTimeout\(timeout\)/u);
+  assert.match(src, /scriptSource\.startsWith\(MANUAL_GTM_PATH\)/u);
+  assert.match(src, /"fallback-loading"/u);
+  assert.equal((src.match(/"gtm.start": Date\.now\(\)/gu) || []).length, 1,
+    "Fallback must not duplicate the initial GTM start event");
 });
 
 test("Manual route has no pre-consent injection; audit recognizes it after acceptance", () => {

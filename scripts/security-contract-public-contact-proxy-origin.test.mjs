@@ -11,6 +11,9 @@ const compile = (path) => ts.transpileModule(readFileSync(path, "utf8"), {
 function createRoute() {
   let writes = 0;
   let failWrite = false;
+  const afterCallbacks = [];
+  let failNotification = false;
+  const notifications = [];
   const helperModule = { exports: {} };
   vm.runInNewContext(compile("src/lib/same-origin.ts"), {
     exports: helperModule.exports, module: helperModule,
@@ -33,7 +36,7 @@ function createRoute() {
     exports: routeModule.exports, module: routeModule, URL, JSON, String, Date,
     require: (name) => {
       if (name === "node:crypto") return { randomUUID: () => "test-uuid" };
-      if (name === "next/server") return { NextResponse: api };
+      if (name === "next/server") return { NextResponse: api, after: (callback) => afterCallbacks.push(callback) };
       if (name === "@/lib/prisma") return { prisma: {
         $executeRaw: async () => {
           if (failWrite) throw new Error("simulated database unavailable");
@@ -42,6 +45,12 @@ function createRoute() {
         },
       } };
       if (name === "@/lib/same-origin") return helperModule.exports;
+      if (name === "@/lib/email/site-contact-notification") return {
+        sendSiteContactNotification: async (input) => {
+          notifications.push(input);
+          if (failNotification) throw new Error("SMTP_TEST_FAILURE");
+        },
+      };
       throw new Error("Unexpected dependency: " + name);
     },
   }, { timeout: 1000 });
@@ -49,6 +58,9 @@ function createRoute() {
   return {
     post: routeModule.exports.POST,
     getWrites: () => writes,
+    getNotifications: () => notifications,
+    flushBackground: async () => { for (const callback of afterCallbacks.splice(0)) await callback(); },
+    setNotificationFailure: (value) => { failNotification = value; },
     setDatabaseFailure: (value) => { failWrite = value; },
   };
 }
@@ -76,6 +88,10 @@ test("valid browser submission survives Cloudflare / internal Node origin differ
   assert.equal(result.status, 303);
   assert.equal(result.location, "https://ilkoku.com/iletisim?durum=alindi");
   assert.equal(route.getWrites(), 1);
+  assert.equal(route.getNotifications().length, 0, "send runs after the response");
+  await route.flushBackground();
+  assert.equal(route.getNotifications().length, 1);
+  assert.equal(route.getNotifications()[0].email, "test@example.com");
 });
 
 test("foreign Origin remains blocked before parsing form or writing data", async () => {
@@ -85,6 +101,7 @@ test("foreign Origin remains blocked before parsing form or writing data", async
   assert.equal(result.status, 403);
   assert.equal(result.payload.ok, false);
   assert.equal(route.getWrites(), 0);
+  assert.equal(route.getNotifications().length, 0);
 });
 
 test("missing origin and referer is rejected, while same-site referer is accepted", async () => {
@@ -116,6 +133,25 @@ test("database error redirects publicly as failure, never success", async () => 
   assert.equal(result.status, 303);
   assert.equal(result.location, "https://ilkoku.com/iletisim?durum=hata");
   assert.equal(route.getWrites(), 0);
+});
+
+
+test("email failure never discards a saved form or reports a false database failure", async () => {
+  const route = createRoute();
+  route.setNotificationFailure(true);
+  const log = console.error;
+  console.error = () => {};
+  try {
+    const result = await route.post(request());
+    assert.equal(result.status, 303);
+    assert.equal(result.location, "https://ilkoku.com/iletisim?durum=alindi");
+    assert.equal(route.getWrites(), 1);
+    assert.equal(route.getNotifications().length, 0);
+    await route.flushBackground();
+    assert.equal(route.getNotifications().length, 1);
+  } finally {
+    console.error = log;
+  }
 });
 
 test("contact analytics still requires server-confirmed success redirect", () => {

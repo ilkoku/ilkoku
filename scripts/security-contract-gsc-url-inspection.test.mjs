@@ -146,6 +146,15 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.doesNotMatch(censusScript, /method: "PUT"|method: "DELETE"/u);
 });
 
+test("full census retries only transient inspection statuses and fails closed for genuine errors", () => {
+  assert.match(censusScript, /INSPECTION_TRANSPORT_ATTEMPTS = 3/);
+  assert.match(censusScript, /RETRYABLE_INSPECTION_HTTP = new Set\(\[429, 500, 502, 503, 504\]\)/);
+  assert.match(censusScript, /httpStatus: response\.status/);
+  assert.match(censusScript, /attempt === INSPECTION_TRANSPORT_ATTEMPTS/);
+  assert.match(censusScript, /result\.error/);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/);
+});
+
 test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
   assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
   assert.doesNotMatch(sitemapSubmitWorkflow, /\n  push:\n/u);

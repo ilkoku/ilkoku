@@ -308,6 +308,7 @@ test("GSC family report classifies the actual public guide URL cohort without ch
   const records = [
     { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/roman", verdict: "NEUTRAL", coverageState: "Tarandı - şu anda dizine eklenmiş değil" },
     { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/polisiye", verdict: "NEUTRAL", coverageState: "URL Google tarafından bilinmiyor" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/utopya", verdict: "NEUTRAL", coverageState: "URL is unknown to Google" },
     { inspectionUrl: "https://ilkoku.com/yazarlar-icin/akademik/arastirma", verdict: "NEUTRAL", coverageState: "Keşfedildi - şu anda dizine eklenmiş değil" },
     { inspectionUrl: "https://ilkoku.com/yazarlar-icin/edebiyat/siir", verdict: "PASS", coverageState: "Gönderildi ve dizine eklendi" },
     { inspectionUrl: "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/fabl", error: "transport timeout" },
@@ -319,14 +320,14 @@ test("GSC family report classifies the actual public guide URL cohort without ch
   const result = summarizeWritingGuideFamilies(records);
   assert.equal(result.length, 7);
   assert.deepEqual(result.find((f) => f.slug === "kurgu"), {
-    slug: "kurgu", label: "Kurgu", total: 2, indexed: 0,
-    crawledNotIndexed: 1, discovered: 0, unknown: 1, errors: 0, other: 0,
+    slug: "kurgu", label: "Kurgu", total: 3, indexed: 0,
+    crawledNotIndexed: 1, discovered: 0, unknown: 2, errors: 0, other: 0,
   });
   assert.equal(result.find((f) => f.slug === "akademik").discovered, 1);
   assert.equal(result.find((f) => f.slug === "edebiyat").indexed, 1);
   assert.equal(result.find((f) => f.slug === "cocuk-ve-genclik").errors, 1);
   assert.equal(result.find((f) => f.slug === "cizgi-anlati").other, 1);
-  assert.equal(result.reduce((n, f) => n + f.total, 0), 6);
+  assert.equal(result.reduce((n, f) => n + f.total, 0), 7);
   assert.match(censusScript, /writingGuideFamilies: summarizeWritingGuideFamilies\(results\)/u);
   assert.match(censusScript, /### Yazarlık rehberi ailelerinin Google durumu/u);
 });

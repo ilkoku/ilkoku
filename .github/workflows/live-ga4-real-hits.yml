@@ -1,0 +1,54 @@
+name: Live GA4 actual hit verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/live-ga4-real-hits.yml
+      - scripts/seo-ga4-live-hit-audit.mjs
+      - scripts/seo-ga4-live-hit-rules.mjs
+      - src/components/privacy/SiteAnalyticsLoader.tsx
+      - src/components/privacy/SiteConsentBanner.tsx
+      - workers/ilkoku-gtm-gateway/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-ga4-actual-hits
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Count real GA4 hits in fresh reject/accept sessions
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Check rules and script syntax
+        run: |
+          node --check scripts/seo-ga4-live-hit-rules.mjs
+          node --check scripts/seo-ga4-live-hit-audit.mjs
+          node --test scripts/security-contract-seo-ga4-live-hit-audit.test.mjs
+      - name: Install browser QA runner
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Inspect live requests after clean reject and accept sessions
+        env:
+          GA4_HIT_AUDIT_REPORT: /tmp/ilkoku-ga4-real-hits.json
+        run: node scripts/seo-ga4-live-hit-audit.mjs
+      - name: Preserve sanitized GA4 request evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-ga4-real-hit-evidence
+          path: /tmp/ilkoku-ga4-real-hits.json
+          if-no-files-found: warn
+          retention-days: 14

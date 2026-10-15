@@ -3,7 +3,7 @@
 const hitPath = /\/(?:g\/collect|j\/collect|mp\/collect|collect)$/i;
 const analyticsHosts = /(^|\.)google-analytics\.com$|^analytics\.google\.com$/i;
 
-export function classifyGa4Request(rawUrl) {
+export function classifyGa4Request(rawUrl, postBody = "") {
   let url;
   try { url = new URL(rawUrl); }
   catch { return null; }
@@ -14,8 +14,14 @@ export function classifyGa4Request(rawUrl) {
   if (firstParty && /^\/ilkgtm\/ag\/g\/c$/i.test(path)) return { type: "tag-configuration" };
   if (!firstParty && !googleHost) return null;
   if (!hitPath.test(path)) return null;
-  const eventName = url.searchParams.get("en");
-  const measurementId = url.searchParams.get("tid");
+  // GA4 sometimes sends URL-encoded events in POST bodies. Inspect only
+  // event name + public measurement ID in memory; discard all other values.
+  // One request may hold a batch of newline-separated events.
+  const lines = typeof postBody === "string" ? postBody.split(/\r?\n/) : [];
+  const bodyParts = lines.map((line) => new URLSearchParams(line));
+  const bodyParam = (key) => bodyParts.map((part) => part.get(key)).find(Boolean) || null;
+  const eventName = url.searchParams.get("en") || bodyParam("en");
+  const measurementId = url.searchParams.get("tid") || bodyParam("tid");
   return {
     type: "ga4-hit",
     firstParty,

@@ -6,7 +6,10 @@ import { buildSitemap } from "@/lib/seo/sitemap-data";
 const baseUrl = "https://ilkoku.com";
 const feedUrl = `${baseUrl}/recent-updates.atom`;
 const hubUrl = "https://pubsubhubbub.appspot.com/";
-const RECENT_ENTRY_LIMIT = 50;
+// The public sitemap currently lists 129 URLs, including 85 writing guides.
+// Keep the Atom feed bounded to the latest genuine lastModified entries, but
+// avoid dropping entire guide families from the additional discovery channel.
+const RECENT_ENTRY_LIMIT = 150;
 
 type RecentSearchEntry = {
   url: string;

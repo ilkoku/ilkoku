@@ -176,8 +176,8 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    "const RECENT_ENTRY_LIMIT = 50",
-    "Atom feed bounded recent-entry cap",
+    "const RECENT_ENTRY_LIMIT = 150",
+    "Atom feed bounded recent-entry cap with current 129-URL sitemap coverage",
   );
   assertContains(
     recentUpdatesAtom,
@@ -199,6 +199,17 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     ".slice(0, RECENT_ENTRY_LIMIT)",
     "Atom feed keeps only the bounded most-recent indexable URLs",
   );
+  // The public writing program has 85 genres; the old limit of 50 silently
+  // dropped 50 writing guides from the feed even while sitemap listed them.
+  const guideDefinitions = source("src/lib/genres.ts");
+  const guideCount = [...guideDefinitions.matchAll(/\{ slug: "[^"]+", label: "[^"]+", category: "[^"]+" \}/gu)].length;
+  const atomEntryLimit = Number(recentUpdatesAtom.match(/RECENT_ENTRY_LIMIT = ([0-9]+)/u)?.[1]);
+  assert.equal(guideCount, 85, "public writing guide inventory size");
+  assert.ok(atomEntryLimit >= guideCount, "Atom cap must cover all currently live writing guide URLs");
+  assert.ok(atomEntryLimit >= 129, "Atom window must cover the observed live sitemap size");
+  assertContains(recentUpdatesAtom, ".sort((a, b) => {", "preserve truthful freshness sorting");
+  assertContains(recentUpdatesAtom, "normalizeLastModified(entry.lastModified)", "preserve sitemap-derived lastmod");
+
   assertNotContains(
     recentUpdatesAtom,
     "WHERE namespace = 'education_guide'",

@@ -14,7 +14,7 @@ function classifyInspection(item) {
   if (item.error) return "errors";
   if (item.verdict === "PASS") return "indexed";
   const state = String(item.coverageState ?? "").toLocaleLowerCase("tr-TR");
-  if (state.includes("google tarafından bilinmiyor") || state.includes("unknown to google")) return "unknown";
+  if (state.includes("google tarafından bilinmiyor") || (state.includes("unknown") && state.includes("google"))) return "unknown";
   if (state.includes("keşfedildi") || state.includes("discovered")) return "discovered";
   if (state.includes("tarandı") || state.includes("crawled")) return "crawledNotIndexed";
   return "other";

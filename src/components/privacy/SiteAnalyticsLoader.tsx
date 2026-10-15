@@ -143,6 +143,21 @@ function loadGtm(id: string, consentRequired: boolean) {
       setRuntimeState("gtm", "loaded");
     };
     script.onerror = () => {
+      // A healthy Worker route could fail independently while delivering the
+      // full tag script. Preserve the existing consent-approved direct loader
+      // and the single gtm.start event if first-party delivery fails.
+      if (scriptSource.startsWith(MANUAL_GTM_PATH) &&
+          script.src.includes(MANUAL_GTM_PATH) &&
+          (!consentRequired || readAnalyticsConsent())) {
+        script.dataset.analyticsState = "fallback-loading";
+        setRuntimeState("gtm", "fallback-loading");
+        script.onerror = () => {
+          script.dataset.analyticsState = "error";
+          setRuntimeState("gtm", "error");
+        };
+        script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
+        return;
+      }
       script.dataset.analyticsState = "error";
       setRuntimeState("gtm", "error");
     };

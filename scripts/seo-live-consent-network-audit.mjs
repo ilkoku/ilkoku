@@ -25,6 +25,7 @@ async function runCase(browser, choice) {
   const requests = [];
   const initiators = [];
   let visitStart = 0;
+  let failureEvidence = null;
 
   page.on("request", (request) => {
     if (!filterUrl(request.url())) return;
@@ -83,6 +84,7 @@ async function runCase(browser, choice) {
 
     const initial = await snapshot();
     const initialRequests = requests.slice();
+    failureEvidence = { initial, initialRequests, requestInitiators: initiators.slice(0, 30) };
     if (initial.hasSavedConsent) throw Error("Fresh context unexpectedly has persisted consent");
     if (initial.appGtm || initial.appGa4) throw Error("App loaded measurement scripts before the visitor granted consent");
     const gatewayBeforeChoice = initialRequests.filter((request) => request.url.includes("/1q6z/"));
@@ -120,6 +122,9 @@ async function runCase(browser, choice) {
       appGtmBeforeChoice: initial.appGtm,
       passed: true,
     };
+  } catch (error) {
+    // Preserve initiator and request evidence even if a privacy gate fails.
+    throw new Error(String(error) + " | NETWORK_EVIDENCE=" + JSON.stringify(failureEvidence));
   } finally {
     await context.close();
   }
@@ -151,7 +156,8 @@ try {
       failed = true;
       report.cases.push({ choice, passed: false, error: String(error) });
       console.error("CONSENT_CASE_FAILED " + choice + ": " + String(error));
-      break;
+      // Inspect reject and accept independently: one failure must not hide
+      // the second consent scenario's initiators and requests.
     }
   }
 } catch (error) {

@@ -41,44 +41,45 @@ test("site events never send before consent and remain blocked after revocation"
   const api = createEmitter("denied");
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), false);
   assert.equal(api.sent.length, 0);
-  assert.equal(api.direct.length, 0);
   api.dataset.ilkokuAnalyticsConsent = "granted";
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), true);
-  assert.equal(api.direct.length, 1);
+  assert.equal(api.sent.length, 1);
   api.dataset.ilkokuAnalyticsConsent = "denied";
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), false);
-  assert.equal(api.direct.length, 1);
+  assert.equal(api.sent.length, 1);
+  assert.equal(api.direct.length, 0);
 });
 
-test("gtag explicit send_to routes exactly one event to the configured GA4 stream", () => {
+test("GTM custom event uses object event key exactly once with no parallel gtag event", () => {
   const api = createEmitter("granted", "loading", "loaded");
   assert.equal(api.emitPublicInteraction("site_contact_click", { channel: "linkedin" }), true);
-  assert.equal(api.sent.length, 0, "must not push a duplicate GTM custom event");
-  assert.equal(api.direct.length, 1);
-  assert.equal(api.direct[0][0], "event");
-  assert.equal(api.direct[0][1], "site_contact_click");
-  assert.equal(api.direct[0][2].send_to, "G-MCF2YN9SL8");
-  assert.equal(api.direct[0][2].channel, "linkedin");
+  assert.equal(api.sent.length, 1);
+  assert.equal(api.sent[0].event, "site_contact_click");
+  assert.equal(api.sent[0].channel, "linkedin");
+  assert.equal(api.direct.length, 0);
   api.dataset.ilkokuAnalyticsGtm = "loaded";
   api.emitPublicInteraction("site_contact_click", { channel: "email" });
-  assert.equal(api.direct.length, 2, "one call per interaction even with both providers");
+  assert.equal(api.sent.length, 2);
+  assert.equal(api.direct.length, 0, "GTM wins even when GA4 provider is ready");
 });
 
-test("GA4-only fallback uses the same destination ID, without extra pageviews", () => {
+test("GA4-only fallback preserves existing direct event delivery, no extra pageview", () => {
   const api = createEmitter("not-required", "disabled", "loaded");
   assert.equal(api.emitPublicInteraction("site_share_click", { channel: "whatsapp", placement: "work_share" }), true);
   assert.equal(api.sent.length, 0);
+  assert.equal(api.direct[0][0], "event");
   assert.equal(api.direct[0][1], "site_share_click");
-  assert.equal(api.direct[0][2].send_to, "G-MCF2YN9SL8");
+  assert.equal(api.direct[0][2].channel, "whatsapp");
   assert.equal(api.direct.filter(row => row[1] === "page_view" || row[0] === "config").length, 0);
 });
 
-test("unknown attributes and arbitrary link or visitor values never leave the page", () => {
+test("unknown attributes and arbitrary visitor values never leave the page", () => {
   const api = createEmitter("granted");
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "https://example.com/?email=secret" }), false);
   assert.equal(api.emitPublicInteraction("site_contact_click", { channel: "linkedin", email: "private@example.com" }), false);
   assert.equal(api.emitPublicInteraction("site_form_success", { form: "invalid" }), false);
   assert.equal(api.emitPublicInteraction("site_share_click", { channel: "whatsapp" }), false);
+  assert.equal(api.sent.length, 0);
   assert.equal(api.direct.length, 0);
 });
 

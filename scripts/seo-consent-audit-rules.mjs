@@ -6,12 +6,9 @@ export function evaluateConsentAudit({ choice, initial, after, initialRequests, 
   }
 
   const violations = [];
-  const gatewayScriptsBeforeChoice = initialRequests.filter(
-    (request) => request.url.includes("/1q6z/"),
-  ).length;
-  const gatewayScriptsAfterChoice = afterRequests.filter(
-    (request) => request.url.includes("/1q6z/"),
-  ).length;
+  const isGatewayRequest = (request) => request.url.includes("/1q6z/") || request.url.includes("/ilkgtm/");
+  const gatewayScriptsBeforeChoice = initialRequests.filter(isGatewayRequest).length;
+  const gatewayScriptsAfterChoice = afterRequests.filter(isGatewayRequest).length;
 
   if (initial.hasSavedConsent) {
     violations.push("FRESH_CONTEXT_ALREADY_HAS_CONSENT");

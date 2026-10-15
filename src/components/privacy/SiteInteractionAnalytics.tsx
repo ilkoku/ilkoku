@@ -29,7 +29,9 @@ function contactChannel(anchor: HTMLAnchorElement): ContactChannel | null {
 
 function ctaPlacement(anchor: HTMLAnchorElement) {
   if (anchor.closest('[data-site-analytics-cta="cms"]')) return "cms";
-  if (anchor.closest(".landing-hero__actions")) return "home_hero";
+  if (anchor.closest(".landing-hero__actions, .nx-hero__actions")) return "home_hero";
+  if (anchor.closest(".nx-role-grid") && anchor.classList.contains("nx-role")) return "home_role";
+  if (anchor.closest(".nx-passport__copy") && anchor.classList.contains("nx-action")) return "home_passport";
   if (anchor.closest(".landing-header__actions")) return "home_header";
   if (anchor.closest(".landing-cta")) return "home_join";
   if (anchor.closest(".contact-route-card__links")) return "contact_quick_links";

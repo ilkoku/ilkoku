@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendSiteContactNotification } from "@/lib/email/site-contact-notification";
 import { isSameOriginRequest, sameOriginRequestUrl } from "@/lib/same-origin";
 
 function clean(value: FormDataEntryValue | null, max: number) {
@@ -40,6 +41,15 @@ export async function POST(request: Request) {
     `;
   } catch {
     return NextResponse.redirect(sameOriginRequestUrl(request, "/iletisim?durum=hata"), 303);
+  }
+
+  // Persist the submission first. A transient SMTP failure must not discard
+  // the user's message or turn a genuine save into a failed form submission.
+  try {
+    await sendSiteContactNotification({ id, name, email, subject, message });
+  } catch {
+    // EmailDelivery records delivery errors. Never log user-entered PII here.
+    console.error("SITE_CONTACT_NOTIFICATION_FAILED", { submissionId: id });
   }
 
   return NextResponse.redirect(sameOriginRequestUrl(request, "/iletisim?durum=alindi"), 303);

@@ -33,6 +33,40 @@ test("Reads mobile metrics precisely without substituting field data", () => {
   assert.match(d.source, /lab/u);
 });
 
+test("Reports nested Lighthouse LCP element and token-safe Gateway transfer footprint", () => {
+  const details = {
+    type: "list",
+    items: [
+      { type: "table", items: [{ node: { type: "node", selector: ".nx-hero__art img" } }] },
+      { type: "table", items: [{ label: "TTFB", timing: 510 }] },
+    ],
+  };
+  const measured = makePerformanceSummary({
+    ...good,
+    audits: {
+      ...good.audits,
+      "lcp-breakdown-insight": { details },
+      "network-requests": {
+        details: { items: [
+          { resourceType: "Script", url: "https://ilkoku.com/1q6z/", transferSize: 130214 },
+          { resourceType: "Script", url: "https://ilkoku.com/1q6z/sensitive-token", transferSize: 189212 },
+          { resourceType: "Image", url: "https://ilkoku.com/_next/image", transferSize: 34000 },
+        ] },
+      },
+    },
+  });
+  assert.deepEqual(measured.lcpElements, [".nx-hero__art img"]);
+  assert.equal(measured.gatewayScriptRequests, 2);
+  assert.equal(measured.gatewayTransferBytes, 319426);
+  assert.equal(JSON.stringify(measured).includes("sensitive-token"), false);
+});
+
+test("Below-fold history illustrations never compete with the hero LCP image", () => {
+  const history = fs.readFileSync("src/features/homepage/history-670.tsx", "utf8");
+  assert.match(history, /src=\{card\.image\}[^>]*loading="lazy" fetchPriority="low"/u);
+  assert.match(history, /className="nx-now__scene"[\s\S]*?loading="lazy"\s+fetchPriority="low"/u);
+});
+
 test("Fails closed when Lighthouse inspected wrong site, desktop or missing LCP", () => {
   assert.throws(() => makePerformanceSummary({ ...good, finalDisplayedUrl: "https://other.example/" }));
   assert.throws(() => makePerformanceSummary({ ...good, configSettings: { formFactor: "desktop" } }));

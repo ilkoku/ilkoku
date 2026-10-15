@@ -24,6 +24,33 @@ const CONSENT_STORAGE_KEY = "ilkoku:consent:v1";
 const GTM_SCRIPT_ID = "ilkoku-gtm-script";
 const GA4_DYNAMIC_SCRIPT_ID = "ilkoku-ga4-script";
 const GA4_HEAD_SCRIPT_ID = "ilkoku-ga4-head-script";
+const MANUAL_GTM_PATH = "/ilkgtm/";
+const MANUAL_GTM_HEALTH_URL = "/ilkgtm/healthy";
+let pendingGtmLoad: Promise<void> | null = null;
+
+async function gtmScriptSource(id: string) {
+  // This probe runs ONLY after the visitor has granted consent. Until the
+  // manual Worker route is live/healthy, retain the known-working Google URL.
+  const fallback = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 1800);
+  try {
+    const response = await fetch(MANUAL_GTM_HEALTH_URL, {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: { Accept: "text/plain" },
+    });
+    if (response.ok && (await response.text()).trim() === "ok") {
+      return `${MANUAL_GTM_PATH}?id=${encodeURIComponent(id)}`;
+    }
+  } catch {
+    // Safe fallback when Worker has not been installed or is unhealthy.
+  } finally {
+    window.clearTimeout(timeout);
+  }
+  return fallback;
+}
+
 
 function setRuntimeState(key: "consent" | "gtm" | "ga4", value: string) {
   document.documentElement.dataset[`ilkokuAnalytics${key[0].toUpperCase()}${key.slice(1)}`] = value;
@@ -85,31 +112,46 @@ function applyInitialConsent(settings: SiteAnalyticsSettings) {
   return true;
 }
 
-function loadGtm(id: string) {
+function loadGtm(id: string, consentRequired: boolean) {
   if (!id) return;
   const existing = document.getElementById(GTM_SCRIPT_ID) as HTMLScriptElement | null;
   if (existing) {
     setRuntimeState("gtm", existing.dataset.analyticsState || "present");
     return;
   }
+  if (pendingGtmLoad) return;
 
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
-  const script = document.createElement("script");
-  script.id = GTM_SCRIPT_ID;
-  script.async = true;
-  script.dataset.analyticsState = "loading";
-  script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
-  script.onload = () => {
-    script.dataset.analyticsState = "loaded";
-    setRuntimeState("gtm", "loaded");
-  };
-  script.onerror = () => {
-    script.dataset.analyticsState = "error";
-    setRuntimeState("gtm", "error");
-  };
   setRuntimeState("gtm", "loading");
-  document.head.appendChild(script);
+  pendingGtmLoad = (async () => {
+    const scriptSource = await gtmScriptSource(id);
+    // Consent can be revoked while the health probe is in flight.
+    if (consentRequired && !readAnalyticsConsent()) {
+      setRuntimeState("gtm", "consent-pending");
+      return;
+    }
+    if (document.getElementById(GTM_SCRIPT_ID)) return;
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+    const script = document.createElement("script");
+    script.id = GTM_SCRIPT_ID;
+    script.async = true;
+    script.dataset.analyticsState = "loading";
+    script.src = scriptSource;
+    script.onload = () => {
+      script.dataset.analyticsState = "loaded";
+      setRuntimeState("gtm", "loaded");
+    };
+    script.onerror = () => {
+      script.dataset.analyticsState = "error";
+      setRuntimeState("gtm", "error");
+    };
+    document.head.appendChild(script);
+  })().catch(() => {
+    setRuntimeState("gtm", "error");
+  }).finally(() => {
+    pendingGtmLoad = null;
+  });
 }
 
 function reuseHeadGa4(id: string, debugMode: boolean) {
@@ -158,7 +200,7 @@ function loadGa4(id: string, debugMode: boolean) {
 function loadProviders(settings: SiteAnalyticsSettings) {
   if (!settings.enabled) return;
 
-  if (settings.gtmEnabled && settings.gtmId) loadGtm(settings.gtmId);
+  if (settings.gtmEnabled && settings.gtmId) loadGtm(settings.gtmId, settings.consentRequired);
   else setRuntimeState("gtm", "disabled");
 
   if (settings.ga4Enabled && settings.ga4MeasurementId) loadGa4(settings.ga4MeasurementId, settings.debugMode);

@@ -1,6 +1,7 @@
 // Read-only live browser audit: no account access, no Cloudflare settings changes.
 import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
+import { evaluateConsentAudit } from "./seo-consent-audit-rules.mjs";
 
 const pageUrl = "https://ilkoku.com/";
 const outputFile = process.env.CONSENT_AUDIT_REPORT || "/tmp/ilkoku-live-consent-network.json";
@@ -85,13 +86,9 @@ async function runCase(browser, choice) {
     const initial = await snapshot();
     const initialRequests = requests.slice();
     failureEvidence = { initial, initialRequests, requestInitiators: initiators.slice(0, 30) };
-    if (initial.hasSavedConsent) throw Error("Fresh context unexpectedly has persisted consent");
-    if (initial.appGtm || initial.appGa4) throw Error("App loaded measurement scripts before the visitor granted consent");
-    const gatewayBeforeChoice = initialRequests.filter((request) => request.url.includes("/1q6z/"));
-    if (gatewayBeforeChoice.length > 0) {
-      throw Error("Google Tag Gateway sent " + gatewayBeforeChoice.length + " script/measurement requests before user consent");
-    }
-
+    // Capture a policy violation but DO NOT stop: rejecting/accepting must
+    // still be inspected, so a CDN-injected request cannot hide duplicate
+    // requests or invalid consent state after the actual visitor action.
     if (choice === "reject") {
       await page.getByRole("button", { name: "Tümünü reddet" }).click();
     } else {
@@ -100,15 +97,9 @@ async function runCase(browser, choice) {
     await page.waitForTimeout(choice === "accept" ? 3500 : 1600);
     const after = await snapshot();
     const afterRequests = requests.slice(initialRequests.length);
-    if (choice === "reject" && afterRequests.some((request) => request.url.includes("/1q6z/"))) {
-      throw Error("Rejected consent still triggered Google Tag Gateway requests");
-    }
-    if (choice === "reject" && (after.appGtm || after.appGa4 || after.consent === "granted")) {
-      throw Error("Rejected consent nevertheless loaded first-party GTM/GA4 or marked consent granted");
-    }
-    if (choice === "accept" && (!after.appGtm || after.consent !== "granted")) {
-      throw Error("Accepted consent did not load GTM or grant analytics_storage");
-    }
+    const evaluation = evaluateConsentAudit({
+      choice, initial, after, initialRequests, afterRequests,
+    });
 
     return {
       choice,
@@ -118,9 +109,11 @@ async function runCase(browser, choice) {
       initialRequests,
       afterRequests,
       requestInitiators: initiators.slice(0, 20),
-      gatewayScriptsBeforeChoice: initialRequests.filter((x) => x.url.includes("/1q6z/")).length,
+      gatewayScriptsBeforeChoice: evaluation.gatewayScriptsBeforeChoice,
+      gatewayScriptsAfterChoice: evaluation.gatewayScriptsAfterChoice,
       appGtmBeforeChoice: initial.appGtm,
-      passed: true,
+      passed: evaluation.passed,
+      violations: evaluation.violations,
     };
   } catch (error) {
     // Preserve initiator and request evidence even if a privacy gate fails.
@@ -144,14 +137,18 @@ try {
     try {
       const result = await runCase(browser, choice);
       report.cases.push(result);
-      console.log("CONSENT_CASE " + JSON.stringify({
+      if (!result.passed) failed = true;
+      const evidenceSummary = {
         choice,
         initialGatewayScripts: result.gatewayScriptsBeforeChoice,
+        postChoiceGatewayScripts: result.gatewayScriptsAfterChoice,
         initialGtmScripts: result.appGtmBeforeChoice,
         endState: result.after.consent,
         appGtmAfter: result.after.appGtm,
-        passed: true,
-      }));
+        passed: result.passed,
+        violations: result.violations,
+      };
+      console.log((result.passed ? "CONSENT_CASE " : "CONSENT_CASE_FAILED ") + JSON.stringify(evidenceSummary));
     } catch (error) {
       failed = true;
       report.cases.push({ choice, passed: false, error: String(error) });

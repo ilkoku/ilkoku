@@ -17,6 +17,7 @@ declare global {
   interface Window {
     dataLayer?: DataLayerItem[];
     gtag?: (...args: unknown[]) => void;
+    google_tag_manager?: Record<string, unknown>;
   }
 }
 
@@ -90,6 +91,15 @@ function loadGtm(id: string) {
   const existing = document.getElementById(GTM_SCRIPT_ID) as HTMLScriptElement | null;
   if (existing) {
     setRuntimeState("gtm", existing.dataset.analyticsState || "present");
+    return;
+  }
+
+  // Cloudflare Google Tag Gateway may have already registered this exact
+  // container. Never execute a second copy when the existing container can
+  // receive the consent update through the shared dataLayer. If the registry
+  // is absent, keep the original post-consent client loader as fallback.
+  if (window.google_tag_manager?.[id]) {
+    setRuntimeState("gtm", "external-reused");
     return;
   }
 

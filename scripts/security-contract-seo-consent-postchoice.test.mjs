@@ -57,6 +57,32 @@ test("A clean accepted scenario may pass; denied or absent GTM may not", () => {
   assert.deepEqual(faulty.violations, ["APP_GTM_NOT_LOADED_AFTER_ACCEPT"]);
 });
 
+test("A verified already registered GTM is reused after acceptance without re-injection", () => {
+  const result = evaluateConsentAudit({
+    choice: "accept",
+    initial: { ...virgin, registeredGtm: true },
+    after: { ...virgin, registeredGtm: true, gtm: "external-reused", consent: "granted" },
+    initialRequests: [], afterRequests: [],
+  });
+  assert.equal(result.passed, true);
+  assert.equal(result.gatewayScriptsAfterChoice, 0);
+  const spoofed = evaluateConsentAudit({
+    choice: "accept",
+    initial: { ...virgin, registeredGtm: false },
+    after: { ...virgin, registeredGtm: false, gtm: "external-reused", consent: "granted" },
+    initialRequests: [], afterRequests: [],
+  });
+  assert.equal(spoofed.passed, false);
+});
+
+test("App deduplicates only a registered matching GTM before pushing gtm.js", () => {
+  const loader = readFileSync("src/components/privacy/SiteAnalyticsLoader.tsx", "utf8");
+  assert.match(loader, /window\.google_tag_manager\?\.\[id\]/u);
+  assert.match(loader, /setRuntimeState\("gtm", "external-reused"\)/u);
+  assert.ok(loader.indexOf('window.google_tag_manager?.[id]') <
+    loader.indexOf('window.dataLayer.push({ "gtm.start"'));
+});
+
 test("Unexpected saved consent and app tags fail closed; unknown choices throw", () => {
   const result = evaluateConsentAudit({
     choice: "reject",

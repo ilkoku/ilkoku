@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { summarizeWritingGuideFamilies } from "./gsc-writing-guide-family-summary.mjs";
 
 const SITE_URL = process.env.GSC_SITE_URL || "sc-domain:ilkoku.com";
 const CLIENT_ID = process.env.GSC_OAUTH_CLIENT_ID;
@@ -247,6 +248,10 @@ function writeStepSummary(payload) {
   const coverageRows = Object.entries(payload.summary.coverageState)
     .map(([state, count]) => `| ${state.replaceAll("|", "%7C")} | ${count} |`);
 
+  const familyRows = payload.summary.writingGuideFamilies.map((family) =>
+    `| ${family.label} | ${family.total} | ${family.indexed} | ${family.crawledNotIndexed} | ${family.discovered} | ${family.unknown} | ${family.errors + family.other} |`,
+  );
+
   const lines = [
     "## GSC full index census",
     "",
@@ -260,6 +265,12 @@ function writeStepSummary(payload) {
     "| Coverage state | Count |",
     "| --- | ---: |",
     ...coverageRows,
+    "",
+    "### Yazarlık rehberi ailelerinin Google durumu",
+    "",
+    "| Aile | URL | İndeksli | Tarandı/eklenmedi | Keşfedildi | Google bilmiyor | Diğer/hata |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ...familyRows,
     "",
     "> Read-only census using Google's URL Inspection API. No indexing request or Search Console mutation is performed.",
     "",
@@ -291,6 +302,7 @@ async function main() {
       pageFetchState: countBy(results, "pageFetchState"),
       indexingState: countBy(results, "indexingState"),
       newestCrawl: newestCrawl(results),
+      writingGuideFamilies: summarizeWritingGuideFamilies(results),
     },
     results,
   };

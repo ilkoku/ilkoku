@@ -5,7 +5,7 @@ import { evaluateConsentAudit } from "./seo-consent-audit-rules.mjs";
 
 const pageUrl = "https://ilkoku.com/";
 const outputFile = process.env.CONSENT_AUDIT_REPORT || "/tmp/ilkoku-live-consent-network.json";
-const filterUrl = (url) => /\/1q6z(?:\/|$)|googletagmanager\.com|google-analytics\.com|\/api\/site-(?:analytics|consent)/i.test(url);
+const filterUrl = (url) => /\/1q6z(?:\/|$)|\/ilkgtm(?:\/|$)|googletagmanager\.com|google-analytics\.com|\/api\/site-(?:analytics|consent)/i.test(url);
 const normalizeUrl = (raw) => {
   try {
     const url = new URL(raw);
@@ -60,6 +60,12 @@ async function runCase(browser, choice) {
       ga4: root.ilkokuAnalyticsGa4 || null,
       hasSavedConsent: window.localStorage.getItem("ilkoku:consent:v1") !== null,
       appGtm: Boolean(document.getElementById("ilkoku-gtm-script")),
+      appGtmSource: (() => {
+        const src = document.getElementById("ilkoku-gtm-script")?.getAttribute("src");
+        if (!src) return null;
+        try { const url = new URL(src, window.location.origin); return url.origin + url.pathname; }
+        catch { return "invalid-url"; }
+      })(),
       appGa4: Boolean(document.getElementById("ilkoku-ga4-script")),
       dynamicScripts: Array.from(document.scripts)
         .filter((script) => script.src && (/\/1q6z(?:\/|$)|googletagmanager\.com/i).test(script.src))

@@ -1,0 +1,10 @@
+name = "ilkoku-manual-gtm-gateway"
+main = "index.mjs"
+compatibility_date = "2026-10-15"
+workers_dev = false
+
+# Independent from automatic Gateway. The route must be installed *before*
+# disabling the old integration. No change to DNS or zone nameservers.
+routes = [
+  { pattern = "ilkoku.com/ilkgtm/*", zone_name = "ilkoku.com" }
+]

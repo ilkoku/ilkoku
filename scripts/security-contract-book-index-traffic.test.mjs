@@ -71,7 +71,6 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
       "https://ilkoku.com/",
       "https://ilkoku.com/en-cok-satanlar",
       "https://ilkoku.com/en-cok-satanlar/turkiye",
-      "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
       "https://ilkoku.com/hakkimizda",
     ],
     changedFiles: ["__BOOK_INDEX__"],
@@ -81,7 +80,6 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   assert.deepEqual(result.urls, [
     "https://ilkoku.com/en-cok-satanlar",
     "https://ilkoku.com/en-cok-satanlar/turkiye",
-    "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
   ]);
 });
 

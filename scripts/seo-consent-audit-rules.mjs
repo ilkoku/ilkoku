@@ -30,13 +30,8 @@ export function evaluateConsentAudit({ choice, initial, after, initialRequests, 
     if (after.appGtm || after.appGa4 || after.consent === "granted") {
       violations.push("MEASUREMENT_ENABLED_AFTER_REJECT");
     }
-  } else {
-    // An existing verified container can be safely reused after acceptance,
-    // so a new app-owned script tag is no longer mandatory.
-    const reusedContainer = after.gtm === "external-reused" && after.registeredGtm === true;
-    if ((!after.appGtm && !reusedContainer) || after.consent !== "granted") {
-      violations.push("APP_GTM_NOT_LOADED_AFTER_ACCEPT");
-    }
+  } else if (!after.appGtm || after.consent !== "granted") {
+    violations.push("APP_GTM_NOT_LOADED_AFTER_ACCEPT");
   }
 
   return {

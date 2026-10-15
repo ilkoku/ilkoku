@@ -7,6 +7,9 @@ on:
     paths:
       - .github/workflows/live-gtm-consent-audit.yml
       - scripts/seo-live-consent-network-audit.mjs
+      - scripts/seo-consent-audit-rules.mjs
+      - workers/ilkoku-gtm-gateway/index.mjs
+      - scripts/security-contract-manual-gtm-worker.test.mjs
       - src/components/privacy/SiteAnalyticsLoader.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/app/layout.tsx

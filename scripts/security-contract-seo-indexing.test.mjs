@@ -813,9 +813,9 @@ test("SEO smoke reports public HTML payload sizes without impersonating Googlebo
 
 test("manual full-sitemap crawler guard has an achievable pacing budget", () => {
   const workflow = source(".github/workflows/full-public-googlebot-guard.yml");
-  const timeoutMinutes = Number(workflow.match(/timeout-minutes: (\\d+)/u)?.[1]);
-  const requestDelaySeconds = Number(workflow.match(/REQUEST_DELAY_SECONDS=(\\d+)/u)?.[1]);
-  const maxUrls = Number(workflow.match(/MAX_DIAGNOSTIC_URLS=(\\d+)/u)?.[1]);
+  const timeoutMinutes = Number(workflow.match(/timeout-minutes: ([0-9]+)/u)?.[1]);
+  const requestDelaySeconds = Number(workflow.match(/REQUEST_DELAY_SECONDS=([0-9]+)/u)?.[1]);
+  const maxUrls = Number(workflow.match(/MAX_DIAGNOSTIC_URLS=([0-9]+)/u)?.[1]);
   assert.equal(timeoutMinutes, 40, "manual crawl compatibility timeout");
   assert.equal(requestDelaySeconds, 10, "polite crawling gap");
   assert.equal(maxUrls, 150, "manual sitemap size circuit breaker");

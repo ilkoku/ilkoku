@@ -7,7 +7,6 @@ on:
     paths:
       - .github/workflows/live-gtm-consent-audit.yml
       - scripts/seo-live-consent-network-audit.mjs
-      - next.config.ts
       - src/components/privacy/SiteAnalyticsLoader.tsx
       - src/components/privacy/SiteConsentBanner.tsx
       - src/app/layout.tsx

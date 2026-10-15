@@ -299,12 +299,16 @@ test("homepage H1 text retains natural spaces across visual spans", () => {
 test("HTML sitemap links to the published indexable registration agreement", () => {
   const htmlSiteMap = source("src/app/site-haritasi/page.tsx");
   const registrationAgreement = source("src/app/uyelik-sozlesmesi/page.tsx");
+  const registrationLayout = source("src/app/uyelik-sozlesmesi/layout.tsx");
   const sitemapData = source("src/lib/seo/sitemap-data.ts");
   assertContains(htmlSiteMap, '{ href: "/uyelik-sozlesmesi", label: "Üyelik Sözleşmesi" }', "HTML legal sitemap links public registration agreement");
   assertContains(htmlSiteMap, "...siteMapLegalLinks.map((link) => link.href)", "CMS sitemap deduplication includes the registration agreement");
   assertContains(htmlSiteMap, "{siteMapLegalLinks.map((link) => (", "HTML legal section renders the added link");
-  assertContains(registrationAgreement, 'robots: { index: true, follow: true }', "registration agreement remains indexable");
-  assertContains(registrationAgreement, 'alternates: { canonical: "/uyelik-sozlesmesi" }', "registration agreement self-canonical");
+  assertContains(registrationLayout, "createPublicPageMetadata({", "registration agreement metadata generated at its layout boundary");
+  assertContains(registrationLayout, 'canonical: "/uyelik-sozlesmesi"', "registration agreement self-canonical");
+  assertContains(registrationLayout, 'title: "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku"', "registration agreement unique search title");
+  assertContains(registrationLayout, 'description: "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü."', "registration agreement unique description");
+  assertNotContains(registrationAgreement, "export const metadata:", "dynamic agreement body must not shadow segment head metadata");
   assertContains(sitemapData, 'url: `${baseUrl}/uyelik-sozlesmesi`', "XML sitemap retains registration agreement");
 });
 

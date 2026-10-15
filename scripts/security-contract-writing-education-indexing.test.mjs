@@ -202,7 +202,7 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   // The public writing program has 85 genres; the old limit of 50 silently
   // dropped 50 writing guides from the feed even while sitemap listed them.
   const guideDefinitions = source("src/lib/genres.ts");
-  const guideCount = [...guideDefinitions.matchAll(/\\{ slug: "[^"]+", label: "[^"]+", category: "[^"]+" \\}/gu)].length;
+  const guideCount = [...guideDefinitions.matchAll(/\{ slug: "[^"]+", label: "[^"]+", category: "[^"]+" \}/gu)].length;
   const atomEntryLimit = Number(recentUpdatesAtom.match(/RECENT_ENTRY_LIMIT = ([0-9]+)/u)?.[1]);
   assert.equal(guideCount, 85, "public writing guide inventory size");
   assert.ok(atomEntryLimit >= guideCount, "Atom cap must cover all currently live writing guide URLs");

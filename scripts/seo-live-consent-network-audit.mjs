@@ -61,7 +61,6 @@ async function runCase(browser, choice) {
       hasSavedConsent: window.localStorage.getItem("ilkoku:consent:v1") !== null,
       appGtm: Boolean(document.getElementById("ilkoku-gtm-script")),
       appGa4: Boolean(document.getElementById("ilkoku-ga4-script")),
-      registeredGtm: Boolean(window.google_tag_manager?.["GTM-W6NVSMNV"]),
       dynamicScripts: Array.from(document.scripts)
         .filter((script) => script.src && (/\/1q6z(?:\/|$)|googletagmanager\.com/i).test(script.src))
         .map((script) => ({
@@ -146,9 +145,6 @@ try {
         initialGtmScripts: result.appGtmBeforeChoice,
         endState: result.after.consent,
         appGtmAfter: result.after.appGtm,
-        registeredGtmBefore: result.initial.registeredGtm,
-        registeredGtmAfter: result.after.registeredGtm,
-        gtmStateAfter: result.after.gtm,
         passed: result.passed,
         violations: result.violations,
       };

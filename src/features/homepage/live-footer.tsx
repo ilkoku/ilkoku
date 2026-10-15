@@ -11,7 +11,7 @@ import {
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
 
-// The same footer is rendered outside the homepage (including all seven\n// /yazarlar-icin category hubs and their 85 guides). Keep its complete\n// landing-scoped visual styles with the component, not only app/page.tsx.\nimport "@/app/landing-footer-pro.css";\nimport "@/app/landing-footer-tight.css";\nimport "./live-footer.css";
+import "./live-footer.css";
 
 type LiveHomepageFooterProps = {
   signedIn: boolean;
@@ -55,7 +55,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
         <div className="landing-container landing-footer__grid">
           <div>
             <Link prefetch={false} className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa">
-              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" />
+              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" style={{ width: "156px", maxWidth: "100%", height: "auto" }} />
             </Link>
             <p><FooterSlogan value={slogan} /></p>
           </div>

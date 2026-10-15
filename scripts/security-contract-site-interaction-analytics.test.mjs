@@ -120,7 +120,7 @@ test("event-only runtime uses consent, private-mode-safe pageview suppression an
   assert.match(loader, /send_page_view: false/);
   assert.match(loader, /allow_google_signals: false/);
   assert.match(loader, /"ilkoku:analytics-event-tag-ready"/);
-  assert.match(loader, /script\.dataset\.analyticsState === "consent-pending"/);
+  assert.match(loader, /existing\.dataset\.analyticsState === "consent-pending"/);
   assert.match(loader, /document\.head\.appendChild\(script\)/);
 });
 

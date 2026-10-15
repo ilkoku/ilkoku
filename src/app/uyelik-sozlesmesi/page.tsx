@@ -1,16 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { getActiveRegistrationAgreement } from "@/features/contracts/registration-agreement";
 import "../yasal/legal.css";
 
 export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku",
-  description: "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü.",
-  alternates: { canonical: "/uyelik-sozlesmesi" },
-  robots: { index: true, follow: true },
-};
 
 type Block =
   | { kind: "paragraph"; text: string }

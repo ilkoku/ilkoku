@@ -98,12 +98,30 @@ test("public registration agreement has unique SEO metadata in server HTML head"
   );
 });
 
-for (const scenario of [
-  { name: "Kurgu desktop", path: "/yazarlar-icin/kurgu", viewport: { width: 1440, height: 900 } },
-  { name: "Kurgu mobile", path: "/yazarlar-icin/kurgu", viewport: { width: 390, height: 844 } },
-  { name: "Roman guide mobile", path: "/yazarlar-icin/kurgu/roman", viewport: { width: 390, height: 844 } },
-]) {
-  test(`writing education footer has bounded logo and full dark grid: ${scenario.name}`, async ({ page }) => {
+// Guard the complete public writing education family, not just the Kurgu example.
+// These routes share one footer; a route-only CSS import regression must fail CI.
+const writingFooterFamilies = [
+  { category: "Kurgu", hub: "kurgu", guide: "roman" },
+  { category: "Edebiyat", hub: "edebiyat", guide: "siir" },
+  { category: "Senaryo ve Sahne", hub: "senaryo-ve-sahne", guide: "film-senaryosu" },
+  { category: "Akademik", hub: "akademik", guide: "makale" },
+  { category: "Bilgilendirici", hub: "bilgilendirici", guide: "tarih" },
+  { category: "Çocuk ve Gençlik", hub: "cocuk-ve-genclik", guide: "masal" },
+  { category: "Çizgi Anlatı", hub: "cizgi-anlati", guide: "cizgi-roman" },
+];
+
+const writingFooterScenarios = [
+  { name: "Homepage desktop", path: "/", viewport: viewports.desktop },
+  { name: "Homepage mobile", path: "/", viewport: viewports.phone390 },
+  ...writingFooterFamilies.flatMap(({ category, hub, guide }) => [
+    { name: `${category} desktop hub`, path: `/yazarlar-icin/${hub}`, viewport: viewports.desktop },
+    { name: `${category} 390px mobile hub`, path: `/yazarlar-icin/${hub}`, viewport: viewports.phone390 },
+    { name: `${category} 390px mobile guide`, path: `/yazarlar-icin/${hub}/${guide}`, viewport: viewports.phone390 },
+  ]),
+];
+
+for (const scenario of writingFooterScenarios) {
+  test(`shared public footer visual integrity: ${scenario.name}`, async ({ page }) => {
     await page.setViewportSize(scenario.viewport);
     const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
@@ -114,20 +132,28 @@ for (const scenario of [
     const metrics = await footer.evaluate((element) => {
       const image = element.querySelector(".landing-logo--footer img");
       const grid = element.querySelector(".landing-footer__grid");
+      const rect = element.getBoundingClientRect();
       return {
         logoWidth: image?.getBoundingClientRect().width ?? 0,
         logoHeight: image?.getBoundingClientRect().height ?? 0,
         gridDisplay: grid ? getComputedStyle(grid).display : "",
+        gridColumns: grid ? getComputedStyle(grid).gridTemplateColumns : "",
         backgroundImage: getComputedStyle(element).backgroundImage,
-        footerHeight: element.getBoundingClientRect().height,
+        footerHeight: rect.height,
+        left: rect.left,
+        right: rect.right,
+        viewportWidth: document.documentElement.clientWidth,
       };
     });
     expect(metrics.logoWidth, JSON.stringify(metrics)).toBeGreaterThan(75);
     expect(metrics.logoWidth, JSON.stringify(metrics)).toBeLessThan(210);
     expect(metrics.logoHeight, JSON.stringify(metrics)).toBeLessThan(230);
-    expect(metrics.gridDisplay).toBe("grid");
-    expect(metrics.backgroundImage).not.toBe("none");
+    expect(metrics.gridDisplay, JSON.stringify(metrics)).toBe("grid");
+    expect(metrics.gridColumns, JSON.stringify(metrics)).not.toBe("none");
+    expect(metrics.backgroundImage, JSON.stringify(metrics)).not.toBe("none");
     expect(metrics.footerHeight, JSON.stringify(metrics)).toBeLessThan(2400);
+    expect(metrics.left, JSON.stringify(metrics)).toBeGreaterThanOrEqual(-1);
+    expect(metrics.right, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.viewportWidth + 1);
     await expect(footer.getByRole("heading", { name: "Platform" })).toBeVisible();
     await expect(footer.getByRole("heading", { name: "Destek" })).toBeVisible();
   });

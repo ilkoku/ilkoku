@@ -101,9 +101,20 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
   contains(
     turkey,
-    "getBookIndexSoftLaunchPageContext(100)",
-    "Turkey route uses route-only soft-launch context",
+    "getBookIndexSoftLaunchPageContext(1200)",
+    "Turkey metadata and page share the full request-scoped dataset",
   );
+  assert.equal(
+    turkey.match(/getBookIndexSoftLaunchPageContext\(1200\)/g)?.length,
+    2,
+    "Turkey metadata and page must use one cache key to avoid duplicate database reads",
+  );
+  notContains(
+    turkey,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "Turkey metadata must not trigger a second data model read",
+  );
+
   contains(
     turkey,
     'context.model.turkey.availability !== "available"',

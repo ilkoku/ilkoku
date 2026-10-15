@@ -9,6 +9,22 @@ test("First-party GA4 page_view is recognized without user/session parameters", 
   assert.doesNotMatch(JSON.stringify(record), /SECRET|cid|dl=/);
 });
 
+test("POST-encoded GA4 event is safely extracted without persisting visitor fields", () => {
+  const record = classifyGa4Request(
+    "https://www.google-analytics.com/g/collect?v=2",
+    "en=page_view&tid=G-MCF2YN9SL8&cid=SENSITIVE&sid=SENSITIVE2&dl=https%3A%2F%2Filkoku.com%2Fprivate"
+  );
+  assert.deepEqual(record, { type: "ga4-hit", firstParty: false, event: "page_view", measurement: "G-MCF2YN9SL8" });
+  assert.doesNotMatch(JSON.stringify(record), /SENSITIVE|sid|cid|private/);
+});
+
+test("Newline-delimited POST collects are parsed safely", () => {
+  const record = classifyGa4Request("https://www.google-analytics.com/g/collect?v=2",
+    "en=page_view&cid=SECRET\nen=user_engagement&cid=SECRET2");
+  assert.equal(record.event, "page_view");
+  assert.doesNotMatch(JSON.stringify(record), /SECRET/);
+});
+
 test("Third-party GA4 requests count but arbitrary domains cannot", () => {
   assert.equal(classifyGa4Request("https://www.google-analytics.com/g/collect?en=page_view").type, "ga4-hit");
   assert.equal(classifyGa4Request("https://analytics.google.com/g/collect?en=form_submit").event, "form_submit");

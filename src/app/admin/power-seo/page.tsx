@@ -262,7 +262,7 @@ export default async function PowerSeoDashboard({
       </section>
       <section className={styles.panel}>
         <h2>Site genelinde SEO araçları</h2>
-        <p>Bunlar ayrı ve salt okunur işlemlerdir. Sayfa açılışında bütün URL'ler otomatik taranmaz.</p>
+        <p>Bunlar ayrı ve salt okunur işlemlerdir. Sayfa açılışında bütün URL’ler otomatik taranmaz.</p>
         <div className={styles.quick}>
           <Link href="/sistem-yonetimi/power-seo?mod=sitemap">Sitemap kontrolü</Link>
           <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı grafiği</Link>

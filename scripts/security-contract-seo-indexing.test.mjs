@@ -1123,7 +1123,7 @@ test("Power-SEO panel reports its actual distinct directly imported modules", ()
   const fullSite = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
   const modules = new Set(
     [panel, operations, fullSite].flatMap((code) =>
-      [...code.matchAll(/from ["']@power-seo\\/([a-z-]+)["']/gu)].map((match) => match[1]),
+      [...code.matchAll(/from ["']@power-seo\/([a-z-]+)["']/gu)].map((match) => match[1]),
     ),
   );
   // Transitive dependencies and env-only connector readiness do not count as active.

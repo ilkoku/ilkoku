@@ -887,3 +887,48 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   await expect(page.getByText("Sitemap URL sayısı")).toBeVisible();
   await expectResponsiveDocument(page);
 });
+
+test("Power-SEO full sitemap scan requires admin and produces complete graph from batches", async ({ page }) => {
+  const denied = await page.request.get("/api/admin/power-seo/scan?offset=0");
+  expect(denied.status()).toBe(401);
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.admin;
+  expect(token).toBeTruthy();
+  await page.context().addCookies([{
+    name: authFixture.cookieName, value: token, url: authCookieUrl,
+  }]);
+
+  // Mock only the public page crawl payload for a deterministic browser exercise.
+  // Real admin auth and dashboard HTML are still verified against the Next server.
+  const siteUrls = [
+    "https://ilkoku.com/",
+    "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/yardim",
+    "https://ilkoku.com/hakkimizda",
+  ];
+  await page.route("**/api/admin/power-seo/scan?offset=0", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        fingerprint: "ci-browser-graph",
+        urls: siteUrls,
+        offset: 0, nextOffset: 4, total: 4,
+        items: siteUrls.map((url) => ({
+          url, title: url === siteUrls[0] ? "İlkOku" : url.split("/").at(-1),
+          links: siteUrls.filter((other) => other !== url),
+          error: "",
+        })),
+      }),
+    });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const pageResponse = await page.goto("/sistem-yonetimi/power-seo?mod=full-links", { waitUntil: "domcontentloaded" });
+  expect(pageResponse?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Tam site bağlantı denetimi", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Tam site taramasını başlat" }).click();
+  await expect(page.getByText("Gerçek HTML çıktısı başarıyla okunan 4 sitemap sayfası")).toBeVisible();
+  await expect(page.getByRole("button", { name: "JSON raporunu al" })).toBeEnabled();
+  await expectResponsiveDocument(page);
+});

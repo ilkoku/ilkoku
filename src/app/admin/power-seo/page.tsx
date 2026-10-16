@@ -143,7 +143,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const titlePrompt = buildTitlePrompt({ content: excerpt, tone: "Turkish" }).user;
   const descriptionPrompt = buildMetaDescriptionPrompt({ title, content: excerpt, tone: "Turkish" }).user;
   // Compare generated preview metadata without injecting it into the site's head.
-  const previewMetadata = createMetadata({ title, description, canonicalUrl: canonical });
+  const previewMetadata = createMetadata({ title, description, canonical });
   const schemaTypes: string[] = [];
   const schemaIssues: string[] = [];
   let schemaCount = 0;

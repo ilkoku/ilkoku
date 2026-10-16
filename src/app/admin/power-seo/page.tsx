@@ -176,7 +176,7 @@ export default async function PowerSeoDashboard({
       </div>
       <section className={styles.panel}>
         <h2>Canlı sayfa denetimi</h2>
-        <p>Bir public URL'nin sunucudan alınan HTML çıktısını analiz eder. Sıralama veya indeksleme garantisi vermez.</p>
+        <p>Bir public URL’nin sunucudan alınan HTML çıktısını analiz eder. Sıralama veya indeksleme garantisi vermez.</p>
         <form method="get" action="/sistem-yonetimi/power-seo" className={styles.form}>
           <label htmlFor="audit-path">URL yolu (örnek: /nasil-calisir)</label>
           <input id="audit-path" name="yol" required defaultValue={path || ""} placeholder="/nasil-calisir" />
@@ -217,7 +217,7 @@ export default async function PowerSeoDashboard({
       </section>
       <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
-        <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API'lere bağlandığı anlamına gelmez.</p>
+        <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>
         <div className={styles.modules}>
           {modules.map((m) => (
             <article key={m.slug} className={styles.module}>

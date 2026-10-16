@@ -25,12 +25,20 @@ const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:0
 // Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
 const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
 
+// A real HTML sitemap link update: the indexable registration agreement was added in PR #1701 (Oct 14).
+const HTML_SITE_MAP_DISCOVERY_UPDATED_AT = new Date("2026-10-14T12:56:16Z");
+
+// PR #1750 changed the registration agreement's rendered title and description (Oct 15).
+const REGISTRATION_AGREEMENT_METADATA_UPDATED_AT = new Date("2026-10-15T22:21:25Z");
+
 // Visible, CMS-independent quick-start guidance and corrected headline on the how-it-works page (Oct 12).
 const HOW_IT_WORKS_QUICK_START_UPDATED_AT = new Date("2026-10-12T13:20:00Z");
 
 const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
   ["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT],
   ["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT],
+  ["/site-haritasi", HTML_SITE_MAP_DISCOVERY_UPDATED_AT],
+  ["/uyelik-sozlesmesi", REGISTRATION_AGREEMENT_METADATA_UPDATED_AT],
   ["/yazarlar-icin/kurgu/roman", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/oyku", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/fantastik", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],

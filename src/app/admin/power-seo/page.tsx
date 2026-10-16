@@ -150,7 +150,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
           const item = node as Record<string, unknown>;
           const label = typeof item["@type"] === "string" ? item["@type"] : "Tanımsız";
           schemaTypes.push(label);
-          const result = validateSchema(item as SchemaObject);
+          const result = validateSchema(item as unknown as SchemaObject);
           schemaCount++;
           for (const issue of result.issues.slice(0, 10)) {
             schemaIssues.push(label + " · " + issue.severity + " · " + issue.field + ": " + issue.message);

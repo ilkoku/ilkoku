@@ -359,7 +359,7 @@ for (const scenario of authenticatedCases) {
     await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
     if (scenario.expectedHeading) {
       await expect(
-        page.getByRole("heading", { name: scenario.expectedHeading }),
+        page.getByRole("heading", { name: scenario.expectedHeading, exact: true }),
       ).toBeVisible();
     }
     await expectResponsiveDocument(page);

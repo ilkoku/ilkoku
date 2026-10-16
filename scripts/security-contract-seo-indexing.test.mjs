@@ -1117,6 +1117,27 @@ test("Power-SEO independent operational tabs stay read-only and bounded", async 
   assert.equal(isDestinationSafe("/nasil-calisir", "javascript:alert(1)"), false);
 });
 
+test("Power-SEO panel reports its actual distinct directly imported modules", () => {
+  const panel = source("src/app/admin/power-seo/page.tsx");
+  const operations = source("src/app/admin/power-seo/PowerSeoOperations.tsx");
+  const fullSite = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
+  const modules = new Set(
+    [panel, operations, fullSite].flatMap((code) =>
+      [...code.matchAll(/from ["']@power-seo\/([a-z-]+)["']/gu)].map((match) => match[1]),
+    ),
+  );
+  // Transitive dependencies and env-only connector readiness do not count as active.
+  assert.deepEqual([...modules].sort(), [
+    "ai", "audit", "content-analysis", "images", "links",
+    "meta", "preview", "redirects", "schema", "sitemap",
+  ]);
+  assertContains(
+    panel,
+    `<strong>${modules.size}</strong><span>Bu panelde doğrudan kullanılan modül</span>`,
+    "the dashboard usage counter must match its actual direct imports",
+  );
+});
+
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {
   const api = source("src/app/api/admin/power-seo/scan/route.ts");
   const page = source("src/app/admin/power-seo/page.tsx");

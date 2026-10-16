@@ -4,6 +4,8 @@ import { auditPage } from "@power-seo/audit";
 import { analyzeContent } from "@power-seo/content-analysis";
 import { analyzeAltText } from "@power-seo/images";
 import { generateSerpPreview } from "@power-seo/preview";
+import { validateSchema, type SchemaObject } from "@power-seo/schema";
+import { PowerSeoOperations } from "./PowerSeoOperations";
 import styles from "./PowerSeoDashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -16,15 +18,15 @@ const modules = [
   { slug: "core", title: "Core", note: "SEO doğrulayıcıları ve hesaplama çekirdeği", mode: "Altyapı" },
   { slug: "content-analysis", title: "Content Analysis", note: "Gerçek HTML içeriği üzerinde SEO kontrolleri", mode: "Bu ekranda çalışır" },
   { slug: "audit", title: "Audit", note: "Sayfa bazında teknik kontrol ve bulgular", mode: "Bu ekranda çalışır" },
-  { slug: "links", title: "Links", note: "Site içi bağlantı grafiği; tam site envanteri gerekli", mode: "Ek bağlantı envanteri gerekli" },
+  { slug: "links", title: "Links", note: "Gerçek HTML üzerinde dört sayfalık parça taraması", mode: "Parçalı denetim aktif; tam grafik değil" },
   { slug: "images", title: "Images", note: "Görsel alt metin analizi", mode: "Bu ekranda çalışır" },
   { slug: "preview", title: "Preview", note: "Google arama sonucu önizlemesi", mode: "Bu ekranda çalışır" },
-  { slug: "schema", title: "Schema", note: "JSON-LD / schema.org yardımcıları", mode: "Paket kurulu" },
-  { slug: "sitemap", title: "Sitemap", note: "XML sitemap üretim/denetim yardımcıları", mode: "Mevcut sitemap korunuyor" },
+  { slug: "schema", title: "Schema", note: "Canlı HTML üzerindeki JSON-LD doğrulaması", mode: "Bu ekranda çalışır" },
+  { slug: "sitemap", title: "Sitemap", note: "Canlı XML URL, tekrar ve lastmod denetimi", mode: "Salt okunur kontrol aktif" },
   { slug: "meta", title: "Meta", note: "Next.js metadata üretim yardımcıları", mode: "Mevcut metadata korunuyor" },
   { slug: "react", title: "React", note: "React SEO bileşenleri", mode: "Paket kurulu" },
   { slug: "readability", title: "Readability", note: "İngilizce formüller; Türkçe puan geçerli sayılmaz", mode: "Türkçe puanlama devre dışı" },
-  { slug: "redirects", title: "Redirects", note: "Yönlendirme motoru ve zincir inceleme", mode: "Mevcut yönlendirmeler korunuyor" },
+  { slug: "redirects", title: "Redirects", note: "Dört eski URL’nin HTTP yönlendirme kontrolü", mode: "Salt okunur kontrol aktif" },
   { slug: "analytics", title: "Analytics", note: "GSC verileri ve denetim eğilimleri", mode: "Veri bağlantısı gerekli" },
   { slug: "search-console", title: "Search Console", note: "Google API istemcisi ve URL inceleme", mode: "Google yetkilendirmesi gerekli" },
   { slug: "integrations", title: "Integrations", note: "Semrush / Ahrefs API istemcileri", mode: "Harici API erişimi gerekli" },
@@ -78,6 +80,9 @@ type AuditResult = {
   previewUrl: string;
   titleTruncated: boolean;
   imageAltIssues: number;
+  schemaCount: number;
+  schemaTypes: string[];
+  schemaIssues: string[];
 };
 
 async function inspectLivePage(path: string): Promise<AuditResult> {
@@ -126,6 +131,36 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const contentAnalysis = analyzeContent({ content, title, metaDescription: description });
   const imageAudit = analyzeAltText(images);
   const preview = generateSerpPreview({ title, description, url: url.toString(), siteTitle: "İlkOku" });
+  const schemaTypes: string[] = [];
+  const schemaIssues: string[] = [];
+  let schemaCount = 0;
+  const jsonLdScripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .filter((match) => /\btype\s*=\s*["']application\/ld\+json["']/i.test(match[1]))
+    .slice(0, 25);
+  for (const script of jsonLdScripts) {
+    try {
+      const parsed: unknown = JSON.parse(script[2]);
+      const roots = Array.isArray(parsed) ? parsed : [parsed];
+      for (const root of roots.slice(0, 50)) {
+        if (!root || typeof root !== "object" || Array.isArray(root)) continue;
+        const record = root as Record<string, unknown>;
+        const graph = Array.isArray(record["@graph"]) ? record["@graph"] : [record];
+        for (const node of graph.slice(0, 50)) {
+          if (!node || typeof node !== "object" || Array.isArray(node)) continue;
+          const item = node as Record<string, unknown>;
+          const label = typeof item["@type"] === "string" ? item["@type"] : "Tanımsız";
+          schemaTypes.push(label);
+          const result = validateSchema(item as unknown as SchemaObject);
+          schemaCount++;
+          for (const issue of result.issues.slice(0, 10)) {
+            schemaIssues.push(label + " · " + issue.severity + " · " + issue.field + ": " + issue.message);
+          }
+        }
+      }
+    } catch {
+      schemaIssues.push("Bozuk JSON-LD: script JSON olarak okunamadı.");
+    }
+  }
   return {
     statusCode: response.status,
     elapsed, title, description, canonical,
@@ -141,16 +176,19 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     previewUrl: preview.displayUrl,
     titleTruncated: preview.titleTruncated,
     imageAltIssues: imageAudit.issues.length,
+    schemaCount, schemaTypes, schemaIssues,
   };
 }
 
 export default async function PowerSeoDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ yol?: string | string[] }>;
+  searchParams: Promise<{ yol?: string | string[]; mod?: string | string[]; parca?: string | string[] }>;
 }) {
   const params = await searchParams;
   const raw = typeof params.yol === "string" ? params.yol : "";
+  const mode = typeof params.mod === "string" ? params.mod : "";
+  const requestedSlice = typeof params.parca === "string" && /^\d{1,2}$/.test(params.parca) ? Number(params.parca) : 1;
   const path = raw ? safePath(raw) : null;
   let audit: AuditResult | null = null;
   let error = raw && !path ? "Yalnız İlkOku'nun herkese açık site içi yolları denetlenebilir." : "";
@@ -171,7 +209,7 @@ export default async function PowerSeoDashboard({
       </div>
       <div className={styles.stats}>
         <div><strong>17 / 17</strong><span>npm modülü bağımlılıkta</span></div>
-        <div><strong>4</strong><span>Bu ekranda kullanılan modül</span></div>
+        <div><strong>8</strong><span>Denetim ve analizde kullanılan modül</span></div>
         <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
       </div>
       <section className={styles.panel}>
@@ -206,6 +244,13 @@ export default async function PowerSeoDashboard({
               <p><strong>{audit.previewTitle}</strong>{audit.titleTruncated ? " · Başlık kırpılmış" : ""}</p>
               <p>{audit.description || "Açıklama eksik"}</p>
             </div>
+            <h3>Gerçek JSON-LD / schema kontrolü</h3>
+            <p>{audit.schemaCount} yapılandırılmış veri nesnesi bulundu. {audit.schemaTypes.length ? audit.schemaTypes.join(" · ") : "JSON-LD tespit edilmedi."}</p>
+            {audit.schemaIssues.length ? (
+              <ul className={styles.issues}>
+                {audit.schemaIssues.slice(0, 25).map((issue, i) => <li key={i}><span>{issue}</span></li>)}
+              </ul>
+            ) : <p>Modülün tanıdığı alanlarda uyarı yok. Tanınmayan tipler için bu Google zengin sonuç uygunluğu anlamına gelmez.</p>}
             <h3>Denetim bulguları</h3>
             <ul className={styles.issues}>
               {audit.rules.filter((r) => r.severity !== "pass").map((r, i) => (
@@ -215,6 +260,16 @@ export default async function PowerSeoDashboard({
           </div>
         ) : null}
       </section>
+      <section className={styles.panel}>
+        <h2>Site genelinde SEO araçları</h2>
+        <p>Bunlar ayrı ve salt okunur işlemlerdir. Sayfa açılışında bütün URL’ler otomatik taranmaz.</p>
+        <div className={styles.quick}>
+          <Link href="/sistem-yonetimi/power-seo?mod=sitemap">Sitemap kontrolü</Link>
+          <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı grafiği</Link>
+          <Link href="/sistem-yonetimi/power-seo?mod=redirects">Yönlendirmeler</Link>
+        </div>
+      </section>
+      <PowerSeoOperations mode={mode} slice={requestedSlice} />
       <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
         <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>

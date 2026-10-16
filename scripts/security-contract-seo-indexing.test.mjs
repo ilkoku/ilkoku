@@ -1082,3 +1082,37 @@ test("Power-SEO independent admin page does not reuse failing CMS SEO query", as
   assert.ok(Number.isFinite(report.score), "actual engine returned numeric audit score");
   assert.ok(Array.isArray(report.rules), "actual engine produced findings");
 });
+
+test("Power-SEO independent operational tabs stay read-only and bounded", async () => {
+  const dashboard = source("src/app/admin/power-seo/page.tsx");
+  const operations = source("src/app/admin/power-seo/PowerSeoOperations.tsx");
+  const css = source("src/app/admin/power-seo/PowerSeoDashboard.module.css");
+  assertContains(dashboard, 'import { validateSchema, type SchemaObject } from "@power-seo/schema"', "real JSON-LD validator");
+  assertContains(dashboard, "<PowerSeoOperations mode={mode} slice={requestedSlice} />", "independent panel tabs render");
+  assertContains(dashboard, "JSON.parse(script[2])", "analyze actual HTML JSON-LD");
+  assertContains(operations, 'import { validateSitemapUrl } from "@power-seo/sitemap"', "sitemap package active");
+  assertContains(operations, 'import { buildLinkGraph, analyzeLinkEquity, suggestLinks } from "@power-seo/links"', "graph package active");
+  assertContains(operations, 'from "@power-seo/redirects"', "redirect package active");
+  assertContains(operations, "const PAGE_LIMIT = 4", "bounded origin scanning");
+  assertContains(operations, 'redirect: "manual"', "do not follow redirects during scans");
+  assertContains(operations, "AbortSignal.timeout(", "bound external requests");
+  assertNotContains(operations, "prisma", "standalone operations do not depend on CMS DB");
+  assertNotContains(operations, "$executeRaw", "no database mutations");
+  assertNotContains(dashboard, "generateMetadata(", "no public metadata rewrite");
+  assertContains(css, "overflow-wrap:anywhere", "mobile long URLs wrap");
+  const [{ buildLinkGraph }, { validateSitemapUrl }, { validateSchema }, { isDestinationSafe }] = await Promise.all([
+    import("@power-seo/links"),
+    import("@power-seo/sitemap"),
+    import("@power-seo/schema"),
+    import("@power-seo/redirects"),
+  ]);
+  const graph = buildLinkGraph([
+    { url: "https://ilkoku.com/", links: ["https://ilkoku.com/nasil-calisir"] },
+    { url: "https://ilkoku.com/nasil-calisir", links: ["https://ilkoku.com/"] },
+  ]);
+  assert.ok(graph.totalLinks > 0, "real internal link graph computed");
+  assert.equal(validateSitemapUrl({ loc: "https://ilkoku.com/" }).valid, true);
+  assert.equal(validateSitemapUrl({ loc: "x" }).valid, false);
+  assert.equal(validateSchema({ "@type": "Article" }).valid, false, "missing required article fields caught");
+  assert.equal(isDestinationSafe("/nasil-calisir", "javascript:alert(1)"), false);
+});

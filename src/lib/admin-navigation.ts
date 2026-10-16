@@ -110,6 +110,7 @@ export const adminNavigationGroups: readonly AdminNavGroup[] = [
     landingHref: "/harita",
     items: [
       { href: "/harita", label: "Sistem Haritası", icon: "audit" },
+      { href: systemPath("/power-seo"), label: "Power-SEO", icon: "audit" },
       { href: systemPath("/okuma-guvenligi"), label: "Okuma Güvenliği", icon: "audit" },
       { href: systemPath("/audit-log"), label: "Audit Log", icon: "audit" },
     ],

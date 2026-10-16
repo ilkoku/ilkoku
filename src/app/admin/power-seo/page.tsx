@@ -7,6 +7,7 @@ import { generateSerpPreview } from "@power-seo/preview";
 import { validateSchema, type SchemaObject } from "@power-seo/schema";
 import { PowerSeoOperations } from "./PowerSeoOperations";
 import { FullSiteLinkAudit } from "./FullSiteLinkAudit";
+import { PowerSeoConnections } from "./PowerSeoConnections";
 import styles from "./PowerSeoDashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -273,6 +274,7 @@ export default async function PowerSeoDashboard({
       </section>
       <PowerSeoOperations mode={mode} slice={requestedSlice} />
       {mode === "full-links" ? <FullSiteLinkAudit /> : null}
+      <PowerSeoConnections />
       <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
         <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>

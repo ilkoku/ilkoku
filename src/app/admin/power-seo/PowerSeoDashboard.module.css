@@ -8,3 +8,5 @@
 @media(max-width:600px){.panel{padding:16px}.form button{width:100%}.stats{grid-template-columns:1fr 1fr}.stats strong{font-size:20px}.wrapper{gap:16px}}
 
 .issues span,.issues b,.module,.facts{overflow-wrap:anywhere}
+
+.quick button{border:1px solid #e5def3;background:#f8f6fd;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#4429a8;cursor:pointer}.quick button:disabled{opacity:.5;cursor:not-allowed}.progress{margin:12px 0;height:10px;border-radius:8px;background:#e8e2f4;overflow:hidden}.progress>div{height:100%;background:#6346b8;transition:width 180ms ease}

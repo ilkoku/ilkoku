@@ -6,6 +6,8 @@ import { analyzeAltText } from "@power-seo/images";
 import { generateSerpPreview } from "@power-seo/preview";
 import { validateSchema, type SchemaObject } from "@power-seo/schema";
 import { PowerSeoOperations } from "./PowerSeoOperations";
+import { FullSiteLinkAudit } from "./FullSiteLinkAudit";
+import { PowerSeoConnections } from "./PowerSeoConnections";
 import styles from "./PowerSeoDashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ const modules = [
   { slug: "core", title: "Core", note: "SEO doğrulayıcıları ve hesaplama çekirdeği", mode: "Altyapı" },
   { slug: "content-analysis", title: "Content Analysis", note: "Gerçek HTML içeriği üzerinde SEO kontrolleri", mode: "Bu ekranda çalışır" },
   { slug: "audit", title: "Audit", note: "Sayfa bazında teknik kontrol ve bulgular", mode: "Bu ekranda çalışır" },
-  { slug: "links", title: "Links", note: "Gerçek HTML üzerinde dört sayfalık parça taraması", mode: "Parçalı denetim aktif; tam grafik değil" },
+  { slug: "links", title: "Links", note: "Parçalı denetim ve kullanıcı tarafından başlatılan birleştirilmiş sitemap grafiği", mode: "Tam tarama isteğe bağlı" },
   { slug: "images", title: "Images", note: "Görsel alt metin analizi", mode: "Bu ekranda çalışır" },
   { slug: "preview", title: "Preview", note: "Google arama sonucu önizlemesi", mode: "Bu ekranda çalışır" },
   { slug: "schema", title: "Schema", note: "Canlı HTML üzerindeki JSON-LD doğrulaması", mode: "Bu ekranda çalışır" },
@@ -266,10 +268,13 @@ export default async function PowerSeoDashboard({
         <div className={styles.quick}>
           <Link href="/sistem-yonetimi/power-seo?mod=sitemap">Sitemap kontrolü</Link>
           <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı grafiği</Link>
+          <Link href="/sistem-yonetimi/power-seo?mod=full-links">Tam site bağlantı taraması</Link>
           <Link href="/sistem-yonetimi/power-seo?mod=redirects">Yönlendirmeler</Link>
         </div>
       </section>
       <PowerSeoOperations mode={mode} slice={requestedSlice} />
+      {mode === "full-links" ? <FullSiteLinkAudit /> : null}
+      <PowerSeoConnections />
       <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
         <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>

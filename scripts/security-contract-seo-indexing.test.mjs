@@ -1015,3 +1015,18 @@ test("Power-SEO adds read-only Turkish-safe content analysis without changing pu
   assertNotContains(audit, "generateMetadata", "do not change public metadata");
   assertNotContains(audit, "robots:", "do not alter robots indexing policy");
 });
+
+test("Power-SEO published analyzer executes on Turkish CMS content", async () => {
+  const { analyzeContent } = await import("@power-seo/content-analysis");
+  const analysis = analyzeContent({
+    title: "Roman Yazma Rehberi",
+    metaDescription: "Roman yazarlığı üzerine özgün ve kapsamlı başlangıç rehberi.",
+    content: "<h1>Roman Yazma Rehberi</h1><h2>Anlatı Yapısı</h2><p>Romanın karakter ve olay örgüsünü planlayın.</p>",
+    locale: "tr-TR",
+    siteUrl: "https://ilkoku.com",
+  });
+  assert.ok(Array.isArray(analysis.results));
+  assert.ok(analysis.results.some((result) => result.id === "title-presence"));
+  assert.ok(Number.isFinite(analysis.score));
+  assert.ok(analysis.maxScore > 0);
+});

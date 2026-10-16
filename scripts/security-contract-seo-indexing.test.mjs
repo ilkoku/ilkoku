@@ -1142,3 +1142,15 @@ test("Power-SEO fullsite API scans only authenticated sitemap batches without mo
   assertNotContains(page, "generateMetadata(", "no public SEO rewrites");
   assertNotContains(full, "fetch('/sitemap.xml')", "scan remains server-authorized");
 });
+
+test("Power-SEO external credentials are not displayed or misrepresented as live API success", () => {
+  const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
+  const dashboard = source("src/app/admin/power-seo/page.tsx");
+  assertContains(connections, 'process.env[name]?.trim()', "readiness checks use process env presence only");
+  assertContains(connections, "API doğrulanmadı", "no invented connectivity success");
+  assertContains(connections, "Yetkilendirme gerekli", "missing credentials explicitly named");
+  assertContains(connections, "GSC_OAUTH_REFRESH_TOKEN", "reuse existing GSC OAuth credentials");
+  assertNotContains(connections, "console.log", "never log secret material");
+  assertNotContains(connections, "JSON.stringify(process.env)", "never serialize server env");
+  assertContains(dashboard, "<PowerSeoConnections />", "readiness visible to administrator");
+});

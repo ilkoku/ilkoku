@@ -134,7 +134,9 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     score: audit.score,
     rules: audit.rules.map(({ id, title: ruleTitle, description: detail, severity }) =>
       ({ id, title: ruleTitle, description: detail, severity })),
-    contentScore: Number.isFinite(contentAnalysis.score) ? contentAnalysis.score : null,
+    contentScore: contentAnalysis.maxScore > 0 && Number.isFinite(contentAnalysis.score)
+      ? Math.round((contentAnalysis.score / contentAnalysis.maxScore) * 100)
+      : null,
     previewTitle: preview.title,
     previewUrl: preview.displayUrl,
     titleTruncated: preview.titleTruncated,

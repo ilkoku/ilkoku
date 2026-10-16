@@ -224,7 +224,7 @@ export default async function PowerSeoDashboard({
       </div>
       <div className={styles.stats}>
         <div><strong>17 / 17</strong><span>npm modülü bağımlılıkta</span></div>
-        <div><strong>8</strong><span>Denetim ve analizde kullanılan modül</span></div>
+        <div><strong>10</strong><span>Bu panelde doğrudan kullanılan modül</span></div>
         <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
       </div>
       <section className={styles.panel}>

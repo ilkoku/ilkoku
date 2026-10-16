@@ -23,6 +23,7 @@
     "social-images:prepare": "node scripts/prepare-social-images.mjs"
   },
   "dependencies": {
+    "@power-seo/content-analysis": "1.0.19",
     "@prisma/adapter-mariadb": "7.9.1",
     "@prisma/client": "7.9.1",
     "@tailwindcss/postcss": "^4.3.3",

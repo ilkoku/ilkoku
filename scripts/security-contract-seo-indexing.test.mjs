@@ -996,3 +996,22 @@ test("verified public page updates reach XML sitemap and Atom without fabricated
   assertNotContains(freshness, '["/yardim",', "do not invent help page lastmod");
   assertNotContains(freshness, '["/iletisim",', "do not invent contact page lastmod");
 });
+
+test("Power-SEO adds read-only Turkish-safe content analysis without changing public indexing", () => {
+  const center = source("src/app/icerik/seo/page.tsx");
+  const audit = source("src/app/icerik/seo/PowerSeoContentAudit.tsx");
+  const pkg = JSON.parse(source("package.json"));
+  const lock = JSON.parse(source("package-lock.json"));
+  assert.equal(pkg.dependencies["@power-seo/content-analysis"], "1.0.19");
+  assert.equal(lock.packages[""].dependencies["@power-seo/content-analysis"], "1.0.19");
+  assert.equal(lock.packages["node_modules/@power-seo/core"].version, "1.0.19");
+  assertContains(center, 'import { PowerSeoContentAudit } from "./PowerSeoContentAudit";', "reuse current protected SEO center");
+  assertContains(center, "SELECT bodyJson FROM ContentPage", "analyze genuine CMS content");
+  assertContains(center, "<PowerSeoContentAudit", "show analysis on selected page only");
+  assertContains(audit, 'import { analyzeContent } from "@power-seo/content-analysis";', "use actual Power-SEO engine");
+  assertContains(audit, "if (!bodyFound) return null;", "refuse false scores without content");
+  assertContains(audit, "STRUCTURAL_CHECKS.has(item.id)", "exclude English-only language heuristics");
+  assertNotContains(audit, "focusKeyphrase: props.title", "do not fabricate focus keyword");
+  assertNotContains(audit, "generateMetadata", "do not change public metadata");
+  assertNotContains(audit, "robots:", "do not alter robots indexing policy");
+});

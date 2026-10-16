@@ -5,6 +5,8 @@ import { analyzeContent } from "@power-seo/content-analysis";
 import { analyzeAltText } from "@power-seo/images";
 import { generateSerpPreview } from "@power-seo/preview";
 import { validateSchema, type SchemaObject } from "@power-seo/schema";
+import { buildTitlePrompt, buildMetaDescriptionPrompt } from "@power-seo/ai";
+import { createMetadata } from "@power-seo/meta";
 import { PowerSeoOperations } from "./PowerSeoOperations";
 import { FullSiteLinkAudit } from "./FullSiteLinkAudit";
 import { PowerSeoConnections } from "./PowerSeoConnections";
@@ -25,14 +27,14 @@ const modules = [
   { slug: "preview", title: "Preview", note: "Google arama sonucu önizlemesi", mode: "Bu ekranda çalışır" },
   { slug: "schema", title: "Schema", note: "Canlı HTML üzerindeki JSON-LD doğrulaması", mode: "Bu ekranda çalışır" },
   { slug: "sitemap", title: "Sitemap", note: "Canlı XML URL, tekrar ve lastmod denetimi", mode: "Salt okunur kontrol aktif" },
-  { slug: "meta", title: "Meta", note: "Next.js metadata üretim yardımcıları", mode: "Mevcut metadata korunuyor" },
+  { slug: "meta", title: "Meta", note: "Next.js metadata üretim yardımcıları", mode: "Taslak önizleme aktif; mevcut metadata korunuyor" },
   { slug: "react", title: "React", note: "React SEO bileşenleri", mode: "Paket kurulu" },
   { slug: "readability", title: "Readability", note: "İngilizce formüller; Türkçe puan geçerli sayılmaz", mode: "Türkçe puanlama devre dışı" },
   { slug: "redirects", title: "Redirects", note: "Dört eski URL’nin HTTP yönlendirme kontrolü", mode: "Salt okunur kontrol aktif" },
   { slug: "analytics", title: "Analytics", note: "GSC verileri ve denetim eğilimleri", mode: "Veri bağlantısı gerekli" },
   { slug: "search-console", title: "Search Console", note: "Google API istemcisi ve URL inceleme", mode: "Google yetkilendirmesi gerekli" },
   { slug: "integrations", title: "Integrations", note: "Semrush / Ahrefs API istemcileri", mode: "Harici API erişimi gerekli" },
-  { slug: "ai", title: "AI", note: "Model bağımsız SEO öneri istemleri", mode: "Harici yapay zekâ modeli gerekli" },
+  { slug: "ai", title: "AI", note: "Model bağımsız SEO öneri istemleri", mode: "İstem taslakları aktif; model bağlantısı gerekli" },
   { slug: "tracking", title: "Tracking", note: "İzleme ve çerez izni yardımcıları", mode: "Mevcut GA4/GTM korunuyor" },
 ] as const;
 
@@ -85,6 +87,9 @@ type AuditResult = {
   schemaCount: number;
   schemaTypes: string[];
   schemaIssues: string[];
+  titlePrompt: string;
+  descriptionPrompt: string;
+  metadataTitle: string;
 };
 
 async function inspectLivePage(path: string): Promise<AuditResult> {
@@ -133,6 +138,12 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const contentAnalysis = analyzeContent({ content, title, metaDescription: description });
   const imageAudit = analyzeAltText(images);
   const preview = generateSerpPreview({ title, description, url: url.toString(), siteTitle: "İlkOku" });
+  // Prompt templates are local and read-only; no model is called or billed.
+  const excerpt = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 900);
+  const titlePrompt = buildTitlePrompt({ content: excerpt, tone: "Turkish" }).user;
+  const descriptionPrompt = buildMetaDescriptionPrompt({ title, content: excerpt, tone: "Turkish" }).user;
+  // Compare generated preview metadata without injecting it into the site's head.
+  const previewMetadata = createMetadata({ title, description, canonicalUrl: canonical });
   const schemaTypes: string[] = [];
   const schemaIssues: string[] = [];
   let schemaCount = 0;
@@ -179,6 +190,8 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     titleTruncated: preview.titleTruncated,
     imageAltIssues: imageAudit.issues.length,
     schemaCount, schemaTypes, schemaIssues,
+    titlePrompt, descriptionPrompt,
+    metadataTitle: typeof previewMetadata.title === "string" ? previewMetadata.title : title,
   };
 }
 
@@ -253,6 +266,18 @@ export default async function PowerSeoDashboard({
                 {audit.schemaIssues.slice(0, 25).map((issue, i) => <li key={i}><span>{issue}</span></li>)}
               </ul>
             ) : <p>Modülün tanıdığı alanlarda uyarı yok. Tanınmayan tipler için bu Google zengin sonuç uygunluğu anlamına gelmez.</p>}
+            <h3>Power-SEO meta taslağı (salt okunur)</h3>
+            <p>Meta modülünün oluşturduğu karşılaştırma başlığı: {audit.metadataTitle}. Bu taslak yayınlanmaz ve sayfa başlığını değiştirmez.</p>
+            <h3>Yapay zekâ öneri istemleri — taslak</h3>
+            <p>AI modülüyle Türkçe öneri istemleri oluşturuldu. Harici yapay zekâ çağrısı yapılmadı; otomatik öneri üretildiği veya içerik düzenlendiği iddia edilmez.</p>
+            <details>
+              <summary>SEO başlığı önerisi istemi</summary>
+              <pre className={styles.facts}>{audit.titlePrompt}</pre>
+            </details>
+            <details>
+              <summary>Meta açıklaması önerisi istemi</summary>
+              <pre className={styles.facts}>{audit.descriptionPrompt}</pre>
+            </details>
             <h3>Denetim bulguları</h3>
             <ul className={styles.issues}>
               {audit.rules.filter((r) => r.severity !== "pass").map((r, i) => (

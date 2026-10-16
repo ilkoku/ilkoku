@@ -208,6 +208,11 @@ const protectedCases = [
     viewport: viewports.phone390,
   },
   {
+    label: "Power-SEO independent portal",
+    path: "/sistem-yonetimi/power-seo",
+    viewport: viewports.phone390,
+  },
+  {
     label: "CMS workspace",
     path: "/icerik",
     viewport: viewports.tablet768,
@@ -268,6 +273,13 @@ const authenticatedCases = [
   {
     label: "admin workspace",
     path: "/admin",
+    role: "admin",
+    viewport: viewports.phone390,
+  },
+  {
+    expectedHeading: "Power-SEO",
+    label: "Power-SEO independent admin dashboard",
+    path: "/sistem-yonetimi/power-seo",
     role: "admin",
     viewport: viewports.phone390,
   },

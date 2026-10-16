@@ -267,7 +267,7 @@ export default async function PowerSeoDashboard({
         <p>Bunlar ayrı ve salt okunur işlemlerdir. Sayfa açılışında bütün URL’ler otomatik taranmaz.</p>
         <div className={styles.quick}>
           <Link href="/sistem-yonetimi/power-seo?mod=sitemap">Sitemap kontrolü</Link>
-          <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı örneklemi</Link>
+          <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı grafiği</Link>
           <Link href="/sistem-yonetimi/power-seo?mod=full-links">Tam site bağlantı taraması</Link>
           <Link href="/sistem-yonetimi/power-seo?mod=redirects">Yönlendirmeler</Link>
         </div>

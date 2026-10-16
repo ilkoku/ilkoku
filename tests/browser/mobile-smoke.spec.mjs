@@ -208,6 +208,11 @@ const protectedCases = [
     viewport: viewports.phone390,
   },
   {
+    label: "Power-SEO independent portal",
+    path: "/sistem-yonetimi/power-seo",
+    viewport: viewports.phone390,
+  },
+  {
     label: "CMS workspace",
     path: "/icerik",
     viewport: viewports.tablet768,
@@ -268,6 +273,13 @@ const authenticatedCases = [
   {
     label: "admin workspace",
     path: "/admin",
+    role: "admin",
+    viewport: viewports.phone390,
+  },
+  {
+    expectedHeading: "Power-SEO",
+    label: "Power-SEO independent admin dashboard",
+    path: "/sistem-yonetimi/power-seo",
     role: "admin",
     viewport: viewports.phone390,
   },
@@ -347,7 +359,7 @@ for (const scenario of authenticatedCases) {
     await expect(page).not.toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
     if (scenario.expectedHeading) {
       await expect(
-        page.getByRole("heading", { name: scenario.expectedHeading }),
+        page.getByRole("heading", { name: scenario.expectedHeading, exact: true }),
       ).toBeVisible();
     }
     await expectResponsiveDocument(page);

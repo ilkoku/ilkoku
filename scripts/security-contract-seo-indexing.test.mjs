@@ -1030,3 +1030,55 @@ test("Power-SEO published analyzer executes on Turkish CMS content", async () =>
   assert.ok(Number.isFinite(analysis.score));
   assert.ok(analysis.maxScore > 0);
 });
+
+test("Power-SEO full toolkit is explicitly pinned with verified lockfile entries", () => {
+  const pkg = JSON.parse(source("package.json"));
+  const lock = JSON.parse(source("package-lock.json"));
+  const modules = [
+    "ai", "analytics", "audit", "content-analysis", "core", "images",
+    "integrations", "links", "meta", "preview", "react", "readability",
+    "redirects", "schema", "search-console", "sitemap", "tracking",
+  ];
+  assert.equal(modules.length, 17);
+  for (const name of modules) {
+    const id = "@power-seo/" + name;
+    assert.equal(pkg.dependencies[id], "1.0.19", id + " dependency");
+    assert.equal(lock.packages[""].dependencies[id], "1.0.19", id + " root lock");
+    const entry = lock.packages["node_modules/" + id];
+    assert.equal(entry?.version, "1.0.19");
+    assert.match(entry?.integrity || "", /^sha512-/u);
+    assert.match(entry?.resolved || "", /^https:\/\/registry\.npmjs\.org\/@power-seo\//u);
+    assert.ok(import.meta.resolve(id).includes("/node_modules/"), id + " resolves");
+  }
+});
+
+test("Power-SEO independent admin page does not reuse failing CMS SEO query", async () => {
+  const page = source("src/app/admin/power-seo/page.tsx");
+  const adminNavigation = source("src/lib/admin-navigation.ts");
+  const adminLayout = source("src/app/admin/layout.tsx");
+  const config = source("next.config.ts");
+  assertContains(page, 'from "@power-seo/audit"', "real audit engine");
+  assertContains(page, 'from "@power-seo/content-analysis"', "real content analyzer");
+  assertContains(page, "inspectLivePage(path)", "explicit one-URL live HTML audit");
+  assertContains(page, 'redirect: "manual"', "no off-site redirect");
+  assertContains(page, "AbortSignal.timeout(8000)", "bounded same-site request");
+  assertContains(page, 'safePath(raw)', "restrict user-provided URL to site paths");
+  assertContains(page, "Denetim yapılmadı:", "surface failures rather than false success");
+  assertNotContains(page, "ContentPage", "independent of CMS database");
+  assertNotContains(page, "prisma", "no database prerequisite");
+  assertNotContains(page, "generateMetadata(", "no public metadata mutation");
+  assertContains(adminNavigation, 'label: "Power-SEO"', "admin navigation entry");
+  assertContains(adminLayout, 'user.role !== "admin"', "admin role enforced");
+  assertContains(config, '"/sistem-yonetimi/:path*"', "private route noindex header");
+  const { auditPage } = await import("@power-seo/audit");
+  const report = auditPage({
+    url: "https://ilkoku.com/nasil-calisir",
+    title: "İlkOku Nasıl Çalışır",
+    metaDescription: "İlkOku hizmetini ve yazarların eserlerini nasıl paylaşacağını açıklayan bilgilendirme.",
+    canonical: "https://ilkoku.com/nasil-calisir",
+    headings: ["h1:İlkOku Nasıl Çalışır"],
+    statusCode: 200,
+  });
+  assert.ok(Number.isFinite(report.score), "actual engine returned numeric audit score");
+  assert.ok(Array.isArray(report.rules), "actual engine produced findings");
+});

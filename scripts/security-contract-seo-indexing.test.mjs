@@ -979,3 +979,20 @@ test("Madde 14 writer hub sitemap lastmod reflects the actual five-guide link re
   assertContains(freshness, '["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT]', "route-specific freshness");
   assertContains(sitemap, "applySearchCodeFreshness(", "dynamic sitemap honors changed route timestamp");
 });
+
+
+test("verified public page updates reach XML sitemap and Atom without fabricated timestamps", () => {
+  const freshness = source("src/lib/search-content-freshness.ts");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const atom = source("src/app/recent-updates.atom/route.ts");
+
+  assertContains(freshness, 'HTML_SITE_MAP_DISCOVERY_UPDATED_AT = new Date("2026-10-14T12:56:16Z")', "PR #1701 actual HTML sitemap link change");
+  assertContains(freshness, 'REGISTRATION_AGREEMENT_METADATA_UPDATED_AT = new Date("2026-10-15T22:21:25Z")', "PR #1750 actual agreement head update");
+  assertContains(freshness, '["/site-haritasi", HTML_SITE_MAP_DISCOVERY_UPDATED_AT]', "site map lastmod mapping");
+  assertContains(freshness, '["/uyelik-sozlesmesi", REGISTRATION_AGREEMENT_METADATA_UPDATED_AT]', "agreement lastmod mapping");
+  assertContains(sitemap, "getSearchCodeFreshness(entry.url)", "XML sitemap derives truthful route freshness");
+  assertContains(atom, "const sitemap = await buildSitemap();", "Atom derives entries from the XML sitemap");
+  assertContains(atom, "const updatedAt = normalizeLastModified(entry.lastModified);", "Atom includes genuine lastmod entries only");
+  assertNotContains(freshness, '["/yardim",', "do not invent help page lastmod");
+  assertNotContains(freshness, '["/iletisim",', "do not invent contact page lastmod");
+});

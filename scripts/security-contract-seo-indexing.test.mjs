@@ -1116,3 +1116,29 @@ test("Power-SEO independent operational tabs stay read-only and bounded", async 
   assert.equal(validateSchema({ "@type": "Article" }).valid, false, "missing required article fields caught");
   assert.equal(isDestinationSafe("/nasil-calisir", "javascript:alert(1)"), false);
 });
+
+test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {
+  const api = source("src/app/api/admin/power-seo/scan/route.ts");
+  const page = source("src/app/admin/power-seo/page.tsx");
+  const full = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
+  assertContains(api, 'user.role !== "admin"', "admin permission enforced for JSON endpoint");
+  assertContains(api, "const BATCH_SIZE = 4", "bounded batch");
+  assertContains(api, "const MAX_URLS = 400", "sitewide safety cap");
+  assertContains(api, 'redirect: "manual"', "no offsite redirect following");
+  assertContains(api, 'const ORIGIN = "https://ilkoku.com"', "fixed target origin");
+  assertContains(api, "AbortSignal.timeout(", "requests have timeouts");
+  assertContains(api, '"Cache-Control": "private, no-store"', "sensitive admin reports never shared-cache");
+  assertContains(api, 'getCurrentUser()', "session enforced inside API not only layout");
+  assertContains(api, 'response.status !== 200', "only successful HTML accepted");
+  assertNotContains(api, "prisma", "no writes or CMS coupling");
+  assertNotContains(api, "axios", "no external crawler");
+  assertContains(full, 'import { analyzeLinkEquity, buildLinkGraph, findOrphanPages, suggestLinks }', "real link-analysis engine");
+  assertContains(full, "pages.length !== urls.length", "completeness check before orphan reporting");
+  assertContains(full, "summary.complete", "explicit true completeness gate");
+  assertContains(full, "Baştan tara", "human-only crawl trigger");
+  assertContains(full, "JSON raporunu al", "report export");
+  assertContains(full, "stopRef.current = true", "user stop control");
+  assertContains(page, 'mode === "full-links" ? <FullSiteLinkAudit />', "isolated panel route");
+  assertNotContains(page, "generateMetadata(", "no public SEO rewrites");
+  assertNotContains(full, "fetch('/sitemap.xml')", "scan remains server-authorized");
+});

@@ -862,3 +862,28 @@ for (const guide of writingGuideRoutes) {
     await expectResponsiveDocument(page);
   });
 }
+
+test("Power-SEO admin sitemap workflow renders real site inventory on mobile", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: token,
+    url: authCookieUrl,
+  }]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Power-SEO", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sitemap kontrolü" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "İç bağlantı grafiği" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Yönlendirmeler" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.getByRole("link", { name: "Sitemap kontrolü" }).click();
+  await expect(page).toHaveURL(/mod=sitemap/u);
+  await expect(page.getByRole("heading", { name: "Canlı sitemap doğrulaması" })).toBeVisible();
+  await expect(page.getByText("Sitemap URL sayısı")).toBeVisible();
+  await expectResponsiveDocument(page);
+});

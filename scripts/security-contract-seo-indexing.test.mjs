@@ -1154,3 +1154,25 @@ test("Power-SEO external credentials are not displayed or misrepresented as live
   assertNotContains(connections, "JSON.stringify(process.env)", "never serialize server env");
   assertContains(dashboard, "<PowerSeoConnections />", "readiness visible to administrator");
 });
+
+test("Power-SEO AI and Meta previews are read-only and operate without model secrets", async () => {
+  const page = source("src/app/admin/power-seo/page.tsx");
+  assertContains(page, 'from "@power-seo/ai"', "real upstream AI prompt module");
+  assertContains(page, 'from "@power-seo/meta"', "real upstream Next metadata module");
+  assertContains(page, "buildTitlePrompt({ content: excerpt", "real content excerpt");
+  assertContains(page, "buildMetaDescriptionPrompt({ title, content: excerpt", "real description prompt");
+  assertContains(page, "createMetadata({ title, description, canonical })", "metadata draft only");
+  assertContains(page, "Yapay zekâ öneri istemleri", "visible preview");
+  assertNotContains(page, "OPENAI_API_KEY", "no API secret in presentation");
+  assertNotContains(page, "fetch('https://api.openai.com", "no automatic AI request");
+  const [{ buildTitlePrompt, buildMetaDescriptionPrompt }, { createMetadata }] = await Promise.all([
+    import("@power-seo/ai"), import("@power-seo/meta")
+  ]);
+  const p = buildTitlePrompt({ content: "Türkçe öykü yazma rehberi", tone: "Turkish" });
+  assert.ok(p.user.includes("Türkçe öykü"));
+  const d = buildMetaDescriptionPrompt({ title: "Öykü rehberi", content: "Yazma rehberi" });
+  assert.ok(d.user.includes("Öykü rehberi"));
+  const m = createMetadata({ title: "Öykü rehberi", canonical: "https://ilkoku.com/yazarlar-icin" });
+  assert.equal(m.title, "Öykü rehberi");
+  assert.equal(m.alternates?.canonical, "https://ilkoku.com/yazarlar-icin");
+});

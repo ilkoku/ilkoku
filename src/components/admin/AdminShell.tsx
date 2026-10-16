@@ -275,29 +275,38 @@ export function AdminShell({
           </Link>
 
           <div className="admin-profile">
-            <span>{initials}</span>
+            <span className="admin-profile__avatar">{initials}</span>
 
-            <div>
+            <div className="admin-profile__identity">
               <strong>{user.fullName}</strong>
               <small>{user.email}</small>
             </div>
 
-            <Link className="admin-profile__logout" href="/icerik">
-              İçerik Yönetimi
-            </Link>
-
-            <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
-
-            <form action={logoutAction}>
-              <button
+            <div className="admin-profile__actions">
+              <Link
+                aria-label="İçerik Yönetimi"
                 className="admin-profile__logout"
-                type="submit"
-                aria-label="Çıkış yap"
-                title="Çıkış yap"
+                href="/icerik"
+                title="İçerik Yönetimi"
               >
-                Çıkış
-              </button>
-            </form>
+                İçerik
+              </Link>
+
+              <Link className="admin-profile__logout" href="/hesabim">
+                Hesabım
+              </Link>
+
+              <form action={logoutAction}>
+                <button
+                  className="admin-profile__logout"
+                  type="submit"
+                  aria-label="Çıkış yap"
+                  title="Çıkış yap"
+                >
+                  Çıkış
+                </button>
+              </form>
+            </div>
           </div>
         </header>
 

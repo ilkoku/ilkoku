@@ -7,6 +7,7 @@ const read = (path) => readFileSync(path, "utf8");
 const navigation = read("src/lib/admin-navigation.ts");
 const shell = read("src/components/admin/AdminShell.tsx");
 const dashboard = read("src/components/admin/AdminDashboard.tsx");
+const adminCss = read("src/app/admin/admin.css");
 const returnLink = read("src/components/admin/AdminReturnLink.tsx");
 const contentCenter = read("src/app/icerik/page.tsx");
 const systemMap = read("src/features/system-map/SystemMapWorkspacePage.tsx");
@@ -101,4 +102,16 @@ test("admin subpages and external management centers expose a consistent return 
   for (const source of [contentCenter, systemMap, contracts]) {
     assert.match(source, /<AdminReturnLink \/>/);
   }
+});
+
+
+test("admin topbar stays compact and audit navigation is not duplicated as a giant dashboard CTA", () => {
+  assert.match(shell, /admin-profile__avatar/);
+  assert.match(shell, /admin-profile__identity/);
+  assert.match(shell, /admin-profile__actions/);
+  assert.match(shell, /aria-label="İçerik Yönetimi"/);
+  assert.doesNotMatch(dashboard, />\s*Sistem hareketlerini aç\s*</);
+  assert.match(adminCss, /ADMIN TOPBAR COMPACT FIX/);
+  assert.match(adminCss, /\.admin-profile__actions\s*\{[\s\S]*display:\s*flex\s*!important/);
+  assert.match(adminCss, /\.admin-search\s*\{[\s\S]*flex:\s*1 1 18rem/);
 });

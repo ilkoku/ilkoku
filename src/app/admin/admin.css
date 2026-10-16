@@ -257,3 +257,154 @@
   align-items: center;
   margin: 0 0 1rem;
 }
+
+
+/* ADMIN TOPBAR COMPACT FIX — 2026-10-08 */
+.admin-topbar {
+  min-height: 4.5rem;
+  height: auto;
+  gap: .75rem;
+  padding: .6rem 1.25rem;
+}
+
+.admin-topbar > div:first-of-type {
+  flex: 0 0 auto;
+}
+
+.admin-search {
+  flex: 1 1 18rem;
+  min-width: 10rem;
+  max-width: 30rem;
+  width: auto;
+  margin-left: auto;
+}
+
+.admin-icon-button {
+  flex: 0 0 2.35rem;
+  width: 2.35rem;
+  height: 2.35rem;
+}
+
+.admin-profile {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+}
+
+.admin-profile > .admin-profile__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: .72rem;
+  font-size: .7rem;
+}
+
+.admin-profile__identity {
+  display: grid !important;
+  gap: .08rem;
+  min-width: 0;
+  max-width: 11rem;
+}
+
+.admin-profile__identity strong,
+.admin-profile__identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-profile__identity strong {
+  font-size: .78rem;
+}
+
+.admin-profile__identity small {
+  color: #778196;
+  font-size: .64rem;
+}
+
+.admin-profile__actions {
+  display: flex !important;
+  align-items: center;
+  gap: .35rem;
+}
+
+.admin-profile__actions form {
+  display: flex !important;
+  margin: 0;
+}
+
+.admin-profile__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 .62rem;
+  white-space: nowrap;
+  font-size: .7rem;
+}
+
+@media (max-width: 1180px) {
+  .admin-search {
+    max-width: 22rem;
+  }
+
+  .admin-profile__identity small {
+    display: none;
+  }
+}
+
+@media (max-width: 1040px) {
+  .admin-profile__identity {
+    display: none !important;
+  }
+
+  .admin-search {
+    max-width: 18rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-topbar {
+    gap: .6rem;
+  }
+
+  .admin-profile__actions {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .admin-topbar {
+    min-height: 4rem;
+    padding: .5rem .75rem;
+  }
+
+  .admin-topbar > div:first-of-type {
+    display: none;
+  }
+
+  .admin-profile__identity {
+    display: none !important;
+  }
+
+  .admin-profile__actions {
+    display: flex !important;
+    gap: .25rem;
+  }
+
+  .admin-profile__logout {
+    min-height: 1.9rem;
+    padding: 0 .5rem;
+    font-size: .66rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-profile__actions > a:first-child {
+    display: none;
+  }
+}

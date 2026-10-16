@@ -16,9 +16,6 @@ const STRUCTURAL_CHECKS = new Set([
   "heading-structure",
   "single-h1",
   "word-count",
-  "internal-links",
-  "external-links",
-  "image-alt",
   "canonical-url",
 ]);
 

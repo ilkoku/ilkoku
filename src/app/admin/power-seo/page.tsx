@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auditPage } from "@power-seo/audit";
 import { analyzeContent } from "@power-seo/content-analysis";
+import { analyzeAltText } from "@power-seo/images";
+import { generateSerpPreview } from "@power-seo/preview";
 import styles from "./PowerSeoDashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -15,8 +17,8 @@ const modules = [
   { slug: "content-analysis", title: "Content Analysis", note: "Gerçek HTML içeriği üzerinde SEO kontrolleri", mode: "Bu ekranda çalışır" },
   { slug: "audit", title: "Audit", note: "Sayfa bazında teknik kontrol ve bulgular", mode: "Bu ekranda çalışır" },
   { slug: "links", title: "Links", note: "Site içi bağlantı grafiği; tam site envanteri gerekli", mode: "Ek bağlantı envanteri gerekli" },
-  { slug: "images", title: "Images", note: "Görsel alt metin ve format kontrolleri", mode: "Paket kurulu" },
-  { slug: "preview", title: "Preview", note: "Arama ve sosyal medya önizleme bileşenleri", mode: "Paket kurulu" },
+  { slug: "images", title: "Images", note: "Görsel alt metin analizi", mode: "Bu ekranda çalışır" },
+  { slug: "preview", title: "Preview", note: "Google arama sonucu önizlemesi", mode: "Bu ekranda çalışır" },
   { slug: "schema", title: "Schema", note: "JSON-LD / schema.org yardımcıları", mode: "Paket kurulu" },
   { slug: "sitemap", title: "Sitemap", note: "XML sitemap üretim/denetim yardımcıları", mode: "Mevcut sitemap korunuyor" },
   { slug: "meta", title: "Meta", note: "Next.js metadata üretim yardımcıları", mode: "Mevcut metadata korunuyor" },
@@ -72,6 +74,10 @@ type AuditResult = {
   score: number;
   rules: Array<{ id: string; title: string; description: string; severity: string }>;
   contentScore: number | null;
+  previewTitle: string;
+  previewUrl: string;
+  titleTruncated: boolean;
+  imageAltIssues: number;
 };
 
 async function inspectLivePage(path: string): Promise<AuditResult> {
@@ -118,6 +124,8 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   // Automated editorial-language scoring can be misleading for Turkish.
   // Show the upstream content score separately rather than labeling it Google rank.
   const contentAnalysis = analyzeContent({ content, title, metaDescription: description });
+  const imageAudit = analyzeAltText(images);
+  const preview = generateSerpPreview({ title, description, url: url.toString(), siteTitle: "İlkOku" });
   return {
     statusCode: response.status,
     elapsed, title, description, canonical,
@@ -127,6 +135,10 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     rules: audit.rules.map(({ id, title: ruleTitle, description: detail, severity }) =>
       ({ id, title: ruleTitle, description: detail, severity })),
     contentScore: Number.isFinite(contentAnalysis.score) ? contentAnalysis.score : null,
+    previewTitle: preview.title,
+    previewUrl: preview.displayUrl,
+    titleTruncated: preview.titleTruncated,
+    imageAltIssues: imageAudit.issues.length,
   };
 }
 
@@ -157,7 +169,7 @@ export default async function PowerSeoDashboard({
       </div>
       <div className={styles.stats}>
         <div><strong>17 / 17</strong><span>npm modülü bağımlılıkta</span></div>
-        <div><strong>2</strong><span>Bu ekranda çalışan analiz motoru</span></div>
+        <div><strong>4</strong><span>Bu ekranda kullanılan modül</span></div>
         <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
       </div>
       <section className={styles.panel}>
@@ -184,7 +196,13 @@ export default async function PowerSeoDashboard({
               <p><b>Başlık:</b> {audit.title || "Eksik"}</p>
               <p><b>Açıklama:</b> {audit.description || "Eksik"}</p>
               <p><b>Canonical:</b> {audit.canonical || "Eksik"}</p>
-              <p><b>H1:</b> {audit.h1Count} · <b>İç bağlantı:</b> {audit.linkCount} · <b>Görsel:</b> {audit.imageCount}</p>
+              <p><b>H1:</b> {audit.h1Count} · <b>İç bağlantı:</b> {audit.linkCount} · <b>Görsel:</b> {audit.imageCount} · <b>Alt metin bulgusu:</b> {audit.imageAltIssues}</p>
+            </div>
+            <h3>Google arama sonucu önizlemesi</h3>
+            <div className={styles.facts}>
+              <small>{audit.previewUrl}</small>
+              <p><strong>{audit.previewTitle}</strong>{audit.titleTruncated ? " · Başlık kırpılmış" : ""}</p>
+              <p>{audit.description || "Açıklama eksik"}</p>
             </div>
             <h3>Denetim bulguları</h3>
             <ul className={styles.issues}>

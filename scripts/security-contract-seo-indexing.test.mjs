@@ -1152,6 +1152,7 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
   assertNotContains(providers, "deleteSitemap", "no GSC sitemap deletion");
   assertNotContains(providers, "console.log", "no secrets in logs");
   assertContains(controls, 'onClick={() => void check(service.id)}', "user-initiated action");
+  assertContains(local, '"use client"', "React package requires explicit client boundary in Next App Router");
   assertContains(local, "createConsentManager()", "tracking module used only in isolated sandbox");
   assertContains(local, "renderMetaTags([", "React metadata element created but not mounted");
   assertContains(local, "analyzeReadability({", "English sample functionality checks");

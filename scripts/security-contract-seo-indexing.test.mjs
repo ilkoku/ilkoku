@@ -395,14 +395,13 @@ test("public footer signup resolves to homepage role section from nested routes"
   assertContains(homepage, 'id="roller"', "homepage role selector is a real target");
 });
 
-test("contextual writing guide handoffs favor indexable siblings", () => {
+test("contextual writing guide handoffs use explicit semantic relationships", () => {
   const shell = source("src/components/content/WritingGuideShell.tsx");
-  assertContains(shell, 'import { isSoftLaunchSearchPriorityPath } from "@/lib/soft-launch-search-policy";', "reuse search-cohort policy");
-  assertContains(shell, "...genres.map((_, index) => index)", "find relevant siblings beyond adjacent genres");
-  assertContains(shell, "const relatedGenreCandidates =", "include available genre link candidates");
-  assertContains(shell, 'isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? "")', "prioritize indexable links");
-  assertContains(shell, '!isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? "")', "preserve unindexed-genre fallback");
-  assertContains(shell, "].slice(0, 3);", "keep contextual links limited");
+  const relatedLinks = source("src/lib/writing-guide-related-links.ts");
+  assertContains(shell, 'import { getRelatedWritingGuideSlugs } from "@/lib/writing-guide-related-links";', "reuse semantic relationship policy");
+  assertContains(shell, "getRelatedWritingGuideSlugs(activeGenreSlug)", "resolve the active guide's semantic handoffs");
+  assertNotContains(shell, "isSoftLaunchSearchPriorityPath", "search-priority cohorts must not define contextual relevance");
+  assertContains(relatedLinks, "RELATED_WRITING_GUIDE_SLUGS", "explicit semantic relationship inventory");
   assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "maintain related link navigation");
 });
 

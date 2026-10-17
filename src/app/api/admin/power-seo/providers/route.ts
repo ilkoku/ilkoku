@@ -153,17 +153,29 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return result({ state: "denied", message: "Oturum gerekli." }, 401);
   if (user.role !== "admin") return result({ state: "denied", message: "Yönetici yetkisi gerekli." }, 403);
+  // The request URL can have a different hostname behind Hostinger or an internal
+  // reverse proxy. Compare the browser Origin against our fixed public origin,
+  // never against the proxy-rewritten request.url or forwarded host headers.
   const origin = request.headers.get("origin");
+  let trustedOrigin = false;
   if (origin) {
     try {
-      const hostname = new URL(origin).hostname;
-      const expectedHostname = new URL(request.url).hostname;
-      if (hostname !== expectedHostname || (!origin.startsWith("https://") && hostname !== "localhost" && hostname !== "127.0.0.1")) {
-        return result({ state: "denied", message: "Geçersiz istek kaynağı." }, 403);
-      }
+      const browserOrigin = new URL(origin);
+      const requestUrl = new URL(request.url);
+      const loopback = ["localhost", "127.0.0.1"];
+      const localPreview = loopback.includes(browserOrigin.hostname) &&
+        loopback.includes(requestUrl.hostname) &&
+        browserOrigin.protocol === "http:" &&
+        browserOrigin.port === requestUrl.port;
+      trustedOrigin = browserOrigin.origin === ORIGIN || localPreview;
     } catch {
-      return result({ state: "denied", message: "Geçersiz istek kaynağı." }, 403);
+      trustedOrigin = false;
     }
+  }
+  // Browser cross-site requests are never permitted, even if a proxy
+  // introduces untrusted X-Forwarded-Host or a cross-origin form is submitted.
+  if (!trustedOrigin || request.headers.get("sec-fetch-site") === "cross-site") {
+    return result({ state: "denied", message: "Geçersiz istek kaynağı." }, 403);
   }
   if (Number(request.headers.get("content-length") || 0) > 1024) {
     return result({ state: "invalid", message: "İstek boyutu sınırı aşıldı." }, 413);

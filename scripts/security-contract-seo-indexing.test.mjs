@@ -1138,6 +1138,11 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
   assertContains(panel, "<PowerSeoProviderChecks />", "manual API interface");
   assertContains(panel, "<PowerSeoLocalDiagnostics />", "safe isolated helpers");
   assertContains(providers, 'getCurrentUser()', "server-side session protection");
+  assertContains(providers, 'browserOrigin.origin === ORIGIN', "fixed public origin supports Hostinger proxy rewriting");
+  assertContains(providers, 'browserOrigin.port === requestUrl.port', "loopback integration test remains bounded");
+  assertContains(providers, 'request.headers.get("sec-fetch-site") === "cross-site"', "cross-site browser requests rejected");
+  assertContains(providers, 'if (!trustedOrigin', "missing or invalid origin rejected");
+  assertNotContains(providers, 'hostname !== expectedHostname', "do not compare against proxy-internal request hostname");
   assertContains(providers, 'user.role !== "admin"', "server-side role guard");
   assertContains(providers, 'method: "POST"', "external provider requests require explicit POST");
   assertContains(providers, 'maxRetries: 0', "bounded paid provider retries");

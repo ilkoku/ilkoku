@@ -55,7 +55,7 @@ function getGscAuth() {
 async function queryGsc() {
   const auth = getGscAuth();
   if (!auth) return { state: "missing", message: "GSC OAuth veya servis hesabı kimlik bilgileri üretim ortamında bulunamadı." };
-  const siteUrl = process.env.GOOGLE_SEARCH_CONSOLE_PROPERTY || process.env.GSC_PROPERTY || ORIGIN + "/";
+  const siteUrl = process.env.GSC_SITE_URL || process.env.GOOGLE_SEARCH_CONSOLE_PROPERTY || process.env.GSC_PROPERTY || ORIGIN + "/";
   if (siteUrl !== ORIGIN && siteUrl !== ORIGIN + "/" && siteUrl !== "sc-domain:ilkoku.com") {
     return { state: "invalid", message: "GSC property İlkOku alan adıyla eşleşmiyor." };
   }

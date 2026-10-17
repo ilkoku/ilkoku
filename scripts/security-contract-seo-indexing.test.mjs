@@ -1138,6 +1138,9 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
   assertContains(panel, "<PowerSeoProviderChecks />", "manual API interface");
   assertContains(panel, "<PowerSeoLocalDiagnostics />", "safe isolated helpers");
   assertContains(providers, 'getCurrentUser()', "server-side session protection");
+  assertContains(providers, "process.env.GSC_SITE_URL", "reuse existing workflow GSC property configuration");
+  assertContains(providers, "process.env.GSC_OAUTH_CLIENT_ID", "reuse read-only GSC OAuth");
+
   assertContains(providers, 'browserOrigin.origin === ORIGIN', "fixed site origin supports proxy");
   assertContains(providers, 'browserOrigin.port === requestUrl.port', "local testing only on loopback");
   assertContains(providers, 'request.headers.get("sec-fetch-site") === "cross-site"', "cross-site requests rejected");
@@ -1175,6 +1178,41 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
   const consent = createConsentManager();
   assert.equal(consent.isGranted("analytics"), false);
   assert.equal(consent.isGranted("necessary"), true);
+});
+
+test("Power-SEO provider readiness and independent live census are truthful and read only", () => {
+  const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
+  const api = source("src/app/api/admin/power-seo/providers/route.ts");
+  const example = source(".env.example");
+  const guide = source("docs/power-seo-live-setup.md");
+  const census = source("scripts/power-seo-live-census.mjs");
+  const workflow = source(".github/workflows/power-seo-live-census.yml");
+  assertContains(connections, 'present("GOOGLE_SERVICE_ACCOUNT_EMAIL")', "service account email detected");
+  assertContains(connections, 'present("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")', "service account private key detected");
+  assertNotContains(connections, 'present("GSC_PROPERTY"))', "service account must not require optional property variable");
+  assertContains(api, "process.env.GSC_SITE_URL", "Power-SEO accepts property variable used by GSC workflows");
+  for (const key of [
+    "GSC_SITE_URL", "GSC_OAUTH_CLIENT_ID", "GSC_OAUTH_CLIENT_SECRET",
+    "GSC_OAUTH_REFRESH_TOKEN", "GOOGLE_SERVICE_ACCOUNT_EMAIL",
+    "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "AHREFS_API_KEY",
+    "SEMRUSH_API_KEY", "OPENAI_API_KEY",
+  ]) {
+    assertContains(example, key + "=", "safe key documentation: " + key);
+  }
+  assertContains(guide, "Hostinger", "hosting-only runtime secret guidance");
+  assertContains(guide, "GitHub Actions secrets", "GitHub secrets are not hosting runtime secrets");
+  assertContains(census, "const CONCURRENCY = 2", "safe production crawl concurrency");
+  assertContains(census, 'redirect: "manual"', "no cross-site redirects");
+  assertContains(census, "MAX_URLS = 400", "safe sitemap count cap");
+  assertContains(census, "canonicalMatches", "real canonical comparison");
+  assertContains(census, "noindexPagesInSitemap", "live indexability gate");
+  assertContains(census, "GITHUB_STEP_SUMMARY", "CI audit summary");
+  assertNotContains(census, "GSC_OAUTH_REFRESH_TOKEN", "external public audit needs no private token");
+  assertNotContains(census, "prisma", "public crawl must not mutate data");
+  assertContains(workflow, "workflow_dispatch:", "on-demand rerun available");
+  assertContains(workflow, "timeout-minutes: 15", "bounded job time");
+  assertContains(workflow, "actions/upload-artifact@", "per-page result retained as evidence");
+  assertContains(workflow, "contents: read", "GitHub token cannot write site or repo");
 });
 
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {

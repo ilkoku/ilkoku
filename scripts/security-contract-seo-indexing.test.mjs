@@ -1117,25 +1117,54 @@ test("Power-SEO independent operational tabs stay read-only and bounded", async 
   assert.equal(isDestinationSafe("/nasil-calisir", "javascript:alert(1)"), false);
 });
 
-test("Power-SEO panel reports its actual distinct directly imported modules", () => {
+test("Power-SEO 17 modules are used in bounded admin diagnostics and protected provider API", async () => {
   const panel = source("src/app/admin/power-seo/page.tsx");
   const operations = source("src/app/admin/power-seo/PowerSeoOperations.tsx");
   const fullSite = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
+  const local = source("src/app/admin/power-seo/PowerSeoLocalDiagnostics.tsx");
+  const providers = source("src/app/api/admin/power-seo/providers/route.ts");
+  const controls = source("src/app/admin/power-seo/PowerSeoProviderChecks.tsx");
   const modules = new Set(
-    [panel, operations, fullSite].flatMap((code) =>
+    [panel, operations, fullSite, local, providers].flatMap((code) =>
       [...code.matchAll(/from ["']@power-seo\/([a-z-]+)["']/gu)].map((match) => match[1]),
     ),
   );
-  // Transitive dependencies and env-only connector readiness do not count as active.
   assert.deepEqual([...modules].sort(), [
-    "ai", "audit", "content-analysis", "images", "links",
-    "meta", "preview", "redirects", "schema", "sitemap",
+    "ai", "analytics", "audit", "content-analysis", "core", "images",
+    "integrations", "links", "meta", "preview", "react", "readability",
+    "redirects", "schema", "search-console", "sitemap", "tracking",
   ]);
-  assertContains(
-    panel,
-    `<strong>${modules.size}</strong><span>Bu panelde doğrudan kullanılan modül</span>`,
-    "the dashboard usage counter must match its actual direct imports",
-  );
+  assertContains(panel, '<strong>17</strong><span>Kodda entegre modül (harici yetkiler ayrı)</span>', "inventory is not a claim that external APIs are authorized");
+  assertContains(panel, "<PowerSeoProviderChecks />", "manual API interface");
+  assertContains(panel, "<PowerSeoLocalDiagnostics />", "safe isolated helpers");
+  assertContains(providers, 'getCurrentUser()', "server-side session protection");
+  assertContains(providers, 'user.role !== "admin"', "server-side role guard");
+  assertContains(providers, 'method: "POST"', "external provider requests require explicit POST");
+  assertContains(providers, 'maxRetries: 0', "bounded paid provider retries");
+  assertContains(providers, 'rowLimit: 15', "bounded GSC sample");
+  assertContains(providers, 'Cache-Control": "private, no-store"', "private API responses");
+  assertContains(providers, 'redirect: "manual"', "AI only fetches same-origin public page");
+  assertContains(providers, 'max_tokens: 220', "bounded on-demand model output");
+  assertContains(providers, 'safePublicPath(rawPath)', "safe same-site path validation");
+  assertContains(providers, '"https://api.openai.com/v1/chat/completions"', "real but opt-in model path");
+  assertNotContains(providers, "prisma", "provider checks must not write to database");
+  assertNotContains(providers, "submitSitemap", "no GSC sitemap state mutation");
+  assertNotContains(providers, "deleteSitemap", "no GSC sitemap deletion");
+  assertNotContains(providers, "console.log", "no secrets in logs");
+  assertContains(controls, 'onClick={() => void check(service.id)}', "user-initiated action");
+  assertContains(local, '"use client"', "React package requires explicit client boundary in Next App Router");
+  assertContains(local, "createConsentManager()", "tracking module used only in isolated sandbox");
+  assertContains(local, "renderMetaTags([", "React metadata element created but not mounted");
+  assertContains(local, "analyzeReadability({", "English sample functionality checks");
+  assertNotContains(local, "dangerouslySetInnerHTML", "do not inject analytics or metadata");
+  const [{ buildDashboardData }, { analyzeReadability }, { createConsentManager }] = await Promise.all([
+    import("@power-seo/analytics"), import("@power-seo/readability"), import("@power-seo/tracking"),
+  ]);
+  assert.equal(buildDashboardData({}).overview.totalPages, 0);
+  assert.ok(Number.isFinite(analyzeReadability({ content: "This is a short English sample." }).score));
+  const consent = createConsentManager();
+  assert.equal(consent.isGranted("analytics"), false);
+  assert.equal(consent.isGranted("necessary"), true);
 });
 
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {

@@ -932,3 +932,26 @@ test("Power-SEO full sitemap scan requires admin and produces complete graph fro
   await expect(page.getByRole("button", { name: "JSON raporunu al" })).toBeEnabled();
   await expectResponsiveDocument(page);
 });
+
+test("Power-SEO provider checks are manual, protected and work at 390px", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.phone390);
+  let calls = 0;
+  await page.route("**/api/admin/power-seo/providers", async (route) => {
+    calls++;
+    await route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ provider: "gsc", state: "verified", source: "CI mock", sampledPages: 1 }),
+    });
+  });
+  await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Canlı servis sorguları — yönetici başlatır" })).toBeVisible();
+  expect(calls).toBe(0);
+  await page.getByRole("button", { name: "GSC verisini sorgula" }).click();
+  await expect(page.getByText("Gerçek API yanıtı alındı")).toBeVisible();
+  expect(calls).toBe(1);
+  await expectResponsiveDocument(page);
+});

@@ -10,6 +10,8 @@ import { createMetadata } from "@power-seo/meta";
 import { PowerSeoOperations } from "./PowerSeoOperations";
 import { FullSiteLinkAudit } from "./FullSiteLinkAudit";
 import { PowerSeoConnections } from "./PowerSeoConnections";
+import { PowerSeoProviderChecks } from "./PowerSeoProviderChecks";
+import { PowerSeoLocalDiagnostics } from "./PowerSeoLocalDiagnostics";
 import styles from "./PowerSeoDashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -28,14 +30,14 @@ const modules = [
   { slug: "schema", title: "Schema", note: "Canlı HTML üzerindeki JSON-LD doğrulaması", mode: "Bu ekranda çalışır" },
   { slug: "sitemap", title: "Sitemap", note: "Canlı XML URL, tekrar ve lastmod denetimi", mode: "Salt okunur kontrol aktif" },
   { slug: "meta", title: "Meta", note: "Next.js metadata üretim yardımcıları", mode: "Taslak önizleme aktif; mevcut metadata korunuyor" },
-  { slug: "react", title: "React", note: "React SEO bileşenleri", mode: "Paket kurulu" },
-  { slug: "readability", title: "Readability", note: "İngilizce formüller; Türkçe puan geçerli sayılmaz", mode: "Türkçe puanlama devre dışı" },
+  { slug: "react", title: "React", note: "React SEO bileşenleri", mode: "İzole meta önizlemesi aktif, public head değişmez" },
+  { slug: "readability", title: "Readability", note: "İngilizce formüller; Türkçe puan geçerli sayılmaz", mode: "İngilizce örnek test edildi, Türkçe puanlama kapalı" },
   { slug: "redirects", title: "Redirects", note: "Dört eski URL’nin HTTP yönlendirme kontrolü", mode: "Salt okunur kontrol aktif" },
-  { slug: "analytics", title: "Analytics", note: "GSC verileri ve denetim eğilimleri", mode: "Veri bağlantısı gerekli" },
-  { slug: "search-console", title: "Search Console", note: "Google API istemcisi ve URL inceleme", mode: "Google yetkilendirmesi gerekli" },
-  { slug: "integrations", title: "Integrations", note: "Semrush / Ahrefs API istemcileri", mode: "Harici API erişimi gerekli" },
+  { slug: "analytics", title: "Analytics", note: "GSC gerçek yanıtından sınırlı sayfa analitiği", mode: "Manuel API sorgusunda, yetki gerekli" },
+  { slug: "search-console", title: "Search Console", note: "Google API istemcisi ve performans okuma", mode: "Manuel gerçek sorgu; Google yetkilendirmesi gerekli" },
+  { slug: "integrations", title: "Integrations", note: "Semrush / Ahrefs API istemcileri", mode: "Manuel gerçek sorgu; API erişimi gerekli" },
   { slug: "ai", title: "AI", note: "Model bağımsız SEO öneri istemleri", mode: "İstem taslakları aktif; model bağlantısı gerekli" },
-  { slug: "tracking", title: "Tracking", note: "İzleme ve çerez izni yardımcıları", mode: "Mevcut GA4/GTM korunuyor" },
+  { slug: "tracking", title: "Tracking", note: "İzole izin modeli kontrolü", mode: "GTM/GA4 değiştirilmeden test edildi" },
 ] as const;
 
 const examples = ["/", "/nasil-calisir", "/yazarlar-icin", "/editoryal-standartlar", "/yardim"];
@@ -224,7 +226,7 @@ export default async function PowerSeoDashboard({
       </div>
       <div className={styles.stats}>
         <div><strong>17 / 17</strong><span>npm modülü bağımlılıkta</span></div>
-        <div><strong>10</strong><span>Bu panelde doğrudan kullanılan modül</span></div>
+        <div><strong>17</strong><span>Kodda entegre modül (harici yetkiler ayrı)</span></div>
         <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
       </div>
       <section className={styles.panel}>
@@ -300,6 +302,8 @@ export default async function PowerSeoDashboard({
       <PowerSeoOperations mode={mode} slice={requestedSlice} />
       {mode === "full-links" ? <FullSiteLinkAudit /> : null}
       <PowerSeoConnections />
+      <PowerSeoProviderChecks />
+      <PowerSeoLocalDiagnostics />
       <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
         <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>

@@ -1,3 +1,5 @@
+"use client";
+
 import { validateTitle } from "@power-seo/core";
 import { analyzeReadability } from "@power-seo/readability";
 import { renderMetaTags } from "@power-seo/react";

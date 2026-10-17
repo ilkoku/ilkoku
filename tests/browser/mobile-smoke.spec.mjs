@@ -955,3 +955,22 @@ test("Power-SEO provider checks are manual, protected and work at 390px", async 
   expect(calls).toBe(1);
   await expectResponsiveDocument(page);
 });
+
+test("Power-SEO POST validates the public origin under reverse proxy", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token).toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  const allowed = await page.request.post("/api/admin/power-seo/providers", {
+    headers: { Origin: "https://ilkoku.com" },
+    data: { provider: "invalid-provider" },
+  });
+  expect(allowed.status()).toBe(400);
+  expect((await allowed.json()).message).toBe("Bilinmeyen servis.");
+
+  const rejected = await page.request.post("/api/admin/power-seo/providers", {
+    headers: { Origin: "https://another.example" },
+    data: { provider: "invalid-provider" },
+  });
+  expect(rejected.status()).toBe(403);
+});

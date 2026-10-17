@@ -8,9 +8,10 @@ function present(name: string) {
 
 export function PowerSeoConnections() {
   const gscOAuth = ["GSC_OAUTH_CLIENT_ID", "GSC_OAUTH_CLIENT_SECRET", "GSC_OAUTH_REFRESH_TOKEN"].every(present);
+  // The API uses the site root as a safe default. Do not claim that a valid
+  // service account is missing solely because an optional property is absent.
   const gscService = present("GOOGLE_SERVICE_ACCOUNT_EMAIL") &&
-    present("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY") &&
-    (present("GOOGLE_SEARCH_CONSOLE_PROPERTY") || present("GSC_PROPERTY"));
+    present("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY");
 
   const connections: Connection[] = [
     {

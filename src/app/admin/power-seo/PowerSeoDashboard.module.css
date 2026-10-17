@@ -12,3 +12,6 @@
 .quick button{border:1px solid #e5def3;background:#f8f6fd;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:700;color:#4429a8;cursor:pointer}.quick button:disabled{opacity:.5;cursor:not-allowed}.progress{margin:12px 0;height:10px;border-radius:8px;background:#e8e2f4;overflow:hidden}.progress>div{height:100%;background:#6346b8;transition:width 180ms ease}
 
 .wrapper pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font:inherit;font-size:12px;line-height:1.6}
+
+/* The private admin shell uses a dark background above the white cards. */
+.top h1{color:#e2d6ff}.top small{color:#cdbaff}.top p,.top>a{color:#d0c4ee}

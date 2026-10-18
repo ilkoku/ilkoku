@@ -1040,6 +1040,29 @@ test("Power-SEO editorially reviewed links connect real writing guides without c
   assertNotContains(guide, "dangerouslySetInnerHTML", "no HTML injection introduced");
 });
 
+test("Shared homepage footer must own its CSS on every public route, not only the home page", () => {
+  const footer = source("src/features/homepage/live-footer.tsx");
+  const home = source("src/app/page.tsx");
+  const base = source("src/features/homepage/live-footer.css");
+  const qa = source("tests/browser/mobile-smoke.spec.mjs");
+  assertContains(footer, 'import "@/app/landing-footer-pro.css";',
+    "common footer imports its background, text, and structural styling");
+  assertContains(footer, 'import "@/app/landing-footer-tight.css";',
+    "common footer imports responsive grid styling");
+  assertNotContains(home, 'import "./landing-footer-pro.css";',
+    "footer design is not tied to homepage route-only styles");
+  assertNotContains(home, 'import "./landing-footer-tight.css";',
+    "mobile column behavior is not tied to homepage route");
+  assertContains(base, '.nx-live-footer-scope .landing-container',
+    "footer container has isolated layout even without landing.css");
+  assertContains(qa, '"/editorler-icin/egitim/tur-editorlugu"',
+    "the user-reported editor genre page is part of visual QA");
+  assertContains(qa, 'metrics.isSingleColumn',
+    "mobile footer layout is checked beyond mere CSS grid presence");
+  assertContains(qa, 'metrics.precedingContentBottom',
+    "footer/content overlap is checked in browser QA");
+});
+
 test("Public writing, reader and editor education templates use one non-nested main landmark", () => {
   const writing = source("src/components/content/WritingGuideShell.tsx");
   assertContains(writing, 'const ContentLandmark = activeGenreSlug ? "div" : "main";',

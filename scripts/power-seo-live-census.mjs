@@ -309,6 +309,8 @@ async function main() {
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
 }
 
+export { mainTextFromHtml, compareMainContent };
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(error instanceof Error ? error.message : "Live census failed");

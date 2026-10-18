@@ -81,6 +81,96 @@ function imageAltFromHtml(html) {
   return summary;
 }
 
+
+// Read-only inventory of published JSON-LD, including array roots and @graph.
+// Missing structured data is not automatically an SEO error; schema must match
+// genuinely visible page content and its breadcrumb hierarchy.
+function structuredDataFromHtml(html) {
+  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/giu)]
+    .filter((match) => attribute(match[1], "type").toLowerCase() === "application/ld+json");
+  const types = {};
+  const breadcrumbs = [];
+  const parseErrors = [];
+  let nodes = 0;
+
+  function inspectNode(value) {
+    if (Array.isArray(value)) {
+      for (const item of value) inspectNode(item);
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    const labels = (Array.isArray(value["@type"]) ? value["@type"] : [value["@type"]])
+      .filter((label) => typeof label === "string");
+    if (labels.length) {
+      nodes += 1;
+      for (const label of labels) types[label] = (types[label] || 0) + 1;
+      if (labels.includes("BreadcrumbList")) {
+        breadcrumbs.push(value.itemListElement);
+      }
+    }
+    if (Array.isArray(value["@graph"])) inspectNode(value["@graph"]);
+  }
+
+  for (const [index, script] of scripts.entries()) {
+    try {
+      inspectNode(JSON.parse(script[2]));
+    } catch {
+      parseErrors.push({ script: index + 1, problem: "invalid-json-ld" });
+    }
+  }
+  return { scriptCount: scripts.length, nodes, types, breadcrumbs, parseErrors };
+}
+
+function inspectBreadcrumbHierarchy(schema, pageUrl, siteUrls) {
+  const issues = [];
+  const chains = [];
+  for (const [chainIndex, elements] of schema.breadcrumbs.entries()) {
+    const chain = [];
+    if (!Array.isArray(elements) || elements.length < 2) {
+      issues.push({ chain: chainIndex + 1, problem: "breadcrumb-list-too-short-or-invalid" });
+      continue;
+    }
+    for (const [index, entry] of elements.entries()) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        issues.push({ chain: chainIndex + 1, position: index + 1, problem: "invalid-list-item" });
+        continue;
+      }
+      if (entry["@type"] !== "ListItem" || Number(entry.position) !== index + 1) {
+        issues.push({ chain: chainIndex + 1, position: index + 1, problem: "invalid-list-item-type-or-position" });
+      }
+      const name = typeof entry.name === "string" ? entry.name.trim()
+        : (entry.item && typeof entry.item === "object" && typeof entry.item.name === "string"
+          ? entry.item.name.trim() : "");
+      if (!name) issues.push({ chain: chainIndex + 1, position: index + 1, problem: "missing-breadcrumb-name" });
+      const raw = typeof entry.item === "string" ? entry.item
+        : (entry.item && typeof entry.item === "object" ?
+          (entry.item["@id"] || entry.item.url || "") : "");
+      if (!raw && index !== elements.length - 1) {
+        issues.push({ chain: chainIndex + 1, position: index + 1, problem: "missing-parent-target" });
+      }
+      // Google permits omitting the last item's target: it is the current page.
+      const target = raw || (index === elements.length - 1 ? pageUrl : "");
+      let normalized = "";
+      if (typeof target === "string" && target) {
+        try {
+          const parsed = new URL(target, pageUrl);
+          if (parsed.origin === ORIGIN && !parsed.search) normalized = normalize(parsed.toString());
+        } catch { /* Recorded below, without following links. */ }
+        if (!normalized) issues.push({ chain: chainIndex + 1, position: index + 1, problem: "off-origin-or-invalid-target" });
+        else if (!siteUrls.has(normalized)) {
+          // The last item can be an ancestor instead of the current page.
+          // An off-sitemap breadcrumb is an editorial review candidate, not
+          // proof of an invalid schema or a broken HTTP destination.
+          issues.push({ chain: chainIndex + 1, position: index + 1, problem: "breadcrumb-target-not-in-public-sitemap" });
+        }
+      }
+      chain.push({ position: index + 1, name, url: normalized });
+    }
+    chains.push(chain);
+  }
+  return { chains, issues };
+}
+
 function comparableDescription(value) {
   return value.normalize("NFC").toLocaleLowerCase("tr-TR").replace(/\s+/gu, " ").trim();
 }
@@ -242,15 +332,16 @@ async function inspect(url) {
     const description = ok ? descriptionFromHtml(body) : "";
     const mainText = ok ? mainTextFromHtml(body) : "";
     const imageAlt = ok ? imageAltFromHtml(body) : null;
+    const structuredData = ok ? structuredDataFromHtml(body) : null;
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt,
+      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt, structuredData,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       error: ok ? "" : "Not HTTP 200 HTML",
     };
   } catch (e) {
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
-      imageAlt: null, canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
+      imageAlt: null, structuredData: null, canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
 
@@ -268,7 +359,27 @@ async function main() {
   const validPages = results.filter((item) => item.ok);
   const contentReview = compareMainContent(validPages);
   // Only summary metrics are persisted. Avoid duplicating entire article bodies in artifacts.
-  const publicResults = results.map(({ mainText, ...page }) => page);
+  const publicResults = results.map(({ mainText, structuredData, ...page }) => page);
+  const siteUrls = new Set(urls.map(normalize));
+  const schemaReview = validPages.map((page) => {
+    const audit = inspectBreadcrumbHierarchy(page.structuredData, page.url, siteUrls);
+    return {
+      url: page.url,
+      scriptCount: page.structuredData.scriptCount,
+      nodes: page.structuredData.nodes,
+      types: page.structuredData.types,
+      breadcrumbCount: page.structuredData.breadcrumbs.length,
+      breadcrumbChains: audit.chains,
+      findings: [...page.structuredData.parseErrors, ...audit.issues],
+    };
+  });
+  const schemaIssues = schemaReview.filter((page) => page.findings.length);
+  const schemaTypeTotals = {};
+  for (const page of schemaReview) {
+    for (const [type, count] of Object.entries(page.types)) {
+      schemaTypeTotals[type] = (schemaTypeTotals[type] || 0) + count;
+    }
+  }
   const imageReview = validPages.filter((page) => page.imageAlt?.missingAltNeedsReview > 0)
     .map((page) => ({
       url: page.url,
@@ -329,6 +440,15 @@ async function main() {
     imagesMissingAltNeedsReview: validPages.reduce((sum, page) => sum + page.imageAlt.missingAltNeedsReview, 0),
     imagesMissingAltExplicitlyDecorative: validPages.reduce((sum, page) => sum + page.imageAlt.missingAltExplicitlyDecorative, 0),
     pagesWithImageAltReview: imageReview.length,
+    pagesWithJsonLd: schemaReview.filter((page) => page.scriptCount > 0).length,
+    jsonLdScripts: schemaReview.reduce((count, page) => count + page.scriptCount, 0),
+    jsonLdTypedNodes: schemaReview.reduce((count, page) => count + page.nodes, 0),
+    pagesWithBreadcrumbs: schemaReview.filter((page) => page.breadcrumbCount > 0).length,
+    breadcrumbLists: schemaReview.reduce((count, page) => count + page.breadcrumbCount, 0),
+    pagesWithSchemaReviewFindings: schemaIssues.length,
+    totalSchemaReviewFindings: schemaIssues.reduce((count, page) => count + page.findings.length, 0),
+    invalidJsonLdScripts: schemaReview.reduce((count, page) =>
+      count + page.findings.filter((finding) => finding.problem === "invalid-json-ld").length, 0),
     shortMainContentReview: contentReview.mainContentStats.filter((x) => x.wordCount < 100).length,
     exactDuplicateMainContentGroups: contentReview.exactDuplicateMainBodies.length,
     mainContentOverlapReviewPairs: contentReview.contentOverlapCandidates.length,
@@ -341,7 +461,7 @@ async function main() {
     noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
     scope: "Live sitemap-only census; not Google index status or complete internal-link graph",
   };
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
@@ -350,6 +470,9 @@ async function main() {
     console.log(JSON.stringify(page));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
+  for (const item of schemaIssues.slice(0, 25)) {
+    console.log(JSON.stringify({ schemaReviewFinding: { url: item.url, findings: item.findings } }));
+  }
   for (const item of imageReview.slice(0, 25)) {
     console.log(JSON.stringify({ imageAltReview: item }));
   }
@@ -370,14 +493,14 @@ async function main() {
       "| --- | ---: |",
       ...Object.entries(summary).filter(([,value]) => typeof value === "number").map(([k,v]) => "| " + k + " | " + v + " |"),
       "",
-      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review.",
+      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review. Schema/breadcrumb counts are factual; missing schema and multiple user-navigation breadcrumb trails are not automatic errors. A breadcrumb URL absent from the public sitemap is an editorial review signal, not proof of a broken link or Google indexing failure.",
       "",
     ].join("\n"));
   }
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
 }
 
-export { mainTextFromHtml, compareMainContent, imageAltFromHtml };
+export { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

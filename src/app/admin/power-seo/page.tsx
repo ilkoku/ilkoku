@@ -326,7 +326,7 @@ export default async function PowerSeoDashboard({
                     </article>
                   );
                 })}
-                <p className={styles.note}>Bu denetim Google’ın indeksleme kararını veya Search Console'daki son tarama tarihini taklit etmez. Otomatik indeksleme isteği ve içerik yayını yoktur.</p>
+                <p className={styles.note}>Bu denetim Google’ın indeksleme kararını veya Search Console’daki son tarama tarihini taklit etmez. Otomatik indeksleme isteği ve içerik yayını yoktur.</p>
               </div>
             ) : null}
           </section>

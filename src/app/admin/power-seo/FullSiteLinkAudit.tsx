@@ -61,6 +61,7 @@ export function FullSiteLinkAudit() {
   const [linkCheckError, setLinkCheckError] = useState("");
   const [importingReport, setImportingReport] = useState(false);
   const [sourceMeasuredAt, setSourceMeasuredAt] = useState("");
+  const [selectedReportName, setSelectedReportName] = useState("");
 
 
 
@@ -311,15 +312,25 @@ export function FullSiteLinkAudit() {
         {complete ? <button type="button" onClick={downloadReport}>JSON raporunu al</button> : null}
       </div>
       <p>Önceden tamamladığınız taramayı yeniden çalıştırmadan kullanmak için önceki Power-SEO JSON raporunu yükleyebilirsiniz. Sistem, canlı sitemap parmak izini kontrol eder ve uyumsuz raporu reddeder.</p>
-      <label>
-        Tamamlanmış Power-SEO JSON raporunu içeri al
-        <input type="file" accept=".json,application/json" disabled={running || importingReport || checkingLinks}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            void importPreviousReport(file);
-          }} />
-      </label>
+      <div className={styles.reportImport}>
+        <p id="power-seo-import-title" className={styles.reportImportTitle}>Tamamlanmış Power-SEO JSON raporunu içeri al</p>
+        <div className={styles.reportImportControls}>
+          <input id="power-seo-json-file" aria-labelledby="power-seo-import-title"
+            className={styles.reportFileInput} type="file" accept=".json,application/json"
+            disabled={running || importingReport || checkingLinks}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              setSelectedReportName(file.name);
+              void importPreviousReport(file);
+            }} />
+          <label htmlFor="power-seo-json-file" className={styles.reportFileButton}>Dosya seç</label>
+          <span className={styles.reportFileName} aria-live="polite">
+            {importingReport ? "Rapor kontrol ediliyor…" : selectedReportName || "Henüz dosya seçilmedi"}
+          </span>
+        </div>
+      </div>
       {importingReport ? <p role="status">Sitemap ve rapor tutarlılığı kontrol ediliyor…</p> : null}
       {sourceMeasuredAt && complete ? <p>Önceki tarama yeniden kullanıldı: {sourceMeasuredAt}. Yeni HTTP doğrulaması ayrı başlatılır.</p> : null}
       <div className={styles.stats}>

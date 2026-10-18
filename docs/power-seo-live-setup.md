@@ -22,6 +22,7 @@ GSC_SITE_URL için mevcut GitHub tanı sisteminin kullandığı varsayılan prop
 2. Harici servisler alanında `Yapılandırma algılandı — API doğrulanmadı` görünene kadar hosting ayarlarını kontrol edin. Bu yalnız **değişkenlerin varlığıdır**.
 3. Her sağlayıcının düğmesine ayrı basın. Sadece `state: verified` ve gerçek sağlayıcı alanları döndüğünde API çağrısı çalışır. `missing` ve `error` başarısız veya yapılandırılmamış anlamına gelir.
 4. GSC 0 sayfa döndürürse, bu property erişiminin **doğrulandığı**, fakat yalnız örneklemin boş olduğu anlamına gelir. Genel Google indeksleme sayısı değildir.
+   - Ayrı **GSC indeks durumunu sorgula** düğmesiyle yalnız tek bir public URL için Google URL Inspection API'nin kayıtlı indeksleme durumunu ve son tarama tarihini okuyabilirsiniz. Bu, canlı URL testi veya indeksleme isteği değildir; Google OAuth `webmasters.readonly` yetkisini kullanır.
 5. `?mod=full-links` panelinde kullanıcı başlatmalı tam tarama ve JSON raporunu indirin; sadece `summary.complete=true` ve `pages.length=urls.length` iken tam sitemap analizi yapıldığını söyleyin.
 6. GitHub Actions `Power-SEO Live Sitemap Census` raporu alternatif read-only tanıdır; sitemap HTTP, canonical ve robots sonuçlarını ayrı artifact'te tutar. Admin taramasını veya Google indeks durumunu taklit etmez.
 

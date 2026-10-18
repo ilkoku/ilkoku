@@ -49,12 +49,12 @@ const priorityPaths = ["/nasil-calisir", "/yazarlar-icin/kurgu/roman"] as const;
 function priorityFindings(path: string, audit: AuditResult) {
   const findings: string[] = [];
   if (audit.statusCode !== 200) findings.push("Public sayfa HTTP " + audit.statusCode + " döndürüyor.");
-  const expected = new URL(path, "https://ilkoku.com").toString().replace(/\\/$/, "");
+  const expected = new URL(path, "https://ilkoku.com").toString().replace(/\/$/, "");
   let canonical = "";
-  try { canonical = audit.canonical ? new URL(audit.canonical, "https://ilkoku.com").toString().replace(/\\/$/, "") : ""; }
+  try { canonical = audit.canonical ? new URL(audit.canonical, "https://ilkoku.com").toString().replace(/\/$/, "") : ""; }
   catch { /* Invalid canonical is reported below. */ }
   if (canonical !== expected) findings.push("Canonical eksik veya beklenen sayfayla eşleşmiyor.");
-  if (/(?:^|[,\\s])noindex\\b/i.test(audit.robots)) findings.push("Robots meta noindex içeriyor.");
+  if (/(?:^|[,\s])noindex\b/i.test(audit.robots)) findings.push("Robots meta noindex içeriyor.");
   if (!audit.title) findings.push("SEO başlığı eksik.");
   if (!audit.description) findings.push("Meta açıklaması eksik.");
   if (audit.h1Count !== 1) findings.push("Beklenen tek H1 yerine " + audit.h1Count + " H1 bulundu.");

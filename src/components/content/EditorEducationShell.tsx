@@ -132,7 +132,7 @@ export async function EditorEducationShell({
             ) : null}
           </aside>
 
-          <div className="min-w-0">
+          <main className="min-w-0">
             {renderedChildren}
             {contextualStep ? (
               <nav aria-label="İlgili editörlük eğitimi" className="mt-6 rounded-[1.6rem] border border-[#6b52c7]/15 bg-[#efebff] p-6 sm:p-8">
@@ -144,7 +144,7 @@ export async function EditorEducationShell({
               </nav>
             ) : null}
             <EditorialTrustNote context="editing" />
-          </div>
+          </main>
         </div>
       </div>
 

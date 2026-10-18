@@ -66,6 +66,91 @@ function descriptionSimilarity(a, b) {
   return common / (left.size + right.size - common);
 }
 
+// Read only the public <main> content already downloaded by the census.
+// Exclude layout navigation and secondary rails before comparing pages.
+function mainTextFromHtml(html) {
+  const main = /<main\b[^>]*>([\s\S]*?)<\/main>/iu.exec(html)?.[1] || "";
+  if (!main) return "";
+  return main
+    .replace(/<!--[\s\S]*?-->/gu, " ")
+    .replace(/<(script|style|svg|nav|aside|footer)\b[^>]*>[\s\S]*?<\/\1>/giu, " ")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/&(?:amp|nbsp|quot|apos|lt|gt);/giu, (entity) => ({
+      "&amp;": "&", "&nbsp;": " ", "&quot;": '"', "&apos;": "'", "&lt;": "<", "&gt;": ">",
+    })[entity.toLowerCase()] || entity)
+    .replace(/&#(?:x([0-9a-f]+)|([0-9]+));/giu, (value, hex, dec) => {
+      const codepoint = Number.parseInt(hex || dec, hex ? 16 : 10);
+      return codepoint > 0 && codepoint <= 0x10ffff ? String.fromCodePoint(codepoint) : value;
+    })
+    .replace(/\s+/gu, " ").trim();
+}
+
+function comparableMainText(value) {
+  return value.normalize("NFC").toLocaleLowerCase("tr-TR").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function mainWordShingles(value, size = 8) {
+  const words = comparableMainText(value).split(/\s+/u).filter(Boolean);
+  const phrases = new Set();
+  for (let i = 0; i + size <= words.length; i += 1) phrases.add(words.slice(i, i + size).join(" "));
+  return { wordCount: words.length, phrases };
+}
+
+function compareMainContent(pages) {
+  const documentFrequency = new Map();
+  const snapshots = pages.map((page) => {
+    const { wordCount, phrases } = mainWordShingles(page.mainText);
+    for (const phrase of phrases) documentFrequency.set(phrase, (documentFrequency.get(phrase) || 0) + 1);
+    return { url: page.url, wordCount, raw: phrases, normalized: comparableMainText(page.mainText) };
+  });
+  // A phrase present on four or more pages is treated as likely common boilerplate.
+  // The 8-word threshold is editorial triage, not an indexing or duplicate-content rule.
+  for (const item of snapshots) {
+    item.distinct = new Set([...item.raw].filter((phrase) => documentFrequency.get(phrase) < 4));
+  }
+
+  const duplicates = new Map();
+  for (const page of snapshots) {
+    if (page.wordCount < 100) continue;
+    const group = duplicates.get(page.normalized) || [];
+    group.push(page.url);
+    duplicates.set(page.normalized, group);
+  }
+  const exactDuplicateMainBodies = [...duplicates.values()].filter((urls) => urls.length > 1)
+    .map((urls) => ({ count: urls.length, urls }));
+
+  const contentOverlapCandidates = [];
+  for (let i = 0; i < snapshots.length; i += 1) {
+    for (let j = i + 1; j < snapshots.length; j += 1) {
+      const left = snapshots[i];
+      const right = snapshots[j];
+      if (left.wordCount < 100 || right.wordCount < 100 || !left.distinct.size || !right.distinct.size) continue;
+      let sharedDistinct = 0;
+      for (const phrase of left.distinct) if (right.distinct.has(phrase)) sharedDistinct += 1;
+      const shorterDistinct = Math.min(left.distinct.size, right.distinct.size);
+      const overlapOfShorter = sharedDistinct / shorterDistinct;
+      if (sharedDistinct >= 20 && overlapOfShorter >= 0.2) {
+        contentOverlapCandidates.push({
+          first: left.url, second: right.url,
+          firstWords: left.wordCount, secondWords: right.wordCount,
+          sharedDistinctPhrases: sharedDistinct,
+          overlapOfShorter: Math.round(overlapOfShorter * 1000) / 1000,
+          classification: "manual-editorial-review-only",
+        });
+      }
+    }
+  }
+  contentOverlapCandidates.sort((a, b) => b.overlapOfShorter - a.overlapOfShorter);
+  return {
+    exactDuplicateMainBodies,
+    contentOverlapCandidates,
+    mainContentStats: snapshots.map(({ url, wordCount, raw, distinct }) => ({
+      url, wordCount, phraseCount: raw.size, distinctivePhraseCount: distinct.size,
+      review: wordCount < 100 ? "short-content-review-only" : "",
+    })),
+  };
+}
+
 function normalize(url) {
   try {
     const parsed = new URL(url);
@@ -116,14 +201,15 @@ async function inspect(url) {
     const canonical = ok ? canonicalFromHtml(body) : "";
     const robots = ok ? robotsFromHtml(body) : "";
     const description = ok ? descriptionFromHtml(body) : "";
+    const mainText = ok ? mainTextFromHtml(body) : "";
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots,
+      url, status: response.status, ok, title, description, canonical, robots, mainText,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       error: ok ? "" : "Not HTTP 200 HTML",
     };
   } catch (e) {
-    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "",
+    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
       canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
@@ -140,6 +226,9 @@ async function main() {
     await new Promise((done) => setTimeout(done, 120));
   }
   const validPages = results.filter((item) => item.ok);
+  const contentReview = compareMainContent(validPages);
+  // Only summary metrics are persisted. Avoid duplicating entire article bodies in artifacts.
+  const publicResults = results.map(({ mainText, ...page }) => page);
   const descriptionGroups = new Map();
   for (const page of validPages) {
     const normalized = comparableDescription(page.description);
@@ -183,6 +272,11 @@ async function main() {
     errors: results.filter((x) => !x.ok).length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
+    mainContentPresent: validPages.filter((x) => !!x.mainText).length,
+    mainContentAbsent: validPages.filter((x) => !x.mainText).length,
+    shortMainContentReview: contentReview.mainContentStats.filter((x) => x.wordCount < 100).length,
+    exactDuplicateMainContentGroups: contentReview.exactDuplicateMainBodies.length,
+    mainContentOverlapReviewPairs: contentReview.contentOverlapCandidates.length,
     descriptionsMissing: validPages.filter((x) => !x.description).length,
     descriptionsUnder60Review: validPages.filter((x) => x.description && x.description.length < 60).length,
     descriptionsOver180Review: validPages.filter((x) => x.description.length > 180).length,
@@ -192,13 +286,23 @@ async function main() {
     noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
     scope: "Live sitemap-only census; not Google index status or complete internal-link graph",
   };
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(summary));
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
+  }
+  // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
+  for (const item of contentReview.contentOverlapCandidates.slice(0, 25)) {
+    console.log(JSON.stringify({ contentOverlapReview: item }));
+  }
+  for (const item of contentReview.exactDuplicateMainBodies.slice(0, 10)) {
+    console.log(JSON.stringify({ exactMainDuplicate: item }));
+  }
+  for (const item of contentReview.mainContentStats.filter((x) => x.wordCount < 100).slice(0, 25)) {
+    console.log(JSON.stringify({ shortOrMissingMainReview: item }));
   }
   if (process.env.GITHUB_STEP_SUMMARY) {
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
@@ -208,12 +312,14 @@ async function main() {
       "| --- | ---: |",
       ...Object.entries(summary).filter(([,value]) => typeof value === "number").map(([k,v]) => "| " + k + " | " + v + " |"),
       "",
-      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact.",
+      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only.",
       "",
     ].join("\n"));
   }
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
 }
+
+export { mainTextFromHtml, compareMainContent };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

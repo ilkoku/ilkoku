@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
+import { mainTextFromHtml, compareMainContent } from "./power-seo-live-census.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -1366,6 +1367,46 @@ test("Power-SEO priority review runs real, bounded and opt-in technical diagnost
   assertNotContains(page, 'submitSitemap(', "priority check does not submit sitemap");
   assertNotContains(page, 'indexing:publish', "priority check does not request indexing");
   assertNotContains(page, 'prisma.', "priority check does not write to database");
+});
+
+test("Power-SEO main HTML extraction excludes footer/nav and safely decodes visible content", () => {
+  const content = mainTextFromHtml(
+    '<nav>Site navigation</nav><main class="public-main">' +
+      '<header><h1>Özgün inceleme metni</h1></header>' +
+      '<nav>Nested navigation ignored</nav><aside>Sidebar ignored</aside>' +
+      '<p>Tür &amp; biçim &#39;öğrenme&#39; notları.</p>' +
+    '</main><footer>Footer must be excluded</footer>',
+  );
+  assert.match(content, /Özgün inceleme metni/u);
+  assert.match(content, /Tür & biçim 'öğrenme' notları\./u);
+  assert.doesNotMatch(content, /Nested navigation|Sidebar|Footer/u);
+  assert.equal(mainTextFromHtml("<body><p>No semantic main</p></body>"), "");
+});
+
+test("Power-SEO content review finds genuine overlap but excludes template phrases repeated across four pages", () => {
+  const sequence = (prefix, count) =>
+    Array.from({ length: count }, (_, index) => prefix + index).join(" ");
+  const shared = sequence("konuortak", 130);
+  const first = shared + " " + sequence("yazarbir", 80);
+  const second = shared + " " + sequence("yazariki", 80);
+  const two = compareMainContent([
+    { url: "https://ilkoku.com/a", mainText: first },
+    { url: "https://ilkoku.com/b", mainText: second },
+  ]);
+  assert.equal(two.contentOverlapCandidates.length, 1, "significant distinct text overlap is reviewed");
+  assert.equal(two.exactDuplicateMainBodies.length, 0, "related content is not declared an exact duplicate");
+  const four = compareMainContent([
+    { url: "https://ilkoku.com/a", mainText: first },
+    { url: "https://ilkoku.com/b", mainText: second },
+    { url: "https://ilkoku.com/c", mainText: shared + " " + sequence("yazaruc", 80) },
+    { url: "https://ilkoku.com/d", mainText: shared + " " + sequence("yazardort", 80) },
+  ]);
+  assert.equal(four.contentOverlapCandidates.length, 0, "common 8-word template phrases do not trigger false duplicates");
+  const exact = compareMainContent([
+    { url: "https://ilkoku.com/a", mainText: first },
+    { url: "https://ilkoku.com/b", mainText: first },
+  ]);
+  assert.equal(exact.exactDuplicateMainBodies.length, 1, "exact same main body is tracked");
 });
 
 test("Power-SEO read-only live sitemap census measures per-page meta descriptions and duplicate review signals", () => {

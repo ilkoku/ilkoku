@@ -200,11 +200,23 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
 export default async function PowerSeoDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ yol?: string | string[]; mod?: string | string[]; parca?: string | string[] }>;
+  searchParams: Promise<{ yol?: string | string[]; mod?: string | string[]; parca?: string | string[]; sekme?: string | string[] }>;
 }) {
   const params = await searchParams;
   const raw = typeof params.yol === "string" ? params.yol : "";
   const mode = typeof params.mod === "string" ? params.mod : "";
+  const requestedTab = typeof params.sekme === "string" ? params.sekme : "";
+  // Keep previously shared ?mod=... and ?yol=... deep links working.
+  const activeTab = ["genel", "tarama", "sayfa", "servisler", "teknik"].includes(requestedTab)
+    ? requestedTab : mode ? "tarama" : raw ? "sayfa" : "genel";
+  const scanMode = mode || "full-links";
+  const navigation = [
+    { id: "genel", label: "Genel Bakış", href: "/sistem-yonetimi/power-seo" },
+    { id: "tarama", label: "Tam Site ve HTTP", href: "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links" },
+    { id: "sayfa", label: "Sayfa Denetimi", href: "/sistem-yonetimi/power-seo?sekme=sayfa" },
+    { id: "servisler", label: "GSC ve API Bağlantıları", href: "/sistem-yonetimi/power-seo?sekme=servisler" },
+    { id: "teknik", label: "Teknik Modüller", href: "/sistem-yonetimi/power-seo?sekme=teknik" },
+  ] as const;
   const requestedSlice = typeof params.parca === "string" && /^\d{1,2}$/.test(params.parca) ? Number(params.parca) : 1;
   const path = raw ? safePath(raw) : null;
   let audit: AuditResult | null = null;
@@ -214,22 +226,73 @@ export default async function PowerSeoDashboard({
     catch (e) { error = e instanceof Error ? e.message : "Canlı HTML denetimi yapılamadı."; }
   }
 
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.top}>
         <div>
-          <small>BAĞIMSIZ SEO YÖNETİM ALANI</small>
+          <small>SEO YÖNETİM MERKEZİ</small>
           <h1>Power-SEO</h1>
-          <p>Mevcut /icerik/seo veritabanı panelinden bağımsız, gerçek HTML üzerinde salt-okunur denetim.</p>
+          <p>Denetim, Google verileri ve harici API işlemleri ayrı çalışma alanlarında.</p>
         </div>
         <Link href="/sistem-yonetimi">← Sistem yönetimi</Link>
       </div>
-      <div className={styles.stats}>
-        <div><strong>17 / 17</strong><span>npm modülü bağımlılıkta</span></div>
-        <div><strong>17</strong><span>Kodda entegre modül (harici yetkiler ayrı)</span></div>
-        <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
-      </div>
-      <section className={styles.panel}>
+      <nav className={styles.taskNav} aria-label="Power-SEO çalışma alanları">
+        {navigation.map((item) => (
+          <Link
+            key={item.id}
+            href={item.href}
+            aria-current={activeTab === item.id ? "page" : undefined}
+            className={activeTab === item.id ? styles.taskNavActive : styles.taskNavLink}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      {activeTab === "genel" ? (
+        <>
+          <div className={styles.stats}>
+            <div><strong>17 / 17</strong><span>Entegre npm modülü</span></div>
+            <div><strong>17</strong><span>Kod entegrasyonu (API yetkisi ayrı)</span></div>
+            <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
+          </div>
+          <section className={styles.panel}>
+            <h2>Sıradaki iş: HTTP bağlantı doğrulaması</h2>
+            <p>129 sayfalık tamamlanmış Power-SEO JSON raporunu yeniden kullanın. Tam siteyi yeniden taramadan sitemap dışı hedeflerin gerçek HTTP durumlarını kontrol edin.</p>
+            <div className={styles.primaryActions}>
+              <Link href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">
+                JSON raporunu içeri al ve HTTP kontrolüne geç →
+              </Link>
+            </div>
+          </section>
+          <section className={styles.panel}>
+            <h2>Hangi işlemi yapmak istiyorsunuz?</h2>
+            <div className={styles.actionGrid}>
+              <Link href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"><strong>Tam site ve kırık bağlantılar</strong><span>JSON raporu, 404/410 doğrulaması, kaynaklar</span></Link>
+              <Link href="/sistem-yonetimi/power-seo?sekme=sayfa"><strong>Tek sayfa SEO kontrolü</strong><span>HTML, başlık, canonical, schema</span></Link>
+              <Link href="/sistem-yonetimi/power-seo?sekme=servisler"><strong>GSC ve diğer API servisleri</strong><span>Gerçek yanıt ve yetkilendirme testleri</span></Link>
+              <Link href="/sistem-yonetimi/power-seo?sekme=teknik"><strong>17 teknik modül</strong><span>Envanter ve izole modül tanıları</span></Link>
+            </div>
+          </section>
+        </>
+      ) : null}
+      {activeTab === "tarama" ? (
+        <>
+          <section className={styles.panel}>
+            <h2>Site taraması ve bağlantılar</h2>
+            <p>Bir denetim seçin. Tam site raporunu içeri almak için ilk seçeneği kullanın; tarama otomatik başlamaz.</p>
+            <nav className={styles.subNav} aria-label="Site tarama araçları">
+              <Link aria-current={scanMode === "full-links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">Tam site / HTTP doğrulaması</Link>
+              <Link aria-current={scanMode === "sitemap" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=sitemap">Sitemap</Link>
+              <Link aria-current={scanMode === "links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=links&parca=1">Parçalı bağlantı grafiği</Link>
+              <Link aria-current={scanMode === "redirects" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=redirects">Yönlendirmeler</Link>
+            </nav>
+          </section>
+          {scanMode === "full-links" ? <FullSiteLinkAudit /> : <PowerSeoOperations mode={scanMode} slice={requestedSlice} />}
+        </>
+      ) : null}
+      {activeTab === "sayfa" ? (
+        <section className={styles.panel}>
         <h2>Canlı sayfa denetimi</h2>
         <p>Bir public URL’nin sunucudan alınan HTML çıktısını analiz eder. Sıralama veya indeksleme garantisi vermez.</p>
         <form method="get" action="/sistem-yonetimi/power-seo" className={styles.form}>
@@ -289,22 +352,17 @@ export default async function PowerSeoDashboard({
           </div>
         ) : null}
       </section>
-      <section className={styles.panel}>
-        <h2>Site genelinde SEO araçları</h2>
-        <p>Bunlar ayrı ve salt okunur işlemlerdir. Sayfa açılışında bütün URL’ler otomatik taranmaz.</p>
-        <div className={styles.quick}>
-          <Link href="/sistem-yonetimi/power-seo?mod=sitemap">Sitemap kontrolü</Link>
-          <Link href="/sistem-yonetimi/power-seo?mod=links&parca=1">İç bağlantı grafiği</Link>
-          <Link href="/sistem-yonetimi/power-seo?mod=full-links">Tam site bağlantı taraması</Link>
-          <Link href="/sistem-yonetimi/power-seo?mod=redirects">Yönlendirmeler</Link>
-        </div>
-      </section>
-      <PowerSeoOperations mode={mode} slice={requestedSlice} />
-      {mode === "full-links" ? <FullSiteLinkAudit /> : null}
-      <PowerSeoConnections />
-      <PowerSeoProviderChecks />
-      <PowerSeoLocalDiagnostics />
-      <section className={styles.panel}>
+      ) : null}
+      {activeTab === "servisler" ? (
+        <>
+          <PowerSeoConnections />
+          <PowerSeoProviderChecks />
+        </>
+      ) : null}
+      {activeTab === "teknik" ? (
+        <>
+          <PowerSeoLocalDiagnostics />
+          <section className={styles.panel}>
         <h2>Power-SEO modül envanteri</h2>
         <p>“Paket kurulu” bir modülün otomatik olarak yapılandırıldığı veya dış API’lere bağlandığı anlamına gelmez.</p>
         <div className={styles.modules}>
@@ -317,7 +375,9 @@ export default async function PowerSeoDashboard({
           ))}
         </div>
       </section>
-      <p className={styles.note}>Google Search Console, Semrush, Ahrefs ve harici yapay zekâ servisleri için gerçek yetkilendirme olmadan “bağlandı” denmez. Bu ekran indeksleme politikalarını veya site içeriğini değiştirmez.</p>
+        </>
+      ) : null}
+      <p className={styles.note}>Power-SEO ekranındaki denetimler kendiliğinden yayın yapmaz; sitemap, robots, canonical, noindex ve mevcut site tasarımı korunur.</p>
     </div>
   );
 }

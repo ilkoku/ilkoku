@@ -1309,6 +1309,8 @@ test("Power-SEO priority review runs real, bounded and opt-in technical diagnost
   assertContains(page, 'if (audit.statusCode !== 200)', "HTTP errors cannot be marked good");
   assertContains(page, 'if (canonical !== expected)', "canonical mismatch reported");
   assertContains(page, 'audit.robots', "robots meta used by priority checker");
+  assertContains(page, 'response.headers.get("x-robots-tag")', "live HTTP indexing header read");
+  assertContains(page, 'audit.xRobotsTag', "HTTP noindex must not be silently skipped");
   assertContains(page, 'audit.imageAltIssues', "alt text audit reused");
   assertContains(page, 'audit.schemaIssues.length', "schema validation reused");
   assertContains(page, 'Google indeks durumu ayrıca GSC ile değerlendirilir.',

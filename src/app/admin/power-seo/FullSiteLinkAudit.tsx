@@ -59,6 +59,9 @@ export function FullSiteLinkAudit() {
   const [linkChecks, setLinkChecks] = useState<HttpVerification[]>([]);
   const [linkCheckComplete, setLinkCheckComplete] = useState(false);
   const [linkCheckError, setLinkCheckError] = useState("");
+  const [importingReport, setImportingReport] = useState(false);
+  const [sourceMeasuredAt, setSourceMeasuredAt] = useState("");
+
 
 
   const summary = useMemo(() => {
@@ -100,7 +103,7 @@ export function FullSiteLinkAudit() {
   }, [complete, pages, urls]);
 
   async function run(fromZero: boolean) {
-    if (running) return;
+    if (running || importingReport || checkingLinks) return;
     stopRef.current = false;
     setRunning(true);
     setError("");
@@ -108,6 +111,7 @@ export function FullSiteLinkAudit() {
       setLinkChecks([]);
       setLinkCheckComplete(false);
       setLinkCheckError("");
+      setSourceMeasuredAt("");
       setPages([]);
       setUrls([]);
       setFingerprint("");
@@ -161,6 +165,71 @@ export function FullSiteLinkAudit() {
     }
   }
 
+  async function importPreviousReport(file: File | undefined) {
+    if (!file || running || checkingLinks || importingReport) return;
+    setImportingReport(true);
+    setError("");
+    try {
+      if (file.size > 1_500_000 || file.size < 100) throw new Error("JSON raporu beklenen boyut sınırları dışında.");
+      const parsed: unknown = JSON.parse(await file.text());
+      if (!parsed || typeof parsed !== "object") throw new Error("Geçerli JSON raporu bulunamadı.");
+      const report = parsed as Record<string, unknown>;
+      const expected = report.expectedUrls;
+      if (report.site !== ORIGIN || report.source !== "sitemap.xml" ||
+        report.complete !== true || !Array.isArray(report.failures) || report.failures.length > 0 ||
+        !Number.isInteger(expected) || typeof expected !== "number" || expected < 1 || expected > MAX_URLS ||
+        report.scannedUrls !== expected || !Array.isArray(report.pages) ||
+        report.pages.length !== expected || typeof report.sitemapFingerprint !== "string" ||
+        !/^[a-f0-9]{20}$/.test(report.sitemapFingerprint)) {
+        throw new Error("Eksik veya farklı siteye ait rapor kabul edilmedi.");
+      }
+      const savedPages: Page[] = report.pages.map((item: unknown) => {
+        if (!item || typeof item !== "object") throw new Error("JSON sayfa kaydı geçersiz.");
+        const row = item as Record<string, unknown>;
+        if (typeof row.url !== "string" || typeof row.title !== "string" ||
+          row.title.length > 180 || row.error !== "" ||
+          !Array.isArray(row.links) || row.links.length > 1500 ||
+          row.links.some((link: unknown) => typeof link !== "string" || link.length > 2048)) {
+          throw new Error("JSON sayfa bağlantıları geçersiz.");
+        }
+        const urlsToCheck = [row.url, ...row.links] as string[];
+        if (urlsToCheck.some((link) => {
+          try {
+            const parsedUrl = new URL(link);
+            return parsedUrl.origin !== ORIGIN || !!parsedUrl.username || !!parsedUrl.password;
+          } catch { return true; }
+        })) throw new Error("JSON içinde site dışı veya geçersiz bağlantı var.");
+        return { url: row.url, title: row.title, links: row.links as string[], error: "" };
+      });
+      if (new Set(savedPages.map((page) => page.url)).size !== expected) {
+        throw new Error("JSON raporunda tekrarlanan sitemap sayfası var.");
+      }
+      // One small authenticated verification batch (4 URLs); never rescan all 129 pages.
+      const response = await fetch("/api/admin/power-seo/scan?offset=0", {
+        cache: "no-store", credentials: "same-origin",
+      });
+      const live: Batch | { error: string } = await response.json();
+      if (!response.ok || "error" in live || !Array.isArray(live.urls) ||
+        live.fingerprint !== report.sitemapFingerprint || live.urls.length !== expected ||
+        live.urls.some((url) => !savedPages.some((page) => page.url === url))) {
+        throw new Error("Canlı sitemap rapordaki sitemap ile eşleşmiyor. Yeni tarama gerekir.");
+      }
+      setPages(savedPages);
+      setUrls(live.urls);
+      setFingerprint(live.fingerprint);
+      setCursor(savedPages.length);
+      setComplete(true);
+      setLinkChecks([]);
+      setLinkCheckComplete(false);
+      setLinkCheckError("");
+      setSourceMeasuredAt(typeof report.measuredAt === "string" ? report.measuredAt : "");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "JSON raporu alınamadı.");
+    } finally {
+      setImportingReport(false);
+    }
+  }
+
   async function verifyOffSitemap() {
     if (!summary?.complete || checkingLinks || running) return;
     const targets = summary.offSitemapTargets.filter((item) => item.category !== "email-protection");
@@ -202,7 +271,8 @@ export function FullSiteLinkAudit() {
   function downloadReport() {
     if (!summary || !complete) return;
     const report = {
-      site: ORIGIN, source: "sitemap.xml", measuredAt: new Date().toISOString(),
+      site: ORIGIN, source: "sitemap.xml", measuredAt: sourceMeasuredAt || new Date().toISOString(),
+      reportExportedAt: new Date().toISOString(),
       sitemapFingerprint: fingerprint, expectedUrls: urls.length,
       scannedUrls: pages.length, failures: summary.failures, complete: summary.complete,
       scope: "Sitemap içindeki HTML sayfalarından alınan bağlantılar; sitemap dışındaki gelen bağlantılar ölçülmez.",
@@ -231,7 +301,7 @@ export function FullSiteLinkAudit() {
         otomatik toplu tarama veya SEO değişikliği yapmaz.
       </p>
       <div className={styles.quick}>
-        <button type="button" onClick={() => void run(true)} disabled={running}>
+        <button type="button" onClick={() => void run(true)} disabled={running || importingReport || checkingLinks}>
           {pages.length ? "Baştan tara" : "Tam site taramasını başlat"}
         </button>
         {pages.length && cursor < urls.length && !running ? (
@@ -240,6 +310,18 @@ export function FullSiteLinkAudit() {
         {running ? <button type="button" onClick={() => { stopRef.current = true; }}>Durdur</button> : null}
         {complete ? <button type="button" onClick={downloadReport}>JSON raporunu al</button> : null}
       </div>
+      <p>Önceden tamamladığınız taramayı yeniden çalıştırmadan kullanmak için önceki Power-SEO JSON raporunu yükleyebilirsiniz. Sistem, canlı sitemap parmak izini kontrol eder ve uyumsuz raporu reddeder.</p>
+      <label>
+        Tamamlanmış Power-SEO JSON raporunu içeri al
+        <input type="file" accept=".json,application/json" disabled={running || importingReport || checkingLinks}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            void importPreviousReport(file);
+          }} />
+      </label>
+      {importingReport ? <p role="status">Sitemap ve rapor tutarlılığı kontrol ediliyor…</p> : null}
+      {sourceMeasuredAt && complete ? <p>Önceki tarama yeniden kullanıldı: {sourceMeasuredAt}. Yeni HTTP doğrulaması ayrı başlatılır.</p> : null}
       <div className={styles.stats}>
         <div><strong>{pages.length} / {urls.length || "?"}</strong><span>İncelenen sitemap URL</span></div>
         <div><strong>{percent}%</strong><span>Tarama ilerlemesi</span></div>

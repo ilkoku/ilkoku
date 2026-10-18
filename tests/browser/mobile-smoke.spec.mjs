@@ -110,9 +110,14 @@ const writingFooterFamilies = [
   { category: "Çizgi Anlatı", hub: "cizgi-anlati", guide: "cizgi-roman" },
 ];
 
-const writingFooterScenarios = [
+const sharedFooterScenarios = [
   { name: "Homepage desktop", path: "/", viewport: viewports.desktop },
   { name: "Homepage mobile", path: "/", viewport: viewports.phone390 },
+  // Regression: non-home routes must ship with the full shared footer CSS.
+  { name: "Editor genre lesson desktop", path: "/editorler-icin/egitim/tur-editorlugu", viewport: viewports.desktop },
+  { name: "Editor genre lesson 390px", path: "/editorler-icin/egitim/tur-editorlugu", viewport: viewports.phone390 },
+  { name: "Editor intro lesson 390px", path: "/editorler-icin/egitim/editorluge-baslama", viewport: viewports.phone390 },
+  { name: "Reader education lesson 390px", path: "/okurlar-icin/okumaya-baslama", viewport: viewports.phone390 },
   ...writingFooterFamilies.flatMap(({ category, hub, guide }) => [
     { name: `${category} desktop hub`, path: `/yazarlar-icin/${hub}`, viewport: viewports.desktop },
     { name: `${category} 390px mobile hub`, path: `/yazarlar-icin/${hub}`, viewport: viewports.phone390 },
@@ -120,7 +125,7 @@ const writingFooterScenarios = [
   ]),
 ];
 
-for (const scenario of writingFooterScenarios) {
+for (const scenario of sharedFooterScenarios) {
   test(`shared public footer visual integrity: ${scenario.name}`, async ({ page }) => {
     await page.setViewportSize(scenario.viewport);
     const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
@@ -133,6 +138,9 @@ for (const scenario of writingFooterScenarios) {
       const image = element.querySelector(".landing-logo--footer img");
       const grid = element.querySelector(".landing-footer__grid");
       const rect = element.getBoundingClientRect();
+      const firstColumn = grid?.firstElementChild?.getBoundingClientRect();
+      const lastColumn = grid?.lastElementChild?.getBoundingClientRect();
+      const precedingContent = element.closest(".nx-live-footer-scope")?.previousElementSibling?.getBoundingClientRect();
       return {
         logoWidth: image?.getBoundingClientRect().width ?? 0,
         logoHeight: image?.getBoundingClientRect().height ?? 0,
@@ -143,6 +151,12 @@ for (const scenario of writingFooterScenarios) {
         left: rect.left,
         right: rect.right,
         viewportWidth: document.documentElement.clientWidth,
+        columnCount: grid?.children.length ?? 0,
+        isSingleColumn: !!firstColumn && !!lastColumn &&
+          Math.abs(firstColumn.left - lastColumn.left) <= 2 &&
+          lastColumn.top > firstColumn.bottom,
+        precedingContentBottom: precedingContent?.bottom ?? null,
+        footerTop: rect.top,
       };
     });
     expect(metrics.logoWidth, JSON.stringify(metrics)).toBeGreaterThan(75);
@@ -150,7 +164,14 @@ for (const scenario of writingFooterScenarios) {
     expect(metrics.logoHeight, JSON.stringify(metrics)).toBeLessThan(230);
     expect(metrics.gridDisplay, JSON.stringify(metrics)).toBe("grid");
     expect(metrics.gridColumns, JSON.stringify(metrics)).not.toBe("none");
-    expect(metrics.backgroundImage, JSON.stringify(metrics)).not.toBe("none");
+    expect(metrics.backgroundImage, JSON.stringify(metrics)).toContain("linear-gradient");
+    expect(metrics.columnCount, JSON.stringify(metrics)).toBe(5);
+    if (scenario.viewport.width <= 390) {
+      expect(metrics.isSingleColumn, JSON.stringify(metrics)).toBe(true);
+    }
+    if (metrics.precedingContentBottom !== null) {
+      expect(metrics.footerTop, JSON.stringify(metrics)).toBeGreaterThanOrEqual(metrics.precedingContentBottom - 2);
+    }
     expect(metrics.footerHeight, JSON.stringify(metrics)).toBeLessThan(2400);
     expect(metrics.left, JSON.stringify(metrics)).toBeGreaterThanOrEqual(-1);
     expect(metrics.right, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.viewportWidth + 1);

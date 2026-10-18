@@ -7,7 +7,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Tür Editörlüğü | İlkOku Editörlük Okulu",
-  description: "Bir eseri kendi türünün okur vaadi, anlatı mantığı, alt türü, tür konvansiyonları ve hedef okur beklentileri içinde değerlendirmeyi; tür beklentisini klişeye dönüştürmeden editörlük yapmayı öğren.",
+  description: "Tür editörlüğü eğitiminde okur vaadini, anlatı mantığını, alt tür ve tür beklentilerini değerlendirmeyi; klişeye düşmeden editörlük yapmayı öğren.",
   canonical: "/editorler-icin/egitim/tur-editorlugu",
 });
 

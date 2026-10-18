@@ -1260,6 +1260,32 @@ test("Power-SEO fullsite API scans only authenticated sitemap batches without mo
   assertNotContains(full, "fetch('/sitemap.xml')", "scan remains server-authorized");
 });
 
+test("Power-SEO distinguishes off-sitemap references from HTTP-verified broken links", () => {
+  const panel = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
+  const api = source("src/app/api/admin/power-seo/verify-links/route.ts");
+  assertContains(panel, "offSitemapTargets:", "off-sitemap inventory included in report");
+  assertContains(panel, "httpVerificationComplete:", "partial verification must never be marked complete");
+  assertContains(panel, "email-protection", "Cloudflare obfuscation is a separate category");
+  assertContains(panel, "HTTP 404/410 ile doğrulanmış kırık hedef", "broken link must have actual HTTP evidence");
+  assertContains(panel, "onClick={() => void verifyOffSitemap()}", "opt-in verification only");
+  assertContains(panel, "Sitemap dışı hedefleri HTTP ile doğrula", "manual verifier visible");
+  assertContains(panel, "if (body.halted)", "client stops on edge block");
+  assertContains(api, "getCurrentUser()", "server-side session required");
+  assertContains(api, 'user.role !== "admin"', "no non-admin verification");
+  assertContains(api, 'browserOrigin?.origin === ORIGIN', "same origin CSRF boundary");
+  assertContains(api, 'request.headers.get("sec-fetch-site") === "cross-site"', "reject cross-site requests");
+  assertContains(api, 'const MAX_BATCH = 4', "four URL maximum per request");
+  assertContains(api, 'const HTTP_TIMEOUT_MS = 6500', "bounded HTTP timeout");
+  assertContains(api, 'redirect: "manual"', "never follow redirects to login/other hosts");
+  assertContains(api, 'if (status === 404 || status === 410) outcome = "missing"', "only 404/410 are declared missing");
+  assertContains(api, 'if (pair.some((row) => row.status === 403 || row.status === 429)) break', "WAF and rate-limit circuit breaker");
+  assertContains(api, 'raw.startsWith(prefix)', "do not fetch private application routes");
+  assertContains(api, '"Cache-Control": "private, no-store"', "private HTTP verification report");
+  assertNotContains(api, "prisma", "HTTP check must not mutate database");
+  assertNotContains(api, "indexing.googleapis.com", "never request indexing");
+  assertNotContains(api, "console.log", "never leak URL or session secrets to server logs");
+});
+
 test("Power-SEO external credentials are not displayed or misrepresented as live API success", () => {
   const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
   const dashboard = source("src/app/admin/power-seo/page.tsx");

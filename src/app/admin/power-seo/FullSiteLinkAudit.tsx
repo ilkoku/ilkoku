@@ -17,6 +17,27 @@ type Batch = {
 const ORIGIN = "https://ilkoku.com";
 const BATCH_SIZE = 4;
 const MAX_URLS = 400;
+const VERIFY_BATCH = 4;
+
+type LinkTarget = { url: string; path: string; sourceCount: number; category: "email-protection" | "account" | "protected" | "other" };
+type HttpVerification = { path: string; status: number | null; outcome: "reachable" | "redirect" | "missing" | "access-restricted" | "temporary-error" | "unverified"; redirectTo: string | null; reason: string };
+
+function classifyOffSitemap(url: string): LinkTarget["category"] {
+  const path = new URL(url).pathname;
+  if (path.startsWith("/cdn-cgi/l/email-protection")) return "email-protection";
+  if (["/giris", "/kayit", "/sifremi-unuttum"].includes(path)) return "account";
+  if (["/yazar", "/hesabim", "/kesfet"].includes(path) ||
+    path.startsWith("/editor/") || path.startsWith("/oku/") || path.endsWith("/pasaport")) return "protected";
+  return "other";
+}
+
+const categoryLabels: Record<LinkTarget["category"], string> = {
+  "email-protection": "Cloudflare e-posta koruması (HTTP kontrolü dışı)",
+  account: "Hesap / giriş sayfası (sitemap dışı olması olağan)",
+  protected: "Oturum veya role bağlı alan (içerik erişimi ayrı)",
+  other: "Sitemap dışı sayfa (robots / noindex ayrı doğrulanmalı)",
+};
+
 
 function normal(url: string) {
   const parsed = new URL(url, ORIGIN);
@@ -34,6 +55,11 @@ export function FullSiteLinkAudit() {
   const [complete, setComplete] = useState(false);
   const [error, setError] = useState("");
   const stopRef = useRef(false);
+  const [checkingLinks, setCheckingLinks] = useState(false);
+  const [linkChecks, setLinkChecks] = useState<HttpVerification[]>([]);
+  const [linkCheckComplete, setLinkCheckComplete] = useState(false);
+  const [linkCheckError, setLinkCheckError] = useState("");
+
 
   const summary = useMemo(() => {
     if (!complete || !urls.length) return null;
@@ -42,9 +68,22 @@ export function FullSiteLinkAudit() {
       return { failures, orphans: [] as Array<{url:string;title?:string;outboundCount:number}>,
         equity: [] as Array<{url:string;score:number;inboundCount:number}>,
         suggestions: [] as Array<{from:string;to:string;anchorText:string;relevanceScore:number}>,
-        nodes: 0, edges: 0, complete: false };
+        nodes: 0, edges: 0, complete: false, offSitemapTargets: [] as LinkTarget[] };
     }
     const allowed = new Set(urls.map(normal));
+    // Off-sitemap links are real HTML anchors, not automatically broken or orphaned.
+    const incoming = new Map<string, number>();
+    for (const page of pages) {
+      for (const link of page.links) {
+        try {
+          const target = normal(link);
+          if (!allowed.has(target)) incoming.set(target, (incoming.get(target) ?? 0) + 1);
+        } catch { /* Invalid attributes were excluded at extraction. */ }
+      }
+    }
+    const offSitemapTargets: LinkTarget[] = [...incoming.entries()].map(([url, sourceCount]) => ({
+      url, path: new URL(url).pathname, sourceCount, category: classifyOffSitemap(url),
+    })).sort((a, b) => b.sourceCount - a.sourceCount || a.url.localeCompare(b.url));
     const graphPages = pages.map((p) => ({
       url: p.url, title: p.title,
       // Only sitemap-to-sitemap edges count; never call off-sitemap pages orphaned.
@@ -57,7 +96,7 @@ export function FullSiteLinkAudit() {
     const equity = analyzeLinkEquity(graph).filter((p) => allowed.has(normal(p.url))).slice(0, 15);
     const suggestions = suggestLinks(graphPages, { maxSuggestions: 12, minRelevance: 0.25 })
       .filter((item) => allowed.has(normal(item.from)) && allowed.has(normal(item.to)));
-    return { failures, orphans, equity, suggestions, nodes: graph.totalPages, edges: graph.totalLinks, complete: true };
+    return { failures, orphans, equity, suggestions, nodes: graph.totalPages, edges: graph.totalLinks, complete: true, offSitemapTargets };
   }, [complete, pages, urls]);
 
   async function run(fromZero: boolean) {
@@ -66,6 +105,9 @@ export function FullSiteLinkAudit() {
     setRunning(true);
     setError("");
     if (fromZero) {
+      setLinkChecks([]);
+      setLinkCheckComplete(false);
+      setLinkCheckError("");
       setPages([]);
       setUrls([]);
       setFingerprint("");
@@ -119,6 +161,44 @@ export function FullSiteLinkAudit() {
     }
   }
 
+  async function verifyOffSitemap() {
+    if (!summary?.complete || checkingLinks || running) return;
+    const targets = summary.offSitemapTargets.filter((item) => item.category !== "email-protection");
+    setCheckingLinks(true);
+    setLinkCheckComplete(false);
+    setLinkCheckError("");
+    setLinkChecks([]);
+    const gathered: HttpVerification[] = [];
+    try {
+      for (let offset = 0; offset < targets.length; offset += VERIFY_BATCH) {
+        const response = await fetch("/api/admin/power-seo/verify-links", {
+          method: "POST",
+          cache: "no-store",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paths: targets.slice(offset, offset + VERIFY_BATCH).map((item) => item.path) }),
+        });
+        const body: { results?: HttpVerification[]; halted?: boolean; error?: string } = await response.json();
+        if (!response.ok || !Array.isArray(body.results)) {
+          throw new Error(body.error || "HTTP doğrulama sunucusu yanıt veremedi.");
+        }
+        gathered.push(...body.results);
+        setLinkChecks([...gathered]);
+        if (body.halted) {
+          throw new Error("HTTP 403/429 erişim koruması algılandı. İstekler durduruldu; kalan hedefler doğrulanmadı.");
+        }
+        if (offset + VERIFY_BATCH < targets.length) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 1600));
+        }
+      }
+      setLinkCheckComplete(true);
+    } catch (cause) {
+      setLinkCheckError(cause instanceof Error ? cause.message : "HTTP doğrulama tamamlanamadı.");
+    } finally {
+      setCheckingLinks(false);
+    }
+  }
+
   function downloadReport() {
     if (!summary || !complete) return;
     const report = {
@@ -127,6 +207,10 @@ export function FullSiteLinkAudit() {
       scannedUrls: pages.length, failures: summary.failures, complete: summary.complete,
       scope: "Sitemap içindeki HTML sayfalarından alınan bağlantılar; sitemap dışındaki gelen bağlantılar ölçülmez.",
       pages, orphanCandidates: summary.orphans, topEquity: summary.equity, suggestions: summary.suggestions,
+      offSitemapTargets: summary.offSitemapTargets,
+      httpVerification: linkChecks,
+      httpVerificationComplete: linkCheckComplete,
+      httpVerificationScope: "Yalnız sitemap dışında kalan aynı alan adı hedefleri; Cloudflare e-posta koruması hariç. Yönlendirme, erişim engeli ve zaman aşımı kırık bağlantı değildir.",
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
     const link = document.createElement("a");
@@ -180,6 +264,27 @@ export function FullSiteLinkAudit() {
                 {summary.orphans.slice(0, 30).map((item) => (
                   <li key={item.url}><b>Bağlantı almayan aday</b><span>{item.url}</span></li>
                 ))}
+              </ul>
+              <h3>Sitemap dışı bağlantılar ve gerçek HTTP durumları</h3>
+              <p>{summary.offSitemapTargets.length} farklı sitemap dışı hedefe {summary.offSitemapTargets.reduce((sum, item) => sum + item.sourceCount, 0)} bağlantı bulundu. Sitemap dışında olması tek başına kırık veya Google tarafından indekslenmemiş anlamına gelmez.</p>
+              <p>{summary.offSitemapTargets.filter((item) => item.category === "email-protection").length} Cloudflare e-posta koruma hedefi sayfa yerine e-posta gizleme bağlantısıdır; hash bilgisi kaldırıldığı için HTTP 404 olarak değerlendirilmez.</p>
+              <div className={styles.quick}>
+                <button type="button" disabled={running || checkingLinks || !summary.offSitemapTargets.length}
+                  onClick={() => void verifyOffSitemap()}>
+                  {checkingLinks ? "HTTP doğrulaması sürüyor…" : "Sitemap dışı hedefleri HTTP ile doğrula"}
+                </button>
+              </div>
+              <p><strong>{linkChecks.filter((item) => item.outcome === "missing").length}</strong> HTTP 404/410 ile doğrulanmış kırık hedef · <strong>{linkChecks.filter((item) => item.outcome === "temporary-error" || item.outcome === "unverified").length}</strong> kesinleşmeyen yanıt · <strong>{linkChecks.length}</strong> HTTP kontrolü tamamlanmış hedef. {linkCheckComplete ? "Bu turdaki kontrol tamamlandı." : "HTTP kontrolü tamamlanmadı veya henüz başlatılmadı."}</p>
+              {linkCheckError ? <p className={styles.error} role="alert">{linkCheckError}</p> : null}
+              <ul className={styles.issues}>
+                {summary.offSitemapTargets.map((item) => {
+                  const result = linkChecks.find((row) => row.path === item.path);
+                  const httpLabel = result ? `HTTP ${result.status ?? "?"} · ${result.reason}` : "HTTP sonucu henüz yok";
+                  return <li key={item.url}>
+                    <b>{item.sourceCount} sayfadan bağlantı · {categoryLabels[item.category]}</b>
+                    <span>{item.url} — {item.category === "email-protection" ? "Cloudflare bağlantısı: HTTP kontrolü uygulanmaz" : httpLabel}</span>
+                  </li>;
+                })}
               </ul>
               <h3>En yüksek göreli bağlantı ağı puanları</h3>
               <ul className={styles.issues}>

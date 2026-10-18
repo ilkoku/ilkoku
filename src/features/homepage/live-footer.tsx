@@ -11,6 +11,10 @@ import {
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
 
+// Footer styling must ship with the shared footer on every public route,
+// not only with src/app/page.tsx (homepage route CSS).
+import "@/app/landing-footer-pro.css";
+import "@/app/landing-footer-tight.css";
 import "./live-footer.css";
 
 type LiveHomepageFooterProps = {

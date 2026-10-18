@@ -112,6 +112,9 @@ export function WritingGuideShell({
   activeGenreSlug,
   expertVerificationRequired = false,
 }: WritingGuideShellProps) {
+  // Category landing pages need this main landmark. Individual genre guides
+  // render their own <main> inside PublicCmsPageBlocks; avoid nested mains.
+  const ContentLandmark = activeGenreSlug ? "div" : "main";
   const genres = getGenresByCategory(activeCategory);
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
   const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
@@ -194,7 +197,7 @@ export function WritingGuideShell({
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <ContentLandmark className="min-w-0">
           <PriorityGuideIntentPanel slug={activeGenreSlug} />
           {children}
           <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
@@ -227,7 +230,7 @@ export function WritingGuideShell({
               </div>
             </aside>
           ) : null}
-        </main>
+        </ContentLandmark>
       </div>
     </div>
     {showOriginalFooter ? (

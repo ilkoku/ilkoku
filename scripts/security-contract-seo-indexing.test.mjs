@@ -1200,6 +1200,21 @@ test("Power-SEO Google URL Inspection is admin-only, opt-in and read-only", () =
   assertNotContains(api, "indexing.googleapis.com", "never use Google Indexing API to request indexing");
   assertNotContains(api, "indexing:publish", "no Google indexing submission");
 });
+test("Power-SEO OpenAI API 429 diagnosis separates quota from rate limits without leaking upstream messages", () => {
+  const api = source("src/app/api/admin/power-seo/providers/route.ts");
+  assertContains(api, "async function classifyOpenAiFailure(response: Response)", "dedicated OpenAI error classifier");
+  assertContains(api, 'response.status !== 429', "non-429 errors handled independently");
+  assertContains(api, '"credit_balance_exhausted"', "credit exhaustion identified");
+  assertContains(api, '"organization_usage_limit_exceeded"', "organization usage cap identified");
+  assertContains(api, '"project_spend_limit_exceeded"', "project spending cap identified");
+  assertContains(api, 'type === "insufficient_quota"', "legacy quota error type handled");
+  assertContains(api, 'code === "rate_limit_exceeded"', "rate limiting identified separately");
+  assertContains(api, "quotaCodes.includes(code) ? code", "only allowlisted provider error codes returned");
+  assertContains(api, "if (!aiResponse.ok) return classifyOpenAiFailure(aiResponse);", "safe classifier used in live request");
+  assertNotContains(api, "message: error.message", "raw upstream error message must not be returned");
+  assertNotContains(api, "message: payload", "raw upstream payload must not be returned");
+});
+
 test("Power-SEO provider readiness and independent live census are truthful and read only", () => {
   const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
   const api = source("src/app/api/admin/power-seo/providers/route.ts");

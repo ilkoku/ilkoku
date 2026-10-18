@@ -296,7 +296,7 @@ export default async function PowerSeoDashboard({
           </div>
           <section className={styles.panel}>
             <h2>Öncelikli sayfalarda canlı Power-SEO teşhisi</h2>
-            <p>129 URL taraması ve sitemap dışı HTTP kontrolleri daha önce tamamlandı. Şimdi Google'ın tarayıp indekslemediği iki öncelikli public sayfayı gerçek HTML, Audit, Content Analysis, Images, Schema ve Preview motorlarıyla kontrol edin. Yalnız düğmeye basıldığında iki sayfa sırayla okunur; SEO kuralları değiştirilmez.</p>
+            <p>129 URL taraması ve sitemap dışı HTTP kontrolleri daha önce tamamlandı. Şimdi Google’ın tarayıp indekslemediği iki öncelikli public sayfayı gerçek HTML, Audit, Content Analysis, Images, Schema ve Preview motorlarıyla kontrol edin. Yalnız düğmeye basıldığında iki sayfa sırayla okunur; SEO kuralları değiştirilmez.</p>
             <div className={styles.primaryActions}>
               <a href="/sistem-yonetimi/power-seo?sekme=genel&kontrol=oncelik">
                 İki öncelikli sayfanın canlı SEO kontrolünü çalıştır →
@@ -326,7 +326,7 @@ export default async function PowerSeoDashboard({
                     </article>
                   );
                 })}
-                <p className={styles.note}>Bu denetim Google'ın indeksleme kararını veya Search Console'daki son tarama tarihini taklit etmez. Otomatik indeksleme isteği ve içerik yayını yoktur.</p>
+                <p className={styles.note}>Bu denetim Google’ın indeksleme kararını veya Search Console'daki son tarama tarihini taklit etmez. Otomatik indeksleme isteği ve içerik yayını yoktur.</p>
               </div>
             ) : null}
           </section>

@@ -55,6 +55,7 @@ function priorityFindings(path: string, audit: AuditResult) {
   catch { /* Invalid canonical is reported below. */ }
   if (canonical !== expected) findings.push("Canonical eksik veya beklenen sayfayla eşleşmiyor.");
   if (/(?:^|[,\s])noindex\b/i.test(audit.robots)) findings.push("Robots meta noindex içeriyor.");
+  if (/(?:^|[,\s])noindex\b/i.test(audit.xRobotsTag)) findings.push("HTTP X-Robots-Tag noindex içeriyor.");
   if (!audit.title) findings.push("SEO başlığı eksik.");
   if (!audit.description) findings.push("Meta açıklaması eksik.");
   if (audit.h1Count !== 1) findings.push("Beklenen tek H1 yerine " + audit.h1Count + " H1 bulundu.");
@@ -98,6 +99,7 @@ type AuditResult = {
   description: string;
   canonical: string;
   robots: string;
+  xRobotsTag: string;
   h1Count: number;
   linkCount: number;
   imageCount: number;
@@ -139,6 +141,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const description = findMeta(html, "name", "description");
   const canonical = canonicalFromHtml(html);
   const robots = findMeta(html, "name", "robots");
+  const xRobotsTag = response.headers.get("x-robots-tag") || "";
   const headings = [...html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map((m) => "h" + m[1] + ":" + textOnly(m[2]));
   const links = (html.match(/<a\b[^>]*>/gi) || []).map((t) => attr(t, "href")).filter(Boolean);
@@ -200,7 +203,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   }
   return {
     statusCode: response.status,
-    elapsed, title, description, canonical, robots,
+    elapsed, title, description, canonical, robots, xRobotsTag,
     h1Count: headings.filter((h) => h.startsWith("h1:")).length,
     linkCount: internalLinks.length, imageCount: images.length,
     score: audit.score,
@@ -310,7 +313,7 @@ export default async function PowerSeoDashboard({
                       {inspected ? (
                         <>
                           <p><b>HTTP {inspected.statusCode}</b> · Power-SEO Audit {inspected.score}/100 · H1: {inspected.h1Count} · İç bağlantı: {inspected.linkCount} · Schema: {inspected.schemaCount} · Alt metin bulgusu: {inspected.imageAltIssues}</p>
-                          <p><b>Canonical:</b> {inspected.canonical || "Eksik"} · <b>Robots:</b> {inspected.robots || "Meta belirtilmedi"}</p>
+                          <p><b>Canonical:</b> {inspected.canonical || "Eksik"} · <b>Robots:</b> {inspected.robots || "Meta belirtilmedi"} · <b>X-Robots-Tag:</b> {inspected.xRobotsTag || "Yok"}</p>
                           {findings.length ? (
                             <ul className={styles.issues}>{findings.map((finding) => <li key={finding}>{finding}</li>)}</ul>
                           ) : <p>Bu teknik kontrollerde doğrudan engel bulunmadı. Google indeks durumu ayrıca GSC ile değerlendirilir.</p>}

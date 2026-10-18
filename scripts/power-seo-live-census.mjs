@@ -294,6 +294,16 @@ async function main() {
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
   }
+  // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
+  for (const item of contentReview.contentOverlapCandidates.slice(0, 25)) {
+    console.log(JSON.stringify({ contentOverlapReview: item }));
+  }
+  for (const item of contentReview.exactDuplicateMainBodies.slice(0, 10)) {
+    console.log(JSON.stringify({ exactMainDuplicate: item }));
+  }
+  for (const item of contentReview.mainContentStats.filter((x) => x.wordCount < 100).slice(0, 25)) {
+    console.log(JSON.stringify({ shortOrMissingMainReview: item }));
+  }
   if (process.env.GITHUB_STEP_SUMMARY) {
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
       "## Power-SEO read-only live sitemap census",

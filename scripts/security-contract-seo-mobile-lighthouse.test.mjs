@@ -236,17 +236,17 @@ test("writer dashboard stylesheet is scoped to authenticated writer route, not p
   }
 });
 
-test("Homepage-only legacy landing CSS is route-scoped instead of loaded on every public page", () => {
+test("Homepage CSS remains route-scoped while reusable footer CSS travels with the common footer", () => {
   const layout = fs.readFileSync("src/app/layout.tsx", "utf8");
   const homepage = fs.readFileSync("src/app/page.tsx", "utf8");
+  const sharedFooter = fs.readFileSync("src/features/homepage/live-footer.tsx", "utf8");
   const homepageOnly = [
-      "landing-theme.css",
-      "landing-role-icons.css",
-      "landing-footer-pro.css",
-      "landing-footer-tight.css",
-      "landing-header-pro.css",
-      "landing-account-bubble.css"
+    "landing-theme.css",
+    "landing-role-icons.css",
+    "landing-header-pro.css",
+    "landing-account-bubble.css",
   ];
+  const sharedFooterStyles = ["landing-footer-pro.css", "landing-footer-tight.css"];
   for (const filename of homepageOnly) {
     const importStatement = 'import "./' + filename + '";';
     assert.ok(homepage.includes(importStatement), filename + " must load on the home route");
@@ -254,8 +254,23 @@ test("Homepage-only legacy landing CSS is route-scoped instead of loaded on ever
     const content = fs.readFileSync("src/app/" + filename, "utf8");
     assert.match(content, /\.landing-page\b/u, filename + " must remain scoped to the landing surface");
   }
-  for (const monitored of ["src/app/layout.tsx", "src/app/page.tsx", "src/app/landing-*.css"]) {
-    assert.ok(workflow.includes(monitored), monitored + " must trigger a new one-shot mobile Lighthouse sample after release");
+  for (const filename of sharedFooterStyles) {
+    const importStatement = 'import "@/app/' + filename + '";';
+    assert.ok(sharedFooter.includes(importStatement),
+      filename + " must load with LiveHomepageFooter on every public page");
+    assert.ok(!homepage.includes('import "./' + filename + '";'),
+      filename + " must not be homepage-only");
+    assert.ok(!layout.includes('import "./' + filename + '";'),
+      filename + " must not globally affect non-footer pages");
+    const content = fs.readFileSync("src/app/" + filename, "utf8");
+    assert.match(content, /\.landing-page\b/u, filename + " must remain scoped to the footer surface");
+  }
+  for (const monitored of [
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/app/landing-*.css",
+  ]) {
+    assert.ok(workflow.includes(monitored), monitored + " must trigger a one-shot mobile Lighthouse sample after release");
   }
   assert.ok(layout.includes('import "./globals.css";'), "Shared CSS stays global");
   assert.ok(layout.includes('import "./site-contact-links.css";'), "Shared contact CSS stays global");

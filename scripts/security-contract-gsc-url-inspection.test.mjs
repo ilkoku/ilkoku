@@ -23,9 +23,9 @@ test("GSC URL Inspection diagnostic is self-change, manual-or-weekly and read-on
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(workflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:\s*\n\s+- "\.github\/workflows\/gsc-url-inspection\.yml"\s*\n\s+- "scripts\/gsc-url-inspection\.mjs"/u);
   assert.match(workflow, /RUN-GSC-URL-INSPECTION/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_ID/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_SECRET/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_ID/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_SECRET/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
 });
 
 test("inspection script only calls read-only Search Console diagnostics", () => {
@@ -134,7 +134,7 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
   assert.match(censusWorkflow, /GSC_CENSUS_MIN_URLS: "128"/u);
   assert.match(censusScript, /Incomplete live census:/u);
-  assert.match(censusWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.match(censusWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
   assert.doesNotMatch(censusWorkflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
 
   assert.match(censusScript, /const MAX_URLS = 500/u);
@@ -193,9 +193,9 @@ test("Book Index Search performance report is weekly and read-only", () => {
   assert.match(performanceWorkflow, /workflow_dispatch:/u);
   assert.match(performanceWorkflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(performanceWorkflow, /gsc-book-index-performance\.mjs/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_CLIENT_ID/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_CLIENT_SECRET/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_ID/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_SECRET/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
 
   assert.match(
     performanceScript,

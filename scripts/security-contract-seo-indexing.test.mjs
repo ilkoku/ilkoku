@@ -1180,6 +1180,25 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
   assert.equal(consent.isGranted("necessary"), true);
 });
 
+test("Power-SEO Google URL Inspection is admin-only, opt-in and read-only", () => {
+  const api = source("src/app/api/admin/power-seo/providers/route.ts");
+  const controls = source("src/app/admin/power-seo/PowerSeoProviderChecks.tsx");
+  assertContains(api, '"gsc-index"', "GSC indexing provider registered");
+  assertContains(api, '"https://searchconsole.googleapis.com/v1/urlInspection/index:inspect"', "real Google URL Inspection endpoint");
+  assertContains(api, "async function queryGscIndex(rawPath: string)", "bounded single-URL inspection");
+  assertContains(api, "const path = safePublicPath(rawPath);", "strict allowed public path");
+  assertContains(api, 'siteUrl, languageCode: "tr-TR"', "correct GSC property language request");
+  assertContains(api, "Google'ın kayıtlı indeksleme durumu", "results explicitly not live test");
+  assertContains(api, 'user.role !== "admin"', "no unauthenticated inspections");
+  assertContains(api, 'browserOrigin.origin === ORIGIN', "CSRF origin boundary preserved");
+  assertContains(api, 'AbortSignal.timeout(24000)', "inspection time bounded");
+  assertContains(api, 'Cache-Control": "private, no-store"', "no shared-cache inspection results");
+  assertContains(controls, 'GSC indeks durumunu sorgula', "real GSC index-status UI trigger");
+  assertContains(controls, 'onClick={() => void check(service.id)}', "query initiated only by admin action");
+  assertContains(controls, 'provider === "gsc-index" ? path : undefined', "path forwarded only for user-directed inspection");
+  assertNotContains(api, "indexing.googleapis.com", "never use Google Indexing API to request indexing");
+  assertNotContains(api, "indexing:publish", "no Google indexing submission");
+});
 test("Power-SEO provider readiness and independent live census are truthful and read only", () => {
   const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
   const api = source("src/app/api/admin/power-seo/providers/route.ts");

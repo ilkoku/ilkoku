@@ -1294,6 +1294,33 @@ test("Power-SEO provider readiness and independent live census are truthful and 
   assertContains(workflow, "contents: read", "GitHub token cannot write site or repo");
 });
 
+test("Power-SEO priority review runs real, bounded and opt-in technical diagnostics on the two Google follow-up URLs", () => {
+  const page = source("src/app/admin/power-seo/page.tsx");
+  assertContains(page, 'const priorityPaths = ["/nasil-calisir", "/yazarlar-icin/kurgu/roman"] as const;',
+    "exactly two fixed public priority URLs");
+  assertContains(page, 'activeTab === "genel" && params.kontrol === "oncelik"',
+    "prioritized live scan only starts when the admin explicitly requests it");
+  assertContains(page, 'for (const target of priorityPaths)',
+    "priority targets are walked as a bounded list");
+  assertContains(page, 'audit: await inspectLivePage(target)',
+    "real HTML auditing is awaited sequentially, no parallel traffic burst");
+  assertContains(page, 'function priorityFindings(path: string, audit: AuditResult)',
+    "priority findings are derived from the actual live audit, not invented");
+  assertContains(page, 'if (audit.statusCode !== 200)', "HTTP errors cannot be marked good");
+  assertContains(page, 'if (canonical !== expected)', "canonical mismatch reported");
+  assertContains(page, 'audit.robots', "robots meta used by priority checker");
+  assertContains(page, 'response.headers.get("x-robots-tag")', "live HTTP indexing header read");
+  assertContains(page, 'audit.xRobotsTag', "HTTP noindex must not be silently skipped");
+  assertContains(page, 'audit.imageAltIssues', "alt text audit reused");
+  assertContains(page, 'audit.schemaIssues.length', "schema validation reused");
+  assertContains(page, 'Google indeks durumu ayrıca GSC ile değerlendirilir.',
+    "technical checks must not claim that Google indexed a URL");
+  assertContains(page, 'sekme=sayfa&yol=', "each result leads to the existing full audit");
+  assertNotContains(page, 'submitSitemap(', "priority check does not submit sitemap");
+  assertNotContains(page, 'indexing:publish', "priority check does not request indexing");
+  assertNotContains(page, 'prisma.', "priority check does not write to database");
+});
+
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {
   const api = source("src/app/api/admin/power-seo/scan/route.ts");
   const page = source("src/app/admin/power-seo/page.tsx");

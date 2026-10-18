@@ -42,6 +42,27 @@ const modules = [
 ] as const;
 
 const examples = ["/", "/nasil-calisir", "/yazarlar-icin", "/editoryal-standartlar", "/yardim"];
+// A small, intentional indexability review. This never triggers the 129-URL
+// crawler and never claims to reproduce Google's indexing decisions.
+const priorityPaths = ["/nasil-calisir", "/yazarlar-icin/kurgu/roman"] as const;
+
+function priorityFindings(path: string, audit: AuditResult) {
+  const findings: string[] = [];
+  if (audit.statusCode !== 200) findings.push("Public sayfa HTTP " + audit.statusCode + " döndürüyor.");
+  const expected = new URL(path, "https://ilkoku.com").toString().replace(/\/$/, "");
+  let canonical = "";
+  try { canonical = audit.canonical ? new URL(audit.canonical, "https://ilkoku.com").toString().replace(/\/$/, "") : ""; }
+  catch { /* Invalid canonical is reported below. */ }
+  if (canonical !== expected) findings.push("Canonical eksik veya beklenen sayfayla eşleşmiyor.");
+  if (/(?:^|[,\s])noindex\b/i.test(audit.robots)) findings.push("Robots meta noindex içeriyor.");
+  if (/(?:^|[,\s])noindex\b/i.test(audit.xRobotsTag)) findings.push("HTTP X-Robots-Tag noindex içeriyor.");
+  if (!audit.title) findings.push("SEO başlığı eksik.");
+  if (!audit.description) findings.push("Meta açıklaması eksik.");
+  if (audit.h1Count !== 1) findings.push("Beklenen tek H1 yerine " + audit.h1Count + " H1 bulundu.");
+  if (audit.imageAltIssues) findings.push(audit.imageAltIssues + " görsel alt metin bulgusu var.");
+  if (audit.schemaIssues.length) findings.push(audit.schemaIssues.length + " schema uyarısı/bulgusu var.");
+  return findings;
+}
 
 function safePath(raw: string) {
   if (raw.length > 160 || !/^\/(?:[a-z0-9-]+\/?)*$/.test(raw)) return null;
@@ -77,6 +98,8 @@ type AuditResult = {
   title: string;
   description: string;
   canonical: string;
+  robots: string;
+  xRobotsTag: string;
   h1Count: number;
   linkCount: number;
   imageCount: number;
@@ -118,6 +141,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const description = findMeta(html, "name", "description");
   const canonical = canonicalFromHtml(html);
   const robots = findMeta(html, "name", "robots");
+  const xRobotsTag = response.headers.get("x-robots-tag") || "";
   const headings = [...html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map((m) => "h" + m[1] + ":" + textOnly(m[2]));
   const links = (html.match(/<a\b[^>]*>/gi) || []).map((t) => attr(t, "href")).filter(Boolean);
@@ -179,7 +203,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   }
   return {
     statusCode: response.status,
-    elapsed, title, description, canonical,
+    elapsed, title, description, canonical, robots, xRobotsTag,
     h1Count: headings.filter((h) => h.startsWith("h1:")).length,
     linkCount: internalLinks.length, imageCount: images.length,
     score: audit.score,
@@ -201,7 +225,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
 export default async function PowerSeoDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ yol?: string | string[]; mod?: string | string[]; parca?: string | string[]; sekme?: string | string[] }>;
+  searchParams: Promise<{ yol?: string | string[]; mod?: string | string[]; parca?: string | string[]; sekme?: string | string[]; kontrol?: string | string[] }>;
 }) {
   const params = await searchParams;
   const raw = typeof params.yol === "string" ? params.yol : "";
@@ -227,6 +251,19 @@ export default async function PowerSeoDashboard({
     catch (e) { error = e instanceof Error ? e.message : "Canlı HTML denetimi yapılamadı."; }
   }
 
+  // Exactly two same-origin requests, sequential and only on explicit admin action.
+  // A status of "teknik engel görülmedi" is NOT proof that Google indexed the URL.
+  const priorityRequested = activeTab === "genel" && params.kontrol === "oncelik";
+  const priorityResults: Array<{ path: string; audit: AuditResult | null; error: string }> = [];
+  if (priorityRequested) {
+    for (const target of priorityPaths) {
+      try {
+        priorityResults.push({ path: target, audit: await inspectLivePage(target), error: "" });
+      } catch {
+        priorityResults.push({ path: target, audit: null, error: "Canlı HTML denetimi başarısız veya zaman aşımına uğradı." });
+      }
+    }
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -258,13 +295,40 @@ export default async function PowerSeoDashboard({
             <div><strong>0</strong><span>Değiştirilen public SEO politikası</span></div>
           </div>
           <section className={styles.panel}>
-            <h2>Sıradaki iş: HTTP bağlantı doğrulaması</h2>
-            <p>129 sayfalık tamamlanmış Power-SEO JSON raporunu yeniden kullanın. Tam siteyi yeniden taramadan sitemap dışı hedeflerin gerçek HTTP durumlarını kontrol edin.</p>
+            <h2>Öncelikli sayfalarda canlı Power-SEO teşhisi</h2>
+            <p>129 URL taraması ve sitemap dışı HTTP kontrolleri daha önce tamamlandı. Şimdi Google’ın tarayıp indekslemediği iki öncelikli public sayfayı gerçek HTML, Audit, Content Analysis, Images, Schema ve Preview motorlarıyla kontrol edin. Yalnız düğmeye basıldığında iki sayfa sırayla okunur; SEO kuralları değiştirilmez.</p>
             <div className={styles.primaryActions}>
-              <a href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">
-                JSON raporunu içeri al ve HTTP kontrolüne geç →
+              <a href="/sistem-yonetimi/power-seo?sekme=genel&kontrol=oncelik">
+                İki öncelikli sayfanın canlı SEO kontrolünü çalıştır →
               </a>
             </div>
+            {priorityRequested ? (
+              <div className={styles.results} aria-label="Canlı öncelikli Power-SEO sonuçları">
+                {priorityResults.map(({ path: checkedPath, audit: inspected, error: failure }) => {
+                  const findings = inspected ? priorityFindings(checkedPath, inspected) : [];
+                  return (
+                    <article className={styles.panel} key={checkedPath}>
+                      <h3>{checkedPath}</h3>
+                      {failure ? <p className={styles.error} role="alert">{failure}</p> : null}
+                      {inspected ? (
+                        <>
+                          <p><b>HTTP {inspected.statusCode}</b> · Power-SEO Audit {inspected.score}/100 · H1: {inspected.h1Count} · İç bağlantı: {inspected.linkCount} · Schema: {inspected.schemaCount} · Alt metin bulgusu: {inspected.imageAltIssues}</p>
+                          <p><b>Canonical:</b> {inspected.canonical || "Eksik"} · <b>Robots:</b> {inspected.robots || "Meta belirtilmedi"} · <b>X-Robots-Tag:</b> {inspected.xRobotsTag || "Yok"}</p>
+                          {findings.length ? (
+                            <ul className={styles.issues}>{findings.map((finding) => <li key={finding}>{finding}</li>)}</ul>
+                          ) : <p>Bu teknik kontrollerde doğrudan engel bulunmadı. Google indeks durumu ayrıca GSC ile değerlendirilir.</p>}
+                          <div className={styles.quick}>
+                            <Link href={"/sistem-yonetimi/power-seo?sekme=sayfa&yol=" + encodeURIComponent(checkedPath)}>Ayrıntılı audit, içerik, schema ve SERP önizlemesi →</Link>
+                            <Link href="/sistem-yonetimi/power-seo?sekme=servisler">Google URL Inspection durumunu sorgula →</Link>
+                          </div>
+                        </>
+                      ) : null}
+                    </article>
+                  );
+                })}
+                <p className={styles.note}>Bu denetim Google’ın indeksleme kararını veya Search Console’daki son tarama tarihini taklit etmez. Otomatik indeksleme isteği ve içerik yayını yoktur.</p>
+              </div>
+            ) : null}
           </section>
           <section className={styles.panel}>
             <h2>Hangi işlemi yapmak istiyorsunuz?</h2>

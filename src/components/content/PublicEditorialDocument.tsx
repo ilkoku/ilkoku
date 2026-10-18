@@ -47,7 +47,7 @@ function tableCells(line: string) {
 // Inline **emphasis** is present in published education copy. Keep this deliberately
 // narrower than full Markdown: plain text remains React-escaped and no HTML is parsed.
 function renderInlineEmphasis(value: string) {
-  return value.split(/(\\*\\*[^*\\n]+\\*\\*)/g).map((part, index) =>
+  return value.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
     part.startsWith("**") && part.endsWith("**") && part.length > 4
       ? <strong key={index}>{part.slice(2, -2)}</strong>
       : part,

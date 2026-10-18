@@ -1286,6 +1286,24 @@ test("Power-SEO distinguishes off-sitemap references from HTTP-verified broken l
   assertNotContains(api, "console.log", "never leak URL or session secrets to server logs");
 });
 
+test("Power-SEO reuses a completed JSON report only after live sitemap integrity check", () => {
+  const full = source("src/app/admin/power-seo/FullSiteLinkAudit.tsx");
+  assertContains(full, "async function importPreviousReport(file: File | undefined)", "explicit user-selected JSON import");
+  assertContains(full, "await file.text()", "read local JSON without server upload");
+  assertContains(full, 'report.site !== ORIGIN', "prevent cross-site import");
+  assertContains(full, 'report.complete !== true', "partial reports rejected");
+  assertContains(full, 'report.scannedUrls !== expected', "only full census reports accepted");
+  assertContains(full, 'report.pages.length !== expected', "all page rows required");
+  assertContains(full, 'report.sitemapFingerprint', "content fingerprint presence checked");
+  assertContains(full, '"/api/admin/power-seo/scan?offset=0"', "single live four-URL batch checks sitemap fingerprint");
+  assertContains(full, 'live.fingerprint !== report.sitemapFingerprint', "stale report must not bypass current sitemap");
+  assertContains(full, 'setComplete(true)', "validated report becomes visible without full scan");
+  assertContains(full, 'sourceMeasuredAt || new Date().toISOString()', "original measurement date preserved");
+  assertContains(full, 'type="file" accept=".json,application/json"', "manual local upload UI");
+  assertContains(full, 'void importPreviousReport(file)', "file input really wired");
+  assertNotContains(full, 'fetch("/api/admin/power-seo/upload"', "no server-side storage of personal report");
+});
+
 test("Power-SEO external credentials are not displayed or misrepresented as live API success", () => {
   const connections = source("src/app/admin/power-seo/PowerSeoConnections.tsx");
   const dashboard = source("src/app/admin/power-seo/page.tsx");

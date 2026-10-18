@@ -914,6 +914,48 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   await expectResponsiveDocument(page);
 });
 
+test("Power-SEO priority action audits both live public pages with admin session", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  test.setTimeout(60_000);
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: token,
+    url: authCookieUrl,
+  }]);
+  await page.setViewportSize(viewports.phone390);
+
+  const start = await page.goto("/sistem-yonetimi/power-seo?sekme=genel", {
+    waitUntil: "domcontentloaded",
+  });
+  expect(start?.status()).toBe(200);
+
+  // This is a genuine user-initiated read-only audit: no sitemap crawl,
+  // publishing request, external indexing call, or browser response mock.
+  await page.getByRole("link", {
+    name: /İki öncelikli sayfanın canlı SEO kontrolünü çalıştır/u,
+  }).click();
+  await expect(page).toHaveURL(/sekme=genel&kontrol=oncelik/u);
+
+  const results = page.locator('[aria-label="Canlı öncelikli Power-SEO sonuçları"]');
+  await expect(results).toBeVisible();
+  const cards = results.locator("article");
+  await expect(cards).toHaveCount(2);
+
+  for (const [index, path] of [
+    "/nasil-calisir",
+    "/yazarlar-icin/kurgu/roman",
+  ].entries()) {
+    const card = cards.nth(index);
+    await expect(card.locator("h3")).toHaveText(path);
+    await expect(card.locator("b", { hasText: "HTTP 200" })).toBeVisible();
+    await expect(card.getByText("Canonical:", { exact: false })).toBeVisible();
+  }
+  await expect(results.getByRole("alert")).toHaveCount(0);
+  await expectResponsiveDocument(page);
+});
+
 test("Power-SEO full sitemap scan requires admin and produces complete graph from batches", async ({ page }) => {
   const denied = await page.request.get("/api/admin/power-seo/scan?offset=0");
   expect(denied.status()).toBe(401);

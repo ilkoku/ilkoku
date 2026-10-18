@@ -157,18 +157,16 @@ function inspectBreadcrumbHierarchy(schema, pageUrl, siteUrls) {
           if (parsed.origin === ORIGIN && !parsed.search) normalized = normalize(parsed.toString());
         } catch { /* Recorded below, without following links. */ }
         if (!normalized) issues.push({ chain: chainIndex + 1, position: index + 1, problem: "off-origin-or-invalid-target" });
-        else if (index === elements.length - 1 && normalized !== normalize(pageUrl)) {
-          issues.push({ chain: chainIndex + 1, position: index + 1, problem: "last-breadcrumb-not-current-page" });
-        } else if (index < elements.length - 1 && !siteUrls.has(normalized)) {
-          issues.push({ chain: chainIndex + 1, position: index + 1, problem: "parent-not-in-public-sitemap" });
+        else if (!siteUrls.has(normalized)) {
+          // The last item can be an ancestor instead of the current page.
+          // An off-sitemap breadcrumb is an editorial review candidate, not
+          // proof of an invalid schema or a broken HTTP destination.
+          issues.push({ chain: chainIndex + 1, position: index + 1, problem: "breadcrumb-target-not-in-public-sitemap" });
         }
       }
       chain.push({ position: index + 1, name, url: normalized });
     }
     chains.push(chain);
-  }
-  if (schema.breadcrumbs.length > 1) {
-    issues.push({ problem: "multiple-breadcrumb-lists-review" });
   }
   return { chains, issues };
 }
@@ -495,7 +493,7 @@ async function main() {
       "| --- | ---: |",
       ...Object.entries(summary).filter(([,value]) => typeof value === "number").map(([k,v]) => "| " + k + " | " + v + " |"),
       "",
-      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review. Schema/breadcrumb counts are factual; missing schema is not an automatic error, and a parent not listed in the public sitemap is a review signal, not proof of a broken link or Google indexing failure.",
+      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review. Schema/breadcrumb counts are factual; missing schema and multiple user-navigation breadcrumb trails are not automatic errors. A breadcrumb URL absent from the public sitemap is an editorial review signal, not proof of a broken link or Google indexing failure.",
       "",
     ].join("\n"));
   }

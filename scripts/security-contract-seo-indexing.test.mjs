@@ -1345,6 +1345,24 @@ test("Power-SEO priority review runs real, bounded and opt-in technical diagnost
   assertNotContains(page, 'prisma.', "priority check does not write to database");
 });
 
+test("Power-SEO read-only live sitemap census measures per-page meta descriptions and duplicate review signals", () => {
+  const census = source("scripts/power-seo-live-census.mjs");
+  assertContains(census, 'function descriptionFromHtml(html)', "extract actual HTML meta description");
+  assertContains(census, 'attribute(tag, "name").toLowerCase() === "description"', "use named meta description tag");
+  assertContains(census, 'description = ok ? descriptionFromHtml(body) : ""', "only trust successful HTML");
+  assertContains(census, 'function comparableDescription(value)', "normalize Unicode Turkish text");
+  assertContains(census, 'function descriptionSimilarity(a, b)', "near duplicates are review-only, not declared errors");
+  assertContains(census, 'duplicateDescriptions', "exact duplicate groups recorded with affected URLs");
+  assertContains(census, 'nearDuplicateDescriptions', "near duplicate pairs recorded with affected URLs");
+  assertContains(census, 'descriptionReview', "missing, short and long description review items captured");
+  assertContains(census, 'descriptionsMissing:', "absence is reported honestly");
+  assertContains(census, 'descriptionsOver180Review:', "longer content is only a review signal");
+  assertContains(census, 'not Google indexing requirements or penalties', "avoid claiming indexing effect");
+  assertContains(census, 'const CONCURRENCY = 2', "bounded requests retained");
+  assertNotContains(census, 'indexing:publish', "no Google indexing submissions");
+  assertNotContains(census, 'prisma.', "read-only without DB mutations");
+});
+
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {
   const api = source("src/app/api/admin/power-seo/scan/route.ts");
   const page = source("src/app/admin/power-seo/page.tsx");

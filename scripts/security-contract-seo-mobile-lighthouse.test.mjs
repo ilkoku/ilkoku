@@ -335,7 +335,12 @@ test("Author workspace CSS is route-scoped to both authenticated writing layouts
 test("three-run Lighthouse validates the live commit rather than a stale CSS/JS fingerprint", () => {
   const comparison = fs.readFileSync("scripts/seo-mobile-lighthouse-comparison.mjs", "utf8");
   const workflow = fs.readFileSync(".github/workflows/seo-mobile-lighthouse-comparison.yml", "utf8");
-  assert.match(comparison, /assert\.equal\(servedCommitSha, expectedCommitSha/u);
+  assert.match(comparison, /servedCommitSha !== expectedCommitSha/u);
+  assert.match(comparison, /execFileSync\("git", \["merge-base", "--is-ancestor"/u);
+  assert.match(comparison, /execFileSync\("git", \["diff", "--name-only"/u);
+  assert.match(comparison, /unpublishedAppChanges/u);
+  assert.match(comparison, /VERIFIED_EQUIVALENT_LIVE_BUILD/u);
+  assert.match(workflow, /fetch-depth: 0/u);
   assert.match(comparison, /VERIFIED_LIVE_COMMIT/u);
   assert.doesNotMatch(comparison, /LEGACY_HOMEPAGE_CSS|PREVIOUS_THREE_RUN_CSS_MEDIAN/u);
   assert.match(workflow, /EXPECTED_COMMIT_SHA:/u);

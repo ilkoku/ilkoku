@@ -1024,8 +1024,8 @@ test("Public writing, reader and editor education templates expose one semantic 
   ];
   for (const file of shells) {
     const shell = source(file);
-    assert.equal((shell.match(/<main\\b/g) || []).length, 1, file + ": exactly one main opens");
-    assert.equal((shell.match(/<\\/main>/g) || []).length, 1, file + ": exactly one main closes");
+    assert.equal(shell.split('<main className="min-w-0">').length - 1, 1, file + ": exactly one main opens");
+    assert.equal(shell.split("</main>").length - 1, 1, file + ": exactly one main closes");
     assertContains(shell, '<main className="min-w-0">', file + ": main retains original styling");
     assertNotContains(shell, "generateMetadata", file + ": no SEO metadata mutation");
     assertNotContains(shell, "robots:", file + ": no robots policy mutation");

@@ -1016,6 +1016,30 @@ test("Power-SEO adds read-only Turkish-safe content analysis without changing pu
   assertNotContains(audit, "robots:", "do not alter robots indexing policy");
 });
 
+test("Power-SEO editorially reviewed links connect real writing guides without changing public SEO metadata", () => {
+  const guide = source("src/components/content/WritingGuideShell.tsx");
+  const requiredPairs = [
+    ["akademik-inceleme", "/yazarlar-icin/edebiyat/inceleme"],
+    ["cocuk-romani", "/yazarlar-icin/kurgu/roman"],
+    ["genc-yetiskin", "/yazarlar-icin/kurgu/roman"],
+    ["grafik-roman", "/yazarlar-icin/kurgu/roman"],
+    ["roman", "/yazarlar-icin/cizgi-anlati/grafik-roman"],
+    ["tarihi-roman", "/yazarlar-icin/bilgilendirici/tarih"],
+    ["alternatif-tarih", "/yazarlar-icin/bilgilendirici/tarih"],
+  ];
+  for (const [sourceSlug, targetPath] of requiredPairs) {
+    assertContains(guide, '"' + sourceSlug + '": {', "cross-category source guide " + sourceSlug);
+    assertContains(guide, 'href: "' + targetPath + '"', "canonical same-origin target " + targetPath);
+  }
+  assertContains(guide, "const contextualBridge = activeGenreSlug ? CONTEXTUAL_GUIDE_BRIDGES[activeGenreSlug] : undefined;",
+    "only individual guide pages receive contextual links");
+  assertContains(guide, "href={contextualBridge.href}", "contextual href rendered as Next Link");
+  assertContains(guide, "{contextualBridge.label} →", "natural editorial anchor text exposed");
+  assertNotContains(guide, "generateMetadata", "no metadata rewrite");
+  assertNotContains(guide, "noindex", "no indexability rules introduced");
+  assertNotContains(guide, "dangerouslySetInnerHTML", "no HTML injection introduced");
+});
+
 test("Public writing, reader and editor education templates use one non-nested main landmark", () => {
   const writing = source("src/components/content/WritingGuideShell.tsx");
   assertContains(writing, 'const ContentLandmark = activeGenreSlug ? "div" : "main";',

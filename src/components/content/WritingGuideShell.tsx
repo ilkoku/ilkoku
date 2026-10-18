@@ -97,6 +97,41 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   karikatur: "/yazarlar-icin/cizgi-anlati/karikatur",
 };
 
+// Editorially reviewed cross-category paths from Power-SEO's completed
+// 129-page link graph. Unlike generic similarity scores, these pairs teach
+// closely related writing skills. All target URLs were checked live (HTTP
+// content, self-canonical and index, follow) before enabling the links.
+const CONTEXTUAL_GUIDE_BRIDGES: Readonly<Record<string, { href: string; label: string }>> = {
+  "akademik-inceleme": {
+    href: "/yazarlar-icin/edebiyat/inceleme",
+    label: "Edebî inceleme yazarlığı",
+  },
+  "cocuk-romani": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman yazarlığı temelleri",
+  },
+  "genc-yetiskin": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman yazarlığı temelleri",
+  },
+  "grafik-roman": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman kurgusu ve olay örgüsü",
+  },
+  "roman": {
+    href: "/yazarlar-icin/cizgi-anlati/grafik-roman",
+    label: "Grafik roman yazarlığı",
+  },
+  "tarihi-roman": {
+    href: "/yazarlar-icin/bilgilendirici/tarih",
+    label: "Tarih araştırması ve yazımı",
+  },
+  "alternatif-tarih": {
+    href: "/yazarlar-icin/bilgilendirici/tarih",
+    label: "Tarih araştırması ve yazımı",
+  },
+};
+
 const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu", "Edebiyat", "Senaryo ve Sahne", "Akademik", "Bilgilendirici", "Çocuk ve Gençlik", "Çizgi Anlatı"]);
 
 type WritingGuideShellProps = {
@@ -128,6 +163,7 @@ export function WritingGuideShell({
   // Keep all existing genre routes available in the sidebar. Give the small
   // contextual handoff priority to the current public search cohort, and keep
   // other related genres as a fallback when no indexable sibling exists.
+  const contextualBridge = activeGenreSlug ? CONTEXTUAL_GUIDE_BRIDGES[activeGenreSlug] : undefined;
   const relatedGenres = [
     ...relatedGenreCandidates.filter((genre) =>
       isSoftLaunchSearchPriorityPath(LIVE_WRITING_GUIDE_HREFS[genre.slug] ?? ""),
@@ -214,6 +250,14 @@ export function WritingGuideShell({
                 Bu rehber, <Link className="font-extrabold text-[#5b35dd] underline decoration-[#5b35dd]/25 underline-offset-4" href={categoryHub.href}>{categoryHub.title} ana eğitiminin</Link> bir parçasıdır. Konuyu komşu türlerle karşılaştırmak için ilgili rehberlere geçebilirsin.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
+                {contextualBridge ? (
+                  <Link
+                    className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
+                    href={contextualBridge.href}
+                  >
+                    {contextualBridge.label} →
+                  </Link>
+                ) : null}
                 {relatedGenres.map((genre) => {
                   const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
                   if (!href) return null;

@@ -932,6 +932,17 @@ test("Power-SEO full sitemap scan requires admin and produces complete graph fro
   const pageResponse = await page.goto("/sistem-yonetimi/power-seo?mod=full-links", { waitUntil: "domcontentloaded" });
   expect(pageResponse?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Tam site bağlantı denetimi", exact: true })).toBeVisible();
+  const importTitle = page.getByText("Tamamlanmış Power-SEO JSON raporunu içeri al", { exact: true });
+  const importButton = page.getByText("Dosya seç", { exact: true });
+  await expect(importTitle).toBeVisible();
+  await expect(importButton).toBeVisible();
+  await expect(page.getByText("Henüz dosya seçilmedi", { exact: true })).toBeVisible();
+  await expect(page.locator('input[type="file"][accept=".json,application/json"]')).toHaveCount(1);
+  const titleBox = await importTitle.boundingBox();
+  const buttonBox = await importButton.boundingBox();
+  expect(titleBox).not.toBeNull();
+  expect(buttonBox).not.toBeNull();
+  expect(titleBox.y + titleBox.height).toBeLessThanOrEqual(buttonBox.y);
   await page.getByRole("button", { name: "Tam site taramasını başlat" }).click();
   await expect(page.getByText("Gerçek HTML çıktısı başarıyla okunan 4 sitemap sayfası")).toBeVisible();
   await expect(page.getByRole("button", { name: "JSON raporunu al" })).toBeEnabled();

@@ -1016,22 +1016,48 @@ test("Power-SEO adds read-only Turkish-safe content analysis without changing pu
   assertNotContains(audit, "robots:", "do not alter robots indexing policy");
 });
 
-test("Public writing, reader and editor education templates expose one semantic main landmark without touching SEO metadata", () => {
-  const shells = [
-    "src/components/content/WritingGuideShell.tsx",
+test("Public writing, reader and editor education templates use one non-nested main landmark", () => {
+  const writing = source("src/components/content/WritingGuideShell.tsx");
+  assertContains(writing, 'const ContentLandmark = activeGenreSlug ? "div" : "main";',
+    "category landing pages own main; genre guides delegate to the inner main");
+  assertContains(writing, '<ContentLandmark className="min-w-0">',
+    "writing content retains its original CSS class");
+  assertContains(writing, "</ContentLandmark>", "conditional writing landmark closes");
+
+  for (const file of [
     "src/components/content/ReaderEducationShell.tsx",
     "src/components/content/EditorEducationShell.tsx",
-  ];
-  for (const file of shells) {
+  ]) {
     const shell = source(file);
-    assert.equal(shell.split('<main className="min-w-0">').length - 1, 1, file + ": exactly one main opens");
+    assert.equal(shell.split('<main className="min-w-0">').length - 1, 1,
+      file + ": exactly one main opens");
     assert.equal(shell.split("</main>").length - 1, 1, file + ": exactly one main closes");
-    assertContains(shell, '<main className="min-w-0">', file + ": main retains original styling");
     assertNotContains(shell, "generateMetadata", file + ": no SEO metadata mutation");
     assertNotContains(shell, "robots:", file + ": no robots policy mutation");
   }
-  const writers = source("src/components/content/WritingCategoryLandingPage.tsx");
-  assertContains(writers, '<h1 className=', "category pages already have an H1; no duplicate heading added");
+
+  const blocks = source("src/components/content/PublicCmsPageBlocks.tsx");
+  assertContains(blocks, '<main className="min-h-screen',
+    "individual genre guides still have an inner main when shell uses div");
+  const categories = source("src/components/content/WritingCategoryLandingPage.tsx");
+  assertContains(categories, '<h1 className=', "category pages keep their original heading");
+  assertNotContains(writing, "robots:", "no writing indexing policy mutation");
+});
+
+test("Roman editorial emphasis is rendered as safe semantic strong instead of literal asterisks", () => {
+  const editor = source("src/components/content/PublicEditorialDocument.tsx");
+  const template = source("src/lib/cms-page-templates.ts");
+  assertContains(template, "**Ham fikir:**", "published roman template uses inline emphasis");
+  assertContains(template, "**İstediği şey:**", "roman character list uses inline emphasis");
+  assertContains(editor, "function renderInlineEmphasis(value: string)",
+    "restricted inline emphasis renderer exists");
+  assertContains(editor, "<strong key={index}>{part.slice(2, -2)}</strong>",
+    "only text inside markers becomes a React strong element");
+  assertContains(editor, "renderInlineEmphasis(line.slice(2))",
+    "unordered list labels are formatted safely");
+  assertContains(editor, "renderInlineEmphasis(block)", "paragraph text is formatted safely");
+  assertNotContains(editor, "dangerouslySetInnerHTML",
+    "untrusted HTML is not injected to render inline emphasis");
 });
 
 test("Power-SEO published analyzer executes on Turkish CMS content", async () => {

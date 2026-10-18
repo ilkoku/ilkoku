@@ -194,7 +194,7 @@ export function WritingGuideShell({
           </div>
         </aside>
 
-        <div className="min-w-0">
+        <main className="min-w-0">
           <PriorityGuideIntentPanel slug={activeGenreSlug} />
           {children}
           <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
@@ -227,7 +227,7 @@ export function WritingGuideShell({
               </div>
             </aside>
           ) : null}
-        </div>
+        </main>
       </div>
     </div>
     {showOriginalFooter ? (

@@ -12,8 +12,6 @@ import HomepageExperience from "@/features/homepage/HomepageExperience";
 
 import "./landing-theme.css";
 import "./landing-role-icons.css";
-import "./landing-footer-pro.css";
-import "./landing-footer-tight.css";
 import "./landing-header-pro.css";
 import "./landing-account-bubble.css";
 import "@/features/homepage/history-pr670.css";

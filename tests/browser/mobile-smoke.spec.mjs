@@ -876,12 +876,17 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   const response = await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Power-SEO", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sitemap kontrolü" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "İç bağlantı grafiği" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Yönlendirmeler" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true })).toBeVisible();
+  // The default page must not dump the full technical inventory into the overview.
+  await expect(page.getByRole("heading", { name: "Power-SEO modül envanteri" })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
-  await page.getByRole("link", { name: "Sitemap kontrolü" }).click();
+  await page.getByRole("link", { name: "Tam Site ve HTTP", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Tam site / HTTP doğrulaması" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Parçalı bağlantı grafiği" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Yönlendirmeler" })).toBeVisible();
+  await page.getByRole("link", { name: "Sitemap", exact: true }).click();
   await expect(page).toHaveURL(/mod=sitemap/u);
   await expect(page.getByRole("heading", { name: "Canlı sitemap doğrulaması" })).toBeVisible();
   await expect(page.getByText("Sitemap URL sayısı")).toBeVisible();
@@ -948,6 +953,7 @@ test("Power-SEO provider checks are manual, protected and work at 390px", async 
     });
   });
   await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
+  await page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Canlı servis sorguları — yönetici başlatır" })).toBeVisible();
   expect(calls).toBe(0);
   await page.getByRole("button", { name: "GSC verisini sorgula" }).click();

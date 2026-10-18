@@ -1279,7 +1279,7 @@ test("Power-SEO distinguishes off-sitemap references from HTTP-verified broken l
   assertContains(api, 'redirect: "manual"', "never follow redirects to login/other hosts");
   assertContains(api, 'if (status === 404 || status === 410) outcome = "missing"', "only 404/410 are declared missing");
   assertContains(api, 'if (pair.some((row) => row.status === 403 || row.status === 429)) break', "WAF and rate-limit circuit breaker");
-  assertContains(api, 'path.startsWith(prefix)', "do not fetch private application routes");
+  assertContains(api, 'raw.startsWith(prefix)', "do not fetch private application routes");
   assertContains(api, '"Cache-Control": "private, no-store"', "private HTTP verification report");
   assertNotContains(api, "prisma", "HTTP check must not mutate database");
   assertNotContains(api, "indexing.googleapis.com", "never request indexing");

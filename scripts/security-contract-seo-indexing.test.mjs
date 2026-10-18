@@ -1467,8 +1467,8 @@ test("Power-SEO breadcrumb review catches mismatched targets and invalid orderin
   };
   const findings = inspectBreadcrumbHierarchy(schema, page, known).issues.map((x) => x.problem);
   assert.ok(findings.includes("invalid-list-item-type-or-position"));
-  assert.ok(findings.includes("parent-not-in-public-sitemap"));
-  assert.ok(findings.includes("last-breadcrumb-not-current-page"));
+  assert.ok(findings.includes("breadcrumb-target-not-in-public-sitemap"));
+  assert.ok(findings.filter((issue) => issue === "breadcrumb-target-not-in-public-sitemap").length === 2);
   const external = inspectBreadcrumbHierarchy({
     breadcrumbs: [[
       { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://not-ilkoku.example/" },
@@ -1476,6 +1476,20 @@ test("Power-SEO breadcrumb review catches mismatched targets and invalid orderin
     ]],
   }, page, known);
   assert.ok(external.issues.some((item) => item.problem === "off-origin-or-invalid-target"));
+  // Google's supported structure permits multiple trails and a final ancestor.
+  const alternate = inspectBreadcrumbHierarchy({
+    breadcrumbs: [
+      [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+      ],
+      [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Roman", item: page },
+      ],
+    ],
+  }, page, known);
+  assert.deepEqual(alternate.issues, [], "multiple trails and a final ancestor are permitted");
 });
 
 test("Power-SEO read-only live sitemap census measures per-page meta descriptions and duplicate review signals", () => {

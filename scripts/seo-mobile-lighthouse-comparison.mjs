@@ -65,11 +65,30 @@ function parseLhr(file) {
   const breakdown = doc.audits["mainthread-work-breakdown"]?.details?.items || [];
   const scriptEval = breakdown.find((item) => item.group === "scriptEvaluation");
   const errorAssets = scripts.map((item) => item.url).filter((url) => /\/app\/(?:error|global-error)-/.test(url));
+  // Scored LCP uses Lighthouse's simulated mobile model. Keep the separately
+  // observed browser lab LCP for diagnosing model variability; neither is CrUX.
+  const observedLcp = doc.audits["metrics"]?.details?.items?.[0]?.observedLargestContentfulPaint;
+  const elementTables = doc.audits["largest-contentful-paint-element"]?.details?.items || [];
+  const elementRows = elementTables.flatMap((table) => Array.isArray(table.items) ? table.items : []);
+  const phaseMs = (label) => {
+    const value = elementRows.find((item) => item.phase === label)?.timing;
+    return Number.isFinite(value) ? round(value) : null;
+  };
+  const heroImage = items.find((item) => item.resourceType === "Image" &&
+    typeof item.url === "string" && item.url.includes("ilkoku-hero-user-final.webp"));
+  const gatewayScripts = scripts.filter((item) => /^https:\/\/ilkoku\.com\/1q6z(?:\/|[?#]|$)/u.test(item.url || ""));
   return {
     at: doc.fetchTime,
     score: round(doc.categories.performance.score * 100),
     tbtMs: round(metric("total-blocking-time")),
     lcpMs: round(metric("largest-contentful-paint")),
+    observedLcpMs: Number.isFinite(observedLcp) ? round(observedLcp) : null,
+    lcpSimulatedPhasesMs: {
+      ttfb: phaseMs("TTFB"), loadDelay: phaseMs("Load Delay"),
+      loadTime: phaseMs("Load Time"), renderDelay: phaseMs("Render Delay"),
+    },
+    heroImageTransferBytes: Number.isFinite(heroImage?.transferSize) ? Math.round(heroImage.transferSize) : null,
+    gatewayScriptTransferBytes: gatewayScripts.reduce((total, item) => total + (item.transferSize || 0), 0),
     fcpMs: round(metric("first-contentful-paint")),
     cls: round(metric("cumulative-layout-shift"), 4),
     jsTransferBytes: Math.round(scripts.reduce((total, item) => total + (item.transferSize || 0), 0)),
@@ -101,6 +120,19 @@ function report(files) {
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ...runs.map((run, i) => "| " + (i + 1) + " | " + [run.score, run.tbtMs, run.lcpMs, run.fcpMs, run.cls, run.cssTransferBytes, run.cssResourceBytes, run.cssRequests, run.jsTransferBytes, run.rscRequests, run.scriptExecutionMs].join(" | ") + " |"),
     "| **Median** | **" + [medians.score, medians.tbtMs, medians.lcpMs, medians.fcpMs, medians.cls, medians.cssTransferBytes, medians.cssResourceBytes, medians.cssRequests, medians.jsTransferBytes, medians.rscRequests, medians.scriptExecutionMs].join("** | **") + "** |",
+    "",
+    "## LCP diagnosis — model versus observed browser lab",
+    "",
+    "The scored LCP and model phases below are SIMULATED mobile timings. Observed browser LCP is a separate unthrottled lab observation, NOT real-user CrUX data. Do not subtract phases from the observed column.",
+    "",
+    "| Run | Scored simulated LCP ms | Observed browser LCP ms | Model TTFB ms | Model load delay ms | Model load time ms | Model render delay ms | Hero image transfer bytes | Same-origin gateway script transfer bytes |",
+    "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ...runs.map((run, i) => "| " + (i + 1) + " | " + [run.lcpMs, run.observedLcpMs ?? "n/a",
+      run.lcpSimulatedPhasesMs.ttfb ?? "n/a", run.lcpSimulatedPhasesMs.loadDelay ?? "n/a",
+      run.lcpSimulatedPhasesMs.loadTime ?? "n/a", run.lcpSimulatedPhasesMs.renderDelay ?? "n/a",
+      run.heroImageTransferBytes ?? "n/a", run.gatewayScriptTransferBytes].join(" | ") + " |"),
+    "",
+    "An observed-versus-simulated difference is NOT proof of a production rendering defect. Identify repeatable causes before changing images, shared CSS, footer, or analytics.",
     "",
     "Interpretation: three independent simulated mobile lab runs on the verified currently deployed commit. Compare with historical single runs cautiously; results cannot establish causal performance changes or Google index status.",
     "",

@@ -1016,6 +1016,24 @@ test("Power-SEO adds read-only Turkish-safe content analysis without changing pu
   assertNotContains(audit, "robots:", "do not alter robots indexing policy");
 });
 
+test("Public writing, reader and editor education templates expose one semantic main landmark without touching SEO metadata", () => {
+  const shells = [
+    "src/components/content/WritingGuideShell.tsx",
+    "src/components/content/ReaderEducationShell.tsx",
+    "src/components/content/EditorEducationShell.tsx",
+  ];
+  for (const file of shells) {
+    const shell = source(file);
+    assert.equal((shell.match(/<main\\b/g) || []).length, 1, file + ": exactly one main opens");
+    assert.equal((shell.match(/<\\/main>/g) || []).length, 1, file + ": exactly one main closes");
+    assertContains(shell, '<main className="min-w-0">', file + ": main retains original styling");
+    assertNotContains(shell, "generateMetadata", file + ": no SEO metadata mutation");
+    assertNotContains(shell, "robots:", file + ": no robots policy mutation");
+  }
+  const writers = source("src/components/content/WritingCategoryLandingPage.tsx");
+  assertContains(writers, '<h1 className=', "category pages already have an H1; no duplicate heading added");
+});
+
 test("Power-SEO published analyzer executes on Turkish CMS content", async () => {
   const { analyzeContent } = await import("@power-seo/content-analysis");
   const analysis = analyzeContent({

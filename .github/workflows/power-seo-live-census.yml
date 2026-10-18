@@ -8,6 +8,8 @@ on:
     paths:
       - "scripts/power-seo-live-census.mjs"
       - ".github/workflows/power-seo-live-census.yml"
+      - "src/components/content/EditorEducationStructuredData.tsx"
+      - "src/app/editorler-icin/egitim/**/page.tsx"
 
 permissions:
   contents: read

@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
-import { mainTextFromHtml, compareMainContent, imageAltFromHtml } from "./power-seo-live-census.mjs";
+import { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy } from "./power-seo-live-census.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -1424,6 +1424,58 @@ test("Power-SEO inventory distinguishes missing alt attributes from deliberate e
   assert.equal(images.missingAltExplicitlyDecorative, 1);
   assert.equal(images.missingAltNeedsReview, 2);
   assert.deepEqual(images.samples, ["/article.webp", "/data.webp"]);
+});
+
+test("Power-SEO reads JSON-LD arrays and @graph without inventing schema requirements", () => {
+  const values = [
+    { "@context": "https://schema.org", "@type": "Article", headline: "Okuma eğitimi" },
+    { "@context": "https://schema.org", "@graph": [{
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Okurlar İçin", item: "https://ilkoku.com/okurlar-icin" },
+        { "@type": "ListItem", position: 3, name: "Okuma eğitimi" },
+      ],
+    }] },
+  ];
+  const html = '<script type="application/ld+json">' + JSON.stringify(values) +
+    '</script><script type="application/ld+json">not json</script>';
+  const parsed = structuredDataFromHtml(html);
+  assert.equal(parsed.scriptCount, 2);
+  assert.equal(parsed.nodes, 2);
+  assert.equal(parsed.types.Article, 1);
+  assert.equal(parsed.types.BreadcrumbList, 1);
+  assert.equal(parsed.parseErrors.length, 1);
+  const page = "https://ilkoku.com/okurlar-icin/ornek";
+  const urls = new Set(["https://ilkoku.com", "https://ilkoku.com/okurlar-icin", page]);
+  const checked = inspectBreadcrumbHierarchy(parsed, page, urls);
+  assert.equal(checked.issues.length, 0, "last breadcrumb may omit item and inherit page URL");
+  assert.equal(checked.chains[0][2].url, page);
+  const none = structuredDataFromHtml("<main>No supported schema</main>");
+  assert.equal(none.scriptCount, 0, "a page without schema is reported, not automatically failed");
+});
+
+test("Power-SEO breadcrumb review catches mismatched targets and invalid ordering", () => {
+  const page = "https://ilkoku.com/yazarlar-icin/kurgu/roman";
+  const known = new Set(["https://ilkoku.com", "https://ilkoku.com/yazarlar-icin", page]);
+  const schema = {
+    breadcrumbs: [[
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+      { "@type": "ListItem", position: 4, name: "Kurgu", item: "https://ilkoku.com/olmayan-ebeveyn" },
+      { "@type": "ListItem", position: 3, name: "Roman", item: "https://ilkoku.com/yanlis" },
+    ]],
+  };
+  const findings = inspectBreadcrumbHierarchy(schema, page, known).issues.map((x) => x.problem);
+  assert.ok(findings.includes("invalid-list-item-type-or-position"));
+  assert.ok(findings.includes("parent-not-in-public-sitemap"));
+  assert.ok(findings.includes("last-breadcrumb-not-current-page"));
+  const external = inspectBreadcrumbHierarchy({
+    breadcrumbs: [[
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://not-ilkoku.example/" },
+      { "@type": "ListItem", position: 2, name: "Roman", item: page },
+    ]],
+  }, page, known);
+  assert.ok(external.issues.some((item) => item.problem === "off-origin-or-invalid-target"));
 });
 
 test("Power-SEO read-only live sitemap census measures per-page meta descriptions and duplicate review signals", () => {

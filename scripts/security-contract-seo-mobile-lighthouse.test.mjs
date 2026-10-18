@@ -349,3 +349,18 @@ test("three-run Lighthouse validates the live commit rather than a stale CSS/JS 
   assert.match(workflow, /"403".*"429"|403".*"429"/u);
   assert.match(comparison, /three independent simulated mobile lab runs/u);
 });
+
+
+test("three-run LCP report distinguishes simulated model from observed browser timings", () => {
+  const comparison = fs.readFileSync("scripts/seo-mobile-lighthouse-comparison.mjs", "utf8");
+  for (const token of [
+    "observedLargestContentfulPaint", "observedLcpMs", "lcpSimulatedPhasesMs",
+    'phaseMs("TTFB")', 'phaseMs("Load Delay")',
+    'phaseMs("Load Time")', 'phaseMs("Render Delay")',
+    "heroImageTransferBytes", "gatewayScriptTransferBytes",
+    "NOT real-user CrUX data",
+  ]) {
+    assert.ok(comparison.includes(token), "Required mobile LCP diagnostic: " + token);
+  }
+  assert.ok(comparison.includes("run.observedLcpMs"), "Evidence must be printed in the Actions report");
+});

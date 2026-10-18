@@ -15,3 +15,22 @@
 
 /* The private admin shell uses a dark background above the white cards. */
 .top h1{color:#e2d6ff}.top small{color:#cdbaff}.top p,.top>a{color:#d0c4ee}
+
+
+/* Task-first navigation: important workflows stay visible without scrolling through module cards. */
+.taskNav{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.taskNavLink,.taskNavActive{display:flex;min-height:48px;align-items:center;justify-content:center;text-align:center;border-radius:12px;padding:10px 12px;border:1px solid #ded7ee;background:#fff;color:#382469;font-size:13px;font-weight:750;text-decoration:none;line-height:1.3}
+.taskNavLink:hover,.taskNavLink:focus-visible{border-color:#6a4ac0;background:#f5f0ff}
+.taskNavActive,.taskNavActive:hover{background:#5636bd;border-color:#5636bd;color:#fff}
+.primaryActions{margin-top:16px}
+.primaryActions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 18px;border-radius:10px;background:#5636bd;color:#fff;font-size:14px;font-weight:750;text-decoration:none}
+.primaryActions a:hover{background:#402690}
+.actionGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+.actionGrid a{display:grid;gap:8px;border:1px solid #ded7ee;border-radius:12px;padding:18px;text-decoration:none;color:#32225b;min-height:98px}
+.actionGrid a:hover,.actionGrid a:focus-visible{border-color:#6346b8;background:#faf7ff}
+.actionGrid strong{font-size:15px}
+.actionGrid span{font-size:13px;color:#675f71;line-height:1.45}
+.subNav{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.subNav a{padding:10px 12px;border:1px solid #e5def3;border-radius:10px;background:#faf9ff;color:#4429a8;font-weight:700;font-size:13px;text-decoration:none}
+.subNav a[aria-current="page"]{border-color:#5636bd;background:#eee8ff;color:#35216d}
+@media(max-width:600px){.taskNav{grid-template-columns:repeat(2,minmax(0,1fr))}.taskNavLink,.taskNavActive{font-size:12px}.actionGrid{grid-template-columns:1fr}.primaryActions a{width:100%}}

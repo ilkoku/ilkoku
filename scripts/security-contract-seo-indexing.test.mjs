@@ -1088,7 +1088,8 @@ test("Power-SEO independent operational tabs stay read-only and bounded", async 
   const operations = source("src/app/admin/power-seo/PowerSeoOperations.tsx");
   const css = source("src/app/admin/power-seo/PowerSeoDashboard.module.css");
   assertContains(dashboard, 'import { validateSchema, type SchemaObject } from "@power-seo/schema"', "real JSON-LD validator");
-  assertContains(dashboard, "<PowerSeoOperations mode={mode} slice={requestedSlice} />", "independent panel tabs render");
+  assertContains(dashboard, '<PowerSeoOperations mode={scanMode} slice={requestedSlice} />', "bounded operations render only in site tools");
+  assertContains(dashboard, 'activeTab === "tarama"', "task-first site audit panel");
   assertContains(dashboard, "JSON.parse(script[2])", "analyze actual HTML JSON-LD");
   assertContains(operations, 'import { validateSitemapUrl } from "@power-seo/sitemap"', "sitemap package active");
   assertContains(operations, 'import { buildLinkGraph, analyzeLinkEquity, suggestLinks } from "@power-seo/links"', "graph package active");
@@ -1134,7 +1135,7 @@ test("Power-SEO 17 modules are used in bounded admin diagnostics and protected p
     "integrations", "links", "meta", "preview", "react", "readability",
     "redirects", "schema", "search-console", "sitemap", "tracking",
   ]);
-  assertContains(panel, '<strong>17</strong><span>Kodda entegre modül (harici yetkiler ayrı)</span>', "inventory is not a claim that external APIs are authorized");
+  assertContains(panel, '<strong>17</strong><span>Kod entegrasyonu (API yetkisi ayrı)</span>', "inventory is not a claim that external APIs are authorized");
   assertContains(panel, "<PowerSeoProviderChecks />", "manual API interface");
   assertContains(panel, "<PowerSeoLocalDiagnostics />", "safe isolated helpers");
   assertContains(providers, 'getCurrentUser()', "server-side session protection");
@@ -1255,7 +1256,8 @@ test("Power-SEO fullsite API scans only authenticated sitemap batches without mo
   assertContains(full, "Baştan tara", "human-only crawl trigger");
   assertContains(full, "JSON raporunu al", "report export");
   assertContains(full, "stopRef.current = true", "user stop control");
-  assertContains(page, 'mode === "full-links" ? <FullSiteLinkAudit />', "isolated panel route");
+  assertContains(page, 'scanMode === "full-links" ? <FullSiteLinkAudit />', "isolated panel route");
+  assertContains(page, 'href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"', "important audit is directly navigable");
   assertNotContains(page, "generateMetadata(", "no public SEO rewrites");
   assertNotContains(full, "fetch('/sitemap.xml')", "scan remains server-authorized");
 });

@@ -7,7 +7,7 @@ type Provider = "gsc" | "gsc-index" | "ahrefs" | "semrush" | "ai";
 type Report = { provider?: string; state: string; message?: string; [key: string]: unknown };
 const services: Array<{ id: Provider; label: string; description: string }> = [
   { id: "gsc", label: "GSC verisini sorgula", description: "Google Search Console: gerçek, son 28 günlük sayfa örneklemi" },
-  { id: "gsc-index", label: "GSC indeks durumunu sorgula", description: "Seçilen URL\u0027nin Google\u0027daki gerçek indeksleme durumu ve son tarama tarihi; dizine ekleme isteği göndermez." },
+  { id: "gsc-index", label: "GSC indeks durumunu sorgula", description: "Seçilen adresin Google indeks durumu ve son tarama tarihi; dizine ekleme isteği göndermez." },
   { id: "ahrefs", label: "Ahrefs API test et", description: "Alan adının gerçek Ahrefs profil özeti (abonelik maliyetli olabilir)" },
   { id: "semrush", label: "Semrush API test et", description: "Gerçek Semrush Türkiye alan adı özeti (API kotası tüketebilir)" },
   { id: "ai", label: "AI SEO önerisi üret", description: "Gerçek model çağrısı; 220 token üst sınırı, yalnız taslak (ücretli olabilir)" },

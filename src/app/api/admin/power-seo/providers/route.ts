@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const ORIGIN = "https://ilkoku.com";
-type Provider = "gsc" | "ahrefs" | "semrush" | "ai";
-const providers: Provider[] = ["gsc", "ahrefs", "semrush", "ai"];
+type Provider = "gsc" | "gsc-index" | "ahrefs" | "semrush" | "ai";
+const providers: Provider[] = ["gsc", "gsc-index", "ahrefs", "semrush", "ai"];
 
 function result(data: unknown, status = 200) {
   return NextResponse.json(data, {
@@ -85,6 +85,61 @@ async function queryGsc() {
     scope: "Yalnız en fazla 15 sayfalık sonuç örneklemi; genel site toplamı değildir.",
     overview: dashboard.overview,
     topPages: dashboard.topPages.slice(0, 8),
+  };
+}
+
+async function queryGscIndex(rawPath: string) {
+  // One user-requested, read-only URL Inspection query; not a live URL test or indexing request.
+  const path = safePublicPath(rawPath);
+  if (!path) return { state: "invalid", message: "Yalnız herkese açık İlkOku yolları sorgulanabilir." };
+  const clientId = process.env.GSC_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GSC_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GSC_OAUTH_REFRESH_TOKEN;
+  if (!clientId || !clientSecret || !refreshToken) return { state: "missing", message: "GSC Production OAuth kimlik bilgileri bulunamadı." };
+  const siteUrl = process.env.GSC_SITE_URL || process.env.GOOGLE_SEARCH_CONSOLE_PROPERTY || process.env.GSC_PROPERTY || ORIGIN + "/";
+  if (![ORIGIN, ORIGIN + "/", "sc-domain:ilkoku.com"].includes(siteUrl)) {
+    return { state: "invalid", message: "GSC property İlkOku alan adıyla eşleşmiyor." };
+  }
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: "refresh_token" }),
+    signal: AbortSignal.timeout(12000),
+  });
+  // Never include an upstream OAuth response body in user-visible output.
+  if (!tokenResponse.ok) return { state: "error", message: "Google OAuth erişim belirteci alınamadı (HTTP " + tokenResponse.status + ")." };
+  const tokenPayload: unknown = await tokenResponse.json();
+  const accessToken = tokenPayload && typeof tokenPayload === "object" && "access_token" in tokenPayload &&
+    typeof tokenPayload.access_token === "string" ? tokenPayload.access_token : null;
+  if (!accessToken) return { state: "error", message: "Google OAuth geçerli erişim belirteci döndürmedi." };
+  const inspectionUrl = ORIGIN + path;
+  const apiResponse = await fetch("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect", {
+    method: "POST",
+    headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
+    body: JSON.stringify({ inspectionUrl, siteUrl, languageCode: "tr-TR" }),
+    signal: AbortSignal.timeout(24000),
+  });
+  if (!apiResponse.ok) return { state: "error", message: "Google URL Inspection API yanıt vermedi (HTTP " + apiResponse.status + ")." };
+  const inspectionPayload: unknown = await apiResponse.json();
+  const record = inspectionPayload as { inspectionResult?: { indexStatusResult?: {
+    verdict?: string; coverageState?: string; robotsTxtState?: string; indexingState?: string;
+    pageFetchState?: string; lastCrawlTime?: string; userCanonical?: string; googleCanonical?: string;
+  } } };
+  const indexed = record?.inspectionResult?.indexStatusResult;
+  if (!indexed) return { state: "error", message: "Google URL Inspection sonucu eksik döndü." };
+  return {
+    state: "verified",
+    source: "Google Search Console URL Inspection — gerçek API yanıtı",
+    inspectionUrl, siteUrl,
+    verdict: indexed.verdict ?? "UNSPECIFIED",
+    coverageState: indexed.coverageState ?? "Belirtilmedi",
+    robotsTxtState: indexed.robotsTxtState ?? null,
+    indexingState: indexed.indexingState ?? null,
+    pageFetchState: indexed.pageFetchState ?? null,
+    lastCrawlTime: indexed.lastCrawlTime ?? null,
+    userCanonical: indexed.userCanonical ?? null,
+    googleCanonical: indexed.googleCanonical ?? null,
+    scope: "Google'ın kayıtlı indeksleme durumu; canlı test değildir. Sorgu dizine ekleme isteği göndermez.",
   };
 }
 
@@ -191,6 +246,7 @@ export async function POST(request: Request) {
     }
     const provider = input.provider as Provider;
     const report = provider === "gsc" ? await queryGsc()
+      : provider === "gsc-index" ? await queryGscIndex(typeof input.path === "string" ? input.path : "")
       : provider === "ahrefs" ? await queryAhrefs()
       : provider === "semrush" ? await querySemrush()
       : await queryAi(typeof input.path === "string" ? input.path : "");

@@ -15,6 +15,88 @@ const CONCURRENCY = 6;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 const censusCohortSource = "live-sitemap";
 
+// Immutable observation baseline from Google URL Inspection on 18 Oct 2026.
+// [path, last Google crawl observed, relevant visible/structured/link update].
+// A null update means no independently verified update timestamp.
+// Read-only reporting. Does not change indexing rules or request recrawling.
+const TRACKED_NOT_INDEXED_BASELINE = [
+  [
+    "/yazarlar-icin/edebiyat",
+    "2026-09-30T09:19:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/bilgilendirici",
+    "2026-09-30T09:21:54Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/senaryo-ve-sahne",
+    "2026-09-30T09:19:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/akademik",
+    "2026-09-30T09:21:54Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/kurgu",
+    "2026-09-30T09:17:54Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/cocuk-ve-genclik",
+    "2026-09-30T09:23:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/kurgu/roman",
+    "2026-09-25T08:41:37Z",
+    "2026-10-06T07:55:57Z"
+  ],
+  [
+    "/okurlar-icin/okumaya-baslama",
+    "2026-09-30T09:11:53Z",
+    "2026-10-06T08:04:59Z"
+  ],
+  [
+    "/editorler-icin/egitim/metin-degerlendirme",
+    "2026-09-27T22:42:08Z",
+    "2026-10-12T15:16:36Z"
+  ],
+  [
+    "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+    "2026-10-04T14:15:08Z",
+    "2026-10-12T15:16:36Z"
+  ],
+  [
+    "/site-haritasi",
+    "2026-09-30T09:07:54Z",
+    "2026-10-14T12:56:16Z"
+  ],
+  [
+    "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
+    "2026-09-25T01:19:43Z",
+    null
+  ],
+  [
+    "/nasil-calisir",
+    "2026-10-08T10:18:59Z",
+    "2026-10-12T13:20:00Z"
+  ],
+  [
+    "/yazarlar-icin",
+    "2026-09-30T09:09:53Z",
+    "2026-10-12T18:15:50Z"
+  ],
+  [
+    "/editorler-icin",
+    "2026-09-30T09:13:53Z",
+    null
+  ]
+];
+
 function requireSecret(name, value) {
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
 }
@@ -241,6 +323,43 @@ function newestCrawl(results) {
   return dated[0]?.toISOString() ?? null;
 }
 
+function summarizeRecrawlWatch(results) {
+  const byUrl = new Map(results.map((result) => [result.inspectionUrl, result]));
+  const pages = TRACKED_NOT_INDEXED_BASELINE.map(([path, baselineCrawl, contentUpdatedAt]) => {
+    const result = byUrl.get(`${BASE_URL}${path}`);
+    const lastCrawlTime = result?.lastCrawlTime ?? null;
+    const lastCrawlMs = lastCrawlTime ? Date.parse(lastCrawlTime) : NaN;
+    const baselineCrawlMs = Date.parse(baselineCrawl);
+    const contentUpdatedMs = contentUpdatedAt ? Date.parse(contentUpdatedAt) : NaN;
+    const reCrawledSinceBaseline = Number.isFinite(lastCrawlMs) && lastCrawlMs > baselineCrawlMs;
+    const newContentCrawled = contentUpdatedAt !== null &&
+      Number.isFinite(lastCrawlMs) && lastCrawlMs >= contentUpdatedMs;
+    let state;
+    if (!result) state = "MISSING_FROM_LIVE_SITEMAP";
+    else if (result.error) state = "INSPECTION_ERROR";
+    else if (result.verdict === "PASS") state = "INDEXED";
+    else if (newContentCrawled) state = "POST_UPDATE_CRAWLED_NOT_INDEXED";
+    else if (reCrawledSinceBaseline) state = "RECRAWLED_NOT_INDEXED";
+    else state = "AWAITING_NEW_CRAWL";
+    return {
+      path, baselineCrawl, contentUpdatedAt, lastCrawlTime,
+      coverageState: result?.coverageState ?? null,
+      verdict: result?.verdict ?? null,
+      reCrawledSinceBaseline, newContentCrawled, state,
+    };
+  });
+  return {
+    baselineDate: "2026-10-18",
+    trackedCount: pages.length,
+    indexed: pages.filter((page) => page.state === "INDEXED").length,
+    reCrawledSinceBaseline: pages.filter((page) => page.reCrawledSinceBaseline).length,
+    confirmedPostUpdateCrawl: pages.filter((page) => page.newContentCrawled).length,
+    awaitingNewCrawl: pages.filter((page) => page.state === "AWAITING_NEW_CRAWL").length,
+    missingFromSitemap: pages.filter((page) => page.state === "MISSING_FROM_LIVE_SITEMAP").length,
+    inspectionErrors: pages.filter((page) => page.state === "INSPECTION_ERROR").length,
+    pages,
+  };
+}
 function writeStepSummary(payload) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) return;
@@ -248,6 +367,10 @@ function writeStepSummary(payload) {
   const coverageRows = Object.entries(payload.summary.coverageState)
     .map(([state, count]) => `| ${state.replaceAll("|", "%7C")} | ${count} |`);
 
+  const watch = payload.summary.recrawlWatch;
+  const watchRows = watch.pages.map((page) =>
+    `| \`${page.path}\` | ${page.baselineCrawl.slice(0, 10)} | ${page.contentUpdatedAt?.slice(0, 10) ?? "—"} | ${page.lastCrawlTime?.slice(0, 10) ?? "—"} | ${page.state} |`,
+  );
   const familyRows = payload.summary.writingGuideFamilies.map((family) =>
     `| ${family.label} | ${family.total} | ${family.indexed} | ${family.crawledNotIndexed} | ${family.discovered} | ${family.unknown} | ${family.errors + family.other} |`,
   );
@@ -272,7 +395,16 @@ function writeStepSummary(payload) {
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ...familyRows,
     "",
-    "> Read-only census using Google's URL Inspection API. No indexing request or Search Console mutation is performed.",
+    "### 18 Ekim bazına göre 15 kritik URL · yeniden tarama takibi",
+    "",
+    `İndeksli: **${watch.indexed}** · Baz tarihten sonra taranan: **${watch.reCrawledSinceBaseline}** · Güncellemeden sonra taranan: **${watch.confirmedPostUpdateCrawl}** · Yeni tarama bekleyen: **${watch.awaitingNewCrawl}**`,
+    "",
+    "| Sayfa | Eski Google taraması | İçerik güncellemesi | Güncel Google taraması | Sonuç |",
+    "| --- | --- | --- | --- | --- |",
+    ...watchRows,
+    "",
+    "> Son kayıtlı Google taramasına göre karşılaştırmadır. Google indeksleme garantisi veya tarama isteği değildir.",
+    "",    "> Read-only census using Google's URL Inspection API. No indexing request or Search Console mutation is performed.",
     "",
   ];
 
@@ -303,6 +435,7 @@ async function main() {
       indexingState: countBy(results, "indexingState"),
       newestCrawl: newestCrawl(results),
       writingGuideFamilies: summarizeWritingGuideFamilies(results),
+      recrawlWatch: summarizeRecrawlWatch(results),
     },
     results,
   };

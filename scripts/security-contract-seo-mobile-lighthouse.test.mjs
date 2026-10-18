@@ -330,3 +330,17 @@ test("Author workspace CSS is route-scoped to both authenticated writing layouts
     assert.ok(workflow.includes(changed), changed + " must trigger post-deploy Lighthouse");
   }
 });
+
+
+test("three-run Lighthouse validates the live commit rather than a stale CSS/JS fingerprint", () => {
+  const comparison = fs.readFileSync("scripts/seo-mobile-lighthouse-comparison.mjs", "utf8");
+  const workflow = fs.readFileSync(".github/workflows/seo-mobile-lighthouse-comparison.yml", "utf8");
+  assert.match(comparison, /assert\.equal\(servedCommitSha, expectedCommitSha/u);
+  assert.match(comparison, /VERIFIED_LIVE_COMMIT/u);
+  assert.doesNotMatch(comparison, /LEGACY_HOMEPAGE_CSS|PREVIOUS_THREE_RUN_CSS_MEDIAN/u);
+  assert.match(workflow, /EXPECTED_COMMIT_SHA:/u);
+  assert.match(workflow, /ilkoku\.com\/api\/build-info/u);
+  assert.match(workflow, /for i in 1 2 3/u);
+  assert.match(workflow, /"403".*"429"|403".*"429"/u);
+  assert.match(comparison, /three independent simulated mobile lab runs/u);
+});

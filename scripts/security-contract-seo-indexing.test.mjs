@@ -407,6 +407,28 @@ test("contextual writing guide handoffs favor indexable siblings", () => {
   assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "maintain related link navigation");
 });
 
+test("all eight released editor lessons publish exactly one Article/Breadcrumb component", () => {
+  const slugs = [
+    "editorluge-baslama", "metin-degerlendirme", "yapisal-editorluk",
+    "dil-ve-anlatim-editorlugu", "tur-editorlugu",
+    "editor-notu-ve-geri-bildirim", "yazarla-calismak",
+    "yayincilik-ve-profesyonel-editorluk",
+  ];
+  for (const slug of slugs) {
+    const page = source("src/app/editorler-icin/egitim/" + slug + "/page.tsx");
+    assertContains(page, 'from "@/components/content/EditorEducationStructuredData"', "editor schema import: " + slug);
+    assertContains(page, '<EditorEducationStructuredData', "editor schema component: " + slug);
+    assert.equal((page.match(/<EditorEducationStructuredData\b/gu) || []).length, 1,
+      "exactly one structured data component: " + slug);
+    assertContains(page, 'canonical="/editorler-icin/egitim/' + slug + '"',
+      "published canonical target in schema: " + slug);
+    const description = /export const metadata: Metadata = createPublicPageMetadata\(\{[\s\S]*?description: "([^"]+)"/u.exec(page)?.[1];
+    assert.ok(description, "published metadata description: " + slug);
+    assertContains(page, "description=" + JSON.stringify(description),
+      "Article description matches page metadata: " + slug);
+  }
+});
+
 test("Article structured data uses the real public Open Graph image on reader and editor lessons", () => {
   const reader = source("src/app/okurlar-icin/[slug]/page.tsx");
   const editor = source("src/components/content/EditorEducationStructuredData.tsx");

@@ -9,6 +9,10 @@ on:
       - "scripts/gsc-sitemap-status.mjs"
       - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/seo/sitemap-data.ts"
+  # Read-only: cross-check whether Google has downloaded the current sitemap.
+  # 08:02 UTC = 11:02 Türkiye; scheduled workflows can start late.
+  schedule:
+    - cron: "2 8 * * *"
   workflow_dispatch:
 
 permissions:

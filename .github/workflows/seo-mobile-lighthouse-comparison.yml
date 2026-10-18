@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # verify ancestry and tree-equivalent live app when only measurement files changed
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
@@ -72,7 +74,7 @@ jobs:
             fi
             if node scripts/seo-mobile-lighthouse-comparison.mjs fingerprint \
               /tmp/ilkoku-current-build-info.json "$EXPECTED_COMMIT_SHA"; then
-              echo "VERIFIED_DEPLOYED_COMMIT=$EXPECTED_COMMIT_SHA"
+              echo "VERIFIED_LIVE_BUILD_GATE_PASSED; actual published SHA is in fingerprint artifact"
               break
             fi
             if [[ "$attempt" == "5" ]]; then

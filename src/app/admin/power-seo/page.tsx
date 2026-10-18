@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Admin tab links use full navigation to avoid delayed same-route RSC transitions. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auditPage } from "@power-seo/audit";
@@ -239,14 +240,14 @@ export default async function PowerSeoDashboard({
       </div>
       <nav className={styles.taskNav} aria-label="Power-SEO çalışma alanları">
         {navigation.map((item) => (
-          <Link
+          <a
             key={item.id}
             href={item.href}
             aria-current={activeTab === item.id ? "page" : undefined}
             className={activeTab === item.id ? styles.taskNavActive : styles.taskNavLink}
           >
             {item.label}
-          </Link>
+          </a>
         ))}
       </nav>
       {activeTab === "genel" ? (
@@ -260,18 +261,18 @@ export default async function PowerSeoDashboard({
             <h2>Sıradaki iş: HTTP bağlantı doğrulaması</h2>
             <p>129 sayfalık tamamlanmış Power-SEO JSON raporunu yeniden kullanın. Tam siteyi yeniden taramadan sitemap dışı hedeflerin gerçek HTTP durumlarını kontrol edin.</p>
             <div className={styles.primaryActions}>
-              <Link href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">
+              <a href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">
                 JSON raporunu içeri al ve HTTP kontrolüne geç →
-              </Link>
+              </a>
             </div>
           </section>
           <section className={styles.panel}>
             <h2>Hangi işlemi yapmak istiyorsunuz?</h2>
             <div className={styles.actionGrid}>
-              <Link href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"><strong>Tam site ve kırık bağlantılar</strong><span>JSON raporu, 404/410 doğrulaması, kaynaklar</span></Link>
-              <Link href="/sistem-yonetimi/power-seo?sekme=sayfa"><strong>Tek sayfa SEO kontrolü</strong><span>HTML, başlık, canonical, schema</span></Link>
-              <Link href="/sistem-yonetimi/power-seo?sekme=servisler"><strong>GSC ve diğer API servisleri</strong><span>Gerçek yanıt ve yetkilendirme testleri</span></Link>
-              <Link href="/sistem-yonetimi/power-seo?sekme=teknik"><strong>17 teknik modül</strong><span>Envanter ve izole modül tanıları</span></Link>
+              <a href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"><strong>Tam site ve kırık bağlantılar</strong><span>JSON raporu, 404/410 doğrulaması, kaynaklar</span></a>
+              <a href="/sistem-yonetimi/power-seo?sekme=sayfa"><strong>Tek sayfa SEO kontrolü</strong><span>HTML, başlık, canonical, schema</span></a>
+              <a href="/sistem-yonetimi/power-seo?sekme=servisler"><strong>GSC ve diğer API servisleri</strong><span>Gerçek yanıt ve yetkilendirme testleri</span></a>
+              <a href="/sistem-yonetimi/power-seo?sekme=teknik"><strong>17 teknik modül</strong><span>Envanter ve izole modül tanıları</span></a>
             </div>
           </section>
         </>
@@ -282,10 +283,10 @@ export default async function PowerSeoDashboard({
             <h2>Site taraması ve bağlantılar</h2>
             <p>Bir denetim seçin. Tam site raporunu içeri almak için ilk seçeneği kullanın; tarama otomatik başlamaz.</p>
             <nav className={styles.subNav} aria-label="Site tarama araçları">
-              <Link aria-current={scanMode === "full-links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">Tam site / HTTP doğrulaması</Link>
-              <Link aria-current={scanMode === "sitemap" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=sitemap">Sitemap</Link>
-              <Link aria-current={scanMode === "links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=links&parca=1">Parçalı bağlantı grafiği</Link>
-              <Link aria-current={scanMode === "redirects" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=redirects">Yönlendirmeler</Link>
+              <a aria-current={scanMode === "full-links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links">Tam site / HTTP doğrulaması</a>
+              <a aria-current={scanMode === "sitemap" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=sitemap">Sitemap</a>
+              <a aria-current={scanMode === "links" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=links&parca=1">Parçalı bağlantı grafiği</a>
+              <a aria-current={scanMode === "redirects" ? "page" : undefined} href="/sistem-yonetimi/power-seo?sekme=tarama&mod=redirects">Yönlendirmeler</a>
             </nav>
           </section>
           {scanMode === "full-links" ? <FullSiteLinkAudit /> : <PowerSeoOperations mode={scanMode} slice={requestedSlice} />}

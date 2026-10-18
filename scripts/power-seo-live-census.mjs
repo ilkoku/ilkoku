@@ -42,6 +42,45 @@ function descriptionFromHtml(html) {
   return "";
 }
 
+
+// Inventory accessible image alternatives from the already-fetched live HTML.
+// Empty alt is valid for decorative images; do not treat it as an SEO error.
+function imageAltFromHtml(html) {
+  const tags = html.match(/<img\b[^>]*>/giu) || [];
+  const summary = {
+    totalImages: tags.length,
+    descriptiveAlt: 0,
+    emptyAlt: 0,
+    missingAltAttribute: 0,
+    missingAltExplicitlyDecorative: 0,
+    missingAltNeedsReview: 0,
+    samples: [],
+  };
+  for (const tag of tags) {
+    const altMatch = /\s+alt\s*=\s*(["'])(.*?)\1/iu.exec(tag);
+    const ariaHidden = attribute(tag, "aria-hidden").toLowerCase() === "true";
+    const role = attribute(tag, "role").toLowerCase();
+    const isExplicitlyDecorative = ariaHidden || role === "presentation" || role === "none";
+    if (!altMatch) {
+      summary.missingAltAttribute += 1;
+      if (isExplicitlyDecorative) {
+        summary.missingAltExplicitlyDecorative += 1;
+      } else {
+        summary.missingAltNeedsReview += 1;
+        if (summary.samples.length < 5) {
+          // Public, truncated src is for manual identification, not auto-fixing.
+          summary.samples.push(attribute(tag, "src").slice(0, 180));
+        }
+      }
+    } else if (decodeEntity(altMatch[2]).trim()) {
+      summary.descriptiveAlt += 1;
+    } else {
+      summary.emptyAlt += 1;
+    }
+  }
+  return summary;
+}
+
 function comparableDescription(value) {
   return value.normalize("NFC").toLocaleLowerCase("tr-TR").replace(/\s+/gu, " ").trim();
 }
@@ -202,15 +241,16 @@ async function inspect(url) {
     const robots = ok ? robotsFromHtml(body) : "";
     const description = ok ? descriptionFromHtml(body) : "";
     const mainText = ok ? mainTextFromHtml(body) : "";
+    const imageAlt = ok ? imageAltFromHtml(body) : null;
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, mainText,
+      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       error: ok ? "" : "Not HTTP 200 HTML",
     };
   } catch (e) {
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
-      canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
+      imageAlt: null, canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
 
@@ -229,6 +269,14 @@ async function main() {
   const contentReview = compareMainContent(validPages);
   // Only summary metrics are persisted. Avoid duplicating entire article bodies in artifacts.
   const publicResults = results.map(({ mainText, ...page }) => page);
+  const imageReview = validPages.filter((page) => page.imageAlt?.missingAltNeedsReview > 0)
+    .map((page) => ({
+      url: page.url,
+      imageCount: page.imageAlt.totalImages,
+      missingAltNeedsReview: page.imageAlt.missingAltNeedsReview,
+      examples: page.imageAlt.samples,
+      classification: "manual-review-only",
+    }));
   const descriptionGroups = new Map();
   for (const page of validPages) {
     const normalized = comparableDescription(page.description);
@@ -274,6 +322,13 @@ async function main() {
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,
     mainContentAbsent: validPages.filter((x) => !x.mainText).length,
+    imagesTotal: validPages.reduce((sum, page) => sum + page.imageAlt.totalImages, 0),
+    imagesWithDescriptiveAlt: validPages.reduce((sum, page) => sum + page.imageAlt.descriptiveAlt, 0),
+    imagesWithEmptyAlt: validPages.reduce((sum, page) => sum + page.imageAlt.emptyAlt, 0),
+    imagesMissingAltAttribute: validPages.reduce((sum, page) => sum + page.imageAlt.missingAltAttribute, 0),
+    imagesMissingAltNeedsReview: validPages.reduce((sum, page) => sum + page.imageAlt.missingAltNeedsReview, 0),
+    imagesMissingAltExplicitlyDecorative: validPages.reduce((sum, page) => sum + page.imageAlt.missingAltExplicitlyDecorative, 0),
+    pagesWithImageAltReview: imageReview.length,
     shortMainContentReview: contentReview.mainContentStats.filter((x) => x.wordCount < 100).length,
     exactDuplicateMainContentGroups: contentReview.exactDuplicateMainBodies.length,
     mainContentOverlapReviewPairs: contentReview.contentOverlapCandidates.length,
@@ -286,7 +341,7 @@ async function main() {
     noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
     scope: "Live sitemap-only census; not Google index status or complete internal-link graph",
   };
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
@@ -295,6 +350,9 @@ async function main() {
     console.log(JSON.stringify(page));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
+  for (const item of imageReview.slice(0, 25)) {
+    console.log(JSON.stringify({ imageAltReview: item }));
+  }
   for (const item of contentReview.contentOverlapCandidates.slice(0, 25)) {
     console.log(JSON.stringify({ contentOverlapReview: item }));
   }
@@ -312,14 +370,14 @@ async function main() {
       "| --- | ---: |",
       ...Object.entries(summary).filter(([,value]) => typeof value === "number").map(([k,v]) => "| " + k + " | " + v + " |"),
       "",
-      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only.",
+      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review.",
       "",
     ].join("\n"));
   }
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
 }
 
-export { mainTextFromHtml, compareMainContent };
+export { mainTextFromHtml, compareMainContent, imageAltFromHtml };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

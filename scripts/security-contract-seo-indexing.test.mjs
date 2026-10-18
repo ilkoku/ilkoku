@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
-import { mainTextFromHtml, compareMainContent } from "./power-seo-live-census.mjs";
+import { mainTextFromHtml, compareMainContent, imageAltFromHtml } from "./power-seo-live-census.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -1407,6 +1407,23 @@ test("Power-SEO content review finds genuine overlap but excludes template phras
     { url: "https://ilkoku.com/b", mainText: first },
   ]);
   assert.equal(exact.exactDuplicateMainBodies.length, 1, "exact same main body is tracked");
+});
+
+test("Power-SEO inventory distinguishes missing alt attributes from deliberate empty alt", () => {
+  const images = imageAltFromHtml(
+    '<main><img src="/hero.webp" alt="Yazarın defteri" />' +
+    '<img src="/ornament.webp" alt="" />' +
+    '<img src="/hidden.webp" aria-hidden="true" />' +
+    '<img src="/article.webp" />' +
+    '<img src="/data.webp" data-alt="Not a real alt attribute" /></main>',
+  );
+  assert.equal(images.totalImages, 5);
+  assert.equal(images.descriptiveAlt, 1);
+  assert.equal(images.emptyAlt, 1, "intentional empty alt is not called an error");
+  assert.equal(images.missingAltAttribute, 3);
+  assert.equal(images.missingAltExplicitlyDecorative, 1);
+  assert.equal(images.missingAltNeedsReview, 2);
+  assert.deepEqual(images.samples, ["/article.webp", "/data.webp"]);
 });
 
 test("Power-SEO read-only live sitemap census measures per-page meta descriptions and duplicate review signals", () => {

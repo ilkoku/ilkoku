@@ -159,6 +159,44 @@ async function querySemrush() {
   return { state: "verified", source: "Semrush — gerçek API yanıtı", data };
 }
 
+// OpenAI 429 can mean spent credit/budget OR a temporary request/token rate limit.
+// Only whitelisted error codes may leave this admin-only endpoint; never echo upstream
+// messages, request headers, provider response bodies or API credentials.
+async function classifyOpenAiFailure(response: Response) {
+  if (response.status !== 429) {
+    return { state: "error", message: "AI servisi yanıt vermedi (HTTP " + response.status + ")." };
+  }
+  const payload: unknown = await response.json().catch(() => null);
+  const error = payload && typeof payload === "object" && "error" in payload &&
+    payload.error && typeof payload.error === "object" ? payload.error as { code?: unknown; type?: unknown } : null;
+  const code = typeof error?.code === "string" ? error.code : "";
+  const type = typeof error?.type === "string" ? error.type : "";
+  const quotaCodes = [
+    "credit_balance_exhausted",
+    "organization_usage_limit_exceeded",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded",
+    "insufficient_quota",
+  ];
+  if (quotaCodes.includes(code) || type === "insufficient_quota") {
+    const errorCode = quotaCodes.includes(code) ? code : "insufficient_quota";
+    return {
+      state: "error", reason: "quota", errorCode,
+      message: "OpenAI API kullanım bakiyesi veya kullanım/harcama limiti dolmuş (HTTP 429). OpenAI API Billing ve Limits sayfalarını kontrol edin; art arda yeniden denemeyin.",
+    };
+  }
+  if (code === "rate_limit_exceeded" || type === "rate_limit_exceeded") {
+    return {
+      state: "error", reason: "rate_limit", errorCode: "rate_limit_exceeded",
+      message: "OpenAI API istek veya token hız sınırına ulaşıldı (HTTP 429). Kısa süre bekleyin ve yalnız bir kez tekrar deneyin; bakiye yüklemek bu sınırı değiştirmez.",
+    };
+  }
+  return {
+    state: "error", reason: "unknown_429",
+    message: "OpenAI HTTP 429 döndürdü; yanıtında tanınan kota veya hız limiti kodu bulunamadı. OpenAI API Billing ve Limits sayfalarını inceleyin.",
+  };
+}
+
 async function queryAi(rawPath: string) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return { state: "missing", message: "OpenAI API anahtarı üretim ortamında bulunamadı." };
@@ -196,7 +234,7 @@ async function queryAi(rawPath: string) {
       ],
     }),
   });
-  if (!aiResponse.ok) return { state: "error", message: "AI servisi yanıt vermedi (HTTP " + aiResponse.status + ")." };
+  if (!aiResponse.ok) return classifyOpenAiFailure(aiResponse);
   const payload: unknown = await aiResponse.json();
   const obj = payload as { choices?: Array<{ message?: { content?: string } }> };
   const suggestion = obj.choices?.[0]?.message?.content?.slice(0, 1500) || "";

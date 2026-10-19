@@ -646,3 +646,7 @@ select {
     padding: 0.9rem;
   }
 }
+
+/* CMS in the unified admin navigation: keep its original topbar/search/content, no second sidebar. */
+.content-shell--unified { display: block; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.content-shell--unified .content-main { min-width: 0; }

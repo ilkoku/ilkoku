@@ -1133,6 +1133,24 @@ test("admin nested groups: initial-open toggle, six submenus, desktop and 390px 
   const firstSubmenuLink = page.locator('.admin-nav-child__items a[href="/icerik"]');
   await firstSubmenuLink.scrollIntoViewIfNeeded();
   await expect(firstSubmenuLink).toBeInViewport();
+  const clippedGroups = await page.locator(".admin-sidebar .admin-nav-group").evaluateAll((groups) =>
+    groups.flatMap((group) =>
+      group.scrollHeight > group.clientHeight + 2
+        ? [{ scrollHeight: group.scrollHeight, clientHeight: group.clientHeight, label: group.textContent?.slice(0, 60) }]
+        : [],
+    ),
+  );
+  expect(clippedGroups, "No navigation group may clip its own expanded content").toEqual([]);
+
+  const clippedGroups = await page.locator(".admin-sidebar .admin-nav-group").evaluateAll((groups) =>
+    groups.flatMap((group) =>
+      group.scrollHeight > group.clientHeight + 2
+        ? [{ scrollHeight: group.scrollHeight, clientHeight: group.clientHeight, label: group.textContent?.slice(0, 60) }]
+        : [],
+    ),
+  );
+  expect(clippedGroups, "No navigation group may clip its own expanded content").toEqual([]);
+
   await page.screenshot({ path: testInfo.outputPath("admin-three-level-desktop.png"), animations: "disabled" });
   await page.setViewportSize(viewports.phone390);
   await page.getByRole("button", { name: "Menüyü aç" }).click();

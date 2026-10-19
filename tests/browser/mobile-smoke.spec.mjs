@@ -1236,6 +1236,25 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
     await expect(active).toHaveAttribute("href", href);
   }
 
+
+  // Nested modes stay under the "Tam Site ve HTTP" second-level section.
+  // Old ?mod= and ?yol= deep links must select the same section as the page.
+  for (const [path, selectedHref] of [
+    ["/sistem-yonetimi/power-seo?sekme=tarama&mod=sitemap", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
+    ["/sistem-yonetimi/power-seo?sekme=tarama&mod=links&parca=1", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
+    ["/sistem-yonetimi/power-seo?sekme=tarama&mod=redirects", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
+    ["/sistem-yonetimi/power-seo?mod=sitemap", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
+    ["/sistem-yonetimi/power-seo?yol=%2Fnasil-calisir", "/sistem-yonetimi/power-seo?sekme=sayfa"],
+    ["/sistem-yonetimi/power-seo?sekme=genel&kaynak=yonetim", "/sistem-yonetimi/power-seo"],
+  ]) {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    const panel = page.locator(".admin-secondary-panel");
+    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
+    await expect(active).toHaveCount(1);
+    await expect(active).toHaveAttribute("href", selectedHref);
+  }
+
   await page.goto("/icerik", { waitUntil: "domcontentloaded" });
   const panel = page.locator(".admin-secondary-panel");
   await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();

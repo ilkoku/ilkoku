@@ -292,3 +292,109 @@
 .admin-sidebar nav > .admin-nav-group {
   flex: 0 0 auto;
 }
+
+
+/* System management: seven fixed left headings, second/third level to the RIGHT.
+   Existing typography, colors, buttons and page components remain unchanged. */
+.admin-sidebar nav button.admin-nav-group__landing {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: .75rem;
+  align-items: center;
+  min-height: 3.45rem;
+  padding: .7rem .55rem .7rem .8rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #c6ccda;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-sidebar nav button.admin-nav-group__landing:hover,
+.admin-sidebar nav button.admin-nav-group__landing:focus-visible {
+  background: rgba(255,255,255,.035);
+  color: #fff;
+}
+.admin-sidebar nav button.admin-nav-group__landing:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: -2px;
+}
+.admin-nav-group.is-active button.admin-nav-group__landing { color: #fff; }
+.admin-sidebar nav .admin-nav-group__header { display: block; }
+.admin-workspace.has-menu {
+  display: grid;
+  grid-template-columns: 16rem minmax(0,1fr);
+  align-items: start;
+}
+.admin-workspace .admin-content { min-width: 0; }
+.admin-secondary-panel {
+  position: sticky;
+  top: 5rem;
+  align-self: start;
+  height: calc(100dvh - 5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(139 92 246 / 55%) transparent;
+  border-right: 1px solid rgba(148,163,184,.12);
+  background: rgba(11,14,26,.66);
+  padding: .8rem .65rem 1.5rem;
+}
+.admin-secondary-panel__heading {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  min-width: 0;
+  gap: .3rem;
+  margin-bottom: .7rem;
+  padding: .65rem .35rem .8rem;
+  border-bottom: 1px solid rgba(148,163,184,.1);
+}
+.admin-secondary-panel__heading > div { min-width: 0; }
+.admin-secondary-panel__heading strong { display: block; font-size: .88rem; color: #fff; }
+.admin-secondary-panel__heading small { display: block; margin-top: .3rem; font-size: .65rem; color: #8b93a7; }
+.admin-secondary-panel__heading > button { width: 2.4rem; flex: 0 0 2.4rem; }
+.admin-secondary-panel__items { display: flex; flex-direction: column; gap: .18rem; }
+.admin-secondary-panel .admin-nav-child__header a,
+.admin-secondary-panel .admin-nav-child__items a {
+  display: grid;
+  grid-template-columns: 1rem minmax(0,1fr);
+  align-items: center;
+  gap: .65rem;
+  padding: .65rem .65rem;
+  min-height: 2.55rem;
+  border: 1px solid transparent;
+  border-radius: .65rem;
+  color: #aeb6c8;
+  font-size: .76rem;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.admin-secondary-panel a:hover { color: #fff; background: rgba(255,255,255,.045); }
+.admin-secondary-panel a.is-active {
+  color: #fff;
+  border-color: rgba(129,140,248,.24);
+  background: linear-gradient(135deg,rgba(79,70,229,.24),rgba(124,58,237,.15));
+  box-shadow: inset 3px 0 #8b5cf6;
+}
+.admin-secondary-panel a svg { width: 1rem; height: 1rem; }
+.admin-secondary-panel .admin-nav-child__items { margin-left: .75rem; }
+.admin-secondary-panel .admin-nav-child__items a { display: block; padding-left: .68rem; }
+.admin-secondary-panel .admin-nav-child__items[hidden] { display: none; }
+.admin-secondary-panel .admin-nav-child__header { grid-template-columns: minmax(0,1fr) auto; }
+@media (max-width: 1180px) {
+  .admin-workspace.has-menu { grid-template-columns: 14rem minmax(0,1fr); }
+}
+@media (max-width: 900px) {
+  .admin-workspace.has-menu { display: block; }
+  .admin-secondary-panel {
+    position: relative;
+    top: auto;
+    height: auto;
+    max-height: 42dvh;
+    border-right: 0;
+    border-bottom: 1px solid rgba(148,163,184,.12);
+  }
+}

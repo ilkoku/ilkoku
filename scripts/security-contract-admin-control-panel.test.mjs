@@ -143,7 +143,7 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
   }
   assert.match(shell, /expandedSubmenus/);
   assert.match(shell, /className="admin-nav-child__header"/);
-  assert.match(shell, /className="admin-nav-child__items"/);
+  assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
   assert.match(shell, /aria-expanded=\{subExpanded\}/);
   assert.match(shell, /aria-controls=\{/);
   assert.match(shell, /id="admin-secondary-panel"/);

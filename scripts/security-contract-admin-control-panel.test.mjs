@@ -175,4 +175,6 @@ test("unified admin preserves hidden CMS helpers and query-based Power-SEO activ
   assert.match(shell, /useSearchParams\(\)/);
   assert.match(shell, /isActiveSubItem\(child\.href, item\.children/);
   assert.match(shell, /new URLSearchParams\(query\)/);
+  assert.match(shell, /currentSearch\.get\("mod"\) \? "tarama"/, "nested scan modes remain under tarama");
+  assert.match(shell, /currentSearch\.get\("yol"\) \? "sayfa"/, "legacy page deep links remain under sayfa");
 });

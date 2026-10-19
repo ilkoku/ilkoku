@@ -103,6 +103,18 @@ test("admin subpages and external management centers expose a consistent return 
   }
 });
 
+test("unified admin displays horizontal second and third-level navigation above page content", () => {
+  const css = read("src/app/admin/admin.css");
+  assert.match(css, /\.admin-workspace\.has-menu\s*\{\s*display: flex;/);
+  assert.match(css, /\.admin-secondary-panel__items,[\s\S]*?display: flex;/);
+  assert.match(css, /flex-wrap: nowrap;/);
+  assert.match(css, /\.admin-secondary-panel \.admin-tertiary-row/);
+  assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
+  assert.match(shell, /selectedGroup\.items\.map/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+});
+
 test("third-level admin navigation preserves 7 groups and all 25 existing destinations", () => {
   assert.match(navigation, /children\?: readonly AdminNavSubItem\[\]/);
   assert.ok(navigation.includes("module.showInNavigation !== false"), "unified CMS nav respects showInNavigation");
@@ -131,13 +143,13 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
   }
   assert.match(shell, /expandedSubmenus/);
   assert.match(shell, /className="admin-nav-child__header"/);
-  assert.match(shell, /className="admin-nav-child__items"/);
+  assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
   assert.match(shell, /aria-expanded=\{subExpanded\}/);
   assert.match(shell, /aria-controls=\{/);
   assert.match(shell, /id="admin-secondary-panel"/);
   assert.match(shell, /setExpandedSubmenus/);
 
-  assert.match(shell, /item\.children\?\.map/);
+  assert.match(shell, /item\.children\.map/);
   assert.match(shell, /className="admin-secondary-panel"/);
 });
 

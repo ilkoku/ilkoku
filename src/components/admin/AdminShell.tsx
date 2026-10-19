@@ -351,19 +351,26 @@ export function AdminShell({
                           </button>
                         ) : null}
                       </div>
-                      {hasChildren ? (
-                        <div className="admin-nav-child__items" id={`admin-submenu-${selectedGroup.id}-${index}`} hidden={!subExpanded}>
-                          {item.children?.map((child) => (
-                            <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
-                              <span>{child.label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : null}
                     </div>
                   );
                 })}
               </nav>
+              {selectedGroup.items.map((item, index) =>
+                item.children?.length && expandedSubmenus[item.href] ? (
+                  <nav
+                    key={item.href}
+                    id={`admin-submenu-${selectedGroup.id}-${index}`}
+                    className="admin-tertiary-row admin-nav-child__items"
+                    aria-label={`${item.label} alt bağlantıları`}
+                  >
+                    {item.children.map((child) => (
+                      <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                        <span>{child.label}</span>
+                      </Link>
+                    ))}
+                  </nav>
+                ) : null,
+              )}
             </aside>
           ) : null}
         <main className={`admin-content ${embeddedWorkspace ? "admin-content--embedded" : ""}`}>

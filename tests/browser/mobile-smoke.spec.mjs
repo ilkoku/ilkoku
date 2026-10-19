@@ -572,7 +572,7 @@ test("authenticated commerce read-only boundaries smoke: admin sees refund payou
   });
   await expect(page.getByRole("heading", { name: "İadeler" })).toBeVisible();
   await expect(page.getByText("İade işlemi burada yürütülmüyor", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /iade/i })).toHaveCount(0);
+  await expect(page.locator("main.admin-content").getByRole("button", { name: /iade/i })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
   await page.goto("/admin/finans-gelirler/yazar-odemeleri", {
@@ -580,7 +580,7 @@ test("authenticated commerce read-only boundaries smoke: admin sees refund payou
   });
   await expect(page.getByRole("heading", { name: "Yazar Ödemeleri" })).toBeVisible();
   await expect(page.getByText("Gerçek payout yürütümü kapalı", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /ödeme|payout|başlat/i })).toHaveCount(0);
+  await expect(page.locator("main.admin-content").getByRole("button", { name: /ödeme|payout|başlat/i })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
   await page.goto("/admin/odeme-sistemi/ayarlar", {

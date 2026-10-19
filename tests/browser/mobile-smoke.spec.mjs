@@ -1117,6 +1117,50 @@ test("dashboard shows live metrics without six duplicated management-center card
   await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: "İçerik Yönetimi", exact: true })).toBeVisible();
 });
 
+test("secondary navigation is horizontal above the content on desktop and mobile", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/sistem-yonetimi/kullanicilar", { waitUntil: "domcontentloaded" });
+    const sidebar = page.locator(".admin-sidebar");
+    const panel = page.locator(".admin-secondary-panel");
+    await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
+    await sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true }).click();
+    await expect(panel.locator(".admin-nav-child")).toHaveCount(8);
+    await expect(panel.locator(".admin-secondary-panel__items")).toHaveCSS("flex-direction", "row");
+    const geometry = await page.evaluate(() => {
+      const nav = document.querySelector(".admin-secondary-panel");
+      const content = document.querySelector(".admin-content");
+      const first = document.querySelectorAll(".admin-secondary-panel .admin-nav-child");
+      if (!nav || !content || first.length < 2) return null;
+      return {
+        panelBottom: nav.getBoundingClientRect().bottom,
+        contentTop: content.getBoundingClientRect().top,
+        firstTop: first[0].getBoundingClientRect().top,
+        secondTop: first[1].getBoundingClientRect().top,
+      };
+    });
+    expect(geometry).not.toBeNull();
+    expect(geometry.panelBottom).toBeLessThanOrEqual(geometry.contentTop + 4);
+    expect(Math.abs(geometry.firstTop - geometry.secondTop)).toBeLessThan(4);
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/icerik/seo", { waitUntil: "domcontentloaded" });
+  const panel = page.locator(".admin-secondary-panel");
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.locator(".admin-tertiary-row")).toHaveCSS("flex-direction", "row");
+  await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

@@ -1190,6 +1190,14 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
   await expect(page.locator(".admin-secondary-panel")).toBeVisible();
   await expectResponsiveDocument(page);
   await page.screenshot({ path: testInfo.outputPath("unified-admin-cms-mobile-workspace.png"), animations: "disabled" });
+  for (const specialist of ["/harita/rotalar", "/sozlesme/takip"]) {
+    await page.goto(specialist, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".admin-shell")).toHaveCount(1);
+    await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
+    await expect(page.locator(".admin-secondary-panel")).toBeVisible();
+    await expect(page.locator(".system-map-primary-nav, .contract-management-sidebar")).toHaveCount(0);
+    await expectResponsiveDocument(page);
+  }
 });
 
 test("CMS manager without system admin role keeps dedicated CMS interface", async ({ page }) => {

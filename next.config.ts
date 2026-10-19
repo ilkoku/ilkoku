@@ -93,6 +93,9 @@ const nextConfig: NextConfig = {
     qualities: [45, 60, 75],
   },
   experimental: {
+    // Hostinger exposes many CPUs but limits process/thread creation.
+    // Prevent Next.js page-data collection from starting 63 workers (EAGAIN).
+    cpus: 2,
     serverActions: {
       bodySizeLimit: "4mb",
     },

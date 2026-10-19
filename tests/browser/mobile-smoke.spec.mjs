@@ -1117,6 +1117,54 @@ test("dashboard shows live metrics without six duplicated management-center card
   await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: "İçerik Yönetimi", exact: true })).toBeVisible();
 });
 
+test("horizontal admin strips visibly separate heading, links, active item and close control", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/sistem-yonetimi/kullanicilar", { waitUntil: "domcontentloaded" });
+    const panel = page.locator(".admin-secondary-panel");
+    await expect(panel).toBeVisible();
+    const borders = await panel.evaluate((element) => {
+      const heading = element.querySelector(".admin-secondary-panel__heading");
+      const close = heading?.querySelector("button");
+      const selected = element.querySelector('.admin-secondary-panel__items a.is-active');
+      const first = element.querySelector('.admin-secondary-panel__items .admin-nav-child__header a');
+      if (!heading || !close || !selected || !first) return null;
+      const paint = (node) => {
+        const style = getComputedStyle(node);
+        return {
+          borderTop: style.borderTopWidth,
+          borderBottom: style.borderBottomWidth,
+          borderLeft: style.borderLeftWidth,
+          borderColor: style.borderColor,
+          shadow: style.boxShadow,
+        };
+      };
+      return {
+        panel: paint(element),
+        heading: paint(heading),
+        close: paint(close),
+        first: paint(first),
+        selected: paint(selected),
+      };
+    });
+    expect(borders).not.toBeNull();
+    expect(borders.panel.borderTop).toBe("1px");
+    expect(borders.panel.borderBottom).toBe("1px");
+    expect(borders.heading.borderBottom).toBe("1px");
+    expect(borders.close.borderLeft).toBe("1px");
+    expect(borders.first.borderTop).toBe("1px");
+    expect(borders.selected.shadow).toContain("inset");
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("secondary navigation is horizontal above the content on desktop and mobile", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

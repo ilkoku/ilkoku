@@ -400,5 +400,10 @@
 }
 
 /* Shared admin workspace: preserve each specialist center's page styles, suppress only outer gutter. */
-.admin-content--embedded { padding: 0; min-width: 0; }
+.admin-content--embedded {
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto; /* Keep wide contract/map tables accessible within the workspace, never overflow the whole viewport. */
+}
 .admin-content--embedded > * { min-width: 0; }

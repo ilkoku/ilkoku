@@ -388,49 +388,36 @@ for (const scenario of authenticatedCases) {
 }
 
 
-test("authenticated admin sidebar group navigation and return path work", async ({ page }) => {
+test("authenticated admin keeps seven fixed main groups and opens submenus on the right", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
-
   const token = authFixture.sessions?.admin;
   expect(token, "Missing admin session fixture").toBeTruthy();
-
-  await page.context().addCookies([
-    {
-      name: authFixture.cookieName,
-      value: token,
-      url: authCookieUrl,
-    },
-  ]);
-
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
   await page.setViewportSize(viewports.desktop);
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
 
-  const peopleLanding = page.locator('a.admin-nav-group__landing[href="/sistem-yonetimi/kullanicilar"]');
-  await expect(peopleLanding).toBeVisible();
-  await peopleLanding.click();
+  const sidebar = page.locator(".admin-sidebar");
+  await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  await expect(page.locator(".admin-secondary-panel")).toHaveCount(0);
+  await sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true }).click();
+  const panel = page.locator(".admin-secondary-panel");
+  await expect(panel.getByRole("link", { name: "Kullanıcılar" })).toBeVisible();
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  await panel.getByRole("link", { name: "Kullanıcılar" }).click();
   await page.waitForURL(/\/sistem-yonetimi\/kullanicilar$/);
+  await expect(panel.getByRole("link", { name: "Başvurular" })).toBeVisible();
 
   const returnLink = page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first();
-  await expect(returnLink).toBeVisible();
   await returnLink.click();
   await page.waitForURL(/\/sistem-yonetimi$/);
+  await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
 
-  const peopleToggle = page.getByRole("button", { name: /Kullanıcı & Roller alt menüsünü/ });
-  await expect(peopleToggle).toHaveAttribute("aria-expanded", "false");
-  await peopleToggle.click();
-  await expect(peopleToggle).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator('.admin-nav-group__items a[href="/sistem-yonetimi/kullanicilar"]')).toBeVisible();
-
-  await page.goto("/icerik", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
-
-  await page.goto("/harita", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
-
-  await page.goto("/sozlesme", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
+  for (const path of ["/icerik", "/harita", "/sozlesme"]) {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("link", { name: "Genel Yönetim Paneline Dön" }).first()).toBeVisible();
+  }
 });
-
 
 test("authenticated writer commerce configuration mutation smoke: writer stages paid access with agreement and final confirmation", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
@@ -1055,7 +1042,7 @@ test("Power-SEO POST validates the public origin under reverse proxy", async ({ 
   expect(rejected.status()).toBe(403);
 });
 
-test("system management three levels expand on demand at desktop and mobile without duplicated Power-SEO tabs", async ({ page }) => {
+test("third-level links open in the RIGHT panel; mobile and Power-SEO stay usable", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;
   expect(token, "Missing admin session fixture").toBeTruthy();
@@ -1063,52 +1050,52 @@ test("system management three levels expand on demand at desktop and mobile with
   await page.setViewportSize(viewports.desktop);
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
 
-  const groupToggle = page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" });
-  await groupToggle.click();
-  const contentToggle = page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" });
-  await expect(contentToggle).toHaveAttribute("aria-expanded", "false");
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeHidden();
-  await contentToggle.click();
-  await expect(page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/rehber"]')).toBeVisible();
+  const sidebar = page.locator(".admin-sidebar");
+  await sidebar.getByRole("button", { name: "Eser & İçerik", exact: true }).click();
+  const panel = page.locator(".admin-secondary-panel");
+  await expect(panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" })).toHaveAttribute("aria-expanded", "false");
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeHidden();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
+  await expect(panel.locator('a[href="/icerik/rehber"]')).toBeVisible();
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
 
-  const original = await page.locator(".admin-shell").evaluate((node) => ({
-    background: getComputedStyle(node).backgroundColor,
-    color: getComputedStyle(node).color,
-  }));
-  expect(original.color).toBe("rgb(248, 250, 252)");
-
+  const color = await page.locator(".admin-shell").evaluate((node) => getComputedStyle(node).color);
+  expect(color).toBe("rgb(248, 250, 252)");
   await page.setViewportSize(viewports.phone390);
   await page.getByRole("button", { name: "Menüyü aç" }).click();
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Eser & İçerik", exact: true })).toBeVisible();
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
-
-  // The current Power-SEO own-tabs must still be unique on first render.
   await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toHaveCount(1);
 });
 
-test("admin nested groups: initial-open toggle, six submenus, desktop and 390px screenshots", async ({ page }, testInfo) => {
+test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;
-  expect(token, "Missing admin fixture").toBeTruthy();
+  expect(token, "Missing admin session fixture").toBeTruthy();
   await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
   await page.setViewportSize(viewports.desktop);
   await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
 
-  const overview = page.getByRole("button", { name: "Genel Bakış alt menüsünü kapat" });
-  await expect(overview).toHaveAttribute("aria-expanded", "true");
-  await overview.click();
-  await expect(page.getByRole("button", { name: "Genel Bakış alt menüsünü aç" })).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("button", { name: "Genel Bakış alt menüsünü aç" }).click();
-  await expect(page.getByRole("button", { name: "Genel Bakış alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
+  const sidebar = page.locator(".admin-sidebar");
+  const panel = page.locator(".admin-secondary-panel");
+  const labels = ["Genel Bakış", "Kullanıcı & Roller", "Eser & İçerik", "Ticaret & Finans", "İletişim & Sözleşmeler", "Güvenlik & Sistem", "Arşiv & Ayarlar"];
+  await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  await expect(panel).toHaveCount(0);
+  const fixedLeft = await sidebar.evaluate((node) => getComputedStyle(node).position);
+  expect(fixedLeft).toBe("fixed");
 
-  await page.goto("/sistem-yonetimi/eserler", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("button", { name: "Eser & İçerik alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("button", { name: "Eser & İçerik alt menüsünü kapat" }).click();
-  await expect(page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" })).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" }).click();
+  for (const group of labels) {
+    await sidebar.getByRole("button", { name: group, exact: true }).click();
+    await expect(panel).toBeVisible();
+    await expect(panel.locator(".admin-nav-child")).toHaveCount(
+      ({ "Genel Bakış": 1, "Kullanıcı & Roller": 8, "Eser & İçerik": 3, "Ticaret & Finans": 2, "İletişim & Sözleşmeler": 3, "Güvenlik & Sistem": 4, "Arşiv & Ayarlar": 4 })[group],
+    );
+    await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  }
 
   const cases = [
     ["Eser & İçerik", "İçerik Yönetimi", "/icerik/seo"],
@@ -1118,45 +1105,34 @@ test("admin nested groups: initial-open toggle, six submenus, desktop and 390px 
     ["Güvenlik & Sistem", "Sistem Haritası", "/harita/rotalar"],
     ["Güvenlik & Sistem", "Power-SEO", "/sistem-yonetimi/power-seo?sekme=teknik"],
   ];
-  for (const [group, name, href] of cases) {
-    const parent = page.getByRole("button", { name: new RegExp(`^${group} alt menüsünü (aç|kapat)$`) });
-    if (await parent.getAttribute("aria-expanded") === "false") await parent.click();
-    await page.getByRole("button", { name: `${name} alt menüsünü aç` }).click();
-    const link = page.locator(`.admin-nav-child__items a[href="${href}"]`);
+  let activeGroup = "Arşiv & Ayarlar";
+  for (const [group, label, href] of cases) {
+    if (activeGroup !== group) {
+      await sidebar.getByRole("button", { name: group, exact: true }).click();
+      activeGroup = group;
+    }
+    await panel.getByRole("button", { name: `${label} alt menüsünü aç` }).click();
+    const link = panel.locator(`a[href="${href}"]`);
     await expect(link).toBeVisible();
-    await page.getByRole("button", { name: `${name} alt menüsünü kapat` }).click();
+    await panel.getByRole("button", { name: `${label} alt menüsünü kapat` }).click();
     await expect(link).toBeHidden();
   }
-
-  await page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
-  const firstSubmenuLink = page.locator('.admin-nav-child__items a[href="/icerik"]');
-  await firstSubmenuLink.scrollIntoViewIfNeeded();
-  await expect(firstSubmenuLink).toBeInViewport();
-  const clippedGroups = await page.locator(".admin-sidebar .admin-nav-group").evaluateAll((groups) =>
-    groups.flatMap((group) =>
-      group.scrollHeight > group.clientHeight + 2
-        ? [{ scrollHeight: group.scrollHeight, clientHeight: group.clientHeight, label: group.textContent?.slice(0, 60) }]
-        : [],
-    ),
-  );
-  expect(clippedGroups, "No navigation group may clip its own expanded content").toEqual([]);
-
-  await page.screenshot({ path: testInfo.outputPath("admin-three-level-desktop.png"), animations: "disabled" });
+  await sidebar.getByRole("button", { name: "Eser & İçerik", exact: true }).click();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await panel.locator('a[href="/icerik"]').scrollIntoViewIfNeeded();
+  await expect(panel.locator('a[href="/icerik"]')).toBeInViewport();
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("fixed-left-right-menu-desktop.png"), animations: "disabled" });
   await page.setViewportSize(viewports.phone390);
   await page.getByRole("button", { name: "Menüyü aç" }).click();
-  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
-  await firstSubmenuLink.scrollIntoViewIfNeeded();
-  await expect(firstSubmenuLink).toBeInViewport();
-  const mobileClippedGroups = await page.locator(".admin-sidebar .admin-nav-group").evaluateAll((groups) =>
-    groups.flatMap((group) =>
-      group.scrollHeight > group.clientHeight + 2
-        ? [{ scrollHeight: group.scrollHeight, clientHeight: group.clientHeight, label: group.textContent?.slice(0, 60) }]
-        : [],
-    ),
-  );
-  expect(mobileClippedGroups, "No navigation group may clip its own expanded content").toEqual([]);
+  await page.screenshot({ path: testInfo.outputPath("fixed-left-right-menu-mobile390.png"), animations: "disabled" });
 
-  await page.screenshot({ path: testInfo.outputPath("admin-three-level-mobile390.png"), animations: "disabled" });
+  await sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true }).click();
+  await expect(panel.getByRole("link", { name: "Kullanıcılar", exact: true })).toBeVisible();
+  await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
+  await panel.getByRole("button", { name: "Kullanıcı & Roller alt menüsünü kapat" }).click();
+  await expect(panel).toHaveCount(0);
 });

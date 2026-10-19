@@ -48,7 +48,7 @@ function systemPath(path = "") {
 
 /* Reuse existing labels and real routes. No page, CMS, or system-map styles change. */
 const contentSubNavigation: readonly AdminNavSubItem[] = [
-  ...cmsModules.filter((module) => module.enabled).map(({ href, label }) => ({ href, label })),
+  ...cmsModules.filter((module) => module.enabled && module.showInNavigation !== false).map(({ href, label }) => ({ href, label })),
   { href: "/icerik/rehber", label: "Rehber & İçerikler" },
 ];
 

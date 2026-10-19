@@ -629,12 +629,6 @@ export async function AdminDashboard() {
           </p>
         </div>
 
-        <Link
-          className="admin-button admin-button--primary"
-          href={`${SYSTEM_MANAGEMENT_PATH}/audit-log`}
-        >
-          Sistem hareketlerini aç
-        </Link>
       </section>
 
       <section className="admin-control-centers" aria-labelledby="admin-control-centers-title">

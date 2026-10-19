@@ -88,6 +88,33 @@
   opacity: 0.65;
 }
 
+/* Keep each user's complete name and e-mail legible in its own table cell.
+   The typography change is scoped to the User column, not the action forms. */
+.admin-users-table tbody td:nth-child(2) {
+  min-width: 0;
+  max-width: 15rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-users-table tbody td:nth-child(2) > strong,
+.admin-users-table tbody td:nth-child(2) > span {
+  display: block;
+  max-width: 100%;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.admin-users-table tbody td:nth-child(2) > strong {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.admin-users-table tbody td:nth-child(2) > span {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
 .admin-users-empty {
   padding: 36px 16px !important;
   text-align: center !important;

@@ -1165,6 +1165,57 @@ test("horizontal admin strips visibly separate heading, links, active item and c
   }
 });
 
+test("user directory fits complete name and e-mail as two smaller readable lines", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/sistem-yonetimi/kullanicilar", { waitUntil: "domcontentloaded" });
+    const userCell = page.locator(".admin-users-table tbody tr td:nth-child(2)").first();
+    await expect(userCell.locator(":scope > strong")).not.toBeEmpty();
+    await expect(userCell.locator(":scope > span")).not.toBeEmpty();
+    const style = await userCell.evaluate((cell) => {
+      const name = cell.querySelector(":scope > strong");
+      const email = cell.querySelector(":scope > span");
+      if (!name || !email) return null;
+      const nameStyle = getComputedStyle(name);
+      const emailStyle = getComputedStyle(email);
+      const nameBox = name.getBoundingClientRect();
+      const emailBox = email.getBoundingClientRect();
+      const cellBox = cell.getBoundingClientRect();
+      return {
+        nameSize: parseFloat(nameStyle.fontSize),
+        emailSize: parseFloat(emailStyle.fontSize),
+        nameDisplay: nameStyle.display,
+        emailDisplay: emailStyle.display,
+        nameWrap: nameStyle.overflowWrap,
+        emailWrap: emailStyle.overflowWrap,
+        nameBottom: nameBox.bottom,
+        emailTop: emailBox.top,
+        nameRight: nameBox.right,
+        emailRight: emailBox.right,
+        cellRight: cellBox.right,
+      };
+    });
+    expect(style).not.toBeNull();
+    expect(style.nameSize).toBeLessThan(16);
+    expect(style.emailSize).toBeLessThan(14);
+    expect(style.nameDisplay).toBe("block");
+    expect(style.emailDisplay).toBe("block");
+    expect(style.nameWrap).toBe("anywhere");
+    expect(style.emailWrap).toBe("anywhere");
+    expect(style.nameBottom).toBeLessThanOrEqual(style.emailTop + 1);
+    expect(style.nameRight).toBeLessThanOrEqual(style.cellRight + 1);
+    expect(style.emailRight).toBeLessThanOrEqual(style.cellRight + 1);
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("secondary navigation is horizontal above the content on desktop and mobile", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

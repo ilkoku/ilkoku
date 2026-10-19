@@ -103,6 +103,20 @@ test("admin subpages and external management centers expose a consistent return 
   }
 });
 
+test("user directory names and e-mails wrap on separate, slightly smaller lines", () => {
+  const css = read("src/app/admin/users.css");
+  const userTable = read("src/components/admin/UserManagement.tsx");
+  assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > strong/);
+  assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > span/);
+  assert.match(css, /font-size: 0\.82rem;/);
+  assert.match(css, /font-size: 0\.72rem;/);
+  assert.match(css, /overflow-wrap: anywhere;/);
+  assert.match(userTable, /<strong>\{user\.fullName\}<\/strong>/);
+  assert.match(userTable, /<span>\{user\.email\}<\/span>/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+});
+
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {
   const css = read("src/app/admin/admin.css");
   const panel = css.slice(css.indexOf("/* Unified navigation:"));

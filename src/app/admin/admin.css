@@ -257,3 +257,26 @@
   align-items: center;
   margin: 0 0 1rem;
 }
+
+/* Third-level navigation only: existing colors, fonts, buttons and public styles stay intact. */
+.admin-nav-child { min-width: 0; }
+.admin-nav-child__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+.admin-nav-child__header > a { min-width: 0; }
+.admin-nav-child__toggle { width: 2.7rem; }
+.admin-nav-child__items {
+  display: grid;
+  gap: .18rem;
+  margin: 0 .42rem .35rem 1.05rem;
+  padding-left: .45rem;
+  border-left: 1px solid rgba(148,163,184,.12);
+}
+.admin-sidebar nav .admin-nav-group__items .admin-nav-child__items a {
+  grid-template-columns: minmax(0,1fr);
+  padding-left: .68rem;
+  overflow-wrap: anywhere;
+}
+.admin-nav-child__items[hidden] { display: none; }

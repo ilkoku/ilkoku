@@ -572,7 +572,7 @@ test("authenticated commerce read-only boundaries smoke: admin sees refund payou
   });
   await expect(page.getByRole("heading", { name: "İadeler" })).toBeVisible();
   await expect(page.getByText("İade işlemi burada yürütülmüyor", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /iade/i })).toHaveCount(0);
+  await expect(page.locator("main.admin-content").getByRole("button", { name: /iade/i })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
   await page.goto("/admin/finans-gelirler/yazar-odemeleri", {
@@ -580,7 +580,7 @@ test("authenticated commerce read-only boundaries smoke: admin sees refund payou
   });
   await expect(page.getByRole("heading", { name: "Yazar Ödemeleri" })).toBeVisible();
   await expect(page.getByText("Gerçek payout yürütümü kapalı", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /ödeme|payout|başlat/i })).toHaveCount(0);
+  await expect(page.locator("main.admin-content").getByRole("button", { name: /ödeme|payout|başlat/i })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
   await page.goto("/admin/odeme-sistemi/ayarlar", {
@@ -1053,4 +1053,38 @@ test("Power-SEO POST validates the public origin under reverse proxy", async ({ 
     data: { provider: "invalid-provider" },
   });
   expect(rejected.status()).toBe(403);
+});
+
+test("system management three levels expand on demand at desktop and mobile without duplicated Power-SEO tabs", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+
+  const groupToggle = page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" });
+  await groupToggle.click();
+  const contentToggle = page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" });
+  await expect(contentToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeHidden();
+  await contentToggle.click();
+  await expect(page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/rehber"]')).toBeVisible();
+
+  const original = await page.locator(".admin-shell").evaluate((node) => ({
+    background: getComputedStyle(node).backgroundColor,
+    color: getComputedStyle(node).color,
+  }));
+  expect(original.color).toBe("rgb(248, 250, 252)");
+
+  await page.setViewportSize(viewports.phone390);
+  await page.getByRole("button", { name: "Menüyü aç" }).click();
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  // The current Power-SEO own-tabs must still be unique on first render.
+  await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toHaveCount(1);
 });

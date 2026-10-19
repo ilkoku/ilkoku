@@ -1128,8 +1128,15 @@ test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and scr
   await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
   await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
-  await page.screenshot({ path: testInfo.outputPath("fixed-left-right-menu-mobile390.png"), animations: "disabled" });
+  await page.screenshot({ path: testInfo.outputPath("fixed-left-main-mobile390.png"), animations: "disabled" });
+  await page.getByRole("button", { name: "Menüyü kapat" }).click();
+  await expect(panel).toBeVisible();
+  await panel.locator('a[href="/icerik/seo"]').scrollIntoViewIfNeeded();
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeInViewport();
+  await expectResponsiveDocument(page);
+  await page.screenshot({ path: testInfo.outputPath("fixed-right-menu-mobile390.png"), animations: "disabled" });
 
+  await page.getByRole("button", { name: "Menüyü aç" }).click();
   await sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true }).click();
   await expect(panel.getByRole("link", { name: "Kullanıcılar", exact: true })).toBeVisible();
   await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);

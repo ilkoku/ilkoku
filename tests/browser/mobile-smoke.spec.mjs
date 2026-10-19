@@ -1130,10 +1130,15 @@ test("admin nested groups: initial-open toggle, six submenus, desktop and 390px 
 
   await page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
   await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  const firstSubmenuLink = page.locator('.admin-nav-child__items a[href="/icerik"]');
+  await firstSubmenuLink.scrollIntoViewIfNeeded();
+  await expect(firstSubmenuLink).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath("admin-three-level-desktop.png"), animations: "disabled" });
   await page.setViewportSize(viewports.phone390);
   await page.getByRole("button", { name: "Menüyü aç" }).click();
   await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
+  await firstSubmenuLink.scrollIntoViewIfNeeded();
+  await expect(firstSubmenuLink).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath("admin-three-level-mobile390.png"), animations: "disabled" });
 });

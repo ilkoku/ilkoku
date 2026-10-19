@@ -279,3 +279,4 @@
   padding-left: .68rem;
   overflow-wrap: anywhere;
 }
+.admin-nav-child__items[hidden] { display: none; }

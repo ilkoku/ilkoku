@@ -53,23 +53,23 @@ const contentSubNavigation: readonly AdminNavSubItem[] = [
 ];
 
 const paymentSubNavigation: readonly AdminNavSubItem[] = [
-  { href: systemPath("/odeme-sistemi/siparisler"), label: "Siparişler" },
-  { href: systemPath("/odeme-sistemi/odemeler"), label: "Ödemeler" },
-  { href: systemPath("/odeme-sistemi/iadeler"), label: "İadeler" },
-  { href: systemPath("/odeme-sistemi/erisim-haklari"), label: "Erişim Hakları" },
-  { href: systemPath("/odeme-sistemi/kuponlar"), label: "Kuponlar" },
-  { href: systemPath("/odeme-sistemi/saglayicilar"), label: "Ödeme Sağlayıcıları" },
-  { href: systemPath("/odeme-sistemi/ayarlar"), label: "Commerce Ayarları" },
+  { href: "/sistem-yonetimi/odeme-sistemi/siparisler", label: "Siparişler" },
+  { href: "/sistem-yonetimi/odeme-sistemi/odemeler", label: "Ödemeler" },
+  { href: "/sistem-yonetimi/odeme-sistemi/iadeler", label: "İadeler" },
+  { href: "/sistem-yonetimi/odeme-sistemi/erisim-haklari", label: "Erişim Hakları" },
+  { href: "/sistem-yonetimi/odeme-sistemi/kuponlar", label: "Kuponlar" },
+  { href: "/sistem-yonetimi/odeme-sistemi/saglayicilar", label: "Ödeme Sağlayıcıları" },
+  { href: "/sistem-yonetimi/odeme-sistemi/ayarlar", label: "Commerce Ayarları" },
 ];
 
 const financeSubNavigation: readonly AdminNavSubItem[] = [
-  { href: systemPath("/finans-gelirler/finans-hareketleri"), label: "Finans Hareketleri" },
-  { href: systemPath("/finans-gelirler/ilkoku-gelirleri"), label: "İlkOku Gelirleri" },
-  { href: systemPath("/finans-gelirler/kampanya-maliyetleri"), label: "Kampanya Maliyetleri" },
-  { href: systemPath("/finans-gelirler/mutabakat"), label: "Mutabakat" },
-  { href: systemPath("/finans-gelirler/yazar-bakiyeleri"), label: "Yazar Bakiyeleri" },
-  { href: systemPath("/finans-gelirler/yazar-hakedisleri"), label: "Yazar Hakedişleri" },
-  { href: systemPath("/finans-gelirler/yazar-odemeleri"), label: "Yazar Ödemeleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/finans-hareketleri", label: "Finans Hareketleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/ilkoku-gelirleri", label: "İlkOku Gelirleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/kampanya-maliyetleri", label: "Kampanya Maliyetleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/mutabakat", label: "Mutabakat" },
+  { href: "/sistem-yonetimi/finans-gelirler/yazar-bakiyeleri", label: "Yazar Bakiyeleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/yazar-hakedisleri", label: "Yazar Hakedişleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/yazar-odemeleri", label: "Yazar Ödemeleri" },
 ];
 
 const contractSubNavigation: readonly AdminNavSubItem[] = [
@@ -84,11 +84,11 @@ const contractSubNavigation: readonly AdminNavSubItem[] = [
 ];
 
 const powerSeoSubNavigation: readonly AdminNavSubItem[] = [
-  { href: systemPath("/power-seo"), label: "Genel Bakış" },
-  { href: systemPath("/power-seo?sekme=tarama&mod=full-links"), label: "Tam Site ve HTTP" },
-  { href: systemPath("/power-seo?sekme=sayfa"), label: "Sayfa Denetimi" },
-  { href: systemPath("/power-seo?sekme=servisler"), label: "GSC ve API Bağlantıları" },
-  { href: systemPath("/power-seo?sekme=teknik"), label: "Teknik Modüller" },
+  { href: "/sistem-yonetimi/power-seo", label: "Genel Bakış" },
+  { href: "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links", label: "Tam Site ve HTTP" },
+  { href: "/sistem-yonetimi/power-seo?sekme=sayfa", label: "Sayfa Denetimi" },
+  { href: "/sistem-yonetimi/power-seo?sekme=servisler", label: "GSC ve API Bağlantıları" },
+  { href: "/sistem-yonetimi/power-seo?sekme=teknik", label: "Teknik Modüller" },
 ];
 
 const systemMapSubNavigation: readonly AdminNavSubItem[] =

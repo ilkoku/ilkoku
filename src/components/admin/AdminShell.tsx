@@ -212,7 +212,7 @@ export function AdminShell({
                           ? pathname === item.href
                           : pathname === item.href || pathname.startsWith(item.href + "/");
                       const hasChildren = Boolean(item.children?.length);
-                      const subExpanded = expandedSubmenus[item.href] ?? active;
+                      const subExpanded = expandedSubmenus[item.href] ?? false;
 
                       return (
                         <div className="admin-nav-child" key={item.href}>
@@ -241,10 +241,11 @@ export function AdminShell({
                               </button>
                             ) : null}
                           </div>
-                          {hasChildren && subExpanded ? (
+                          {hasChildren ? (
                             <div
                               className="admin-nav-child__items"
                               id={`admin-submenu-${group.id}-${group.items.indexOf(item)}`}
+                              hidden={!subExpanded}
                             >
                               {item.children?.map((child) => (
                                 <Link

@@ -56,10 +56,16 @@ test("system management keeps every admin destination behind seven grouped navig
 
   assert.match(shell, /adminNavigationGroups\.map/);
   assert.match(shell, /admin-nav-group__landing/);
-  assert.match(shell, /href=\{group\.landingHref\}/);
+  assert.match(shell, /setMenuSelection/);
   assert.match(shell, /admin-nav-group__toggle/);
-  assert.match(shell, /aria-expanded=\{expanded\}/);
-  assert.match(shell, /group\.items\.map/);
+  assert.match(shell, /Sistem yönetimi ana menüsü/);
+  assert.match(shell, /admin-secondary-panel__items/);
+  assert.match(shell, /admin-workspace/);
+  assert.match(shell, /adminNavigationGroups\.map/);
+  assert.doesNotMatch(shell.slice(shell.indexOf('<nav aria-label="Sistem yönetimi ana menüsü">'), shell.indexOf("</nav>")), /group\.items\.map|selectedGroup\.items\.map/, "left sidebar must not render submenus");
+
+  assert.match(shell, /aria-expanded=\{isSelected\}/);
+  assert.match(shell, /selectedGroup\.items\.map/);
 
   for (const landing of [
     'landingHref: systemPath()',
@@ -134,6 +140,9 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
   assert.match(shell, /className="admin-nav-child__items"/);
   assert.match(shell, /aria-expanded=\{subExpanded\}/);
   assert.match(shell, /aria-controls=\{/);
+  assert.match(shell, /id="admin-secondary-panel"/);
+  assert.match(shell, /setExpandedSubmenus/);
+
   assert.match(shell, /item\.children\?\.map/);
-  assert.match(shell, /onClick=\{\(\) => setOpen\(false\)\}/);
+  assert.match(shell, /className="admin-secondary-panel"/);
 });

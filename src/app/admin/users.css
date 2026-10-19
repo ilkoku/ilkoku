@@ -105,13 +105,13 @@
 }
 
 .admin-users-table tbody td:nth-child(2) > strong {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 650;
 }
 
 .admin-users-table tbody td:nth-child(2) > span {
   margin-top: 0.2rem;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   opacity: 0.75;
 }
 

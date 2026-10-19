@@ -398,3 +398,42 @@
     border-bottom: 1px solid rgba(148,163,184,.12);
   }
 }
+
+/* Shared admin workspace: preserve each specialist center's page styles, suppress only outer gutter. */
+.admin-content--embedded {
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto; /* Keep wide contract/map tables accessible within the workspace, never overflow the whole viewport. */
+}
+.admin-content--embedded > * { min-width: 0; }
+
+/* UNIFIED ADMIN MOBILE TOPBAR REFLOW
+   All original buttons/links remain available; the profile moves to a second
+   flex row rather than widening the entire 390px document. */
+@media (max-width: 680px) {
+  .admin-shell .admin-topbar {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 5rem;
+    padding: .6rem 1rem;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  .admin-shell .admin-topbar > div:first-of-type {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .admin-shell .admin-profile {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+  .admin-shell .admin-profile__logout { white-space: nowrap; }
+}

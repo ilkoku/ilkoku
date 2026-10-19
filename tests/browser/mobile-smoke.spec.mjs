@@ -1143,3 +1143,72 @@ test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and scr
   await panel.getByRole("button", { name: "Kullanıcı & Roller alt menüsünü kapat" }).click();
   await expect(panel).toHaveCount(0);
 });
+
+test("all four admin workspaces share exactly one main sidebar and one right submenu", async ({ page }, testInfo) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin browser session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.desktop);
+  const cases = [
+    { path: "/sistem-yonetimi", group: "Genel Bakış", second: "Kontrol Merkezi" },
+    { path: "/icerik", group: "Eser & İçerik", second: "İçerik Yönetimi", third: "/icerik/seo" },
+    { path: "/icerik/seo", group: "Eser & İçerik", second: "İçerik Yönetimi", third: "/icerik/seo" },
+    { path: "/harita", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
+    { path: "/harita/rotalar", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
+    { path: "/sozlesme", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
+    { path: "/sozlesme/takip", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
+  ];
+  for (const scenario of cases) {
+    const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), scenario.path).toBeLessThan(400);
+    await expect(page.locator(".admin-shell")).toHaveCount(1);
+    await expect(page.locator(".admin-sidebar")).toHaveCount(1);
+    await expect(page.locator(".admin-nav-group")).toHaveCount(7);
+    await expect(page.locator(".admin-secondary-panel")).toHaveCount(scenario.path === "/sistem-yonetimi" ? 0 : 1);
+    await expect(page.locator(".admin-sidebar .admin-nav-child")).toHaveCount(0);
+    await expect(page.locator(".content-sidebar, .system-map-primary-nav, .contract-management-sidebar")).toHaveCount(0);
+    if (scenario.path !== "/sistem-yonetimi") {
+      const group = page.locator(".admin-sidebar").getByRole("button", { name: scenario.group, exact: true });
+      await expect(group).toHaveAttribute("aria-expanded", "true");
+      await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: scenario.second, exact: true })).toBeVisible();
+    }
+    if (scenario.third) {
+      await page.locator(".admin-secondary-panel").getByRole("button", { name: scenario.second + " alt menüsünü aç" }).click();
+      await expect(page.locator(`.admin-secondary-panel .admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
+    }
+    await expectResponsiveDocument(page);
+  }
+  await page.screenshot({ path: testInfo.outputPath("unified-admin-contracts-desktop.png"), animations: "disabled" });
+  await page.setViewportSize(viewports.phone390);
+  await page.goto("/icerik", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".admin-secondary-panel")).toBeVisible();
+  await expect(page.locator(".content-shell--unified")).toHaveCSS("color", "rgb(23, 21, 33)");
+  await page.getByRole("button", { name: "Menüyü aç" }).click();
+  await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
+  await page.screenshot({ path: testInfo.outputPath("unified-admin-cms-mobile-drawer.png"), animations: "disabled" });
+  await page.getByRole("button", { name: "Menüyü kapat" }).click({ position: { x: 350, y: 500 } });
+  await expect(page.locator(".admin-secondary-panel")).toBeVisible();
+  await expectResponsiveDocument(page);
+  await page.screenshot({ path: testInfo.outputPath("unified-admin-cms-mobile-workspace.png"), animations: "disabled" });
+  for (const specialist of ["/harita/rotalar", "/sozlesme/takip"]) {
+    await page.goto(specialist, { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".admin-shell")).toHaveCount(1);
+    await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
+    await expect(page.locator(".admin-secondary-panel")).toBeVisible();
+    await expect(page.locator(".system-map-primary-nav, .contract-management-sidebar")).toHaveCount(0);
+    await expectResponsiveDocument(page);
+  }
+});
+
+test("CMS manager without system admin role keeps dedicated CMS interface", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.cmsManager;
+  expect(token, "CMS manager fixture missing").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.goto("/icerik", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".content-sidebar")).toHaveCount(1);
+  await expect(page.locator(".admin-shell")).toHaveCount(0);
+  await page.goto("/harita", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/);
+});

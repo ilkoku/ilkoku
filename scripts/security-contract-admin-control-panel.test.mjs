@@ -146,3 +146,24 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
   assert.match(shell, /item\.children\?\.map/);
   assert.match(shell, /className="admin-secondary-panel"/);
 });
+
+test("all four admin centers render one canonical left/right navigation shell", () => {
+  const layouts = [
+    "src/app/admin/layout.tsx",
+    "src/app/icerik/layout.tsx",
+    "src/app/harita/layout.tsx",
+    "src/app/sozlesme/layout.tsx",
+  ];
+  for (const path of layouts) {
+    assert.match(read(path), /<AdminShell/, path + " uses the one shared admin shell");
+  }
+  assert.match(read("src/app/icerik/layout.tsx"), /access\.isAdmin/, "CMS respects non-admin publisher roles");
+  assert.match(read("src/app/icerik/layout.tsx"), /<ContentShell embedded/, "CMS keeps its own workspace without a second nav");
+  assert.match(read("src/components/content/ContentShell.tsx"), /!embedded \? <aside/, "non-admin CMS sidebar stays accessible");
+  assert.doesNotMatch(read("src/app/harita/layout.tsx"), /<SystemMapNavigation/, "map must not add a second left sidebar");
+  assert.doesNotMatch(read("src/app/sozlesme/layout.tsx"), /<ContractManagementNavigation/, "contracts must not add a second left sidebar");
+  for (const path of layouts.slice(1)) {
+    assert.match(read(path), /\.\.\/admin\/admin\.css/, "all areas share same original admin navigation styling");
+  }
+  assert.match(read("src/components/admin/AdminShell.tsx"), /embeddedWorkspace/, "specialist page content is preserved without extra gutters");
+});

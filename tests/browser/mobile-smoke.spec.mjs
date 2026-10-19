@@ -1183,6 +1183,7 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
   await page.setViewportSize(viewports.phone390);
   await page.goto("/icerik", { waitUntil: "domcontentloaded" });
   await expect(page.locator(".admin-secondary-panel")).toBeVisible();
+  await expect(page.locator(".content-shell--unified")).toHaveCSS("color", "rgb(23, 21, 33)");
   await page.getByRole("button", { name: "Menüyü aç" }).click();
   await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
   await page.screenshot({ path: testInfo.outputPath("unified-admin-cms-mobile-drawer.png"), animations: "disabled" });

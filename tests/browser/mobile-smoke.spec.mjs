@@ -1245,7 +1245,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
     ["/sistem-yonetimi/power-seo?sekme=tarama&mod=redirects", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
     ["/sistem-yonetimi/power-seo?mod=sitemap", "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links"],
     ["/sistem-yonetimi/power-seo?yol=%2Fnasil-calisir", "/sistem-yonetimi/power-seo?sekme=sayfa"],
-    ["/sistem-yonetimi/power-seo?sekme=genel&kontrol=oncelik", "/sistem-yonetimi/power-seo"],
+    ["/sistem-yonetimi/power-seo?sekme=genel&kaynak=yonetim", "/sistem-yonetimi/power-seo"],
   ]) {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     const panel = page.locator(".admin-secondary-panel");

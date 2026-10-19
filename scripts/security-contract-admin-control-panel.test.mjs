@@ -102,3 +102,38 @@ test("admin subpages and external management centers expose a consistent return 
     assert.match(source, /<AdminReturnLink \/>/);
   }
 });
+
+test("third-level admin navigation preserves 7 groups and all 25 existing destinations", () => {
+  assert.match(navigation, /children\?: readonly AdminNavSubItem\[\]/);
+  assert.match(navigation, /cmsModules\.filter\(\(module\) => module\.enabled\)/);
+  assert.match(navigation, /systemMapNavigationItems\.map/);
+  for (const key of [
+    "contentSubNavigation", "paymentSubNavigation", "financeSubNavigation",
+    "contractSubNavigation", "powerSeoSubNavigation", "systemMapSubNavigation",
+  ]) {
+    assert.ok(navigation.includes(`children: ${key}`), `${key} is attached to the second-level item`);
+  }
+  for (const route of [
+    "/odeme-sistemi/siparisler", "/odeme-sistemi/odemeler",
+    "/odeme-sistemi/iadeler", "/odeme-sistemi/erisim-haklari",
+    "/odeme-sistemi/kuponlar", "/odeme-sistemi/saglayicilar",
+    "/odeme-sistemi/ayarlar", "/finans-gelirler/finans-hareketleri",
+    "/finans-gelirler/ilkoku-gelirleri", "/finans-gelirler/kampanya-maliyetleri",
+    "/finans-gelirler/mutabakat", "/finans-gelirler/yazar-bakiyeleri",
+    "/finans-gelirler/yazar-hakedisleri", "/finans-gelirler/yazar-odemeleri",
+    "/sozlesme/sablonlar/yeni", "/sozlesme/hukuk-inceleme",
+    "/sozlesme/takip", "/icerik/rehber",
+  ]) {
+    assert.ok(navigation.includes(route), `${route} remains discoverable`);
+  }
+  for (const tab of ["tarama", "sayfa", "servisler", "teknik"]) {
+    assert.ok(navigation.includes(`sekme=${tab}`), `Power-SEO ${tab} tab is linked`);
+  }
+  assert.match(shell, /expandedSubmenus/);
+  assert.match(shell, /className="admin-nav-child__header"/);
+  assert.match(shell, /className="admin-nav-child__items"/);
+  assert.match(shell, /aria-expanded=\{subExpanded\}/);
+  assert.match(shell, /aria-controls=\{/);
+  assert.match(shell, /item\.children\?\.map/);
+  assert.match(shell, /onClick=\{\(\) => setOpen\(false\)\}/);
+});

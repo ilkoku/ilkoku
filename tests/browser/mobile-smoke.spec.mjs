@@ -1095,6 +1095,28 @@ test("admin header leaves Hesabım and Çıkış unchanged; duplicate topbar sho
   await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: "Audit Log", exact: true })).toBeVisible();
 });
 
+test("dashboard shows live metrics without six duplicated management-center cards", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+    await expect(page.locator(".admin-control-centers, .admin-control-center")).toHaveCount(0);
+    await expect(page.getByText("Nereye gitmek istiyorsun?")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Anlık platform özeti" })).toBeVisible();
+    await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+  await page.setViewportSize(viewports.desktop);
+  await page.locator(".admin-sidebar").getByRole("button", { name: "Eser & İçerik", exact: true }).click();
+  await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: "İçerik Yönetimi", exact: true })).toBeVisible();
+});
+
 test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

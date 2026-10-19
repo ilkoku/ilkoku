@@ -269,38 +269,25 @@ export function AdminShell({
             />
           </form>
 
-          <Link
-            className="admin-icon-button"
-            aria-label="Sistem hareketlerini görüntüle"
-            href={`${SYSTEM_MANAGEMENT_PATH}/audit-log`}
-          >
-            ♢
-          </Link>
-
           <div className="admin-profile">
-            <span>{initials}</span>
-
-            <div>
-              <strong>{user.fullName}</strong>
-              <small>{user.email}</small>
-            </div>
-
-            <Link className="admin-profile__logout" href="/icerik">
-              İçerik Yönetimi
-            </Link>
-
-            <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
-
-            <form action={logoutAction}>
-              <button
-                className="admin-profile__logout"
-                type="submit"
-                aria-label="Çıkış yap"
-                title="Çıkış yap"
-              >
-                Çıkış
-              </button>
-            </form>
+            <span aria-hidden="true">{initials}</span>
+            <details className="admin-account-menu">
+              <summary aria-label="Hesap seçeneklerini aç">
+                Hesap <span aria-hidden="true">⌄</span>
+              </summary>
+              <section className="admin-account-menu__panel" aria-label="Hesap işlemleri">
+                <p className="admin-account-menu__identity">
+                  <strong>{user.fullName}</strong>
+                  <span>{user.email}</span>
+                </p>
+                <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
+                <form action={logoutAction}>
+                  <button className="admin-profile__logout" type="submit" aria-label="Çıkış yap">
+                    Çıkış
+                  </button>
+                </form>
+              </section>
+            </details>
           </div>
         </header>
 

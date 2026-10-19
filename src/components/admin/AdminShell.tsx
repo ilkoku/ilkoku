@@ -126,6 +126,17 @@ function isActiveSubItem(
   const [targetPath, targetSearch = ""] = href.split("?");
   if (targetPath !== pathname) return false;
 
+  // Match the active Power-SEO section, not a specific nested scan mode.
+  // The page keeps "tarama" active for sitemap, links and redirects modes.
+  if (targetPath === `${SYSTEM_MANAGEMENT_PATH}/power-seo`) {
+    const requestedTab = currentSearch.get("sekme");
+    const activeTab = requestedTab && ["genel", "tarama", "sayfa", "servisler", "teknik"].includes(requestedTab)
+      ? requestedTab
+      : currentSearch.get("mod") ? "tarama" : currentSearch.get("yol") ? "sayfa" : "genel";
+    const targetTab = new URLSearchParams(targetSearch).get("sekme") ?? "genel";
+    return activeTab === targetTab;
+  }
+
   const matchesQueryLink = (link: string) => {
     const [path, query = ""] = link.split("?");
     if (path !== pathname || !query) return false;

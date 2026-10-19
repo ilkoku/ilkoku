@@ -285,10 +285,6 @@ export function AdminShell({
               <small>{user.email}</small>
             </div>
 
-            <Link className="admin-profile__logout" href="/icerik">
-              İçerik Yönetimi
-            </Link>
-
             <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
 
             <form action={logoutAction}>

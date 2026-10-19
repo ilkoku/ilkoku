@@ -15,6 +15,7 @@ import {
 
 type AdminShellProps = {
   children: ReactNode;
+  embeddedWorkspace?: boolean;
   user: {
     email: string;
     fullName: string;
@@ -128,6 +129,7 @@ function getInitials(fullName: string) {
 
 export function AdminShell({
   children,
+  embeddedWorkspace = false,
   user,
 }: AdminShellProps) {
   const pathname = usePathname();
@@ -333,8 +335,8 @@ export function AdminShell({
               </nav>
             </aside>
           ) : null}
-        <main className="admin-content">
-          {pathname !== SYSTEM_MANAGEMENT_PATH ? (
+        <main className={`admin-content ${embeddedWorkspace ? "admin-content--embedded" : ""}`}>
+          {!embeddedWorkspace && pathname !== SYSTEM_MANAGEMENT_PATH ? (
             <div className="admin-return-row">
               <AdminReturnLink />
             </div>

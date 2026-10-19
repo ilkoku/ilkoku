@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { SystemMapNavigation } from "@/features/system-map/SystemMapNavigation";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import "../admin/admin.css";
 import "./harita.css";
 import "./control-center.css";
 import "./operations.css";
@@ -39,9 +40,8 @@ export default async function SystemMapLayout({
   }
 
   return (
-    <div className="system-map-app-shell">
-      <SystemMapNavigation />
-      <div className="system-map-app-content">{children}</div>
-    </div>
+    <AdminShell embeddedWorkspace user={{ email: user.email, fullName: user.displayName || user.fullName }}>
+      {children}
+    </AdminShell>
   );
 }

@@ -13,6 +13,7 @@ type ContentShellProps = {
   children: ReactNode;
   user: { email: string; fullName: string };
   isAdmin: boolean;
+  embedded?: boolean;
 };
 
 function isEditableTarget(target: EventTarget | null) {
@@ -21,7 +22,7 @@ function isEditableTarget(target: EventTarget | null) {
   return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
 }
 
-export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
+export function ContentShell({ children, user, isAdmin, embedded = false }: ContentShellProps) {
   const pathname = usePathname();
   const navigationPathname = pathname.startsWith("/icerik/egitim/okur/")
     ? pathname.replace("/icerik/egitim/okur/", "/icerik/okur-egitim/")
@@ -66,10 +67,10 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
   }, []);
 
   return (
-    <div className="content-shell">
+    <div className={`content-shell ${embedded ? "content-shell--unified" : ""}`}>
       <a className="content-skip-link" href="#icerik-ana">İçeriğe geç</a>
 
-      <aside className="content-sidebar" aria-label="İçerik yönetimi gezinmesi">
+      {!embedded ? <aside className="content-sidebar" aria-label="İçerik yönetimi gezinmesi">
         <div className="content-brand">
           <Link href="/" aria-label="İlkOku ana sayfa">
             <Image src={logo} alt="İlkOku" priority />
@@ -114,7 +115,7 @@ export function ContentShell({ children, user, isAdmin }: ContentShellProps) {
           <Link href="/">Siteye Dön</Link>
           <Link href="/hesabim">Hesabım</Link>
         </div>
-      </aside>
+      </aside> : null}
 
       <section className="content-main">
         <header className="content-topbar">

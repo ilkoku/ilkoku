@@ -1088,6 +1088,7 @@ test("admin header leaves Hesabım and Çıkış unchanged; duplicate topbar sho
     await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
     await expectResponsiveDocument(page);
   }
+  await page.setViewportSize(viewports.desktop);
   await page.locator(".admin-sidebar").getByRole("button", { name: "Eser & İçerik", exact: true }).click();
   await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: "İçerik Yönetimi", exact: true })).toBeVisible();
   await page.locator(".admin-sidebar").getByRole("button", { name: "Güvenlik & Sistem", exact: true }).click();

@@ -148,13 +148,13 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
 });
 
 test("admin removes only duplicated shortcuts while preserving Hesabım and Çıkış", () => {
-  assert.doesNotMatch(shell, /href="\\/icerik">\\s*İçerik Yönetimi/);
+  assert.doesNotMatch(shell, /href="\/icerik">\s*İçerik Yönetimi/);
   assert.doesNotMatch(dashboard, /Sistem hareketlerini aç/);
-  assert.match(shell, /href="\\/hesabim">Hesabım/);
-  assert.match(shell, /<form action=\\{logoutAction\\}>/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
   assert.match(shell, /aria-label="Çıkış yap"/);
   assert.match(shell, /aria-label="Sistem hareketlerini görüntüle"/);
-  assert.match(navigation, /href: "\\/icerik", label: "İçerik Yönetimi"/);
+  assert.match(navigation, /href: "\/icerik", label: "İçerik Yönetimi"/);
   assert.match(navigation, /label: "Audit Log"/);
 });
 

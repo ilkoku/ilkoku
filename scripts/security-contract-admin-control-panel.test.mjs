@@ -103,6 +103,21 @@ test("admin subpages and external management centers expose a consistent return 
   }
 });
 
+test("horizontal admin navigation keeps visible borders and active-tab cues", () => {
+  const css = read("src/app/admin/admin.css");
+  const panel = css.slice(css.indexOf("/* Unified navigation:"));
+  assert.match(panel, /border-top: 1px solid rgba\(148,163,184,\.24\)/);
+  assert.match(panel, /border-bottom: 1px solid rgba\(148,163,184,\.32\)/);
+  assert.match(panel, /border-bottom: 1px solid rgba\(148,163,184,\.25\)/);
+  assert.match(panel, /border: 1px solid rgba\(148,163,184,\.25\)/);
+  assert.match(panel, /border-color: rgba\(167,139,250,\.75\)/);
+  assert.match(panel, /box-shadow: inset 0 -3px #a78bfa/);
+  assert.match(panel, /border-left: 1px solid rgba\(148,163,184,\.3\)/);
+  assert.match(panel, /\.admin-secondary-panel a:focus-visible/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+});
+
 test("unified admin displays horizontal second and third-level navigation above page content", () => {
   const css = read("src/app/admin/admin.css");
   assert.match(css, /\.admin-workspace\.has-menu\s*\{\s*display: flex;/);

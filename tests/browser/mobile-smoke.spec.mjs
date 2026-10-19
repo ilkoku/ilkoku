@@ -1088,3 +1088,52 @@ test("system management three levels expand on demand at desktop and mobile with
   await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toHaveCount(1);
 });
+
+test("admin nested groups: initial-open toggle, six submenus, desktop and 390px screenshots", async ({ page }, testInfo) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", { waitUntil: "domcontentloaded" });
+
+  const overview = page.getByRole("button", { name: "Genel Bakış alt menüsünü kapat" });
+  await expect(overview).toHaveAttribute("aria-expanded", "true");
+  await overview.click();
+  await expect(page.getByRole("button", { name: "Genel Bakış alt menüsünü aç" })).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("button", { name: "Genel Bakış alt menüsünü aç" }).click();
+  await expect(page.getByRole("button", { name: "Genel Bakış alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
+
+  await page.goto("/sistem-yonetimi/eserler", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("button", { name: "Eser & İçerik alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
+  await page.getByRole("button", { name: "Eser & İçerik alt menüsünü kapat" }).click();
+  await expect(page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" })).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("button", { name: "Eser & İçerik alt menüsünü aç" }).click();
+
+  const cases = [
+    ["Eser & İçerik", "İçerik Yönetimi", "/icerik/seo"],
+    ["Ticaret & Finans", "Ödeme Sistemi", "/sistem-yonetimi/odeme-sistemi/siparisler"],
+    ["Ticaret & Finans", "Finans & Gelirler", "/sistem-yonetimi/finans-gelirler/mutabakat"],
+    ["İletişim & Sözleşmeler", "Sözleşme Yönetimi", "/sozlesme/sablonlar"],
+    ["Güvenlik & Sistem", "Sistem Haritası", "/harita/rotalar"],
+    ["Güvenlik & Sistem", "Power-SEO", "/sistem-yonetimi/power-seo?sekme=teknik"],
+  ];
+  for (const [group, name, href] of cases) {
+    const parent = page.getByRole("button", { name: new RegExp(`^${group} alt menüsünü (aç|kapat)$`) });
+    if (await parent.getAttribute("aria-expanded") === "false") await parent.click();
+    await page.getByRole("button", { name: `${name} alt menüsünü aç` }).click();
+    const link = page.locator(`.admin-nav-child__items a[href="${href}"]`);
+    await expect(link).toBeVisible();
+    await page.getByRole("button", { name: `${name} alt menüsünü kapat` }).click();
+    await expect(link).toBeHidden();
+  }
+
+  await page.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("admin-three-level-desktop.png"), animations: "disabled" });
+  await page.setViewportSize(viewports.phone390);
+  await page.getByRole("button", { name: "Menüyü aç" }).click();
+  await expect(page.locator('.admin-nav-child__items a[href="/icerik/seo"]')).toBeVisible();
+  await expectResponsiveDocument(page);
+  await page.screenshot({ path: testInfo.outputPath("admin-three-level-mobile390.png"), animations: "disabled" });
+});

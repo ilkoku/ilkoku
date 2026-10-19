@@ -1212,3 +1212,35 @@ test("CMS manager without system admin role keeps dedicated CMS interface", asyn
   await page.goto("/harita", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/erisim-reddedildi/);
 });
+
+test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  test.setTimeout(90_000);
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.desktop);
+
+  for (const href of [
+    "/sistem-yonetimi/power-seo",
+    "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links",
+    "/sistem-yonetimi/power-seo?sekme=sayfa",
+    "/sistem-yonetimi/power-seo?sekme=servisler",
+    "/sistem-yonetimi/power-seo?sekme=teknik",
+  ]) {
+    await page.goto(href, { waitUntil: "domcontentloaded" });
+    const panel = page.locator(".admin-secondary-panel");
+    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
+    await expect(active).toHaveCount(1);
+    await expect(active).toHaveAttribute("href", href);
+  }
+
+  await page.goto("/icerik", { waitUntil: "domcontentloaded" });
+  const panel = page.locator(".admin-secondary-panel");
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
+  await expect(panel.locator('a[href="/icerik/ana-sayfa/history"]')).toHaveCount(0);
+  await expect(panel.locator('a[href="/icerik/sayfalar/sablonlar"]')).toHaveCount(0);
+  await expectResponsiveDocument(page);
+});

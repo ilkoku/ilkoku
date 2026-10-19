@@ -80,21 +80,15 @@ test("system management keeps every admin destination behind seven grouped navig
   }
 });
 
-test("general admin dashboard exposes the six operational control centers before detail metrics", () => {
-  for (const title of [
-    "Kullanıcı & Roller",
-    "Eser & İçerik",
-    "Ticaret & Finans",
-    "İletişim & Sözleşmeler",
-    "Güvenlik & Sistem",
-    "Arşiv & Ayarlar",
-  ]) {
-    assert.ok(dashboard.includes(`title: "${title}"`), `${title} dashboard center must remain available`);
-  }
-
-  assert.match(dashboard, /Nereye gitmek istiyorsun\?/);
-  assert.match(dashboard, /managementCenters\.map/);
-  assert.match(dashboard, /admin-control-centers__grid/);
+test("dashboard keeps real metrics but avoids duplicating the permanent management menu", () => {
+  assert.doesNotMatch(dashboard, /managementCenters|admin-control-centers|Nereye gitmek istiyorsun\?/);
+  assert.match(dashboard, /Anlık platform özeti/);
+  assert.match(dashboard, /newUsersToday/);
+  assert.match(dashboard, /latestActivity/);
+  assert.match(shell, /adminNavigationGroups\.map/);
+  assert.match(shell, /selectedGroup\.items\.map/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /aria-label="Çıkış yap"/);
 });
 
 

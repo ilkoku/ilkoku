@@ -280,3 +280,15 @@
   overflow-wrap: anywhere;
 }
 .admin-nav-child__items[hidden] { display: none; }
+
+/* ADMIN THREE-LEVEL SCROLL TRACK FIX — preserve colors and control styling.
+   A vertical grid can compress tall expanded sections inside the sidebar,
+   while .admin-nav-group overflow:hidden clips its real menu rows. */
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.admin-sidebar nav > .admin-nav-group {
+  flex: 0 0 auto;
+}

@@ -1129,7 +1129,7 @@ test("secondary navigation is horizontal above the content on desktop and mobile
     const sidebar = page.locator(".admin-sidebar");
     const panel = page.locator(".admin-secondary-panel");
     await expect(sidebar.locator(".admin-nav-group")).toHaveCount(7);
-    await sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true }).click();
+    await expect(sidebar.getByRole("button", { name: "Kullanıcı & Roller", exact: true })).toHaveAttribute("aria-expanded", "true");
     await expect(panel.locator(".admin-nav-child")).toHaveCount(8);
     await expect(panel.locator(".admin-secondary-panel__items")).toHaveCSS("flex-direction", "row");
     const geometry = await page.evaluate(() => {

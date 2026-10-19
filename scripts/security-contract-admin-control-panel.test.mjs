@@ -108,8 +108,8 @@ test("user directory names and e-mails wrap on separate, slightly smaller lines"
   const userTable = read("src/components/admin/UserManagement.tsx");
   assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > strong/);
   assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > span/);
-  assert.match(css, /font-size: 0\.82rem;/);
-  assert.match(css, /font-size: 0\.72rem;/);
+  assert.match(css, /font-size: 0\.76rem;/);
+  assert.match(css, /font-size: 0\.68rem;/);
   assert.match(css, /overflow-wrap: anywhere;/);
   assert.match(userTable, /<strong>\{user\.fullName\}<\/strong>/);
   assert.match(userTable, /<span>\{user\.email\}<\/span>/);

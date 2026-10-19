@@ -111,7 +111,7 @@ test("admin subpages and external management centers expose a consistent return 
 
 test("third-level admin navigation preserves 7 groups and all 25 existing destinations", () => {
   assert.match(navigation, /children\?: readonly AdminNavSubItem\[\]/);
-  assert.match(navigation, /cmsModules\.filter\(\(module\) => module\.enabled\)/);
+  assert.ok(navigation.includes("module.showInNavigation !== false"), "unified CMS nav respects showInNavigation");
   assert.match(navigation, /systemMapNavigationItems\.map/);
   for (const key of [
     "contentSubNavigation", "paymentSubNavigation", "financeSubNavigation",
@@ -166,4 +166,13 @@ test("all four admin centers render one canonical left/right navigation shell", 
     assert.match(read(path), /\.\.\/admin\/admin\.css/, "all areas share same original admin navigation styling");
   }
   assert.match(read("src/components/admin/AdminShell.tsx"), /embeddedWorkspace/, "specialist page content is preserved without extra gutters");
+});
+
+test("unified admin preserves hidden CMS helpers and query-based Power-SEO active tabs", () => {
+  const cms = read("src/lib/cms-modules.ts");
+  assert.match(cms, /showInNavigation: false/);
+  assert.match(navigation, /module\.showInNavigation !== false/);
+  assert.match(shell, /useSearchParams\(\)/);
+  assert.match(shell, /isActiveSubItem\(child\.href, item\.children/);
+  assert.match(shell, /new URLSearchParams\(query\)/);
 });

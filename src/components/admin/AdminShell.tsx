@@ -176,6 +176,7 @@ export function AdminShell({
                   <button
                     type="button"
                     className="admin-nav-group__landing"
+                    aria-label={group.label}
                     aria-expanded={isSelected}
                     aria-controls="admin-secondary-panel"
                     onClick={() => {

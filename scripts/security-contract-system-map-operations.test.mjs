@@ -169,8 +169,12 @@ test("harita left navigation exposes every specialist workbench as a real route"
   }
   contains(navigation, 'usePathname()', "active specialist route indicator");
   contains(navigation, 'aria-label="Harita çalışma masaları"', "navigation accessibility label");
-  contains(layout, "<SystemMapNavigation />", "shared nested navigation shell");
-  contains(styles, "grid-template-columns: 264px minmax(0, 1fr)", "desktop left application shell");
+  const unifiedNavigation = source("src/lib/admin-navigation.ts");
+  contains(layout, "AdminShell", "shared navigation shell for all admin centers");
+  contains(layout, "embeddedWorkspace", "preserve original system map workspace content");
+  notContains(layout, "<SystemMapNavigation />", "old second left menu must not render");
+  contains(unifiedNavigation, "children: systemMapSubNavigation", "all map routes in unified menu");
+  contains(styles, "grid-template-columns: 264px minmax(0, 1fr)", "legacy navigation stylesheet unchanged for style preservation");
   contains(styles, "position: sticky", "sticky navigation");
   contains(styles, "overflow-x: auto", "responsive horizontal navigation fallback");
 });

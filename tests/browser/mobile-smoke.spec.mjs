@@ -1119,8 +1119,8 @@ test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and scr
   }
   await sidebar.getByRole("button", { name: "Eser & İçerik", exact: true }).click();
   await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
-  await panel.locator('a[href="/icerik"]').scrollIntoViewIfNeeded();
-  await expect(panel.locator('a[href="/icerik"]')).toBeInViewport();
+  await panel.locator('.admin-nav-child__items a[href="/icerik"]').scrollIntoViewIfNeeded();
+  await expect(panel.locator('.admin-nav-child__items a[href="/icerik"]')).toBeInViewport();
   await expect(sidebar.locator(".admin-nav-child")).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath("fixed-left-right-menu-desktop.png"), animations: "disabled" });
   await page.setViewportSize(viewports.phone390);

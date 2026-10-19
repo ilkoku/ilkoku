@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
@@ -116,6 +116,29 @@ function Icon({ name }: { name: AdminNavItem["icon"] }) {
   );
 }
 
+// Query-based destinations (such as Power-SEO tabs) need a distinct active state.
+function isActiveSubItem(
+  href: string,
+  siblings: readonly { href: string }[],
+  pathname: string,
+  currentSearch: { get(key: string): string | null },
+) {
+  const [targetPath, targetSearch = ""] = href.split("?");
+  if (targetPath !== pathname) return false;
+
+  const matchesQueryLink = (link: string) => {
+    const [path, query = ""] = link.split("?");
+    if (path !== pathname || !query) return false;
+    return Array.from(new URLSearchParams(query).entries()).every(
+      ([key, value]) => currentSearch.get(key) === value,
+    );
+  };
+
+  return targetSearch
+    ? matchesQueryLink(href)
+    : !siblings.some((sibling) => matchesQueryLink(sibling.href));
+}
+
 function getInitials(fullName: string) {
   const initials = fullName
     .trim()
@@ -133,6 +156,7 @@ export function AdminShell({
   user,
 }: AdminShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [menuSelection, setMenuSelection] = useState<{ path: string; groupId: string | null } | null>(null);
   const [expandedSubmenus, setExpandedSubmenus] = useState<Record<string, boolean>>({});
@@ -323,7 +347,7 @@ export function AdminShell({
                       {hasChildren ? (
                         <div className="admin-nav-child__items" id={`admin-submenu-${selectedGroup.id}-${index}`} hidden={!subExpanded}>
                           {item.children?.map((child) => (
-                            <Link key={child.href} href={child.href} className={pathname === child.href.split("?")[0] ? "is-active" : ""}>
+                            <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                               <span>{child.label}</span>
                             </Link>
                           ))}

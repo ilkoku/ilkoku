@@ -1129,7 +1129,7 @@ test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and scr
   await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
   await page.screenshot({ path: testInfo.outputPath("fixed-left-main-mobile390.png"), animations: "disabled" });
-  await page.getByRole("button", { name: "Menüyü kapat" }).click();
+  await page.getByRole("button", { name: "Menüyü kapat" }).click({ position: { x: 350, y: 500 } });
   await expect(panel).toBeVisible();
   await panel.locator('a[href="/icerik/seo"]').scrollIntoViewIfNeeded();
   await expect(panel.locator('a[href="/icerik/seo"]')).toBeInViewport();

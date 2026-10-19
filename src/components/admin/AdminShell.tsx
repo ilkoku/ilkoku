@@ -190,7 +190,7 @@ export function AdminShell({
                     onClick={() =>
                       setExpandedGroups((current) => ({
                         ...current,
-                        [group.id]: !current[group.id],
+                        [group.id]: !(current[group.id] ?? (group.id === "overview" || groupActive)),
                       }))
                     }
                     type="button"

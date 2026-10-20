@@ -1335,6 +1335,30 @@ test("contract overview and tracking clamp page ranges, preserve URL filters and
   await expect(page.locator(".contract-table-wrap table")).toBeVisible();
 });
 
+test("email operations keeps historical tests separate and requires retry confirmation", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin browser session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+  await page.setViewportSize(viewports.phone390);
+
+  const response = await page.goto("/sistem-yonetimi/eposta-operasyonlari", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  for (const label of [
+    "Geçmiş sistem testi hatası", "Bildirim hatası", "Son 24 saatte çözümlenmemiş",
+    "Son SMTP sağlayıcı kabulü", "Çözümlenmemiş hata", "Son 1 saat hata",
+  ]) {
+    await expect(page.getByText(label, { exact: true })).toBeVisible();
+  }
+  const checkboxes = page.locator('.admin-email-retry-form input[name="retryConfirmed"]');
+  const count = await checkboxes.count();
+  for (let i = 0; i < count; i += 1) {
+    await expect(checkboxes.nth(i)).toHaveAttribute("required", "");
+    await expect(checkboxes.nth(i)).not.toBeChecked();
+  }
+  await expectResponsiveDocument(page);
+});
+
 test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

@@ -281,6 +281,60 @@ test("communications and contract submenus use a row-column matrix without alter
   assert.match(scoped, /@media \(max-width: 380px\)/);
 });
 
+test("communications group has row/column content across contracts and email subpages", () => {
+  const paths = {
+    overview: "src/app/sozlesme/page.tsx",
+    library: "src/app/sozlesme/sablonlar/page.tsx",
+    drafts: "src/app/sozlesme/taslaklar/page.tsx",
+    review: "src/app/sozlesme/inceleme/page.tsx",
+    legal: "src/app/sozlesme/hukuk-inceleme/page.tsx",
+    inbox: "src/app/sozlesme/bildirimler/page.tsx",
+    tracking: "src/app/sozlesme/takip/page.tsx",
+    mail: "src/app/admin/epostalar/page.tsx",
+    operations: "src/app/admin/eposta-operasyonlari/page.tsx",
+  };
+  const pages = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, read(path)]));
+  const css = read("src/app/sozlesme/operations-table-layout.css");
+  const contractLayout = read("src/app/sozlesme/layout.tsx");
+  const adminLayout = read("src/app/admin/layout.tsx");
+
+  for (const key of ["overview", "library", "drafts", "review", "legal"]) {
+    assert.match(pages[key], /className="contract-list-table|className="contract-table-wrap contract-list-table"/);
+    assert.match(pages[key], /<thead>/, `${key}: column headers`);
+    assert.match(pages[key], /<tbody>/, `${key}: record rows`);
+    assert.match(pages[key], /<tr key=\{/);
+  }
+
+  assert.doesNotMatch(pages.overview, /className="contract-template-grid"/);
+  assert.doesNotMatch(pages.library, /className="contract-library-card"/);
+  assert.doesNotMatch(pages.drafts, /className="contract-soft-card"/);
+  assert.doesNotMatch(pages.review, /className="contract-review-card"/);
+  assert.match(pages.review, /<details className="contract-row-details">/);
+  assert.match(pages.review, /readiness\.legalReviewItems\.map/);
+  assert.match(pages.review, /readiness\.ownerDecisionItems\.map/);
+  assert.match(pages.legal, /contract-legal-pack-documents/);
+  assert.match(pages.legal, /template\.body/);
+  assert.match(pages.legal, /ContractLegalReviewPrintButton/);
+  assert.match(pages.inbox, /NotificationListItem/);
+  assert.match(pages.inbox, /contract-notification-rows/);
+  assert.match(pages.tracking, /className="contract-table-wrap"/);
+  assert.match(pages.mail, /admin-data-table admin-email-table/);
+  assert.match(pages.operations, /admin-data-table admin-email-operations-table/);
+  assert.match(pages.operations, /AdminEmailRetryButton/);
+  assert.match(pages.overview, /ContractSendWorkbench/);
+
+  assert.match(css, /\.contract-list-table table/);
+  assert.match(css, /overflow-x: auto/);
+  assert.match(css, /\.contract-notification-rows/);
+  assert.match(css, /\.admin-email-operations-summary/);
+  assert.match(css, /\.admin-email-summary/);
+  assert.match(css, /@media screen and \(max-width: 660px\)/);
+  assert.match(contractLayout, /import "\.\/operations-table-layout\.css"/);
+  assert.match(adminLayout, /import "\.\.\/sozlesme\/operations-table-layout\.css"/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /aria-label="Çıkış yap"/);
+});
+
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {
   const css = read("src/app/admin/admin.css");
   const panel = css.slice(css.indexOf("/* Unified navigation:"));

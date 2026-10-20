@@ -304,7 +304,7 @@ export function AdminShell({
           {selectedGroup ? (
             <aside
               id="admin-secondary-panel"
-              className="admin-secondary-panel"
+              className={`admin-secondary-panel ${selectedGroup.id === "communications" ? "admin-secondary-panel--communications" : ""}`}
               aria-label={`${selectedGroup.label} alt menüleri`}
             >
               <div className="admin-secondary-panel__heading">
@@ -319,6 +319,9 @@ export function AdminShell({
                   onClick={() => setMenuSelection({ path: pathname, groupId: null })}
                 >×</button>
               </div>
+              {selectedGroup.id === "communications" ? (
+                <p className="admin-communications-nav__caption">Ana menüler</p>
+              ) : null}
               <nav className="admin-secondary-panel__items" aria-label="Seçili yönetim grubunun alt menüleri">
                 {selectedGroup.items.map((item, index) => {
                   const isActive =
@@ -326,7 +329,9 @@ export function AdminShell({
                       ? pathname === item.href
                       : pathname === item.href || pathname.startsWith(item.href + "/");
                   const hasChildren = Boolean(item.children?.length);
-                  const subExpanded = expandedSubmenus[item.href] ?? false;
+                  const subExpanded = selectedGroup.id === "communications" && hasChildren
+                    ? true
+                    : expandedSubmenus[item.href] ?? false;
                   return (
                     <div className="admin-nav-child" key={item.href}>
                       <div className="admin-nav-child__header">
@@ -335,7 +340,7 @@ export function AdminShell({
                           <span>{item.label}</span>
                           {item.badge && <b>{item.badge}</b>}
                         </Link>
-                        {hasChildren ? (
+                        {hasChildren && selectedGroup.id !== "communications" ? (
                           <button
                             type="button"
                             className="admin-nav-group__toggle admin-nav-child__toggle"
@@ -355,8 +360,11 @@ export function AdminShell({
                   );
                 })}
               </nav>
+              {selectedGroup.id === "communications" ? (
+                <p className="admin-communications-nav__caption">Sözleşme alt menüleri</p>
+              ) : null}
               {selectedGroup.items.map((item, index) =>
-                item.children?.length && expandedSubmenus[item.href] ? (
+                item.children?.length && (selectedGroup.id === "communications" || expandedSubmenus[item.href]) ? (
                   <nav
                     key={item.href}
                     id={`admin-submenu-${selectedGroup.id}-${index}`}

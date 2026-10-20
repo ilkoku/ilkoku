@@ -124,27 +124,33 @@ export default async function ContractManagementPage({
           Soft Taslaklar ayrı çalışma alanında tutulur. Burada operasyon ve sistem şablonları görünür; gönderim çalışma masasında yalnız aktif manuel şablonlar kullanılabilir. Kayıtta otomatik kabul edilen temel üyelik sözleşmesi manuel gönderim listesinden özellikle ayrılmıştır.
         </p>
 
-        <div className="contract-template-grid">
-          {operationalTemplates.map((template) => {
-            const isRegistrationTemplate = template.code === MANDATORY_REGISTRATION_CONTRACT_CODE;
-            return (
-              <Link key={template.id} href={`/sozlesme/sablonlar/${template.id}`} className="contract-template-card" data-active={template.active ? "true" : "false"}>
-                <div>
-                  <span>{template.targetRole === "any" ? "Tüm roller" : template.targetRole}</span>
-                  <span>v{template.version}</span>
-                </div>
-                <h3>{template.title}</h3>
-                <p>{template.description ?? "Açıklama yok"}</p>
-                <small>
-                  {isRegistrationTemplate
-                    ? "Sistem / kayıt sırasında otomatik kabul"
-                    : template.active
-                      ? "Aktif / manuel gönderilebilir"
-                      : "Çalışma aşamasında"} · {template.code}
-                </small>
-              </Link>
-            );
-          })}
+        <div className="contract-table-wrap contract-list-table">
+          <table>
+            <thead>
+              <tr><th>Şablon / Kod</th><th>Hedef rol</th><th>Sürüm</th><th>Açıklama</th><th>Gönderim durumu</th><th>İşlem</th></tr>
+            </thead>
+            <tbody>
+              {operationalTemplates.map((template) => {
+                const isRegistrationTemplate = template.code === MANDATORY_REGISTRATION_CONTRACT_CODE;
+                return (
+                  <tr key={template.id}>
+                    <td><strong>{template.title}</strong><small>{template.code}</small></td>
+                    <td>{template.targetRole === "any" ? "Tüm roller" : template.targetRole}</td>
+                    <td>v{template.version}</td>
+                    <td>{template.description ?? "Açıklama yok"}</td>
+                    <td>
+                      <span className="contract-row-state" data-state={template.active ? "active" : "draft"}>
+                        {isRegistrationTemplate
+                          ? "Sistem / otomatik kabul"
+                          : template.active ? "Aktif / manuel gönderilebilir" : "Çalışma aşamasında"}
+                      </span>
+                    </td>
+                    <td><Link href={`/sozlesme/sablonlar/${template.id}`}>Şablonu aç →</Link></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
         {operationalTemplates.length === 0 ? <div className="contract-empty">Henüz kütüphane şablonu yok. Soft Taslaklar&apos;dan çalışma kopyası oluşturabilirsiniz.</div> : null}
       </section>

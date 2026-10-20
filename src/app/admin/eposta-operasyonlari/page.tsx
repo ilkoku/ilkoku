@@ -132,6 +132,7 @@ export default async function AdminEmailOperationsPage() {
     records,
     retryRows,
     lastSmtpAcceptance,
+    schedulerHealth,
   ] = await Promise.all([
     prisma.emailDelivery.count({
       where: {
@@ -185,6 +186,21 @@ export default async function AdminEmailOperationsPage() {
       orderBy: [{ sentAt: "desc" }, { attemptedAt: "desc" }],
       select: { sentAt: true, attemptedAt: true },
     }),
+    prisma.emailOperationsSchedulerState.findUnique({
+      where: { id: "hourly" },
+      select: {
+        lastAttemptAt: true,
+        lastSuccessAt: true,
+        lastFailureAt: true,
+        lastAttemptSource: true,
+        lastDurationMs: true,
+        lastErrorCode: true,
+      },
+    }).then((state) => ({ state, readError: false }))
+      .catch((error) => {
+        console.error("EMAIL_OPERATIONS_SCHEDULER_HEALTH_READ_FAILED", error);
+        return { state: null, readError: true };
+      }),
   ]);
 
   const latestRetryBySource = new Map<string, RetryRow>();
@@ -194,12 +210,24 @@ export default async function AdminEmailOperationsPage() {
     }
   }
 
+  const schedulerSuccessAt = schedulerHealth.state?.lastSuccessAt ?? null;
+  const schedulerAgeMinutes = schedulerSuccessAt
+    ? Math.max(0, Math.floor((now.getTime() - schedulerSuccessAt.getTime()) / 60_000))
+    : null;
+  // This is a read-only indicator: when all cron providers stop, the panel
+  // can only show the overdue status when an administrator next opens it.
+  const schedulerIsLate =
+    schedulerHealth.readError
+    || schedulerAgeMinutes === null
+    || schedulerAgeMinutes > 90;
+
   const critical =
-    unresolved.readError
+    schedulerIsLate
+    || unresolved.readError
     || stalePendingCount > 0
     || failedLastHour >= FAILURE_ALERT_THRESHOLD;
   const warning = !critical && (unresolved.total > 0 || pendingCount > 0);
-  const healthLabel = unresolved.readError
+  const healthLabel = unresolved.readError || schedulerHealth.readError
     ? "Ölçüm hatası"
     : critical
       ? "Müdahale gerekiyor"
@@ -268,6 +296,21 @@ export default async function AdminEmailOperationsPage() {
           <span>Son SMTP sağlayıcı kabulü</span>
           <strong className="admin-email-operations-last-smtp">{lastSmtpAcceptance ? formatDate(lastSmtpAcceptance.sentAt || lastSmtpAcceptance.attemptedAt) : "Kayıt yok"}</strong>
           <small>SMTP mesaj kimliği kayıtlı; gelen kutusuna teslim kanıtı değildir</small>
+        </article>
+        <article>
+          <span>Son başarılı saatlik kontrol</span>
+          <strong className="admin-email-operations-last-smtp">
+            {schedulerHealth.readError ? "Ölçüm hatası" : formatDate(schedulerSuccessAt)}
+          </strong>
+          <small>
+            Son deneme: {formatDate(schedulerHealth.state?.lastAttemptAt ?? null)}
+            {" · "}Kaynak: {schedulerHealth.state?.lastAttemptSource ?? "Bilinmiyor"}
+          </small>
+        </article>
+        <article>
+          <span>Kontrol gecikmesi</span>
+          <strong>{schedulerHealth.readError ? "Ölçüm hatası" : schedulerAgeMinutes === null ? "Kayıt yok" : `${schedulerAgeMinutes} dk`}</strong>
+          <small>90 dakikadan fazla gecikme müdahale gerektirir; gösterge, ekran açıldığında güncellenir.</small>
         </article>
         <article>
           <span>Bugünkü tekrarlar</span>

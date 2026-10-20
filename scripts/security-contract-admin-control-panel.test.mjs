@@ -159,7 +159,7 @@ test("writers directory combines server filters with sorting and preserved pagin
   assert.match(page, /role: "writer"/);
   assert.match(page, /deletedAt: null/);
   assert.match(page, /works === "yes" \? \{ some: \{\} \} : \{ none: \{\} \}/);
-  assert.match(page, /emailVerified: verification === "yes"/);
+  assert.match(page, /emailVerified: verification === "yes" \? \{ not: null \} : null/);
   assert.match(page, /isPremium: premium === "yes"/);
   assert.match(page, /works: \{ _count: "desc" \}/);
   assert.match(page, /orderBy,/);

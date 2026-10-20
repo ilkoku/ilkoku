@@ -102,6 +102,8 @@ export function BookShowcase({
     ) ?? firstReadableChapter;
   const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
+  // Related-book navigation only needs the immediate previous book, not the full history.
+  const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);
   const firstPublishedBookItem = work.publicationBook?.items[0] ?? null;
   const hasReadableContent = Boolean(firstPublishedBookItem || firstChapter);
   const coverHref = hasReadableContent
@@ -637,7 +639,7 @@ export function BookShowcase({
                     <p>{related.authorName}</p>
                     <Link
                       className="showcase-text-link"
-                      href={`/kitap/${related.slug}?from=${encodedBookContextPath}`}
+                      href={`/kitap/${related.slug}?from=${encodedRelatedBookReturnPath}`}
                     >
                       Eseri İncele <span aria-hidden="true">→</span>
                     </Link>
@@ -689,7 +691,7 @@ export function BookShowcase({
                     <p>{related.authorName}</p>
                     <Link
                       className="showcase-text-link"
-                      href={`/kitap/${related.slug}?from=${encodedBookContextPath}`}
+                      href={`/kitap/${related.slug}?from=${encodedRelatedBookReturnPath}`}
                     >
                       Eseri İncele <span aria-hidden="true">→</span>
                     </Link>

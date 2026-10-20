@@ -529,3 +529,51 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Mobile email history: override the late desktop seven-column filter rule.
+   Scroll the data table itself, never the entire administrator viewport. */
+@media screen and (max-width: 700px) {
+  .admin-email-page .admin-email-history {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .admin-email-page .admin-email-filters {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-email-page .admin-email-filters > *,
+  .admin-email-page .admin-email-filters label {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    grid-column: auto;
+  }
+
+  .admin-email-page .admin-email-filters input,
+  .admin-email-page .admin-email-filters select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .admin-email-page .admin-email-history .admin-table-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}

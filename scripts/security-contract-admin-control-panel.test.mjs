@@ -247,38 +247,31 @@ test("payment overview groups five live metrics and seven links without duplicat
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });
 
-test("communications and contract submenus use a row-column matrix without altering global navigation", () => {
+test("communications navigation uses original horizontal strip and collapsible contract submenu", () => {
   const css = read("src/app/admin/admin.css");
-  const communications = navigation.slice(navigation.indexOf('id: "communications"'), navigation.indexOf('id: "security"'));
+  const group = navigation.slice(navigation.indexOf('id: "communications"'), navigation.indexOf('id: "security"'));
   const contracts = navigation.slice(navigation.indexOf("const contractSubNavigation:"), navigation.indexOf("const powerSeoSubNavigation:"));
 
-  assert.match(communications, /label: "İletişim & Sözleşmeler"/);
   for (const label of ["Sözleşme Yönetimi", "E-postalar", "E-posta Operasyonları"]) {
-    assert.ok(communications.includes(`label: "${label}"`), `communications menu item: ${label}`);
+    assert.ok(group.includes(`label: "${label}"`), `preserve communications destination: ${label}`);
   }
-
   for (const label of [
     "Genel Bakış", "Takip Merkezi", "Bildirimler", "Soft Taslaklar",
     "Şablon Kütüphanesi", "İnceleme Masası", "Hukukçu Paketi", "Yeni Şablon",
   ]) {
-    assert.ok(contracts.includes(`label: "${label}"`), `contract submenu: ${label}`);
+    assert.ok(contracts.includes(`label: "${label}"`), `preserve contracts destination: ${label}`);
   }
 
-  assert.match(shell, /data-group=\{selectedGroup\.id\}/);
-  assert.match(shell, /selectedGroup\.id === "communications"/);
-  assert.match(shell, /Ana menüler/);
-  assert.match(shell, /Sözleşme alt menüleri/);
-  assert.match(shell, /expandedSubmenus\[item\.href\]/);
   assert.match(shell, /className="admin-secondary-panel"/);
+  assert.match(shell, /className="admin-secondary-panel__items"/);
+  assert.match(shell, /const subExpanded = expandedSubmenus\[item\.href\] \?\? false/);
+  assert.match(shell, /\{hasChildren \? \(/);
+  assert.match(shell, /aria-expanded=\{subExpanded\}/);
+  assert.match(shell, /item\.children\?\.length && expandedSubmenus\[item\.href\]/);
+  assert.doesNotMatch(shell, /admin-communications-nav__caption|data-group=\{selectedGroup\.id\}/);
+  assert.doesNotMatch(css, /\.admin-secondary-panel\[data-group="communications"\]/);
   assert.match(shell, /href="\/hesabim">Hesabım/);
   assert.match(shell, /aria-label="Çıkış yap"/);
-
-  const scoped = css.slice(css.indexOf("/* İletişim & Sözleşmeler:"));
-  assert.ok(scoped.includes('.admin-secondary-panel[data-group="communications"]'));
-  assert.match(scoped, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(scoped, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
-  assert.match(scoped, /@media \(max-width: 650px\)/);
-  assert.match(scoped, /@media \(max-width: 380px\)/);
 });
 
 test("communications group has row/column content across contracts and email subpages", () => {

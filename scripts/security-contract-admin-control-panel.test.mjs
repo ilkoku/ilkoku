@@ -174,6 +174,40 @@ test("writers directory combines server filters with sorting and preserved pagin
   assert.match(shell, /aria-label="Çıkış yap"/);
 });
 
+test("writers directory renders a nine-column horizontal table rather than profile cards", () => {
+  const page = read("src/app/admin/yazarlar/page.tsx");
+  const css = read("src/app/admin/yazarlar/writers.css");
+  for (const heading of [
+    "İlkOku kimliği", "Yazar", "Durum", "Üyelik", "Kayıtları",
+    "Profil", "Son giriş", "Kayıt tarihi", "İşlemler",
+  ]) {
+    assert.ok(page.includes(`<th scope="col">${heading}</th>`), `writer column ${heading}`);
+  }
+  assert.match(page, /<table className="writers-table">/);
+  assert.match(page, /<tr key=\{writer\.id\}>/);
+  assert.match(page, /colSpan=\{9\}/);
+  assert.match(page, /<div className="writers-table-wrap" role="region"/);
+  assert.match(page, /publicId: true/);
+  assert.match(page, /<dl className="writers-records"/);
+  for (const counter of ["works", "feedbackReceived", "ownershipStamps", "publisherSubmissions"]) {
+    assert.ok(page.includes(`writer._count.${counter}`), `preserve writer record ${counter}`);
+  }
+  assert.match(page, /updateUserStatusAction/);
+  assert.match(page, /name="status"/);
+  assert.match(page, /writer\.profile\?\.completionPercentage/);
+  assert.match(page, /writer\.emailVerified/);
+  assert.match(page, /pageHref\(filters, safePage - 1\)/);
+  assert.match(page, /pageHref\(filters, safePage \+ 1\)/);
+  assert.doesNotMatch(page, /writer-card|writers-grid/);
+  assert.match(css, /\.writers-table-wrap \{/);
+  assert.match(css, /overflow-x: auto/);
+  assert.match(css, /\.writers-table th,/);
+  assert.match(css, /\.writers-identity span \{/);
+  assert.doesNotMatch(css, /\.writer-card\{/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /aria-label="Çıkış yap"/);
+});
+
 test("payment overview groups five live metrics and seven links without duplicated oversized navigation", () => {
   const page = read("src/app/admin/odeme-sistemi/page.tsx");
   const css = read("src/app/admin/commerce.css");

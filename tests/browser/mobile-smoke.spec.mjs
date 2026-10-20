@@ -1337,20 +1337,11 @@ test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and scr
       await sidebar.getByRole("button", { name: group, exact: true }).click();
       activeGroup = group;
     }
+    await panel.getByRole("button", { name: `${label} alt menüsünü aç` }).click();
     const link = panel.locator(`a[href="${href}"]`);
-    if (group === "İletişim & Sözleşmeler") {
-      // Contract links are now always visible in a two-row grid.
-      await expect(panel).toHaveAttribute("data-group", "communications");
-      await expect(panel.locator(".admin-tertiary-row")).toHaveCSS("display", "grid");
-      await expect(panel.locator(".admin-tertiary-row a")).toHaveCount(8);
-      await expect(link).toBeVisible();
-      await expect(panel.getByRole("button", { name: `${label} alt menüsünü aç` })).toHaveCount(0);
-    } else {
-      await panel.getByRole("button", { name: `${label} alt menüsünü aç` }).click();
-      await expect(link).toBeVisible();
-      await panel.getByRole("button", { name: `${label} alt menüsünü kapat` }).click();
-      await expect(link).toBeHidden();
-    }
+    await expect(link).toBeVisible();
+    await panel.getByRole("button", { name: `${label} alt menüsünü kapat` }).click();
+    await expect(link).toBeHidden();
   }
   await sidebar.getByRole("button", { name: "Eser & İçerik", exact: true }).click();
   await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
@@ -1409,15 +1400,8 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
       await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: scenario.second, exact: true })).toBeVisible();
     }
     if (scenario.third) {
-      const activePanel = page.locator(".admin-secondary-panel");
-      if (scenario.group === "İletişim & Sözleşmeler") {
-        await expect(activePanel).toHaveAttribute("data-group", "communications");
-        await expect(activePanel.locator(".admin-tertiary-row")).toHaveCSS("display", "grid");
-        await expect(activePanel.locator(".admin-tertiary-row a")).toHaveCount(8);
-      } else {
-        await activePanel.getByRole("button", { name: scenario.second + " alt menüsünü aç" }).click();
-      }
-      await expect(activePanel.locator(`.admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
+      await page.locator(".admin-secondary-panel").getByRole("button", { name: scenario.second + " alt menüsünü aç" }).click();
+      await expect(page.locator(`.admin-secondary-panel .admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
     }
     await expectResponsiveDocument(page);
   }

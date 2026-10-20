@@ -34,15 +34,6 @@ function isStatus(value: string | undefined): value is UserStatus {
   return value === "active" || value === "suspended" || value === "disabled";
 }
 
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toLocaleUpperCase("tr-TR"))
-    .join("") || "YZ";
-}
-
 function dateLabel(date: Date | null) {
   if (!date) return "Henüz giriş yok";
   return new Intl.DateTimeFormat("tr-TR", {
@@ -125,11 +116,11 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
     take: PAGE_SIZE,
     select: {
       id: true,
+      publicId: true,
       fullName: true,
       displayName: true,
       email: true,
       username: true,
-      avatarUrl: true,
       status: true,
       isPremium: true,
       emailVerified: true,
@@ -138,7 +129,6 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
       profile: {
         select: {
           city: true,
-          writingGenres: true,
           completionPercentage: true,
         },
       },
@@ -241,61 +231,116 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
           {hasActiveFilters && <Link href="/sistem-yonetimi/yazarlar">Tüm yazarları göster</Link>}
         </div>
 
-        {writers.length > 0 ? (
-          <div className="writers-grid">
-            {writers.map((writer) => (
-              <article className="writer-card" key={writer.id}>
-                <div className="writer-card__head">
-                  <div className="writer-avatar" aria-hidden="true">{initials(writer.displayName || writer.fullName)}</div>
-                  <div className="writer-identity">
-                    <div>
-                      <strong>{writer.displayName || writer.fullName}</strong>
-                      {writer.isPremium && <b>Premium</b>}
-                    </div>
-                    <span>{writer.email}</span>
-                    <small>@{writer.username || "kullanici-adi-yok"}</small>
-                  </div>
-                  <span className={`writer-status writer-status--${writer.status}`}>{statusLabels[writer.status]}</span>
-                </div>
-
-                <div className="writer-metrics">
-                  <div><strong>{writer._count.works}</strong><span>Eser</span></div>
-                  <div><strong>{writer._count.feedbackReceived}</strong><span>Geri bildirim</span></div>
-                  <div><strong>{writer._count.ownershipStamps}</strong><span>Özgünlük kaydı</span></div>
-                  <div><strong>{writer._count.publisherSubmissions}</strong><span>Başvuru</span></div>
-                </div>
-
-                <div className="writer-profile-progress">
-                  <div><span>Profil doluluğu</span><strong>%{writer.profile?.completionPercentage ?? 0}</strong></div>
-                  <i><em style={{ width: `${writer.profile?.completionPercentage ?? 0}%` }} /></i>
-                </div>
-
-                <dl className="writer-details">
-                  <div><dt>Son giriş</dt><dd>{dateLabel(writer.lastLoginAt)}</dd></div>
-                  <div><dt>Kayıt</dt><dd>{dateLabel(writer.createdAt)}</dd></div>
-                  <div><dt>Konum</dt><dd>{writer.profile?.city || "Belirtilmedi"}</dd></div>
-                  <div><dt>E-posta</dt><dd>{writer.emailVerified ? "Doğrulandı" : "Bekliyor"}</dd></div>
-                </dl>
-
-                <div className="writer-card__actions">
-                  <Link href={`/admin/eserler?yazar=${encodeURIComponent(writer.id)}`}>Eserleri gör</Link>
-                  <form action={updateUserStatusAction}>
-                    <input type="hidden" name="userId" value={writer.id} />
-                    <select name="status" defaultValue={writer.status} aria-label={`${writer.fullName} hesap durumu`}>
-                      {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                    <button type="submit">Kaydet</button>
-                  </form>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="writers-empty">
-            <strong>Yazar bulunamadı</strong>
-            <p>Arama veya filtre ölçütlerini değiştirerek yeniden deneyin.</p>
-          </div>
-        )}
+        <div className="writers-table-wrap" role="region" aria-label="Yazar listesi" tabIndex={0}>
+          <table className="writers-table">
+            <thead>
+              <tr>
+                <th scope="col">İlkOku kimliği</th>
+                <th scope="col">Yazar</th>
+                <th scope="col">Durum</th>
+                <th scope="col">Üyelik</th>
+                <th scope="col">Kayıtları</th>
+                <th scope="col">Profil</th>
+                <th scope="col">Son giriş</th>
+                <th scope="col">Kayıt tarihi</th>
+                <th scope="col">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {writers.length > 0 ? (
+                writers.map((writer) => (
+                  <tr key={writer.id}>
+                    <td>
+                      <Link
+                        className="writers-public-id"
+                        href={`/sistem-yonetimi/kullanicilar/${writer.publicId}`}
+                      >
+                        {writer.publicId}
+                      </Link>
+                    </td>
+                    <td>
+                      <div className="writers-identity">
+                        <strong>{writer.displayName || writer.fullName}</strong>
+                        <span>{writer.email}</span>
+                        <small>@{writer.username || "kullanici-adi-yok"}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="writers-status-cell">
+                        <span className={`writer-status writer-status--${writer.status}`}>
+                          {statusLabels[writer.status]}
+                        </span>
+                        <form action={updateUserStatusAction} className="writers-status-form">
+                          <input type="hidden" name="userId" value={writer.id} />
+                          <select
+                            name="status"
+                            defaultValue={writer.status}
+                            aria-label={`${writer.displayName || writer.fullName} hesap durumu`}
+                          >
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                              <option key={value} value={value}>{label}</option>
+                            ))}
+                          </select>
+                          <button type="submit">Kaydet</button>
+                        </form>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`writers-membership ${writer.isPremium ? "writers-membership--premium" : ""}`}>
+                        {writer.isPremium ? "Premium" : "Standart"}
+                      </span>
+                    </td>
+                    <td>
+                      <dl className="writers-records" aria-label="Yazar kayıt sayıları">
+                        <div><dt>Eser</dt><dd>{writer._count.works}</dd></div>
+                        <div><dt>Geri bildirim</dt><dd>{writer._count.feedbackReceived}</dd></div>
+                        <div><dt>Özgünlük</dt><dd>{writer._count.ownershipStamps}</dd></div>
+                        <div><dt>Başvuru</dt><dd>{writer._count.publisherSubmissions}</dd></div>
+                      </dl>
+                    </td>
+                    <td>
+                      <div className="writers-profile">
+                        <div><span>Doluluk</span><strong>%{writer.profile?.completionPercentage ?? 0}</strong></div>
+                        <div className="writers-profile__track" aria-hidden="true">
+                          <span style={{ width: `${Math.max(0, Math.min(100, writer.profile?.completionPercentage ?? 0))}%` }} />
+                        </div>
+                        <small>{writer.profile?.city || "Konum belirtilmedi"}</small>
+                        <small>{writer.emailVerified ? "E-posta doğrulandı" : "E-posta bekliyor"}</small>
+                      </div>
+                    </td>
+                    <td>
+                      {writer.lastLoginAt ? (
+                        <time dateTime={writer.lastLoginAt.toISOString()}>
+                          {dateLabel(writer.lastLoginAt)}
+                        </time>
+                      ) : (
+                        <span className="writers-muted">Henüz giriş yok</span>
+                      )}
+                    </td>
+                    <td>
+                      <time dateTime={writer.createdAt.toISOString()}>{dateLabel(writer.createdAt)}</time>
+                    </td>
+                    <td>
+                      <Link
+                        className="writers-works-link"
+                        href={`/sistem-yonetimi/eserler?yazar=${encodeURIComponent(writer.id)}`}
+                      >
+                        Eserleri gör →
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="writers-empty" colSpan={9}>
+                    <strong>Yazar bulunamadı</strong>
+                    <p>Arama veya filtre ölçütlerini değiştirerek yeniden deneyin.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <footer className="writers-pagination">
           <span>{first}–{last} / {filteredCount} yazar</span>

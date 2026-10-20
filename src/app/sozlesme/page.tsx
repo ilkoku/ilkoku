@@ -141,7 +141,7 @@ export default async function ContractManagementPage({
                     <td>
                       <span className="contract-row-state" data-state={template.active ? "active" : "draft"}>
                         {isRegistrationTemplate
-                          ? "Sistem / otomatik kabul"
+                          ? "Sistem / kayıt sırasında otomatik kabul"
                           : template.active ? "Aktif / manuel gönderilebilir" : "Çalışma aşamasında"}
                       </span>
                     </td>

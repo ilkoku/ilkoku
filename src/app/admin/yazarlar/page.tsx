@@ -84,7 +84,7 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
     deletedAt: null,
     ...(status ? { status } : {}),
     ...(works ? { works: works === "yes" ? { some: {} } : { none: {} } } : {}),
-    ...(verification ? { emailVerified: verification === "yes" } : {}),
+    ...(verification ? { emailVerified: verification === "yes" ? { not: null } : null } : {}),
     ...(premium ? { isPremium: premium === "yes" } : {}),
     ...(q
       ? {

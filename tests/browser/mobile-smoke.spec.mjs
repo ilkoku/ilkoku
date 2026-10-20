@@ -1260,6 +1260,43 @@ test("secondary navigation is horizontal above the content on desktop and mobile
   await expectResponsiveDocument(page);
 });
 
+test("communications workspaces render complete tabular rows on 390px and desktop", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  const scenarios = [
+    { path: "/sozlesme", selector: ".contract-list-table table" },
+    { path: "/sozlesme/takip", selector: ".contract-table-wrap table" },
+    { path: "/sozlesme/sablonlar", selector: ".contract-list-table table" },
+    { path: "/sozlesme/taslaklar", selector: ".contract-list-table table" },
+    { path: "/sozlesme/inceleme", selector: ".contract-list-table table" },
+    { path: "/sozlesme/hukuk-inceleme", selector: ".contract-legal-pack-index table" },
+    { path: "/sozlesme/bildirimler", selector: ".contract-notification-table-head" },
+    { path: "/sistem-yonetimi/epostalar", selector: ".admin-data-table.admin-email-table" },
+    { path: "/sistem-yonetimi/eposta-operasyonlari", selector: ".admin-email-operations-rule-grid" },
+  ];
+
+  test.setTimeout(120000);
+  for (const scenario of scenarios) {
+    await page.setViewportSize(viewports.phone390);
+    const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), `page ${scenario.path}`).toBeLessThan(400);
+    await expect(page.locator(scenario.selector), scenario.path).toBeVisible();
+    await expectResponsiveDocument(page);
+  }
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sozlesme/sablonlar", { waitUntil: "domcontentloaded" });
+  const table = page.locator(".contract-list-table table");
+  await expect(table).toBeVisible();
+  await expect(table.locator("thead th")).toHaveCount(7);
+  await expect(page.locator(".admin-sidebar .admin-nav-group")).toHaveCount(7);
+  await expect(page.locator('.admin-profile__logout[href="/hesabim"]')).toBeVisible();
+  await expectResponsiveDocument(page);
+});
+
 test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

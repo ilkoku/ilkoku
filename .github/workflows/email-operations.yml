@@ -30,4 +30,5 @@ jobs:
             --retry-all-errors \
             --request POST \
             --header "Authorization: Bearer $SUMMARY_SECRET" \
+            --header "X-IlkOku-Scheduler: github" \
             https://ilkoku.com/api/internal/email-operations

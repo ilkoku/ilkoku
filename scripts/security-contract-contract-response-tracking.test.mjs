@@ -38,20 +38,23 @@ test("admin cancellation requires explicit confirmation and preserves canonical 
   contains(actions, "cancelAdminContract", "canonical DB-level cancellation path");
 });
 
-test("tracking center separates registration acceptance from manual operational contracts", () => {
+test("tracking center separates registration and manual contracts across the complete database", () => {
   const tracking = source("src/app/sozlesme/takip/page.tsx");
+  const repository = source("src/features/contracts/repository.ts");
   const navigation = source("src/features/contracts/ContractManagementNavigation.tsx");
 
-  contains(tracking, "MANDATORY_REGISTRATION_CONTRACT_CODE", "stable registration contract boundary");
-  contains(tracking, "const registration = contracts.filter", "registration acceptance queue");
-  contains(tracking, "const manual = contracts.filter", "manual operational queue");
-  contains(tracking, 'value="waiting"', "waiting filter");
-  contains(tracking, 'value="accepted"', "accepted filter");
-  contains(tracking, 'value="rejected"', "rejected filter");
-  contains(tracking, 'value="cancelled"', "cancelled filter");
-  contains(tracking, 'value="registration"', "registration filter");
-  contains(tracking, "recipientEmail", "recipient search surface");
-  contains(tracking, "relatedWorkTitle", "work search surface");
+  contains(tracking, "getAdminUserContractsPage", "page-scoped SQL read");
+  contains(tracking, "getAdminContractSummary", "complete-count KPI query");
+  contains(repository, 'flow === "registration"', "registration SQL filter");
+  contains(repository, "template.code = ?", "registration-only SQL predicate");
+  contains(repository, "template.code <> ?", "manual-only SQL predicate");
+  contains(repository, "MANDATORY_REGISTRATION_CONTRACT_CODE", "stable registration code");
+  for (const name of ["waiting", "accepted", "rejected", "cancelled", "registration"]) {
+    contains(tracking, `value="${name}"`, `filter ${name}`);
+  }
+  for (const searchField of ["recipient.fullName", "recipient.email", "work.title"]) {
+    contains(repository, searchField, `SQL search surface ${searchField}`);
+  }
   contains(navigation, 'href: "/sozlesme/takip"', "tracking navigation entry");
 });
 

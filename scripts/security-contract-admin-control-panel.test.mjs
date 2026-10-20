@@ -103,38 +103,49 @@ test("admin subpages and external management centers expose a consistent return 
   }
 });
 
-test("user directory names and e-mails wrap on separate, slightly smaller lines", () => {
+test("user directory applies small type to all seven columns and visually separates e-mail", () => {
   const css = read("src/app/admin/users.css");
   const userTable = read("src/components/admin/UserManagement.tsx");
-  assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > strong/);
-  assert.match(css, /\.admin-users-table tbody td:nth-child\(2\) > span/);
-  assert.match(css, /font-size: 0\.76rem;/);
-  assert.match(css, /font-size: 0\.68rem;/);
-  assert.match(css, /overflow-wrap: anywhere;/);
-  assert.match(userTable, /<strong>\{user\.fullName\}<\/strong>/);
-  assert.match(userTable, /<span>\{user\.email\}<\/span>/);
-  assert.match(shell, /href="\/hesabim">Hesabım/);
-  assert.match(shell, /<form action=\{logoutAction\}>/);
+
+  assert.ok(css.includes(".admin-users-table th {"), "all seven headers share the compact style");
+  assert.ok(css.includes("font-size: 0.63rem;"), "all headers use compact readable typography");
+  assert.ok(css.includes("text-transform: none;"), "do not force wide uppercase headers");
+  assert.ok(css.includes(".admin-users-table tbody td {"), "all seven cells share the compact style");
+  assert.ok(css.includes("font-size: 0.69rem;"), "normal cell typography is compact");
+  assert.ok(css.includes(".admin-users-table tbody td:first-child .admin-public-id"), "ID column is included");
+  assert.ok(css.includes(".admin-users-table tbody td:nth-child(2) > strong"), "name has its own type size");
+  assert.ok(css.includes("font-size: 0.73rem;"), "name stays readable");
+  assert.ok(css.includes(".admin-users-table tbody td:nth-child(2) > span"), "e-mail has separate styling");
+  assert.ok(css.includes("font-size: 0.64rem;"), "e-mail is visually smaller");
+  assert.ok(css.includes("border-top: 1px solid rgba(148, 163, 184, 0.14);"), "separate e-mail from name");
+  assert.ok(css.includes("overflow-wrap: anywhere;"), "long e-mails wrap instead of overflowing");
+  assert.ok(userTable.includes("<strong>{user.fullName}</strong>"), "full user name is preserved");
+  assert.ok(userTable.includes("<span>{user.email}</span>"), "full e-mail address is preserved");
 });
 
-test("user directory operational columns use compact, readable typography and retain edit actions", () => {
+test("user records are a labeled three-row grid while role and status editing remain available", () => {
   const css = read("src/app/admin/users.css");
   const userTable = read("src/components/admin/UserManagement.tsx");
-
-  assert.match(css, /\.admin-users-table th:nth-child\(n \+ 3\),[\s\S]*?td:nth-child\(n \+ 3\)/);
-  assert.match(css, /\.admin-users-table tbody td:nth-child\(n \+ 3\)\s*\{\s*font-size: 0\.73rem;/);
-  assert.match(css, /\.admin-users-table tbody td:nth-child\(5\) > small/);
-  assert.match(css, /\.admin-users-table tbody td:nth-child\(6\),[\s\S]*?td:nth-child\(7\)/);
-  assert.match(css, /font-variant-numeric: tabular-nums;/);
-  assert.match(css, /font-size: 0\.72rem;/);
-  assert.match(css, /font-size: 0\.69rem;/);
-  assert.match(userTable, /action=\{updateUserRoleAction\}/);
-  assert.match(userTable, /action=\{updateUserStatusAction\}/);
-  assert.match(userTable, /<th>Rol<\/th>/);
-  assert.match(userTable, /<th>Durum<\/th>/);
-  assert.match(userTable, /<th>Kayıtları<\/th>/);
-  assert.match(userTable, /<th>Son giriş<\/th>/);
-  assert.match(userTable, /<th>Üyelik<\/th>/);
+  assert.ok(css.includes(".admin-users-records > div {"), "each metric aligns label and value");
+  assert.ok(css.includes("grid-template-columns: minmax(0, 1fr) auto;"), "record values right align");
+  assert.ok(css.includes(".admin-users-records dt {"), "record labels have a style");
+  assert.ok(css.includes(".admin-users-records dd {"), "record values have a style");
+  assert.ok(userTable.includes('<dl className="admin-users-records"'), "records use semantic descriptions");
+  for (const label of ["Eser", "Okuma", "Yorum"]) {
+    assert.ok(userTable.includes(`<dt>${label}</dt>`), `${label} label stays visible`);
+  }
+  for (const count of ["works", "readingProgress", "comments"]) {
+    assert.ok(userTable.includes(`<dd>{user._count.${count}}</dd>`), `${count} count stays visible`);
+  }
+  for (const title of ["İlkOku kimliği", "Kullanıcı", "Rol", "Durum", "Kayıtları", "Son giriş", "Üyelik"]) {
+    assert.ok(userTable.includes(`<th>${title}</th>`), `${title} column remains`);
+  }
+  assert.ok(userTable.includes("action={updateUserRoleAction}"), "role changes still submit");
+  assert.ok(userTable.includes("action={updateUserStatusAction}"), "status changes still submit");
+  assert.ok(css.includes(".admin-users-table tbody td:nth-child(3) .admin-user-control select"));
+  assert.ok(css.includes(".admin-users-table tbody td:nth-child(4) .admin-user-control button"));
+  assert.ok(shell.includes('href="/hesabim">Hesabım'), "Hesabım button remains in shell");
+  assert.ok(shell.includes("<form action={logoutAction}>"), "logout form remains unchanged");
 });
 
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {

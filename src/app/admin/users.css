@@ -58,67 +58,31 @@
 
 .admin-users-table {
   width: 100%;
-  border-collapse: collapse;
   min-width: 860px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-users-table th,
 .admin-users-table td {
-  padding: 16px;
+  padding: 10px 8px;
   border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
   text-align: left;
   vertical-align: middle;
 }
 
 .admin-users-table th {
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.65;
-}
-
-.admin-users-table td:first-child strong,
-.admin-users-table td:first-child span {
-  display: block;
-}
-
-.admin-users-table td:first-child span {
-  margin-top: 4px;
-  font-size: 13px;
-  opacity: 0.65;
-}
-
-/* Keep each user's complete name and e-mail legible in its own table cell.
-   The typography change is scoped to the User column, not the action forms. */
-.admin-users-table tbody td:nth-child(2) {
-  min-width: 0;
-  max-width: 15rem;
-  overflow-wrap: anywhere;
-}
-
-.admin-users-table tbody td:nth-child(2) > strong,
-.admin-users-table tbody td:nth-child(2) > span {
-  display: block;
-  max-width: 100%;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.admin-users-table tbody td:nth-child(2) > strong {
-  font-size: 0.76rem;
+  font-size: 0.63rem;
   font-weight: 650;
+  letter-spacing: 0.025em;
+  text-transform: none;
+  white-space: nowrap;
+  color: #aeb7ca;
 }
 
-.admin-users-table tbody td:nth-child(2) > span {
-  margin-top: 0.2rem;
-  font-size: 0.68rem;
-  opacity: 0.75;
-}
-
-/* Smaller, well-aligned operational data in Rol, Durum, Kayitlari,
-   Son giris and Uyelik; identity fields and administrative actions stay intact. */
-.admin-users-table {
-  font-variant-numeric: tabular-nums;
+.admin-users-table tbody td {
+  font-size: 0.69rem;
+  line-height: 1.35;
 }
 
 .admin-users-table tbody tr {
@@ -129,69 +93,103 @@
   background: rgba(148, 163, 184, 0.045);
 }
 
-.admin-users-table th:nth-child(n + 3),
-.admin-users-table td:nth-child(n + 3) {
-  padding: 12px 10px;
+.admin-users-table tbody td:first-child .admin-public-id {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.admin-users-table th:nth-child(n + 3) {
-  font-size: 0.66rem;
-  letter-spacing: 0.06em;
+/* Keep the name and e-mail distinct and readable without changing their values. */
+.admin-users-table tbody td:nth-child(2) {
+  min-width: 0;
+  max-width: 14rem;
+  overflow-wrap: anywhere;
 }
 
-.admin-users-table tbody td:nth-child(n + 3) {
+.admin-users-table tbody td:nth-child(2) > strong,
+.admin-users-table tbody td:nth-child(2) > span {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.admin-users-table tbody td:nth-child(2) > strong {
   font-size: 0.73rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.admin-users-table tbody td:nth-child(2) > span {
+  margin-top: 0.36rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: #9aa8be;
+  font-size: 0.64rem;
   line-height: 1.4;
 }
 
-.admin-users-table tbody td:nth-child(5) > span,
-.admin-users-table tbody td:nth-child(5) > small {
-  display: block;
+/* Three aligned label-value rows replace free-form record-count text. */
+.admin-users-records {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 5rem;
+  margin: 0;
 }
 
-.admin-users-table tbody td:nth-child(5) > span {
-  font-weight: 600;
-  white-space: nowrap;
+.admin-users-records > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 0.65rem;
 }
 
-.admin-users-table tbody td:nth-child(5) > small {
-  margin-top: 0.2rem;
-  font-size: 0.67rem;
-  opacity: 0.72;
+.admin-users-records dt {
+  font-size: 0.64rem;
+  font-weight: 400;
+  color: #aeb7ca;
+}
+
+.admin-users-records dd {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: #e2e8f0;
+  text-align: right;
 }
 
 .admin-users-table tbody td:nth-child(6),
 .admin-users-table tbody td:nth-child(7) {
   white-space: nowrap;
   color: #cbd5e1;
+  font-size: 0.67rem;
 }
 
 .admin-users-table tbody td:nth-child(6) > span {
-  opacity: 0.72;
+  color: #9aa8be;
 }
 
 .admin-users-table tbody td:nth-child(3) .admin-user-control,
 .admin-users-table tbody td:nth-child(4) .admin-user-control {
-  gap: 6px;
+  gap: 5px;
 }
 
 .admin-users-table tbody td:nth-child(3) .admin-user-control select,
 .admin-users-table tbody td:nth-child(4) .admin-user-control select {
   min-width: 0;
   min-height: 32px;
+  padding: 0 5px;
   border-radius: 8px;
-  padding: 0 6px;
   font-family: inherit;
-  font-size: 0.72rem;
+  font-size: 0.69rem;
 }
 
 .admin-users-table tbody td:nth-child(3) .admin-user-control button,
 .admin-users-table tbody td:nth-child(4) .admin-user-control button {
   min-height: 32px;
+  padding: 0 7px;
   border-radius: 8px;
-  padding: 0 8px;
   font-family: inherit;
-  font-size: 0.69rem;
+  font-size: 0.67rem;
 }
 
 .admin-users-empty {

@@ -20,6 +20,11 @@ test("independent Cron Trigger is hourly, isolated and preserves the GitHub back
   assert.doesNotMatch(config, /(?:^|\n)routes\s*=/);
   assert.match(github, /cron: "35 \* \* \* \*"/);
   assert.match(github, /workflow_dispatch:/);
+  // Release smoke is scoped to the existing scheduler and API, not all pushes.
+  assert.match(github, /push:\n    branches:\n      - main/);
+  assert.match(github, /"src\/features\/email-operations\/\*\*"/);
+  assert.match(github, /"src\/app\/api\/internal\/email-operations\/route\.ts"/);
+  assert.match(github, /"\.github\/workflows\/email-operations\.yml"/);
   assert.match(route, /timingSafeEqual/);
   assert.match(route, /EMAIL_OPERATIONS_SECRET/);
   assert.match(docs, /two|iki|consecutive/i);

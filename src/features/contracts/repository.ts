@@ -245,6 +245,9 @@ export type AdminContractFlow =
 
 export type AdminContractSummary = {
   total: number;
+  allWaiting: number;
+  allAccepted: number;
+  allRejected: number;
   manual: number;
   registration: number;
   waiting: number;
@@ -323,6 +326,9 @@ export async function getAdminUserContractsPage({
 export async function getAdminContractSummary(): Promise<AdminContractSummary> {
   const rows = await prisma.$queryRaw<Array<{
     total: bigint | number;
+    allWaiting: bigint | number;
+    allAccepted: bigint | number;
+    allRejected: bigint | number;
     manual: bigint | number;
     registration: bigint | number;
     waiting: bigint | number;
@@ -334,6 +340,9 @@ export async function getAdminContractSummary(): Promise<AdminContractSummary> {
   }>>`
     SELECT
       COUNT(*) AS total,
+      SUM(CASE WHEN contract.status IN ('sent', 'viewed') THEN 1 ELSE 0 END) AS allWaiting,
+      SUM(CASE WHEN contract.status = 'accepted' THEN 1 ELSE 0 END) AS allAccepted,
+      SUM(CASE WHEN contract.status = 'rejected' THEN 1 ELSE 0 END) AS allRejected,
       SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} THEN 1 ELSE 0 END) AS manual,
       SUM(CASE WHEN template.code = ${MANDATORY_REGISTRATION_CONTRACT_CODE} THEN 1 ELSE 0 END) AS registration,
       SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status IN ('sent', 'viewed') THEN 1 ELSE 0 END) AS waiting,
@@ -350,6 +359,9 @@ export async function getAdminContractSummary(): Promise<AdminContractSummary> {
   const row = rows[0];
   return {
     total: countValue(row?.total),
+    allWaiting: countValue(row?.allWaiting),
+    allAccepted: countValue(row?.allAccepted),
+    allRejected: countValue(row?.allRejected),
     manual: countValue(row?.manual),
     registration: countValue(row?.registration),
     waiting: countValue(row?.waiting),

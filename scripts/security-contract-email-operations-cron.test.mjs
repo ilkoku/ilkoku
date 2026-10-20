@@ -91,3 +91,30 @@ test("scheduled handler waits for the asynchronous job and cannot expose HTTP fe
   await assert.rejects(ctx.promise, /SECRET_MISSING/);
   assert.equal(Object.hasOwn(worker, "fetch"), false);
 });
+
+ 
+test("cron heartbeat is persistent, cross-provider serialized, and shows read-only late status", () => {
+  const schema = file("prisma/schema.prisma");
+  const migration = file("prisma/migrations/20261021003000_email_operations_scheduler_heartbeat/migration.sql");
+  const lease = file("src/features/email-operations/scheduler-state.ts");
+  const service = file("src/features/email-operations/service.ts");
+  const route = file("src/app/api/internal/email-operations/route.ts");
+  const panel = file("src/app/admin/eposta-operasyonlari/page.tsx");
+  const github = file(".github/workflows/email-operations.yml");
+
+  assert.match(schema, /model EmailOperationsSchedulerState/);
+  assert.match(schema, /lastSuccessAt\s+DateTime\?/);
+  assert.match(migration, /CREATE TABLE/);
+  assert.match(lease, /emailOperationsSchedulerState\.updateMany/);
+  assert.match(lease, /leaseToken: token/);
+  assert.match(lease, /leaseUntil: \{ lte: now \}/);
+  assert.match(lease, /uniqueCollision/);
+  assert.match(lease, /lastFailureAt: now/);
+  assert.match(service, /await beginEmailOperationsCheck\(source\)/);
+  assert.match(service, /await finishEmailOperationsCheck\(token, startedAtMs, true\)/);
+  assert.match(route, /status: result\.skipped \? 409 : 200/);
+  assert.match(github, /X-IlkOku-Scheduler: github/);
+  assert.match(panel, /Kontrol gecikmesi/);
+  assert.match(panel, /lastSuccessAt/);
+  assert.match(panel, /90 dakikadan/);
+});

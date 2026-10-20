@@ -769,9 +769,9 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   await page.goto("/sozlesmelerim", {
     waitUntil: "domcontentloaded",
   });
-  const recipientContractLink = page.getByRole("link", {
-    name: /CI Browser Reader Contract/,
-  });
+  // Multiple historic assignments can legitimately share one template title.
+  // Always navigate to the contract created by this test, never an arbitrary match.
+  const recipientContractLink = page.locator(`a[href="/sozlesmelerim/${contractId}"]`);
   await expect(recipientContractLink).toBeVisible();
   await recipientContractLink.click();
   await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}$`));

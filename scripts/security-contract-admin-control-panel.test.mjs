@@ -148,6 +148,32 @@ test("user records are a labeled three-row grid while role and status editing re
   assert.ok(shell.includes("<form action={logoutAction}>"), "logout form remains unchanged");
 });
 
+test("writers directory combines server filters with sorting and preserved pagination", () => {
+  const page = read("src/app/admin/yazarlar/page.tsx");
+  const css = read("src/app/admin/yazarlar/writers.css");
+
+  for (const filter of ["q", "status", "works", "verification", "premium", "sort"]) {
+    assert.match(page, new RegExp(`name="${filter}"`), `${filter} must remain user-selectable`);
+  }
+
+  assert.match(page, /role: "writer"/);
+  assert.match(page, /deletedAt: null/);
+  assert.match(page, /works === "yes" \? \{ some: \{\} \} : \{ none: \{\} \}/);
+  assert.match(page, /emailVerified: verification === "yes" \? \{ not: null \} : null/);
+  assert.match(page, /isPremium: premium === "yes"/);
+  assert.match(page, /works: \{ _count: "desc" \}/);
+  assert.match(page, /orderBy,/);
+  assert.match(page, /pageHref\(filters, safePage - 1\)/);
+  assert.match(page, /pageHref\(filters, safePage \+ 1\)/);
+  assert.match(page, /action="\/sistem-yonetimi\/yazarlar"/);
+  assert.match(page, /filteredCount\.toLocaleString\("tr-TR"\)/);
+  assert.match(page, /updateUserStatusAction/);
+  assert.match(css, /\.writers-panel \.writers-filters/);
+  assert.match(css, /@media \(max-width: 520px\)/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /aria-label="Çıkış yap"/);
+});
+
 test("payment overview groups five live metrics and seven links without duplicated oversized navigation", () => {
   const page = read("src/app/admin/odeme-sistemi/page.tsx");
   const css = read("src/app/admin/commerce.css");

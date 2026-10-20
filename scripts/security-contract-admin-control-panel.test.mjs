@@ -247,6 +247,44 @@ test("payment overview groups five live metrics and seven links without duplicat
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });
 
+test("contract history uses full database counts, safe page filters, and page-scoped reminders", () => {
+  const overview = read("src/app/sozlesme/page.tsx");
+  const tracking = read("src/app/sozlesme/takip/page.tsx");
+  const repository = read("src/features/contracts/repository.ts");
+  const reminders = read("src/features/contracts/tracking-activity.ts");
+  const pager = read("src/features/contracts/ContractHistoryPagination.tsx");
+  const css = read("src/app/sozlesme/tracking.css");
+
+  assert.doesNotMatch(overview, /listAdminUserContracts\(\)/);
+  assert.doesNotMatch(tracking, /listAdminUserContracts\(500\)/);
+  assert.doesNotMatch(tracking, /listContractReminderActivity\(500\)/);
+  assert.match(overview, /getAdminUserContractsPage\(\{ page: requestedPage, pageSize: 25 \}\)/);
+  assert.match(overview, /countLegacyPublisherContracts\(\)/);
+  assert.match(overview, /listLegacyPublisherContracts\(legacyPageSize, \(legacyPage - 1\) \* legacyPageSize\)/);
+  assert.match(overview, /summary\.allAccepted/);
+  assert.match(overview, /summary\.total/);
+  assert.match(overview, /pageParam="gecmisSayfa"/);
+  assert.match(tracking, /getAdminUserContractsPage\(\{/);
+  assert.match(tracking, /listContractReminderActivityForIds/);
+  assert.match(tracking, /preservedParams=\{\{ akis: flow, q: query \}\}/);
+  assert.match(tracking, /summary\.reminded/);
+  assert.match(repository, /SELECT COUNT\(\*\) AS total/);
+  assert.match(repository, /ORDER BY contract\.updatedAt DESC, contract\.id DESC LIMIT \? OFFSET \?/);
+  assert.match(repository, /LOCATE\(LOWER\(\?\)/);
+  assert.match(repository, /getAdminContractSummary/);
+  assert.match(repository, /status = 'accepted'/);
+  assert.match(repository, /countLegacyPublisherContracts/);
+  assert.match(repository, /skip: Math\.max\(0, Math\.trunc\(offset\)\)/);
+  assert.match(reminders, /event\.contractId IN \(\$\{placeholders\}\)/);
+  assert.match(pager, /Number\.isSafeInteger/);
+  assert.match(pager, /new URLSearchParams\(\)/);
+  assert.match(pager, /aria-label=\{label\}/);
+  assert.match(pager, /Sayfa \{page\}\/\{totalPages\}/);
+  assert.match(css, /\.contract-history-pagination/);
+  assert.match(overview, /<ContractSendWorkbench/);
+  assert.match(tracking, /<Link href=\{\`\/sozlesme\/\$\{contract\.id\}\`\}>/);
+});
+
 test("communications navigation uses original horizontal strip and collapsible contract submenu", () => {
   const css = read("src/app/admin/admin.css");
   const group = navigation.slice(navigation.indexOf('id: "communications"'), navigation.indexOf('id: "security"'));

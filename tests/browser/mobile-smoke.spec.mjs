@@ -1297,6 +1297,44 @@ test("communications workspaces render complete tabular rows on 390px and deskto
   await expectResponsiveDocument(page);
 });
 
+test("contract overview and tracking clamp page ranges, preserve URL filters and never overflow mobile", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  const cases = [
+    { path: "/sozlesme?sayfa=999999&gecmisSayfa=999999", labels: [
+      "Gönderilen sözleşme sayfaları",
+      "Tarihsel yayınevi sözleşmesi sayfaları",
+    ] },
+    { path: "/sozlesme/takip?akis=registration&q=ilkoku&sayfa=999999", labels: [
+      "Takip merkezi sözleşme sayfaları",
+    ] },
+    { path: "/sozlesme/takip?akis=waiting&sayfa=-10", labels: [
+      "Takip merkezi sözleşme sayfaları",
+    ] },
+  ];
+  for (const scenario of cases) {
+    await page.setViewportSize(viewports.phone390);
+    const response = await page.goto(scenario.path, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), scenario.path).toBe(200);
+    for (const label of scenario.labels) {
+      const pager = page.getByRole("navigation", { name: label });
+      await expect(pager).toBeVisible();
+      await expect(pager).toContainText("Sayfa");
+      await expect(pager).toContainText("toplam kayıt");
+    }
+    await expectResponsiveDocument(page);
+  }
+
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sozlesme/takip?akis=accepted", { waitUntil: "domcontentloaded" });
+  await expect(page.locator(".contract-tracking-filters select[name=akis]")).toHaveValue("accepted");
+  await expect(page.getByRole("navigation", { name: "Takip merkezi sözleşme sayfaları" })).toBeVisible();
+  await expect(page.locator(".contract-table-wrap table")).toBeVisible();
+});
+
 test("fixed LEFT seven headings and RIGHT 25 submenus: responsive accept and screenshots", async ({ page }, testInfo) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

@@ -146,8 +146,18 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assert.equal(
     (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,
-    2,
-    "writing hubs and writing guides must both expose the truthful internal-link content update",
+    1,
+    "unchanged writing hubs preserve the October 4 content update",
+  );
+  assert.equal(
+    (sitemap.match(/lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/g) ?? []).length,
+    1,
+    "all 85 guide entries reflect their October 18 visible related-link update",
+  );
+  assertContains(
+    sitemap,
+    'WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z")',
+    "writing guides use the truthful PR #1789 release date",
   );
   assertContains(
     searchFreshness,

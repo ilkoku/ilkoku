@@ -1,0 +1,51 @@
+name: SEO CMS image optimization canary
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/seo-cms-image-optimization-canary.yml
+      - src/app/yazarlar-icin/kurgu/novella/page.tsx
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Verify public CMS PNG -> optimized Next image
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verify one media image with bounded low-impact GETs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          id="27570dd7-f232-4313-af83-33ff62476881"
+          origin="https://ilkoku.com/api/media/$id"
+          optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=640&q=75"
+          dir="$(mktemp -d)"
+          trap 'rm -rf "$dir"' EXIT
+          get_image() {
+            local name="$1" url="$2" status size type
+            status="$(curl --silent --show-error --location --max-time 30 \
+              -H 'Accept: image/webp,image/*;q=0.8' \
+              -A 'IlkOku-Media-Canary/1.0' \
+              -D "$dir/$name.headers" -o "$dir/$name.bin" \
+              --write-out '%{http_code}' "$url" || true)"
+            size="$(wc -c < "$dir/$name.bin" | tr -d ' ')" 
+            type="$(grep -i '^content-type:' "$dir/$name.headers" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true)"
+            echo "$name: HTTP $status, type=$type, bytes=$size"
+            if [[ "$status" == 403 || "$status" == 429 ]]; then
+              echo "BLOCKED by edge: do not infer broken media optimizer; abort" >&2
+              exit 1
+            fi
+            [[ "$status" == 200 && "$type" == image/* && "$size" -gt 1000 ]]
+          }
+          get_image original "$origin"
+          sleep 3
+          get_image optimized "$optimized"
+          original_bytes="$(wc -c < "$dir/original.bin" | tr -d ' ')"
+          optimized_bytes="$(wc -c < "$dir/optimized.bin" | tr -d ' ')"
+          echo "Original bytes=$original_bytes, optimized bytes=$optimized_bytes"
+          [[ "$optimized_bytes" -lt "$original_bytes" ]]
+          echo "PASS: public CMS image optimizer returns smaller valid image."

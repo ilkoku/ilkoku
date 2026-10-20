@@ -350,7 +350,6 @@ export default async function OykuYazarlikRehberiPage() {
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
       </WritingGuideShell>

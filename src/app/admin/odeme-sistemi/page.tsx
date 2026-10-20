@@ -4,8 +4,6 @@ import { getPaymentMethodAvailability } from "@/features/commerce/payment-provid
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { prisma } from "@/lib/prisma";
 
-const PAYMENT_BASE_PATH = "/sistem-yonetimi/odeme-sistemi";
-
 export default async function PaymentSystemPage() {
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentMethods = getPaymentMethodAvailability();
@@ -27,35 +25,35 @@ export default async function PaymentSystemPage() {
       label: "Siparişler",
       count: orders,
       detail: "Satın alma siparişleri",
-      href: `${PAYMENT_BASE_PATH}/siparisler`,
+      href: "/sistem-yonetimi/odeme-sistemi/siparisler",
       action: "Siparişleri görüntüle",
     },
     {
       label: "Ödemeler",
       count: payments,
       detail: "Ödeme denemeleri",
-      href: `${PAYMENT_BASE_PATH}/odemeler`,
+      href: "/sistem-yonetimi/odeme-sistemi/odemeler",
       action: "Ödemeleri görüntüle",
     },
     {
       label: "İadeler",
       count: refunds,
       detail: "İade kayıtları",
-      href: `${PAYMENT_BASE_PATH}/iadeler`,
+      href: "/sistem-yonetimi/odeme-sistemi/iadeler",
       action: "İadeleri görüntüle",
     },
     {
       label: "Erişim hakları",
       count: entitlements,
       detail: "Okur–eser erişimleri",
-      href: `${PAYMENT_BASE_PATH}/erisim-haklari`,
+      href: "/sistem-yonetimi/odeme-sistemi/erisim-haklari",
       action: "Erişim haklarını görüntüle",
     },
     {
       label: "İlkOku kuponları",
       count: platformCoupons,
       detail: "Platform kuponları",
-      href: `${PAYMENT_BASE_PATH}/kuponlar`,
+      href: "/sistem-yonetimi/odeme-sistemi/kuponlar",
       action: "Kuponları görüntüle",
     },
   ];
@@ -107,7 +105,7 @@ export default async function PaymentSystemPage() {
               <span className="admin-eyebrow">Altyapı</span>
               <h2>Ödeme kanalları</h2>
             </div>
-            <Link href={`${PAYMENT_BASE_PATH}/saglayicilar`}>
+            <Link href="/sistem-yonetimi/odeme-sistemi/saglayicilar">
               Sağlayıcıları aç <span aria-hidden="true">→</span>
             </Link>
           </div>
@@ -145,7 +143,7 @@ export default async function PaymentSystemPage() {
                 ? "Checkout kapalı. Buradaki sayılar geçmiş veya hazırlık kayıtlarını gösterir."
                 : "Sağlayıcı durumu tek başına ücretli erişimin hazır olduğunu göstermez; sözleşme koşullarını da kontrol edin."}
           </p>
-          <Link className="admin-commerce-overview__settings-link" href={`${PAYMENT_BASE_PATH}/ayarlar`}>
+          <Link className="admin-commerce-overview__settings-link" href="/sistem-yonetimi/odeme-sistemi/ayarlar">
             Ayar durumunu görüntüle <span aria-hidden="true">→</span>
           </Link>
           <p className="admin-commerce-overview__policy">

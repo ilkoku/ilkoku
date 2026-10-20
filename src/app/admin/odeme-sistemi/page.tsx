@@ -25,36 +25,51 @@ export default async function PaymentSystemPage() {
       label: "Siparişler",
       count: orders,
       detail: "Satın alma siparişleri",
-      href: "/sistem-yonetimi/odeme-sistemi/siparisler",
-      action: "Siparişleri görüntüle",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/siparisler">
+          Siparişleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
     },
     {
       label: "Ödemeler",
       count: payments,
       detail: "Ödeme denemeleri",
-      href: "/sistem-yonetimi/odeme-sistemi/odemeler",
-      action: "Ödemeleri görüntüle",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/odemeler">
+          Ödemeleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
     },
     {
       label: "İadeler",
       count: refunds,
       detail: "İade kayıtları",
-      href: "/sistem-yonetimi/odeme-sistemi/iadeler",
-      action: "İadeleri görüntüle",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/iadeler">
+          İadeleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
     },
     {
       label: "Erişim hakları",
       count: entitlements,
       detail: "Okur–eser erişimleri",
-      href: "/sistem-yonetimi/odeme-sistemi/erisim-haklari",
-      action: "Erişim haklarını görüntüle",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari">
+          Erişim haklarını görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
     },
     {
       label: "İlkOku kuponları",
       count: platformCoupons,
       detail: "Platform kuponları",
-      href: "/sistem-yonetimi/odeme-sistemi/kuponlar",
-      action: "Kuponları görüntüle",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/kuponlar">
+          Kuponları görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
     },
   ];
 
@@ -86,13 +101,11 @@ export default async function PaymentSystemPage() {
         </div>
         <div className="admin-commerce-overview__metrics">
           {metrics.map((metric) => (
-            <article className="admin-panel admin-commerce-overview__metric" key={metric.href}>
+            <article className="admin-panel admin-commerce-overview__metric" key={metric.label}>
               <span>{metric.label}</span>
               <strong>{metric.count.toLocaleString("tr-TR")}</strong>
               <p>{metric.detail}</p>
-              <Link href={metric.href}>
-                {metric.action} <span aria-hidden="true">→</span>
-              </Link>
+              {metric.link}
             </article>
           ))}
         </div>

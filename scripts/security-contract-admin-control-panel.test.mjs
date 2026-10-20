@@ -117,6 +117,26 @@ test("user directory names and e-mails wrap on separate, slightly smaller lines"
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });
 
+test("user directory operational columns use compact, readable typography and retain edit actions", () => {
+  const css = read("src/app/admin/users.css");
+  const userTable = read("src/components/admin/UserManagement.tsx");
+
+  assert.match(css, /\.admin-users-table th:nth-child\(n \+ 3\),[\s\S]*?td:nth-child\(n \+ 3\)/);
+  assert.match(css, /\.admin-users-table tbody td:nth-child\(n \+ 3\)\s*\{\s*font-size: 0\.73rem;/);
+  assert.match(css, /\.admin-users-table tbody td:nth-child\(5\) > small/);
+  assert.match(css, /\.admin-users-table tbody td:nth-child\(6\),[\s\S]*?td:nth-child\(7\)/);
+  assert.match(css, /font-variant-numeric: tabular-nums;/);
+  assert.match(css, /font-size: 0\.72rem;/);
+  assert.match(css, /font-size: 0\.69rem;/);
+  assert.match(userTable, /action=\{updateUserRoleAction\}/);
+  assert.match(userTable, /action=\{updateUserStatusAction\}/);
+  assert.match(userTable, /<th>Rol<\/th>/);
+  assert.match(userTable, /<th>Durum<\/th>/);
+  assert.match(userTable, /<th>Kayıtları<\/th>/);
+  assert.match(userTable, /<th>Son giriş<\/th>/);
+  assert.match(userTable, /<th>Üyelik<\/th>/);
+});
+
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {
   const css = read("src/app/admin/admin.css");
   const panel = css.slice(css.indexOf("/* Unified navigation:"));

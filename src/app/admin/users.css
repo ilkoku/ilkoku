@@ -115,6 +115,85 @@
   opacity: 0.75;
 }
 
+/* Smaller, well-aligned operational data in Rol, Durum, Kayitlari,
+   Son giris and Uyelik; identity fields and administrative actions stay intact. */
+.admin-users-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-users-table tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.admin-users-table tbody tr:hover {
+  background: rgba(148, 163, 184, 0.045);
+}
+
+.admin-users-table th:nth-child(n + 3),
+.admin-users-table td:nth-child(n + 3) {
+  padding: 12px 10px;
+}
+
+.admin-users-table th:nth-child(n + 3) {
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+}
+
+.admin-users-table tbody td:nth-child(n + 3) {
+  font-size: 0.73rem;
+  line-height: 1.4;
+}
+
+.admin-users-table tbody td:nth-child(5) > span,
+.admin-users-table tbody td:nth-child(5) > small {
+  display: block;
+}
+
+.admin-users-table tbody td:nth-child(5) > span {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-users-table tbody td:nth-child(5) > small {
+  margin-top: 0.2rem;
+  font-size: 0.67rem;
+  opacity: 0.72;
+}
+
+.admin-users-table tbody td:nth-child(6),
+.admin-users-table tbody td:nth-child(7) {
+  white-space: nowrap;
+  color: #cbd5e1;
+}
+
+.admin-users-table tbody td:nth-child(6) > span {
+  opacity: 0.72;
+}
+
+.admin-users-table tbody td:nth-child(3) .admin-user-control,
+.admin-users-table tbody td:nth-child(4) .admin-user-control {
+  gap: 6px;
+}
+
+.admin-users-table tbody td:nth-child(3) .admin-user-control select,
+.admin-users-table tbody td:nth-child(4) .admin-user-control select {
+  min-width: 0;
+  min-height: 32px;
+  border-radius: 8px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
+.admin-users-table tbody td:nth-child(3) .admin-user-control button,
+.admin-users-table tbody td:nth-child(4) .admin-user-control button {
+  min-height: 32px;
+  border-radius: 8px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 0.69rem;
+}
+
 .admin-users-empty {
   padding: 36px 16px !important;
   text-align: center !important;

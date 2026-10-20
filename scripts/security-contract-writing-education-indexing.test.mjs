@@ -477,17 +477,14 @@ test("Roman guide uses the shared public metadata contract instead of inheriting
 });
 
 
-test("Novella CMS media optimization canary preserves all other writing-guide image policies", () => {
-  const novella = source("src/app/yazarlar-icin/kurgu/novella/page.tsx");
+test("Five bespoke fiction guides use responsive CMS image optimization without visual template changes", () => {
   const common = source("src/components/content/PublicCmsPageBlocks.tsx");
-
-  assertContains(novella, "<PublicCmsPageBlocks", "Novella public CMS visual renderer");
-  assertNotContains(novella, "unoptimizedImages", "Novella 7 original oversized PNGs must use optimized Next image delivery");
-  assertContains(common, 'unoptimizedImages = false', "responsive Next image optimizer default");
-  assertContains(common, 'fill sizes="100vw"', "media keeps original responsive aspect fill");
-  assertContains(common, 'alt={block.alt}', "image alternative text preserved");
-  for (const slug of ["oyku", "fantastik", "bilim-kurgu", "distopya"]) {
-    const other = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
-    assertContains(other, "unoptimizedImages", `${slug} remains unmodified until successful canary release`);
+  assertContains(common, 'unoptimizedImages = false', "responsive optimizer remains the default");
+  assertContains(common, 'fill sizes="100vw"', "original responsive image area preserved");
+  assertContains(common, 'alt={block.alt}', "CMS image alt text preserved");
+  for (const slug of ["novella", "oyku", "fantastik", "bilim-kurgu", "distopya"]) {
+    const route = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
+    assertContains(route, "<PublicCmsPageBlocks", `${slug} reuses existing visual template`);
+    assertNotContains(route, "unoptimizedImages", `${slug} CMS PNGs must use optimized delivery`);
   }
 });

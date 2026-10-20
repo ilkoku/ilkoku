@@ -144,8 +144,8 @@ test("user records are a labeled three-row grid while role and status editing re
   assert.ok(userTable.includes("action={updateUserStatusAction}"), "status changes still submit");
   assert.ok(css.includes(".admin-users-table tbody td:nth-child(3) .admin-user-control select"));
   assert.ok(css.includes(".admin-users-table tbody td:nth-child(4) .admin-user-control button"));
-  assert.match(shell, /href="\\/hesabim">Hesabım/);
-  assert.match(shell, /<form action=\\{logoutAction\\}>/);
+  assert.ok(shell.includes('href="/hesabim">Hesabım'), "Hesabım button remains in shell");
+  assert.ok(shell.includes("<form action={logoutAction}>"), "logout form remains unchanged");
 });
 
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {

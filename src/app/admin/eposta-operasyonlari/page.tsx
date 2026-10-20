@@ -19,10 +19,11 @@ type RetryRow = {
   status: string;
 };
 
-function toNumber(value: bigint | number | string | null) {
+function toNumber(value: unknown) {
   if (typeof value === "bigint") return Number(value);
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (typeof value === "string") {
+  // MySQL COUNT may return BigInt; SUM(CASE...) may be a Prisma Decimal.
+  if (typeof value === "string" || (value !== null && typeof value === "object")) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }

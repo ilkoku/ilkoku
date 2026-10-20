@@ -1965,4 +1965,20 @@ model BookIndexSchedulerLease {
   @@index([lockedUntil])
 }
 
+ 
+// Persistent proof and cross-provider lease for scheduled email operations.
+model EmailOperationsSchedulerState {
+  id                String    @id @db.VarChar(32)
+  leaseToken        String?   @db.Char(36)
+  leaseUntil        DateTime?
+  lastAttemptAt     DateTime?
+  lastSuccessAt     DateTime?
+  lastFailureAt     DateTime?
+  lastAttemptSource String?   @db.VarChar(24)
+  lastErrorCode     String?   @db.VarChar(80)
+  lastDurationMs    Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
+  @@index([lastSuccessAt])
+}

@@ -98,3 +98,19 @@ test("Static fallback cannot pass independent production DB evidence", () => {
     workUrls: [], cmsUrls: [], urls: base, dataSource: "static-fallback",
   }).status, 0);
 });
+
+
+test("85 writing-guide sitemap lastmod tracks PR #1789 without falsely refreshing category hubs", () => {
+  const body = fs.readFileSync("src/lib/seo/sitemap-data.ts", "utf8");
+  assert.match(body, /const WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date\("2026-10-18T22:43:29Z"\)/u);
+  const hubStart = body.indexOf("...WRITING_CATEGORY_HUBS.map((hub) => ({");
+  const guideStart = body.indexOf("...GENRES.map((genre) => {", hubStart);
+  const guideEnd = body.indexOf("const readerEducationHrefs", guideStart);
+  assert.ok(hubStart >= 0 && guideStart > hubStart && guideEnd > guideStart);
+  const hubBlock = body.slice(hubStart, guideStart);
+  const guideBlock = body.slice(guideStart, guideEnd);
+  assert.match(hubBlock, /lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/u);
+  assert.doesNotMatch(hubBlock, /WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/u);
+  assert.match(guideBlock, /lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/u);
+  assert.doesNotMatch(guideBlock, /lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/u);
+});

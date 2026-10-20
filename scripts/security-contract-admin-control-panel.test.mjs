@@ -148,6 +148,45 @@ test("user records are a labeled three-row grid while role and status editing re
   assert.ok(shell.includes("<form action={logoutAction}>"), "logout form remains unchanged");
 });
 
+test("payment overview groups five live metrics and seven links without duplicated oversized navigation", () => {
+  const page = read("src/app/admin/odeme-sistemi/page.tsx");
+  const css = read("src/app/admin/commerce.css");
+
+  for (const counter of [
+    "prisma.order.count()",
+    "prisma.payment.count()",
+    "prisma.refund.count()",
+    "prisma.workEntitlement.count()",
+    'prisma.coupon.count({ where: { owner: "platform" } })',
+  ]) {
+    assert.ok(page.includes(counter), `live counter remains: ${counter}`);
+  }
+
+  for (const route of [
+    "/siparisler", "/odemeler", "/iadeler", "/erisim-haklari",
+    "/kuponlar", "/saglayicilar", "/ayarlar",
+  ]) {
+    assert.ok(page.includes(route), `payment management still links to ${route}`);
+  }
+
+  assert.match(page, /admin-commerce-overview__metrics/);
+  assert.match(page, /admin-commerce-overview__provider-list/);
+  assert.match(page, /admin-commerce-overview__settings/);
+  assert.match(page, /getPaymentMethodAvailability\(\)/);
+  assert.match(page, /isCommerceCheckoutEnabled\(\)/);
+  assert.match(page, /operationalProviderCount === 0/);
+  assert.match(page, /gerçek tahsilat hazır değil/);
+  assert.doesNotMatch(page, /Tahsilat aktif/);
+  assert.doesNotMatch(page, /admin-detail-grid/);
+
+  assert.match(css, /\.admin-commerce-overview__metrics/);
+  assert.match(css, /\.admin-commerce-overview__details/);
+  assert.match(css, /@media \(max-width: 540px\)/);
+  assert.match(css, /\.admin-commerce-overview a:focus-visible/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+});
+
 test("horizontal admin navigation keeps visible borders and active-tab cues", () => {
   const css = read("src/app/admin/admin.css");
   const panel = css.slice(css.indexOf("/* Unified navigation:"));

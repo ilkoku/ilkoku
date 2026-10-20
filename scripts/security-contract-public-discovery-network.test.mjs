@@ -301,3 +301,39 @@ test("public discovery keeps the anonymous-to-member reading line closed", () =>
   contains(authActions, 'safeInternalPath(getText(formData, "next"))', "registration continuation validation");
   contains(authActions, "redirect(safeNextPath || roleDestinations[role])", "post-registration continuation");
 });
+
+
+test("related-book navigation uses a bounded one-hop from param while reading paths keep their origin", () => {
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  contains(
+    showcase,
+    "const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);",
+    "related books retain only the immediate book path",
+  );
+  assert.equal(
+    (showcase.match(/href=\{`\/kitap\/\$\{related\.slug\}\?from=\$\{encodedRelatedBookReturnPath\}`\}/gu) ?? []).length,
+    2,
+    "same-author and similar-work links must both use bounded return paths",
+  );
+  assert.ok(
+    !showcase.includes("href={`/kitap/${related.slug}?from=${encodedBookContextPath}`}"),
+    "related books must not copy nested reading history",
+  );
+  contains(
+    showcase,
+    "const encodedBookContextPath = encodeURIComponent(bookContextPath);",
+    "reading, purchases and passport still preserve the existing return path",
+  );
+
+  // Even a long incoming legacy ?from= chain must never propagate to the next book.
+  let current = "/kitap/demo-ikinci-bakis?from=%2Fkitap%2Fdemo-kayip-harfler%3Ffrom%3D%252F";
+  for (let n = 0; n < 20; n += 1) {
+    const currentSlug = new URL(current, "https://ilkoku.com").pathname.split("/").at(-1);
+    const nextSlug = n % 2 ? "demo-kayip-harfler" : "demo-dis-editor-hazir";
+    current = `/kitap/${nextSlug}?from=${encodeURIComponent(`/kitap/${currentSlug}`)}`;
+    const from = new URL(current, "https://ilkoku.com").searchParams.get("from");
+    assert.equal(from, `/kitap/${currentSlug}`);
+    assert.ok(!from.includes("?"), "nested from must never return");
+    assert.ok(current.length < 150, "navigation URL growth must remain bounded");
+  }
+});

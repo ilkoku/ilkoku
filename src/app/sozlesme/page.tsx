@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { ContractSendWorkbench } from "@/features/contracts/ContractSendWorkbench";
+import { ContractHistoryPagination, parseContractPage } from "@/features/contracts/ContractHistoryPagination";
 import {
-  listAdminUserContracts,
+  getAdminUserContractsPage,
+  getAdminContractSummary,
+  countLegacyPublisherContracts,
   listContractRecipients,
   listContractTemplates,
   listContractWorks,
@@ -53,26 +56,34 @@ function messageForStatus(status: string | undefined) {
 export default async function ContractManagementPage({
   searchParams,
 }: {
-  searchParams: Promise<{ durum?: string }>;
+  searchParams: Promise<{ durum?: string; sayfa?: string; gecmisSayfa?: string }>;
 }) {
   const params = await searchParams;
-  const [templates, recipients, works, contracts, legacyContracts, activeAssignments] = await Promise.all([
+  const requestedPage = parseContractPage(params.sayfa);
+  const requestedLegacyPage = parseContractPage(params.gecmisSayfa);
+  const [templates, recipients, works, contractsPage, legacyTotal, activeAssignments, summary] = await Promise.all([
     listContractTemplates({ includeInactive: true }),
     listContractRecipients(),
     listContractWorks(),
-    listAdminUserContracts(),
-    listLegacyPublisherContracts(),
+    getAdminUserContractsPage({ page: requestedPage, pageSize: 25 }),
+    countLegacyPublisherContracts(),
     listActiveManualContractAssignments(),
+    getAdminContractSummary(),
   ]);
+  const contracts = contractsPage.rows;
+  const legacyPageSize = 25;
+  const legacyTotalPages = Math.max(1, Math.ceil(legacyTotal / legacyPageSize));
+  const legacyPage = Math.min(requestedLegacyPage, legacyTotalPages);
+  const legacyContracts = await listLegacyPublisherContracts(legacyPageSize, (legacyPage - 1) * legacyPageSize);
 
   const operationalTemplates = templates.filter((template) => !template.code.startsWith("SOFT_"));
   const manualTemplates = operationalTemplates.filter(
     (template) => template.code !== MANDATORY_REGISTRATION_CONTRACT_CODE,
   );
   const activeTemplates = manualTemplates.filter((template) => template.active);
-  const waiting = contracts.filter((contract) => contract.status === "sent" || contract.status === "viewed").length;
-  const accepted = contracts.filter((contract) => contract.status === "accepted").length;
-  const rejected = contracts.filter((contract) => contract.status === "rejected").length;
+  const waiting = summary.allWaiting;
+  const accepted = summary.allAccepted;
+  const rejected = summary.allRejected;
   const message = messageForStatus(params.durum);
 
   return (
@@ -98,11 +109,11 @@ export default async function ContractManagementPage({
 
       <section className="contract-metrics" aria-label="Sözleşme özeti">
         <article><strong>{activeTemplates.length}</strong><span>Manuel gönderim şablonu</span></article>
-        <article><strong>{contracts.length}</strong><span>Merkezi sözleşme</span></article>
+        <article><strong>{summary.total}</strong><span>Merkezi sözleşme</span></article>
         <article><strong>{waiting}</strong><span>Yanıt bekliyor</span></article>
         <article><strong>{accepted}</strong><span>Kabul edildi</span></article>
         <article><strong>{rejected}</strong><span>Reddedildi</span></article>
-        <article><strong>{legacyContracts.length}</strong><span>Tarihsel yayınevi kaydı</span></article>
+        <article><strong>{legacyTotal}</strong><span>Tarihsel yayınevi kaydı</span></article>
       </section>
 
       <ContractSendWorkbench
@@ -161,7 +172,7 @@ export default async function ContractManagementPage({
             <p>CANLI AKIŞ</p>
             <h2>Gönderilen sözleşmeler</h2>
           </div>
-          <span>{contracts.length} kayıt</span>
+          <span>{contractsPage.total} toplam kayıt</span>
         </div>
 
         <div className="contract-table-wrap">
@@ -191,6 +202,15 @@ export default async function ContractManagementPage({
           </table>
           {contracts.length === 0 ? <div className="contract-empty">Henüz merkezi sözleşme gönderilmedi.</div> : null}
         </div>
+        <ContractHistoryPagination
+          label="Gönderilen sözleşme sayfaları"
+          path="/sozlesme"
+          page={contractsPage.page}
+          pageSize={contractsPage.pageSize}
+          total={contractsPage.total}
+          totalPages={contractsPage.totalPages}
+          preservedParams={{ durum: params.durum, gecmisSayfa: params.gecmisSayfa }}
+        />
       </section>
 
       <section className="contract-admin-section contract-legacy-section">
@@ -223,6 +243,16 @@ export default async function ContractManagementPage({
           </table>
           {legacyContracts.length === 0 ? <div className="contract-empty">Tarihsel yayınevi sözleşmesi yok.</div> : null}
         </div>
+        <ContractHistoryPagination
+          label="Tarihsel yayınevi sözleşmesi sayfaları"
+          path="/sozlesme"
+          page={legacyPage}
+          pageSize={legacyPageSize}
+          total={legacyTotal}
+          totalPages={legacyTotalPages}
+          pageParam="gecmisSayfa"
+          preservedParams={{ durum: params.durum, sayfa: params.sayfa }}
+        />
       </section>
     </main>
   );

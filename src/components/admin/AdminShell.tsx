@@ -304,7 +304,8 @@ export function AdminShell({
           {selectedGroup ? (
             <aside
               id="admin-secondary-panel"
-              className={`admin-secondary-panel ${selectedGroup.id === "communications" ? "admin-secondary-panel--communications" : ""}`}
+              className="admin-secondary-panel"
+              data-group={selectedGroup.id}
               aria-label={`${selectedGroup.label} alt menüleri`}
             >
               <div className="admin-secondary-panel__heading">

@@ -19,10 +19,11 @@ type RetryRow = {
   status: string;
 };
 
-function toNumber(value: bigint | number | string | null) {
+function toNumber(value: unknown) {
   if (typeof value === "bigint") return Number(value);
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (typeof value === "string") {
+  // MySQL COUNT may return BigInt; SUM(CASE...) may be a Prisma Decimal.
+  if (typeof value === "string" || (value !== null && typeof value === "object")) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
@@ -38,10 +39,22 @@ function formatDate(value: Date | null) {
   }).format(value);
 }
 
-async function loadUnresolvedFailureCount() {
+type FailureBreakdownRow = CountRow & {
+  testCount: bigint | number | string | null;
+  notificationCount: bigint | number | string | null;
+  smtpAuthCount: bigint | number | string | null;
+  recentCount: bigint | number | string | null;
+};
+
+async function loadUnresolvedFailureBreakdown(since: Date) {
   try {
-    const rows = await prisma.$queryRaw<CountRow[]>`
-      SELECT COUNT(*) AS count
+    const rows = await prisma.$queryRaw<FailureBreakdownRow[]>`
+      SELECT
+        COUNT(*) AS count,
+        SUM(CASE WHEN delivery.template = 'admin_test_email' THEN 1 ELSE 0 END) AS testCount,
+        SUM(CASE WHEN delivery.template <> 'admin_test_email' THEN 1 ELSE 0 END) AS notificationCount,
+        SUM(CASE WHEN delivery.failureMessage LIKE '%535 5.7.8%' THEN 1 ELSE 0 END) AS smtpAuthCount,
+        SUM(CASE WHEN delivery.attemptedAt >= ${since} THEN 1 ELSE 0 END) AS recentCount
       FROM EmailDelivery delivery
       WHERE delivery.status = 'failed'
         AND NOT EXISTS (
@@ -51,11 +64,18 @@ async function loadUnresolvedFailureCount() {
             AND retryRecord.status = 'sent'
         )
     `;
-
-    return toNumber(rows[0]?.count ?? 0);
+    const row = rows[0];
+    return {
+      total: toNumber(row?.count ?? 0),
+      test: toNumber(row?.testCount ?? 0),
+      notification: toNumber(row?.notificationCount ?? 0),
+      smtpAuth: toNumber(row?.smtpAuthCount ?? 0),
+      recent: toNumber(row?.recentCount ?? 0),
+      readError: false,
+    };
   } catch (error) {
-    console.error("EMAIL_OPERATIONS_UNRESOLVED_COUNT_FAILED", error);
-    return 0;
+    console.error("EMAIL_OPERATIONS_UNRESOLVED_BREAKDOWN_FAILED", error);
+    return { total: 0, test: 0, notification: 0, smtpAuth: 0, recent: 0, readError: true };
   }
 }
 
@@ -99,6 +119,7 @@ export default async function AdminEmailOperationsPage() {
   const now = new Date();
   const staleBefore = new Date(now.getTime() - STALE_PENDING_MS);
   const hourStart = new Date(now.getTime() - 60 * 60 * 1000);
+  const dayStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
@@ -106,10 +127,11 @@ export default async function AdminEmailOperationsPage() {
     stalePendingCount,
     failedLastHour,
     pendingCount,
-    unresolvedFailed,
+    unresolved,
     retriesToday,
     records,
     retryRows,
+    lastSmtpAcceptance,
   ] = await Promise.all([
     prisma.emailDelivery.count({
       where: {
@@ -132,7 +154,7 @@ export default async function AdminEmailOperationsPage() {
         status: "pending",
       },
     }),
-    loadUnresolvedFailureCount(),
+    loadUnresolvedFailureBreakdown(dayStart),
     loadRetriesToday(today),
     prisma.emailDelivery.findMany({
       where: {
@@ -154,6 +176,15 @@ export default async function AdminEmailOperationsPage() {
       take: 50,
     }),
     loadRecentRetries(),
+    prisma.emailDelivery.findFirst({
+      where: {
+        deliveryMode: "smtp",
+        providerMessageId: { not: null },
+        status: "sent",
+      },
+      orderBy: [{ sentAt: "desc" }, { attemptedAt: "desc" }],
+      select: { sentAt: true, attemptedAt: true },
+    }),
   ]);
 
   const latestRetryBySource = new Map<string, RetryRow>();
@@ -164,11 +195,14 @@ export default async function AdminEmailOperationsPage() {
   }
 
   const critical =
-    stalePendingCount > 0
+    unresolved.readError
+    || stalePendingCount > 0
     || failedLastHour >= FAILURE_ALERT_THRESHOLD;
-  const warning = !critical && unresolvedFailed > 0;
-  const healthLabel = critical
-    ? "Müdahale gerekiyor"
+  const warning = !critical && (unresolved.total > 0 || pendingCount > 0);
+  const healthLabel = unresolved.readError
+    ? "Ölçüm hatası"
+    : critical
+      ? "Müdahale gerekiyor"
     : warning
       ? "İzleniyor"
       : "Sağlıklı";
@@ -212,14 +246,55 @@ export default async function AdminEmailOperationsPage() {
         </article>
         <article>
           <span>Çözümlenmemiş hata</span>
-          <strong>{unresolvedFailed}</strong>
+          <strong>{unresolved.readError ? "—" : unresolved.total}</strong>
           <small>Başarılı tekrar bildirimi bulunmayan</small>
+        </article>
+        <article>
+          <span>Geçmiş sistem testi hatası</span>
+          <strong>{unresolved.readError ? "—" : unresolved.test}</strong>
+          <small>admin_test_email · gerçek bildirimden ayrı</small>
+        </article>
+        <article>
+          <span>Bildirim hatası</span>
+          <strong>{unresolved.readError ? "—" : unresolved.notification}</strong>
+          <small>Test dışı, henüz başarılı tekrar kaydı yok</small>
+        </article>
+        <article>
+          <span>Son 24 saatte çözümlenmemiş</span>
+          <strong>{unresolved.readError ? "—" : unresolved.recent}</strong>
+          <small>Eski arşivden bağımsız dönem</small>
+        </article>
+        <article>
+          <span>Son SMTP sağlayıcı kabulü</span>
+          <strong className="admin-email-operations-last-smtp">{lastSmtpAcceptance ? formatDate(lastSmtpAcceptance.sentAt || lastSmtpAcceptance.attemptedAt) : "Kayıt yok"}</strong>
+          <small>SMTP mesaj kimliği kayıtlı; gelen kutusuna teslim kanıtı değildir</small>
         </article>
         <article>
           <span>Bugünkü tekrarlar</span>
           <strong>{retriesToday}</strong>
           <small>Admin operasyon kaydı</small>
         </article>
+      </section>
+
+      <section className="admin-panel admin-email-operations-history" aria-label="Geçmiş SMTP hata ayrımı">
+        <div className="admin-panel__heading">
+          <div>
+            <span>Geçmişe dönük inceleme</span>
+            <h2>SMTP hatalarının kaynağı</h2>
+          </div>
+          <Link href="/sistem-yonetimi/epostalar?durum=failed">Başarısız gönderim geçmişi →</Link>
+        </div>
+        {unresolved.readError ? (
+          <p>Hata dökümü yüklenemedi. Başarısız kayıt sayısı sıfır kabul edilmedi; sunucu kayıtları incelenmeli.</p>
+        ) : (
+          <p>
+            Çözümlenmemiş <strong>{unresolved.total}</strong> başarısız kaydın <strong>{unresolved.test}</strong> tanesi
+            yönetici sistem testi, <strong>{unresolved.notification}</strong> tanesi bildirim kaynaklı.
+            <strong> {unresolved.smtpAuth}</strong> kayıtta SMTP 535 5.7.8 kimlik doğrulama hatası bulunuyor.
+            Son 24 saatteki çözümlenmemiş kayıt sayısı <strong>{unresolved.recent}</strong>.
+            Bu ayrım hata geçmişini silmez, teslim edildi olarak işaretlemez veya yeni e-posta göndermez.
+          </p>
+        )}
       </section>
 
       <section className="admin-panel admin-email-operations-rules">

@@ -285,6 +285,40 @@ test("contract history uses full database counts, safe page filters, and page-sc
   assert.match(tracking, /<Link href=\{\`\/sozlesme\/\$\{contract\.id\}\`\}>/);
 });
 
+test("email operations separates past tests from actual notifications without deleting errors or sending mail", () => {
+  const operations = read("src/app/admin/eposta-operasyonlari/page.tsx");
+  const retryAction = read("src/features/admin-email/retry-actions.ts");
+  const retryButton = read("src/components/admin/AdminEmailRetryButton.tsx");
+  const emailCss = read("src/app/admin/email-operations.css");
+
+  assert.match(operations, /loadUnresolvedFailureBreakdown\(dayStart\)/);
+  assert.match(operations, /delivery\.template = 'admin_test_email'/);
+  assert.match(operations, /delivery\.template <> 'admin_test_email'/);
+  assert.match(operations, /delivery\.attemptedAt >= \$\{since\}/);
+  assert.match(operations, /delivery\.failureMessage LIKE '%535 5\.7\.8%'/);
+  assert.match(operations, /retryRecord\.status = 'sent'/);
+  assert.match(operations, /readError: true/);
+  assert.match(operations, /Son 24 saatte çözümlenmemiş/);
+  assert.match(operations, /Geçmiş sistem testi hatası/);
+  assert.match(operations, /Bildirim hatası/);
+  assert.match(operations, /Son SMTP sağlayıcı kabulü/);
+  assert.match(operations, /providerMessageId: \{ not: null \}/);
+  assert.match(operations, /status: "sent"/);
+  assert.match(operations, /Son 1 saat hata/);
+  assert.match(operations, /AdminEmailRetryButton/);
+  assert.match(operations, /silmez, teslim edildi olarak işaretlemez veya yeni e-posta göndermez/);
+  assert.doesNotMatch(operations, /UPDATE EmailDelivery|DELETE FROM EmailDelivery/);
+
+  assert.match(retryButton, /name="retryConfirmed"/);
+  assert.match(retryButton, /value="confirmed"/);
+  assert.match(retryButton, /required/);
+  assert.match(retryAction, /formData\.get\("retryConfirmed"\) !== "confirmed"/);
+  assert.match(retryAction, /getCurrentUser\(\)/);
+  assert.match(retryAction, /canSafelyRetryEmailTemplate/);
+  assert.match(retryAction, /RETRY_RATE_LIMIT_MS/);
+  assert.match(emailCss, /\.admin-email-retry-confirm/);
+});
+
 test("communications navigation uses original horizontal strip and collapsible contract submenu", () => {
   const css = read("src/app/admin/admin.css");
   const group = navigation.slice(navigation.indexOf('id: "communications"'), navigation.indexOf('id: "security"'));

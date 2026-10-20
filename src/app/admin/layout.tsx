@@ -13,6 +13,7 @@ import "./management.css";
 import "./roles.css";
 import "./users.css";
 import "./yazarlar/writers.css";
+import "../sozlesme/operations-table-layout.css";
 
 export const metadata: Metadata = {
   title: "İlkOku Sistem Yönetimi",

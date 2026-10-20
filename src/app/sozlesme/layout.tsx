@@ -10,6 +10,7 @@ import "./assignment-workbench.css";
 import "./tracking.css";
 import "./review-readiness.css";
 import "./review-evidence.css";
+import "./operations-table-layout.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",

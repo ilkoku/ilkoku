@@ -82,42 +82,39 @@ export default async function ContractReviewReadinessPage() {
         </section>
       ) : null}
 
-      <section className="contract-review-grid" aria-label="Şablon inceleme kuyruğu">
-        {rows.map(({ record, readiness }) => (
-          <article className="contract-review-card" data-review-state={readiness?.reviewState ?? "unmapped"} key={record.id}>
-            <header>
-              <div>
-                <span>{record.lifecycleStatus.toUpperCase()}</span>
-                <small>{record.code} · v{record.version}</small>
-              </div>
-              <strong>{readiness ? reviewStateLabels[readiness.reviewState] : "Manuel sınıflandırma gerekli"}</strong>
-            </header>
-
-            <div className="contract-review-card__body">
-              <h2>{record.title}</h2>
-              <p>{readiness?.summary ?? "Bu çalışma şablonu henüz dokuz kanonik LIB kayıt sınıflandırmasına dahil değil."}</p>
-
-              <section>
-                <h3>Hukuki inceleme</h3>
-                {readiness?.legalReviewItems.length ? (
-                  <ul>{readiness.legalReviewItems.map((item) => <li key={item}>{item}</li>)}</ul>
-                ) : <p>Özel hukuki inceleme notu tanımlanmadı.</p>}
-              </section>
-
-              <section>
-                <h3>Kaydedilen ürün politikası</h3>
-                {readiness?.ownerDecisionItems.length ? (
-                  <ul>{readiness.ownerDecisionItems.map((item) => <li key={item}>{item}</li>)}</ul>
-                ) : <p>Bu şablon için ayrıca ürün sahibi kararı gerekmiyor.</p>}
-              </section>
-            </div>
-
-            <footer>
-              <span>Aktivasyon: {record.lifecycleStatus === "active" ? "Aktif" : "Pasif / inceleme sınırında"}</span>
-              <Link href={`/sozlesme/sablonlar/${record.id}`}>Şablonu aç →</Link>
-            </footer>
-          </article>
-        ))}
+      <section className="contract-review-table-section" aria-label="Şablon inceleme kuyruğu">
+        <div className="contract-table-wrap contract-list-table">
+          <table>
+            <thead><tr><th>Şablon / Kod</th><th>Yaşam döngüsü</th><th>İnceleme sınıfı</th><th>İnceleme özeti</th><th>Hukuki ve ürün kararı ayrıntıları</th><th>Aktivasyon</th><th>İşlem</th></tr></thead>
+            <tbody>
+              {rows.map(({ record, readiness }) => (
+                <tr key={record.id}>
+                  <td><strong>{record.title}</strong><small>{record.code} · v{record.version}</small></td>
+                  <td>{record.lifecycleStatus.toUpperCase()}</td>
+                  <td>{readiness ? reviewStateLabels[readiness.reviewState] : "Manuel sınıflandırma gerekli"}</td>
+                  <td>{readiness?.summary ?? "Bu çalışma şablonu henüz dokuz kanonik LIB kayıt sınıflandırmasına dahil değil."}</td>
+                  <td>
+                    <details className="contract-row-details">
+                      <summary>Notları görüntüle</summary>
+                      <div>
+                        <strong>Hukuki inceleme</strong>
+                        {readiness?.legalReviewItems.length
+                          ? <ul>{readiness.legalReviewItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                          : <p>Özel hukuki inceleme notu tanımlanmadı.</p>}
+                        <strong>Kaydedilen ürün politikası</strong>
+                        {readiness?.ownerDecisionItems.length
+                          ? <ul>{readiness.ownerDecisionItems.map((item) => <li key={item}>{item}</li>)}</ul>
+                          : <p>Bu şablon için ayrıca ürün sahibi kararı gerekmiyor.</p>}
+                      </div>
+                    </details>
+                  </td>
+                  <td><span className="contract-row-state" data-state={record.lifecycleStatus}>{record.lifecycleStatus === "active" ? "Aktif" : "Pasif / incelemede"}</span></td>
+                  <td><Link href={`/sozlesme/sablonlar/${record.id}`}>Şablonu aç →</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {rows.length !== contractReviewReadiness.length ? (

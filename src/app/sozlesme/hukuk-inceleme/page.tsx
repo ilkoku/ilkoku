@@ -57,11 +57,32 @@ export default async function ContractLegalReviewPackPage() {
         </p>
       </section>
 
+      <section className="contract-legal-pack-index" aria-label="Hukuk inceleme belge dizini">
+        <h2>Belge dizini</h2>
+        <div className="contract-table-wrap contract-list-table">
+          <table>
+            <thead><tr><th>Sıra</th><th>Şablon / Kod</th><th>Hedef rol</th><th>Durum</th><th>Sürüm</th><th>İşlem</th></tr></thead>
+            <tbody>
+              {templates.map((template, index) => (
+                <tr key={template.id}>
+                  <td>{index + 1}</td>
+                  <td><strong>{template.title}</strong><small>{template.code}</small></td>
+                  <td>{template.targetRole}</td>
+                  <td><span className="contract-row-state" data-state={template.lifecycleStatus}>{template.lifecycleStatus}</span></td>
+                  <td>v{template.version}</td>
+                  <td><a href={`#contract-legal-${template.id}`}>Tam metne git ↓</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="contract-legal-pack-documents" aria-label="İncelenecek sözleşmeler">
         {templates.map((template, index) => {
           const readiness = getContractReviewReadiness(template.code);
           return (
-            <article className="contract-legal-pack-document" key={template.id}>
+            <article className="contract-legal-pack-document" id={`contract-legal-${template.id}`} key={template.id}>
               <header>
                 <div>
                   <small>Belge {index + 1}/{templates.length}</small>

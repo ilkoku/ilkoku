@@ -58,6 +58,8 @@ export default function robots(): MetadataRoute.Robots {
           "/yorumlarim",
           "/api",
           "/auth",
+          // Cloudflare-managed infrastructure URLs are not website content.
+          "/cdn-cgi/",
           // First-party Google Tag Gateway measurement path; analytics is not required for page rendering.
           "/1q6z",
         ],

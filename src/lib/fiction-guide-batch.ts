@@ -355,7 +355,7 @@ const definitions: FictionGuideDefinition[] = [
   },
   {
     slug: "macera", label: "Macera", title: "Macera Nasıl Yazılır?",
-    description: "Hedef, yolculuk, engel, keşif ve dönüşüm üzerinden macera anlatısı kurmayı öğreten rehber.",
+    description: "Macera hikâyesi nasıl yazılır? Kahramanın hedefini, yolculuktaki engelleri, keşifleri ve dönüşümünü planlayarak sürükleyici bir anlatı oluşturmayı öğrenin.",
     summary: "Macera yalnız uzak yerlere gitmek değildir; her durak hedefi değiştirir, yeni bilgi verir ve kahramanı daha zor bir seçime iter.",
     alts: alts("Macera", "Kayıp Meridyen"),
     orientationHeading: "Macera, hareket eden hedef ve değişen dünya duygusudur",
@@ -835,7 +835,7 @@ const definitions: FictionGuideDefinition[] = [
   },
   {
     slug: "hiciv", label: "Hiciv (Satir)", title: "Hiciv Nasıl Yazılır?",
-    description: "Eleştiri hedefi, ironi, abartı, sistem mantığı ve karakter üzerinden hiciv yazarlık rehberi.",
+    description: "Hiciv nasıl yazılır? Eleştiri hedefini belirlemeyi, ironi ve abartıyı kullanmayı, karakter ve olay örgüsüyle etkili hiciv sahneleri kurmayı öğrenin.",
     summary: "Hicivde önce neye güldüğünü değil neyi eleştirdiğini bil. Abartı, hedefin gerçek mantığını daha görünür yapmalı.",
     alts: alts("Hiciv", "Mükemmel Vatandaşlık Ofisi"),
     orientationHeading: "Hiciv güldürürken bir güç mekanizmasını açığa çıkarır",

@@ -308,7 +308,7 @@ test("HTML sitemap links to the published indexable registration agreement", () 
   assertContains(registrationLayout, "createPublicPageMetadata({", "registration agreement metadata generated at its layout boundary");
   assertContains(registrationLayout, 'canonical: "/uyelik-sozlesmesi"', "registration agreement self-canonical");
   assertContains(registrationLayout, 'title: "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku"', "registration agreement unique search title");
-  assertContains(registrationLayout, 'description: "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü."', "registration agreement unique description");
+  assertContains(registrationLayout, 'description: "İlkOku Platform Kullanım ve Gizlilik Taahhüdü: hesap oluştururken kabul edilen temel üyelik, platform kullanımı ve gizlilik koşullarını inceleyin."', "registration agreement unique description");
   assertNotContains(registrationAgreement, "export const metadata:", "dynamic agreement body must not shadow segment head metadata");
   assertContains(sitemapData, 'url: `${baseUrl}/uyelik-sozlesmesi`', "XML sitemap retains registration agreement");
 });

@@ -375,11 +375,14 @@ export function AdminShell({
                     className="admin-tertiary-row admin-nav-child__items"
                     aria-label={`${item.label} alt bağlantıları`}
                   >
-                    {item.children.map((child) => (
-                      <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
-                        <span>{child.label}</span>
-                      </Link>
-                    ))}
+                    {item.children.map((child) => {
+                      const active = isActiveSubItem(child.href, item.children ?? [], pathname, searchParams);
+                      return (
+                        <Link key={child.href} href={child.href} aria-current={active ? "page" : undefined} className={active ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </Link>
+                      );
+                    })}
                   </nav>
                 ) : null,
               )}

@@ -336,10 +336,10 @@ test("communications navigation uses original horizontal strip and collapsible c
 
   assert.match(shell, /className="admin-secondary-panel"/);
   assert.match(shell, /className="admin-secondary-panel__items"/);
-  assert.match(shell, /const subExpanded = expandedSubmenus\[item\.href\] \?\? false/);
+  assert.match(shell, /const subExpanded = isSubmenuExpanded\(item\)/);
   assert.match(shell, /\{hasChildren \? \(/);
   assert.match(shell, /aria-expanded=\{subExpanded\}/);
-  assert.match(shell, /item\.children\?\.length && expandedSubmenus\[item\.href\]/);
+  assert.match(shell, /item\.children\?\.length && isSubmenuExpanded\(item\)/);
   assert.doesNotMatch(shell, /admin-communications-nav__caption|data-group=\{selectedGroup\.id\}/);
   assert.doesNotMatch(css, /\.admin-secondary-panel\[data-group="communications"\]/);
   assert.match(shell, /href="\/hesabim">Hesabım/);
@@ -514,7 +514,7 @@ test("existing horizontal third-level navigation remains open on every nested ad
   const groups = read("src/lib/admin-navigation.ts");
   assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
   assert.match(shell, /const expansionKey =/);
-  assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(isActive \|\| nestedRouteActive\)/);
+  assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(activeParent \|\| nestedRouteActive\)/);
   assert.match(shell, /\[expansionKey\]: !subExpanded/);
   assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
   assert.match(shell, /isActiveSubItem\(child\.href/);

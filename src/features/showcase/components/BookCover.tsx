@@ -34,6 +34,7 @@ export function BookCover({
             alt={`${title} kapak görseli`}
             width={1024}
             height={1536}
+            loading={compact ? "lazy" : "eager"}
             sizes={compact ? "(max-width: 640px) 38vw, 180px" : "(max-width: 640px) 80vw, (max-width: 1200px) 35vw, 520px"}
           />
         ) : (

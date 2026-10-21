@@ -45,9 +45,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const source = request.headers.get("x-ilkoku-scheduler") === "cloudflare"
-      ? "cloudflare"
-      : "github";
+    const schedulerHeader = request.headers.get("x-ilkoku-scheduler");
+    const source = schedulerHeader === "hostinger"
+      ? "hostinger"
+      : schedulerHeader === "cloudflare"
+        ? "cloudflare"
+        : "github";
     const result = await runEmailOperationsCheck(source);
     return NextResponse.json(
       { ok: !result.skipped, ...result },

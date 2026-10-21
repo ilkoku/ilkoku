@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Power-SEO query-only tabs require full navigation to reload their server-rendered workflow. */
 "use client";
 
 import Image from "next/image";
@@ -381,9 +382,15 @@ export function AdminShell({
                     aria-label={`${item.label} alt bağlantıları`}
                   >
                     {item.children.map((child) => (
-                      <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
-                        <span>{child.label}</span>
-                      </Link>
+                      item.href === `${SYSTEM_MANAGEMENT_PATH}/power-seo` ? (
+                        <a key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </a>
+                      ) : (
+                        <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </Link>
+                      )
                     ))}
                   </nav>
                 ) : null,

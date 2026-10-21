@@ -360,7 +360,7 @@ export const READER_EDUCATION_CATEGORIES = [
     lead: "İyi okur yorumu bir hüküm bırakıp gitmez. Neyi fark ettiğini, neden böyle düşündüğünü ve bunu metindeki hangi seçimlerin oluşturduğunu açıklar.",
     promise: "Bu eğitim, spoiler vermeden gerekçeli yorum yazmayı, eleştiriyi kişiselleştirmemeyi ve yazara gerçekten kullanılabilir geri bildirim sunmayı öğretir.",
     seoTitle: "Yorum ve Eleştiri Yazma Eğitimi | İlkOku Okurluk Okulu",
-    seoDescription: "Gerekçeli, yapıcı ve spoiler vermeyen okur yorumu ile eser eleştirisi yazmayı adım adım öğrenin.",
+    seoDescription: "Yorum ve eleştiri yazma eğitiminde metne dayalı değerlendirme yapmayı, spoilerları yönetmeyi ve yazarlara gerekçeli, yapıcı geri bildirim sunmayı öğrenin.",
     benefits: [
       { title: "Görüşü gerekçelendirmek", text: "‘İyiydi’ veya ‘olmadı’ yerine neyin neden etkili olduğunu açıklayan yorum kur." },
       { title: "Eseri hedeflemek", text: "Yazarın kişiliğini değil; metindeki anlatı, karakter, dil veya yapı seçimlerini değerlendir." },

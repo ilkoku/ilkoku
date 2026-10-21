@@ -103,3 +103,38 @@ test("approved Turkish starter FAQ publication migration is scoped, one-shot and
   assertNotContains(sql, "`valueJson` =", "does not rewrite approved texts");
   assertNotContains(sql, "`updatedById` =", "preserves the original editor identity");
 });
+
+test("approved five legal SEO descriptions update metadata only with guarded live CMS rows", () => {
+  const sql = source("prisma/migrations/20261021202000_approved_legal_seo_descriptions/migration.sql");
+  const slugs = ["kvkk", "gizlilik-politikasi", "telif-hakki-politikasi", "kullanim-sartlari", "cerez-politikasi"];
+  assert.equal((sql.match(/UPDATE \`ContentPage\`/g) ?? []).length, slugs.length, "only five published legal page updates");
+  assert.equal((sql.match(/SET \`seoDescription\` =/g) ?? []).length, slugs.length, "only approved metadata column is written");
+  for (const slug of slugs) {
+    assertContains(sql, "'legal:" + slug + "'", "guard the legal CMS record " + slug);
+    assertContains(sql, "'/yasal/" + slug + "'", "guard the public legal slug " + slug);
+  }
+  assert.equal((sql.match(/\`status\` = 'published'/g) ?? []).length, slugs.length, "published only");
+  assert.equal((sql.match(/JSON_VALID\(\`bodyJson\`\)/g) ?? []).length, slugs.length, "valid old content only");
+  assert.equal((sql.match(/\`seoDescription\` IS NULL OR \`seoDescription\` =/g) ?? []).length, slugs.length, "do not overwrite modified metadata");
+  for (const forbidden of ["SET \`bodyJson\`", "SET \`title\`", "INSERT INTO", "DELETE FROM", "\`updatedById\` =", "\`publishedAt\` ="]) {
+    assertNotContains(sql, forbidden, "preserve legal body and audit identity");
+  }
+  assertContains(source("src/app/yasal/[slug]/page.tsx"), "cms?.seoDescription?.trim()", "legal metadata reads updated field");
+});
+
+test("approved seven non-CMS descriptions update route metadata without editing body sources", () => {
+  const expected = [
+    ["src/app/uyelik-sozlesmesi/layout.tsx", "İlkOku Platform Kullanım ve Gizlilik Taahhüdü: hesap oluştururken kabul edilen temel üyelik, platform kullanımı ve gizlilik koşullarını inceleyin."],
+    ["src/app/yazarlar-icin/kurgu/hiciv/page.tsx", "Hiciv nasıl yazılır? Eleştiri hedefini belirlemeyi, ironi ve abartıyı kullanmayı, karakter ve olay örgüsüyle etkili hiciv sahneleri kurmayı öğrenin."],
+    ["src/app/yazarlar-icin/kurgu/macera/page.tsx", "Macera hikâyesi nasıl yazılır? Kahramanın hedefini, yolculuktaki engelleri, keşifleri ve dönüşümünü planlayarak sürükleyici bir anlatı oluşturmayı öğrenin."],
+    ["src/app/iletisim/page.tsx", "İlkOku ile iletişime geçin. Platform kullanımı ve genel sorular için destek kanallarını, başvuru yollarını ve telif bildirimlerine ilişkin bağlantıları öğrenin."],
+    ["src/app/yazarlar-icin/senaryo-ve-sahne/page.tsx", "Film, dizi, tiyatro ve podcast gibi türler için senaryo ve sahne yazarlığı eğitimlerini keşfedin. Anlatı kurma ve türlere göre yazma yollarını inceleyin."],
+    ["src/lib/reader-education.ts", "Yorum ve eleştiri yazma eğitiminde metne dayalı değerlendirme yapmayı, spoilerları yönetmeyi ve yazarlara gerekçeli, yapıcı geri bildirim sunmayı öğrenin."],
+    ["src/app/yazarlar-icin/edebiyat/page.tsx", "Edebiyat yazarlığı eğitimlerinde şiir, deneme, anı, biyografi ve diğer türlerin yazma yaklaşımlarını keşfedin; anlatım becerilerinizi geliştirmeye başlayın."],
+  ];
+  for (const [path, description] of expected) {
+    assertContains(source(path), description, "approved metadata: " + path);
+  }
+  assertContains(source("src/app/yazarlar-icin/kurgu/hiciv/page.tsx"), "<BatchedFictionGuidePage definition={definition} />", "ficitional hero not altered");
+  assertContains(source("src/app/yazarlar-icin/kurgu/macera/page.tsx"), "<BatchedFictionGuidePage definition={definition} />", "fictional hero not altered");
+});

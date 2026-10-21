@@ -88,7 +88,7 @@ test("public registration agreement has unique SEO metadata in server HTML head"
   await expect(page).toHaveTitle("Platform Kullanım ve Gizlilik Taahhüdü | İlkOku");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü.",
+    "İlkOku Platform Kullanım ve Gizlilik Taahhüdü: hesap oluştururken kabul edilen temel üyelik, platform kullanımı ve gizlilik koşullarını inceleyin.",
   );
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
     "content", "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku",

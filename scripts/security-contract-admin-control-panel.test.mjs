@@ -512,6 +512,8 @@ test("unified admin preserves hidden CMS helpers and query-based Power-SEO activ
 test("existing horizontal third-level navigation remains open on every nested admin page", () => {
   const shell = read("src/components/admin/AdminShell.tsx");
   const groups = read("src/lib/admin-navigation.ts");
+  const powerSeo = read("src/app/admin/power-seo/page.tsx");
+  assert.doesNotMatch(powerSeo, /aria-label="Power-SEO çalışma alanları"/, "do not duplicate the common Power-SEO horizontal tabs inside the page");
   assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
   assert.match(shell, /const expansionKey =/);
   assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(activeParent \|\| nestedRouteActive\)/);

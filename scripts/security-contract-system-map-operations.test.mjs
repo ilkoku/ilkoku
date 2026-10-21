@@ -249,3 +249,27 @@ test("all 18 harita submenu pages use one accessible row-column directory", () =
   notContains(layout, '<SystemMapNavigation />', "no duplicated sidebar menu");
   notContains(directory, "fetch(", "navigation does not fetch private data");
 });
+
+
+test("system map tertiary tabs are visible and active on all 19 harita routes without duplicate navigation", () => {
+  const shell = source("src/components/admin/AdminShell.tsx");
+  const adminNavigation = source("src/lib/admin-navigation.ts");
+  const mapNavigation = source("src/features/system-map/navigation.ts");
+  const layout = source("src/app/harita/layout.tsx");
+
+  contains(adminNavigation, "systemMapNavigationItems.map", "one canonical menu item source");
+  contains(adminNavigation, 'children: systemMapSubNavigation', "existing admin submenu registry");
+  contains(shell, "function isSubmenuExpanded(", "one expansion rule reused for rendering");
+  contains(shell, 'href === "/harita" && (pathname === "/harita" || pathname.startsWith("/harita/"))', "all nested harita pages auto-expand");
+  assert.equal(shell.split("isSubmenuExpanded(item.href, pathname, expandedSubmenus)").length - 1, 2, "toggle state and tertiary row use one identical rule");
+  contains(shell, "item.children.map((child)", "original admin tertiary links remain");
+  contains(shell, "isActiveSubItem(child.href", "active tab stays bound to current route");
+  contains(shell, 'aria-current={active ? "page" : undefined}', "active tab is explicitly identified for accessible navigation");
+  contains(shell, "admin-tertiary-row admin-nav-child__items", "original horizontal scroll CSS retained");
+  contains(layout, "<AdminShell embeddedWorkspace", "same admin sidebar and layout retained");
+  notContains(layout, "<SystemMapHorizontalTabs", "no duplicate /harita navigation strip");
+
+  const urls = [...mapNavigation.matchAll(/\{ key: "([^"]+)", href: "(\/harita(?:\/[^"]*)?)"/g)];
+  assert.equal(urls.length, 19, "overview plus every 18 specialist tabs remain");
+  assert.equal(new Set(urls.map((entry) => entry[2])).size, 19, "each submenu destination occurs once");
+});

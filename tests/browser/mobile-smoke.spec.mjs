@@ -1444,6 +1444,11 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
     { path: "/icerik/seo", group: "Eser & İçerik", second: "İçerik Yönetimi", third: "/icerik/seo" },
     { path: "/harita", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
     { path: "/harita/rotalar", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
+    { path: "/harita/denetim", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/denetim" },
+    { path: "/harita/menuler", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/menuler" },
+    { path: "/harita/altyapi", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/altyapi" },
+    { path: "/harita/sozlesmeler", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/sozlesmeler" },
+    { path: "/harita/tedarik-zinciri", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/tedarik-zinciri" },
     { path: "/sozlesme", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
     { path: "/sozlesme/takip", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
   ];
@@ -1462,8 +1467,17 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
       await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: scenario.second, exact: true })).toBeVisible();
     }
     if (scenario.third) {
-      await page.locator(".admin-secondary-panel").getByRole("button", { name: scenario.second + " alt menüsünü aç" }).click();
+      const toggle = page.locator(".admin-secondary-panel").getByRole("button", {
+        name: new RegExp(`^${scenario.second} alt menüsünü (aç|kapat)`),
+      });
+      const currentlyExpanded = await toggle.getAttribute("aria-expanded");
+      if (currentlyExpanded !== "true") await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
       await expect(page.locator(`.admin-secondary-panel .admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
+      if (scenario.path === "/harita" || scenario.path.startsWith("/harita/")) {
+        await expect(page.locator(".admin-secondary-panel .admin-tertiary-row a")).toHaveCount(19);
+        await expect(page.locator(`.admin-secondary-panel .admin-tertiary-row a[href="${scenario.path}"]`)).toHaveAttribute("aria-current", "page");
+      }
     }
     await expectResponsiveDocument(page);
   }

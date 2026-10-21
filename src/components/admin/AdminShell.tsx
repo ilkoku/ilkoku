@@ -150,6 +150,18 @@ function isActiveSubItem(
     : !siblings.some((sibling) => matchesQueryLink(sibling.href));
 }
 
+// The existing third-level row must stay available throughout /harita.
+// Use the canonical adminNavigation child links; never render a second tab strip.
+function isSubmenuExpanded(
+  href: string,
+  pathname: string,
+  overrides: Record<string, boolean>,
+) {
+  return overrides[href] ?? (
+    href === "/harita" && (pathname === "/harita" || pathname.startsWith("/harita/"))
+  );
+}
+
 function getInitials(fullName: string) {
   const initials = fullName
     .trim()
@@ -326,7 +338,7 @@ export function AdminShell({
                       ? pathname === item.href
                       : pathname === item.href || pathname.startsWith(item.href + "/");
                   const hasChildren = Boolean(item.children?.length);
-                  const subExpanded = expandedSubmenus[item.href] ?? false;
+                  const subExpanded = isSubmenuExpanded(item.href, pathname, expandedSubmenus);
                   return (
                     <div className="admin-nav-child" key={item.href}>
                       <div className="admin-nav-child__header">
@@ -356,18 +368,21 @@ export function AdminShell({
                 })}
               </nav>
               {selectedGroup.items.map((item, index) =>
-                item.children?.length && expandedSubmenus[item.href] ? (
+                item.children?.length && isSubmenuExpanded(item.href, pathname, expandedSubmenus) ? (
                   <nav
                     key={item.href}
                     id={`admin-submenu-${selectedGroup.id}-${index}`}
                     className="admin-tertiary-row admin-nav-child__items"
                     aria-label={`${item.label} alt bağlantıları`}
                   >
-                    {item.children.map((child) => (
-                      <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
-                        <span>{child.label}</span>
-                      </Link>
-                    ))}
+                    {item.children.map((child) => {
+                      const active = isActiveSubItem(child.href, item.children ?? [], pathname, searchParams);
+                      return (
+                        <Link key={child.href} href={child.href} aria-current={active ? "page" : undefined} className={active ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </Link>
+                      );
+                    })}
                   </nav>
                 ) : null,
               )}

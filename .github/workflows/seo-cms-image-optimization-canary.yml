@@ -23,7 +23,7 @@ jobs:
           for id in "459c18b8-39ea-4565-9663-0be6cace30e6" "39abb993-16b0-4e2e-b688-d2a10cf32ae0" "20cdbe7f-0df1-4cfd-a6cb-dc1ca3df8a91"; do
           echo "Media ID: $id"
           origin="https://ilkoku.com/api/media/$id"
-          optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=640&q=75"
+          optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=1080&q=75"
           dir="$(mktemp -d)"
           trap 'rm -rf "$dir"' EXIT
           get_image() {

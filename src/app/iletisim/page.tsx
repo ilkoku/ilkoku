@@ -6,7 +6,7 @@ import "./contact.css";
 import "../nasil-calisir/public-trust-footer.css";
 
 const title = "İletişim | İlkOku";
-const description = "İlkOku hakkında genel sorularınız, talepleriniz ve platform iletişimi için bize ulaşın.";
+const description = "İlkOku ile iletişime geçin. Platform kullanımı ve genel sorular için destek kanallarını, başvuru yollarını ve telif bildirimlerine ilişkin bağlantıları öğrenin.";
 const socialImage = "/opengraph-image";
 const baseUrl = "https://ilkoku.com";
 

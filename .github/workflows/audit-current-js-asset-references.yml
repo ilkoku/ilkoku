@@ -1,0 +1,33 @@
+name: Audit current live JS assets vs historical Ahrefs 404
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/audit-current-js-asset-references.yml"
+      - "scripts/audit-current-live-js-assets.mjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Collect read-only live bundle evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check script syntax
+        run: node --check scripts/audit-current-live-js-assets.mjs
+      - name: Inspect eight live pages and current JS URLs
+        run: node scripts/audit-current-live-js-assets.mjs
+      - name: Upload evidence regardless of audit outcome
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-current-live-js-asset-audit
+          path: |
+            /tmp/ilkoku-live-js-ref-audit/report.json
+            /tmp/ilkoku-live-js-ref-audit/report.md
+          retention-days: 14
+          if-no-files-found: warn

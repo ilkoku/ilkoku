@@ -1559,3 +1559,58 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
   await expect(panel.locator('a[href="/icerik/sayfalar/sablonlar"]')).toHaveCount(0);
   await expectResponsiveDocument(page);
 });
+
+
+test("deletion center records render as responsive row-column tables with intact protected actions", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  const sections = [
+    { title: "Yazar silme", label: "Yazar silme kayıtları", columns: ["Yazar", "E-posta", "Eser", "Yayınevi başvurusu", "Silme onayı"] },
+    { title: "Eser silme", label: "Eser silme kayıtları", columns: ["Eser", "Yazar", "Bölüm", "Aktif erişim", "Başarılı sipariş", "Silme onayı"] },
+    { title: "Yayınevi silme", label: "Yayınevi silme kayıtları", columns: ["Yayınevi", "Slug", "Aktif üye", "Başvuru", "Silme onayı"] },
+    { title: "Editör silme", label: "Editör silme kayıtları", columns: ["Editör", "E-posta", "Aktif inceleme", "Tamamlanan rapor", "Silme onayı"] },
+  ];
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/sistem-yonetimi/silme-merkezi", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Silme Merkezi", exact: true })).toBeVisible();
+    await expect(page.getByRole("note")).toContainText("Güvenli silme kullanılıyor.");
+    await expect(page.locator(".admin-deletion-center .admin-delete-card")).toHaveCount(0);
+
+    for (const scenario of sections) {
+      const section = page.locator(".admin-delete-section").filter({ has: page.getByRole("heading", { name: scenario.title, exact: true }) });
+      await expect(section).toHaveCount(1);
+      const table = section.getByRole("table");
+      if (await table.count()) {
+        const region = section.getByRole("region", { name: scenario.label });
+        await expect(region).toHaveCount(1);
+        await expect(table.locator("thead tr")).toHaveCount(1);
+        for (const heading of scenario.columns) {
+          await expect(table.getByRole("columnheader", { name: heading, exact: true })).toHaveCount(1);
+        }
+        const rows = table.locator("tbody tr");
+        expect(await rows.count()).toBeGreaterThan(0);
+        await expect(rows.first().getByRole("rowheader")).toHaveCount(1);
+        await expect(rows.first().locator('input[name="confirmation"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="targetId"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="targetType"]')).toHaveCount(1);
+        await expect(rows.first().getByRole("button")).toHaveCount(1);
+        if (viewport.width === 390) {
+          const geometry = await region.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth, overflow: getComputedStyle(el).overflowX }));
+          expect(geometry.scroll).toBeGreaterThan(geometry.client);
+          expect(geometry.overflow).toBe("auto");
+        }
+      } else {
+        await expect(section.locator(".admin-profile-empty")).toBeVisible();
+      }
+    }
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+});

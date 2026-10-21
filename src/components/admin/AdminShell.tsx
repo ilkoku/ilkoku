@@ -326,7 +326,14 @@ export function AdminShell({
                       ? pathname === item.href
                       : pathname === item.href || pathname.startsWith(item.href + "/");
                   const hasChildren = Boolean(item.children?.length);
-                  const subExpanded = expandedSubmenus[item.href] ?? false;
+                  // Keep the existing horizontal third-level tabs visible on every
+                  // nested destination; only an explicit click on this route closes them.
+                  const nestedRouteActive = item.children?.some((child) => {
+                    const childPath = child.href.split("?")[0];
+                    return pathname === childPath || pathname.startsWith(childPath + "/");
+                  }) ?? false;
+                  const expansionKey = `${pathname}::${item.href}`;
+                  const subExpanded = expandedSubmenus[expansionKey] ?? (isActive || nestedRouteActive);
                   return (
                     <div className="admin-nav-child" key={item.href}>
                       <div className="admin-nav-child__header">
@@ -344,7 +351,7 @@ export function AdminShell({
                             aria-controls={`admin-submenu-${selectedGroup.id}-${index}`}
                             onClick={() => setExpandedSubmenus((current) => ({
                               ...current,
-                              [item.href]: !subExpanded,
+                              [expansionKey]: !subExpanded,
                             }))}
                           >
                             <span className={`admin-nav-group__chevron ${subExpanded ? "is-open" : ""}`} aria-hidden="true">⌄</span>

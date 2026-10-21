@@ -360,8 +360,9 @@ test("legacy return-path normalization bounds nested book and passport navigatio
   const immediate = "/kitap/demo-ikinci-bakis";
   let oldPath = "/kitap/demo-kayip-harfler";
   for (let n = 0; n < 25; n += 1) {
-    oldPath = `/kitap/demo-kayip-harfler?from=${encodeURIComponent(oldPath)}`;
-    if (oldPath.length > 1400) break;
+    const next = `/kitap/demo-kayip-harfler?from=${encodeURIComponent(oldPath)}`;
+    if (next.length > 1400) break;
+    oldPath = next;
   }
   const normalized = safeOneHopReturnPath(oldPath, "/");
   assert.equal(normalized, "/kitap/demo-kayip-harfler", "legacy recursive context reduced to one previous book");

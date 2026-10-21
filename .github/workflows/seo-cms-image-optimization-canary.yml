@@ -16,11 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Verify one media image with bounded low-impact GETs
+      - name: Verify three sampled high-impact CMS images with paced low-impact GETs
         shell: bash
         run: |
           set -Eeuo pipefail
-          id="459c18b8-39ea-4565-9663-0be6cace30e6"
+          for id in "459c18b8-39ea-4565-9663-0be6cace30e6" "39abb993-16b0-4e2e-b688-d2a10cf32ae0" "20cdbe7f-0df1-4cfd-a6cb-dc1ca3df8a91"; do
+          echo "Media ID: $id"
           origin="https://ilkoku.com/api/media/$id"
           optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=640&q=75"
           dir="$(mktemp -d)"
@@ -49,3 +50,6 @@ jobs:
           echo "Original bytes=$original_bytes, optimized bytes=$optimized_bytes"
           [[ "$optimized_bytes" -lt "$original_bytes" ]]
           echo "PASS: public CMS image optimizer returns smaller valid image."
+          rm -rf "$dir"
+          sleep 3
+          done

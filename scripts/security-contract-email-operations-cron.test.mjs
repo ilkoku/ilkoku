@@ -10,7 +10,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const file = (path) => readFileSync(join(root, path), "utf8");
 const SECRET = "ci-only-synthetic-test-secret-not-real-123456789";
 
-test("independent Cron Trigger is hourly, isolated and preserves the GitHub backup", () => {
+test("Hostinger is the only automated scheduler; GitHub retains manual emergency checks", () => {
   const config = file("workers/ilkoku-email-ops-cron/wrangler.toml");
   const github = file(".github/workflows/email-operations.yml");
   const route = file("src/app/api/internal/email-operations/route.ts");
@@ -19,13 +19,9 @@ test("independent Cron Trigger is hourly, isolated and preserves the GitHub back
   assert.match(config, /workers_dev = false/);
   assert.match(config, /crons = \["12 \* \* \* \*"\]/);
   assert.doesNotMatch(config, /(?:^|\n)routes\s*=/);
-  assert.match(github, /cron: "13,43 \* \* \* \*"/);
   assert.match(github, /workflow_dispatch:/);
-  // Release smoke is scoped to the existing scheduler and API, not all pushes.
-  assert.match(github, /push:\n    branches:\n      - main/);
-  assert.match(github, /"src\/features\/email-operations\/\*\*"/);
-  assert.match(github, /"src\/app\/api\/internal\/email-operations\/route\.ts"/);
-  assert.match(github, /"\.github\/workflows\/email-operations\.yml"/);
+  assert.doesNotMatch(github, /^\\s*schedule:/m);
+  assert.doesNotMatch(github, /^\\s*push:/m);
   assert.match(route, /timingSafeEqual/);
   assert.match(route, /EMAIL_OPERATIONS_SECRET/);
   assert.match(docs, /two|iki|consecutive/i);

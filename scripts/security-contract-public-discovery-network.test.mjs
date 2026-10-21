@@ -352,4 +352,5 @@ test("first-party book covers use responsive Next images without changing remote
   contains(cover, '<span className="showcase-cover__star"', "no-image design preserved");
   contains(cover, "width={1024}", "image intrinsic dimensions set");
   contains(cover, "height={1536}", "image intrinsic proportions set");
+  contains(cover, 'loading={compact ? "lazy" : "eager"}', "above-the-fold book cover remains eager, compact covers lazy");
 });

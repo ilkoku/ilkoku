@@ -112,7 +112,7 @@ test("approved legal SEO description migration is exact-match guarded and leaves
   assert.equal((sql.match(/INSERT INTO ContentRevision/g) ?? []).length, 5, "five CMS revision snapshots");
   assert.equal((sql.match(/UPDATE ContentPage/g) ?? []).length, 5, "five approved legal document updates");
   assert.equal((sql.match(/bodyJson = JSON_SET\(bodyJson, '\$\.description',/g) ?? []).length, 5, "only the summary field of the JSON document is edited");
-  assert.equal((sql.match(/seoDescription =/g) ?? []).length, 5, "five SEO metadata column updates");
+  assert.equal((sql.match(/SET seoDescription =/g) ?? []).length, 5, "five SEO metadata column updates");
   for (const slug of legalSlugs) {
     assert.equal(sql.split("contentKey = 'legal:" + slug + "'").length - 1, 2, slug + " must be guarded on revision and update");
     assert.equal(sql.split("slug = '/yasal/" + slug + "'").length - 1, 2, slug + " must require canonical TR route");

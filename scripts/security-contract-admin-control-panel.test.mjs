@@ -507,3 +507,19 @@ test("unified admin preserves hidden CMS helpers and query-based Power-SEO activ
   assert.match(shell, /currentSearch\.get\("mod"\) \? "tarama"/, "nested scan modes remain under tarama");
   assert.match(shell, /currentSearch\.get\("yol"\) \? "sayfa"/, "legacy page deep links remain under sayfa");
 });
+
+
+test("existing horizontal third-level navigation remains open on every nested admin page", () => {
+  const shell = readFileSync(join(ROOT, "src/components/admin/AdminShell.tsx"), "utf8");
+  const groups = readFileSync(join(ROOT, "src/lib/admin-navigation.ts"), "utf8");
+  assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
+  assert.match(shell, /const expansionKey =/);
+  assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(isActive \|\| nestedRouteActive\)/);
+  assert.match(shell, /\[expansionKey\]: !subExpanded/);
+  assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
+  assert.match(shell, /isActiveSubItem\(child\.href/);
+  assert.match(groups, /systemMapNavigationItems\.map/);
+  assert.match(groups, /children: contractSubNavigation/);
+  assert.match(groups, /children: contentSubNavigation/);
+  assert.match(groups, /children: powerSeoSubNavigation/);
+});

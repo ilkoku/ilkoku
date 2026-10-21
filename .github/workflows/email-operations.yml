@@ -11,7 +11,7 @@ on:
       - "src/features/email-operations/**"
       - "src/app/api/internal/email-operations/route.ts"
   schedule:
-    - cron: "35 * * * *"
+    - cron: "13,43 * * * *"
   workflow_dispatch:
 
 permissions:

@@ -9,7 +9,7 @@ if (!hub) throw new Error("Edebiyat category hub definition missing");
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Edebiyat Yazarlığı ve Eğitimleri | İlkOku",
-  description: "Şiir, deneme, anı, biyografi ve diğer edebiyat türlerinin farklı yazarlık mantıklarını keşfet.",
+  description: "Edebiyat yazarlığı eğitimlerinde şiir, deneme, anı, biyografi ve diğer türlerin yazma yaklaşımlarını keşfedin; anlatım becerilerinizi geliştirmeye başlayın.",
   canonical: "/yazarlar-icin/edebiyat",
 });
 

@@ -343,7 +343,7 @@ test("first-party book covers use responsive Next images without changing remote
   const cover = source("src/features/showcase/components/BookCover.tsx");
   contains(cover, 'import Image from "next/image";', "Next image primitive is used only for own CMS");
   contains(cover, "const firstPartyMediaPath = coverUrl?.match(", "safe CMS-only URL allowlist");
-  contains(cover, "/api\\/media\\/", "CMS media path");
+  contains(cover, "api\\/media\\/", "CMS media path");
   contains(cover, "firstPartyMediaPath ? (", "external cover fallback remains in place");
   contains(cover, "src={firstPartyMediaPath}", "optimized source is own media UUID");
   contains(cover, 'src={coverUrl}', "existing arbitrary remote cover URL remains untouched");

@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          id="27570dd7-f232-4313-af83-33ff62476881"
+          id="459c18b8-39ea-4565-9663-0be6cace30e6"
           origin="https://ilkoku.com/api/media/$id"
           optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=640&q=75"
           dir="$(mktemp -d)"

@@ -207,3 +207,45 @@ test("deep operations panel exposes blocker warn pass semantics and fail-closed 
   contains(operations, "Build-time kaynak bağımlılık manifesti boş", "manifest failure visibility");
   contains(operations, "Derin kaynak taraması sınırlı", "limited-mode gap");
 });
+
+
+test("all 18 harita submenu pages use one accessible row-column directory", () => {
+  const nav = source("src/features/system-map/navigation.ts");
+  const directory = source("src/features/system-map/SystemMapSectionDirectory.tsx");
+  const overview = source("src/features/system-map/SystemMapOverviewNavigator.tsx");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
+  const contracts = source("src/app/harita/sozlesmeler/page.tsx");
+  const supply = source("src/app/harita/tedarik-zinciri/page.tsx");
+  const layout = source("src/app/harita/layout.tsx");
+  const styles = source("src/app/harita/workspace.css");
+
+  const menuItems = [...nav.matchAll(/\{ key: "([^"]+)", href: "(\/harita(?:\/[^"]*)?)"/g)];
+  assert.equal(menuItems.length, 19, "Overview and all 18 existing submenu pages remain in one registry");
+  assert.equal(new Set(menuItems.map((match) => match[1])).size, 19, "No duplicated menu keys");
+  assert.equal(new Set(menuItems.map((match) => match[2])).size, 19, "No duplicated menu links");
+
+  for (const item of menuItems) {
+    if (item[2] === "/harita") continue;
+    contains(directory, "systemMapNavigationGroups", "shared canonical submenu registry");
+    assert.ok(existsSync(join(ROOT, `src/app${item[2]}/page.tsx`)), `${item[2]} route file must exist`);
+  }
+
+  for (const heading of ["Bölüm", "Alt sayfa", "Açıklama", "URL"]) {
+    contains(overview, heading, `overview directory ${heading} heading`);
+  }
+  for (const heading of ["Alt sayfa", "İçerik / amaç", "URL", "Bağlantı"]) {
+    contains(directory, heading, `subpage directory ${heading} heading`);
+  }
+  contains(overview, "visibleGroups.map", "all categories and search filters remain connected");
+  contains(overview, "system-map-directory-table", "overview table is rendered");
+  contains(overview, "rowSpan", "group rows retain table semantics on overview");
+  contains(directory, 'aria-current={item.key === activeKey ? "page"', "active page is announced");
+  contains(workspace, "<SystemMapSectionDirectory activeKey={workspace} />", "all standard specialist routes share directory");
+  contains(contracts, '<SystemMapSectionDirectory activeKey="contracts" />', "contract specialist page");
+  contains(supply, '<SystemMapSectionDirectory activeKey="supplyChain" />', "supply chain specialist page");
+  contains(styles, ".system-map-directory-table", "shared table layout");
+  contains(styles, "@media (max-width: 760px)", "responsive overflow");
+  contains(layout, '<AdminShell embeddedWorkspace', "original admin shell preserved");
+  notContains(layout, '<SystemMapNavigation />', "no duplicated sidebar menu");
+  notContains(directory, "fetch(", "navigation does not fetch private data");
+});

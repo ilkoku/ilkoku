@@ -103,3 +103,42 @@ test("approved Turkish starter FAQ publication migration is scoped, one-shot and
   assertNotContains(sql, "`valueJson` =", "does not rewrite approved texts");
   assertNotContains(sql, "`updatedById` =", "preserves the original editor identity");
 });
+
+test("approved legal SEO description migration is exact-match guarded and leaves document bodies untouched", () => {
+  const sql = source("prisma/migrations/20261021222000_approved_legal_seo_descriptions/migration.sql");
+  const legalSlugs = ["kvkk", "gizlilik-politikasi", "telif-hakki-politikasi", "kullanim-sartlari", "cerez-politikasi"];
+  assertContains(sql, "START TRANSACTION;", "migration should be atomic");
+  assertContains(sql, "COMMIT;", "transaction finishes");
+  assert.equal((sql.match(/INSERT INTO ContentRevision/g) ?? []).length, 5, "five CMS revision snapshots");
+  assert.equal((sql.match(/UPDATE ContentPage/g) ?? []).length, 5, "five approved legal document updates");
+  assert.equal((sql.match(/bodyJson = JSON_SET\(bodyJson, '\$\.description',/g) ?? []).length, 5, "only the summary field of the JSON document is edited");
+  assert.equal((sql.match(/seoDescription =/g) ?? []).length, 5, "five SEO metadata column updates");
+  for (const slug of legalSlugs) {
+    assert.equal(sql.split("contentKey = 'legal:" + slug + "'").length - 1, 2, slug + " must be guarded on revision and update");
+    assert.equal(sql.split("slug = '/yasal/" + slug + "'").length - 1, 2, slug + " must require canonical TR route");
+  }
+  assert.equal((sql.match(/BINARY seoDescription = BINARY/g) ?? []).length, 5, "each update guarded by its original description");
+  assert.equal((sql.match(/BINARY page\.seoDescription = BINARY/g) ?? []).length, 5, "each revision guarded by original description");
+  assertNotContains(sql, "SET title =", "legal titles never changed");
+  assertNotContains(sql, "SET bodyJson =", "full body replacements forbidden");
+  assertNotContains(sql, "$.body',", "legal body JSON path must not be a mutation target");
+  assertNotContains(sql, "DELETE FROM ContentPage", "no CMS records deleted");
+  assertNotContains(sql, "UPDATE SiteContent", "no unrelated CMS data");
+  assertNotContains(sql, "CREATE TABLE", "no schema changes");
+});
+
+test("all seven approved source SEO descriptions are exact; no extra editorial sections changed", () => {
+  const expected = [
+    ["src/app/uyelik-sozlesmesi/layout.tsx", "İlkOku Platform Kullanım ve Gizlilik Taahhüdü: hesap oluştururken kabul edilen temel üyelik, platform kullanımı ve gizlilik koşullarını inceleyin."],
+    ["src/lib/fiction-guide-batch.ts", "Hiciv nasıl yazılır? Eleştiri hedefini belirlemeyi, ironi ve abartıyı kullanmayı, karakter ve olay örgüsüyle etkili hiciv sahneleri kurmayı öğrenin."],
+    ["src/lib/fiction-guide-batch.ts", "Macera hikâyesi nasıl yazılır? Kahramanın hedefini, yolculuktaki engelleri, keşifleri ve dönüşümünü planlayarak sürükleyici bir anlatı oluşturmayı öğrenin."],
+    ["src/app/iletisim/page.tsx", "İlkOku ile iletişime geçin. Platform kullanımı ve genel sorular için destek kanallarını, başvuru yollarını ve telif bildirimlerine ilişkin bağlantıları öğrenin."],
+    ["src/app/yazarlar-icin/senaryo-ve-sahne/page.tsx", "Film, dizi, tiyatro ve podcast gibi türler için senaryo ve sahne yazarlığı eğitimlerini keşfedin. Anlatı kurma ve türlere göre yazma yollarını inceleyin."],
+    ["src/lib/reader-education.ts", "Yorum ve eleştiri yazma eğitiminde metne dayalı değerlendirme yapmayı, spoilerları yönetmeyi ve yazarlara gerekçeli, yapıcı geri bildirim sunmayı öğrenin."],
+    ["src/app/yazarlar-icin/edebiyat/page.tsx", "Edebiyat yazarlığı eğitimlerinde şiir, deneme, anı, biyografi ve diğer türlerin yazma yaklaşımlarını keşfedin; anlatım becerilerinizi geliştirmeye başlayın."],
+  ];
+  for (const [file, snippet] of expected) {
+    assertContains(source(file), snippet, file + " has exactly approved description");
+    assert.equal(source(file).split(snippet).length - 1, 1, file + " exact count");
+  }
+});

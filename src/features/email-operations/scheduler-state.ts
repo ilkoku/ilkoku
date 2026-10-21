@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
-export type EmailOperationsSource = "github" | "cloudflare";
+export type EmailOperationsSource = "github" | "cloudflare" | "hostinger";
 
 const STATE_ID = "hourly";
 const LEASE_MS = 8 * 60 * 1000;

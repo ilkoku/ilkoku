@@ -111,64 +111,114 @@
   line-height: 1.65;
 }
 
-.admin-delete-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.admin-delete-card {
-  display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
+.admin-delete-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  -webkit-overflow-scrolling: touch;
 }
 
-.admin-delete-card > div:first-child strong,
-.admin-delete-card > div:first-child span,
-.admin-delete-card > div:first-child small {
+.admin-delete-table-scroll:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.admin-delete-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-width: 68rem;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.admin-delete-table th,
+.admin-delete-table td {
+  min-width: 0;
+  padding: 0.8rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-delete-table tr > :last-child {
+  border-right: 0;
+}
+
+.admin-delete-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.admin-delete-table thead th {
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.admin-delete-table tbody th {
+  min-width: 10rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.admin-delete-table tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.035);
+}
+
+.admin-delete-table__wrap,
+.admin-delete-table__id {
+  overflow-wrap: anywhere;
+}
+
+.admin-delete-table td small,
+.admin-delete-table__id {
   display: block;
 }
 
-.admin-delete-card > div:first-child span,
-.admin-delete-card > div:first-child small {
+.admin-delete-table td small {
   margin-top: 0.25rem;
   color: var(--color-text-muted);
 }
 
-.admin-delete-card dl {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
+.admin-delete-table__number {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
 }
 
-.admin-delete-card dl div {
-  min-width: 6.5rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-background);
-}
-
-.admin-delete-card dt {
-  color: var(--color-text-muted);
-  font-size: 0.7rem;
-}
-
-.admin-delete-card dd {
-  margin: 0.18rem 0 0;
-  color: var(--color-text);
-  font-weight: 800;
-}
-
-.admin-delete-card > a {
-  width: fit-content;
+.admin-delete-table td > a {
   color: var(--color-accent);
-  font-size: 0.78rem;
   font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-delete-table__safe {
+  color: var(--color-text-muted);
+}
+
+.admin-delete-table .admin-delete-blocker {
+  display: block;
+  min-width: 10rem;
+  max-width: 16rem;
+}
+
+.admin-delete-table .admin-delete-form {
+  min-width: 17rem;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-delete-table .admin-delete-form input,
+.admin-delete-table .admin-delete-form button {
+  min-width: 0;
+  width: 100%;
 }
 
 .admin-delete-blocker {
@@ -239,10 +289,6 @@
 }
 
 @media (max-width: 64rem) {
-  .admin-delete-grid {
-    grid-template-columns: 1fr;
-  }
-
   .admin-delete-search {
     align-items: stretch;
     flex-direction: column;
@@ -250,15 +296,13 @@
 }
 
 @media (max-width: 42rem) {
-  .admin-delete-search form,
-  .admin-delete-form {
+  .admin-delete-search form {
     grid-template-columns: 1fr;
     display: grid;
   }
 
   .admin-delete-search button,
-  .admin-delete-search a,
-  .admin-delete-form button {
+  .admin-delete-search a {
     width: 100%;
   }
 }

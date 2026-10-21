@@ -358,3 +358,17 @@ test("SEO history evidence uses the minimum Turkey composite source history floo
     "public gate cannot use unrelated global/new-release history",
   );
 });
+
+test("Book Index public SEO evidence is briefly cached without caching live book listings", () => {
+  const access = source("src/lib/book-index/public-access.ts");
+  contains(access, 'import { unstable_cache } from "next/cache";', "supported Next.js database cache");
+  contains(access, '["ilkoku-book-index-public-seo-evidence-v1"]', "separate public evidence cache key");
+  contains(access, "{ revalidate: 30 }", "readiness evidence expires after 30 seconds");
+  contains(access, "const readiness = await getBookIndexReadinessSnapshot();", "real SEO readiness still determines the gate");
+  contains(access, "getCachedPublicBookIndexSeoEvidence()", "public routes reuse one bounded evidence snapshot");
+  contains(access, "getBookIndexPublicReadModel(limit)", "public book list remains fresh per request");
+  contains(access, "turkeyItemCount: model.turkey.items.length", "SEO gate keeps live Turkey book count");
+  contains(access, "if (!context.gate.canPublish) return null;", "SEO gate remains fail closed");
+  const pageScope = access.slice(access.indexOf("async function buildBookIndexPageContext("), access.indexOf("export const getBookIndexPublicPageContext"));
+  notContains(pageScope, "getBookIndexReadinessSnapshot()", "public path must not directly recalculate heavy readiness every request");
+});

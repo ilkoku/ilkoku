@@ -1,0 +1,33 @@
+name: Audit three Ahrefs non-parameter slow pages
+on:
+  pull_request:
+    paths:
+      - "scripts/audit-ahrefs-three-static-routes.mjs"
+      - ".github/workflows/audit-ahrefs-three-static-pages.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    name: Sample 3 public URLs x 3 reads
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check scripts/audit-ahrefs-three-static-routes.mjs
+      - name: Pace read-only public HTTP checks
+        run: node scripts/audit-ahrefs-three-static-routes.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-ahrefs-three-nonparameter-ttfb
+          path: |
+            /tmp/ilkoku-three-routes-audit/results.json
+            /tmp/ilkoku-three-routes-audit/report.md
+          retention-days: 14
+          if-no-files-found: warn

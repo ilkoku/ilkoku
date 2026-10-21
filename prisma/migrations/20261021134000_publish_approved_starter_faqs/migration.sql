@@ -20,5 +20,5 @@ WHERE `namespace` = 'faq'
     OR (`contentKey` = 'item_starter_editor_inceleme'
       AND JSON_UNQUOTE(JSON_EXTRACT(`valueJson`, '$.question')) = 'Editör incelemesi nasıl çalışır?')
     OR (`contentKey` = 'item_starter_yayinevi_kesif'
-      AND JSON_UNQUOTE(JSON_EXTRACT(`valueJson`, '$.question')) = 'Yayınevleri İlkOku\'da ne yapabilir?')
+      AND JSON_UNQUOTE(JSON_EXTRACT(`valueJson`, '$.question')) = 'Yayınevleri İlkOku''da ne yapabilir?')
   );

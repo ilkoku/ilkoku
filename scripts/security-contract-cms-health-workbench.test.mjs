@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { resolveLegalSeoDescription } from "../src/lib/cms-legal-seo-description.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -137,4 +138,74 @@ test("approved seven non-CMS descriptions update route metadata without editing 
   }
   assertContains(source("src/app/yazarlar-icin/kurgu/hiciv/page.tsx"), "<BatchedFictionGuidePage definition={definition} />", "ficitional hero not altered");
   assertContains(source("src/app/yazarlar-icin/kurgu/macera/page.tsx"), "<BatchedFictionGuidePage definition={definition} />", "fictional hero not altered");
+});
+
+test("legal CMS republish keeps approved independent SEO metadata when visible summary is unchanged", () => {
+  const originalSummary = "6698 sayılı Kanun kapsamında İlkOku kullanıcılarına yönelik aydınlatma metni.";
+  const approvedSeo = "İlkOku KVKK Aydınlatma Metni: işlenen veri kategorilerini, kişisel verilerin kullanım amaçlarını, hukuki sebepleri ve başvuru yollarını inceleyin.";
+  const previousBody = JSON.stringify({ description: originalSummary, updatedLabel: "12 Ağustos 2026", body: "## Existing legal text" });
+  const prior = { existingBodyJson: previousBody, existingSeoDescription: approvedSeo };
+
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: originalSummary, ...prior }),
+    approvedSeo,
+    "unchanged visible summary must retain approved SEO metadata",
+  );
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: `  ${originalSummary}  `, ...prior }),
+    approvedSeo,
+    "no-op whitespace changes must not erase approved SEO metadata",
+  );
+
+  const edited = "Kullanıcının sonradan açıkça düzenlediği yeni kısa açıklama.";
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: edited, ...prior }),
+    edited,
+    "intentional visible summary edits still update SEO metadata",
+  );
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: originalSummary, existingBodyJson: null, existingSeoDescription: approvedSeo }),
+    originalSummary,
+    "new documents keep existing creation behavior",
+  );
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: originalSummary, existingBodyJson: previousBody, existingSeoDescription: null }),
+    originalSummary,
+    "previously empty SEO metadata may be initialized",
+  );
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: originalSummary, existingBodyJson: "{", existingSeoDescription: approvedSeo }),
+    originalSummary,
+    "malformed prior data does not pretend that the visible summary was unchanged",
+  );
+  assert.equal(
+    resolveLegalSeoDescription({ submittedDescription: "", existingBodyJson: null, existingSeoDescription: null }),
+    null,
+    "empty new summaries retain existing null metadata semantics",
+  );
+});
+
+test("both manual and scheduled legal CMS publication use identical SEO preservation rule", () => {
+  const manual = source("src/features/cms/document-actions.ts");
+  const scheduled = source("src/lib/cms-scheduler.ts");
+  const editor = source("src/components/content/CmsDocumentEditor.tsx");
+  const publicLegal = source("src/app/yasal/[slug]/page.tsx");
+
+  assertContains(manual, 'import { resolveLegalSeoDescription } from "@/lib/cms-legal-seo-description.mjs"', "manual action shares pure decision rule");
+  assertContains(manual, "SELECT id, status, bodyJson, seoDescription FROM ContentPage", "manual action reads the saved summary and independent SEO description");
+  assertContains(manual, "existingBodyJson: existing?.bodyJson", "manual no-op detection compares against saved CMS body");
+  assertContains(manual, "existingSeoDescription: existing?.seoDescription", "manual keeps existing approved SEO meta");
+  assertContains(manual, "${seoDescription}, ${path}, false,", "manual SQL writes resolved meta, not old short summary");
+  assertNotContains(manual, "${description || null}, ${path}, false,", "old overwrite path removed");
+
+  assertContains(scheduled, 'import { resolveLegalSeoDescription } from "@/lib/cms-legal-seo-description.mjs"', "scheduler shares pure decision rule");
+  assertContains(scheduled, "existingBodyJson: target.bodyJson", "scheduler compares against saved visible summary");
+  assertContains(scheduled, "existingSeoDescription: target.seoDescription", "scheduler retains approved SEO meta");
+  assertContains(scheduled, "seoDescription = ${seoDescription}, publishedAt", "scheduled SQL stores resolved metadata");
+  assertNotContains(scheduled, "seoDescription = ${description || null}, publishedAt", "scheduled old overwrite path removed");
+
+  assertContains(editor, 'name="description"', "visible legal summary field and original UX retained");
+  assertContains(editor, 'name="body"', "legal body editing interface retained");
+  assertContains(manual, "await addRevision(pageId, currentUser.id, snapshot);", "manual publishing revision audit remains intact");
+  assertContains(publicLegal, "cms?.seoDescription?.trim()", "public meta continues to use separately approved SEO metadata");
 });

@@ -401,8 +401,13 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   contains(
     bookPage,
-    'return "/";',
-    "public book safe fallback inventory",
+    'return safeOneHopReturnPath(value, "/");',
+    "public book safe fallback delegates to the shared path validator",
+  );
+  contains(
+    source("src/lib/one-hop-return-path.mjs"),
+    'return fallback;',
+    "shared safe return-path validator retains explicit fallback",
   );
   notContains(
     bookPage,

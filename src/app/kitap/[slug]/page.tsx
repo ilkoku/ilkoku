@@ -13,26 +13,16 @@ import {
   isBlockedPublicWorkSlug,
   isSearchIndexExcludedPublicWorkSlug,
 } from "@/lib/public-content-safety";
+import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 
 const baseUrl = "https://ilkoku.com";
-const MAX_RETURN_PATH_LENGTH = 1500;
-
 type BookShowcasePageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ from?: string }>;
 };
 
 function getSafeReturnPath(value: string | undefined) {
-  if (
-    !value ||
-    value.length > MAX_RETURN_PATH_LENGTH ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
-    return "/";
-  }
-
-  return value;
+  return safeOneHopReturnPath(value, "/");
 }
 
 function getSeoDescription(description: string | null, title: string, authorName: string) {

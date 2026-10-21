@@ -514,6 +514,8 @@ test("existing horizontal third-level navigation remains open on every nested ad
   const groups = read("src/lib/admin-navigation.ts");
   const powerSeo = read("src/app/admin/power-seo/page.tsx");
   assert.doesNotMatch(powerSeo, /aria-label="Power-SEO çalışma alanları"/, "do not duplicate the common Power-SEO horizontal tabs inside the page");
+  assert.match(shell, /item\.href === \`\$\{SYSTEM_MANAGEMENT_PATH\}\/power-seo\`/, "Power-SEO query-only tabs must use full navigation");
+  assert.match(shell, /<a key=\{child\.href\} href=\{child\.href\}/, "full-page navigation remains available for Power-SEO");
   assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
   assert.match(shell, /const expansionKey =/);
   assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(activeParent \|\| nestedRouteActive\)/);

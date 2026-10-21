@@ -74,3 +74,32 @@ test("public FAQ API reports read failures without pretending there are no publi
   assertContains(route, "console.error", "server-side diagnostic is retained");
   assertNotContains(route, "catch {\n    return NextResponse.json({ locale, enabled: true, items: [] });", "silently masking query failures");
 });
+
+test("approved Turkish starter FAQ publication migration is scoped, one-shot and text-preserving", () => {
+  const sql = source("prisma/migrations/20261021134000_publish_approved_starter_faqs/migration.sql");
+  const approved = [
+    "item_starter_ilkoku_nedir",
+    "item_starter_yazar_yayin",
+    "item_starter_editor_inceleme",
+    "item_starter_yayinevi_kesif",
+  ];
+
+  assertContains(sql, "UPDATE `SiteContent`", "updates existing FAQ records instead of inserting");
+  assertContains(sql, "`namespace` = 'faq'", "only default Turkish FAQ namespace");
+  assertContains(sql, "`status` = 'draft'", "only previously-unpublished FAQ drafts");
+  assertContains(sql, "`publishedAt` IS NULL", "only unpublished records");
+  assertContains(sql, "JSON_VALID(`valueJson`)", "invalid payloads remain unpublished");
+  assertContains(sql, "'$.answer'", "publishes only FAQ records with an answer");
+  assertContains(sql, "'$.question'", "checks approved question titles");
+  assertContains(sql, "`status` = 'published'", "publication changes only status and timestamps");
+  assertContains(sql, "CURRENT_TIMESTAMP(3)", "published timestamp is set");
+  for (const key of approved) {
+    const matches = sql.match(new RegExp(key, "g")) ?? [];
+    assert.equal(matches.length, 1, `exactly one guarded entry for ${key}`);
+  }
+  assert.equal((sql.match(/\`contentKey\` =/g) ?? []).length, approved.length, "no extra FAQ keys");
+  assertNotContains(sql, "INSERT INTO", "does not generate new content");
+  assertNotContains(sql, "DELETE FROM", "does not delete existing content");
+  assertNotContains(sql, "`valueJson` =", "does not rewrite approved texts");
+  assertNotContains(sql, "`updatedById` =", "preserves the original editor identity");
+});

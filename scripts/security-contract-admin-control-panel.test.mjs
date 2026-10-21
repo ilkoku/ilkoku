@@ -510,8 +510,8 @@ test("unified admin preserves hidden CMS helpers and query-based Power-SEO activ
 
 
 test("existing horizontal third-level navigation remains open on every nested admin page", () => {
-  const shell = readFileSync(join(ROOT, "src/components/admin/AdminShell.tsx"), "utf8");
-  const groups = readFileSync(join(ROOT, "src/lib/admin-navigation.ts"), "utf8");
+  const shell = read("src/components/admin/AdminShell.tsx");
+  const groups = read("src/lib/admin-navigation.ts");
   assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
   assert.match(shell, /const expansionKey =/);
   assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(isActive \|\| nestedRouteActive\)/);

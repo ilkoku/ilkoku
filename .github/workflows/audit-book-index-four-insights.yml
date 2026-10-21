@@ -1,0 +1,33 @@
+name: Audit four book index insight page timings
+on:
+  pull_request:
+    paths:
+      - "scripts/audit-book-index-four-insights.mjs"
+      - ".github/workflows/audit-book-index-four-insights.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    name: Sample 4 public URLs x 3 reads
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check scripts/audit-book-index-four-insights.mjs
+      - name: Pace read-only public HTTP checks
+        run: node scripts/audit-book-index-four-insights.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-book-index-four-insight-ttfb
+          path: |
+            /tmp/ilkoku-four-insight-pages-audit/results.json
+            /tmp/ilkoku-four-insight-pages-audit/report.md
+          retention-days: 14
+          if-no-files-found: warn

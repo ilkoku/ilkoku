@@ -884,6 +884,8 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   const response = await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Power-SEO", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true })).toBeVisible();
   // The default page must not dump the full technical inventory into the overview.
@@ -1254,8 +1256,12 @@ test("secondary navigation is horizontal above the content on desktop and mobile
   await page.setViewportSize(viewports.desktop);
   await page.goto("/icerik/seo", { waitUntil: "domcontentloaded" });
   const panel = page.locator(".admin-secondary-panel");
-  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
   await expect(panel.locator(".admin-tertiary-row")).toHaveCSS("flex-direction", "row");
+  await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeVisible();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" }).click();
+  await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeHidden();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
   await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
 });
@@ -1462,7 +1468,8 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
       await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: scenario.second, exact: true })).toBeVisible();
     }
     if (scenario.third) {
-      await page.locator(".admin-secondary-panel").getByRole("button", { name: scenario.second + " alt menüsünü aç" }).click();
+      const panel = page.locator(".admin-secondary-panel");
+      await expect(panel.getByRole("button", { name: scenario.second + " alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
       await expect(page.locator(`.admin-secondary-panel .admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
     }
     await expectResponsiveDocument(page);
@@ -1518,7 +1525,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
   ]) {
     await page.goto(href, { waitUntil: "domcontentloaded" });
     const panel = page.locator(".admin-secondary-panel");
-    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    await expect(panel.getByRole("button", { name: "Power-SEO alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
     const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
     await expect(active).toHaveCount(1);
     await expect(active).toHaveAttribute("href", href);
@@ -1537,7 +1544,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
   ]) {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     const panel = page.locator(".admin-secondary-panel");
-    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    await expect(panel.getByRole("button", { name: "Power-SEO alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
     const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
     await expect(active).toHaveCount(1);
     await expect(active).toHaveAttribute("href", selectedHref);
@@ -1545,7 +1552,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
 
   await page.goto("/icerik", { waitUntil: "domcontentloaded" });
   const panel = page.locator(".admin-secondary-panel");
-  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
   await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expect(panel.locator('a[href="/icerik/ana-sayfa/history"]')).toHaveCount(0);
   await expect(panel.locator('a[href="/icerik/sayfalar/sablonlar"]')).toHaveCount(0);

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { safeOneHopReturnPath } from "../src/lib/one-hop-return-path.mjs";
 
 const ROOT = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -353,4 +354,45 @@ test("first-party book covers use responsive Next images without changing remote
   contains(cover, "width={1024}", "image intrinsic dimensions set");
   contains(cover, "height={1536}", "image intrinsic proportions set");
   contains(cover, 'loading={compact ? "lazy" : "eager"}', "above-the-fold book cover remains eager, compact covers lazy");
+});
+
+test("legacy return-path normalization bounds nested book and passport navigation without losing useful filters", () => {
+  const immediate = "/kitap/demo-ikinci-bakis";
+  let oldPath = "/kitap/demo-kayip-harfler";
+  for (let n = 0; n < 25; n += 1) {
+    oldPath = `/kitap/demo-kayip-harfler?from=${encodeURIComponent(oldPath)}`;
+    if (oldPath.length > 1400) break;
+  }
+  const normalized = safeOneHopReturnPath(oldPath, "/");
+  assert.equal(normalized, "/kitap/demo-kayip-harfler", "legacy recursive context reduced to one previous book");
+  assert.ok(normalized.length < 100, "newly generated navigation URL is bounded");
+
+  const bookReturn = `/kitap/demo-tamamlanan-dosya?from=${encodeURIComponent(immediate + "?from=%2F")}`;
+  const safe = safeOneHopReturnPath(new URL(bookReturn, "https://ilkoku.com").searchParams.get("from") ?? undefined, "/");
+  assert.equal(safe, immediate, "old return chains terminate at the immediate book route");
+  const passportUrl = `/kitap/demo-tamamlanan-dosya/pasaport?from=${encodeURIComponent(`/kitap/demo-tamamlanan-dosya?from=${encodeURIComponent(safe)}`)}`;
+  const passportOrigin = new URL(passportUrl, "https://ilkoku.com").searchParams.get("from") ?? undefined;
+  assert.equal(safeOneHopReturnPath(passportOrigin, "/kitap/demo-tamamlanan-dosya"), "/kitap/demo-tamamlanan-dosya", "passport return does not perpetuate old history");
+
+  assert.equal(safeOneHopReturnPath("/kesfet?sayfa=3&tur=roman", "/"), "/kesfet?sayfa=3&tur=roman", "discovery filters remain unchanged");
+  assert.equal(safeOneHopReturnPath("/kesfet?sayfa=3&from=%2Fkitap%2Ffoo&tur=roman", "/"), "/kesfet?sayfa=3&tur=roman", "only nested history is dropped");
+  assert.equal(safeOneHopReturnPath("/kitap/demo-kayip-harfler", "/"), "/kitap/demo-kayip-harfler", "plain previous book route unchanged");
+  assert.equal(safeOneHopReturnPath("//bad.example/path", "/"), "/", "protocol relative external redirects refused");
+  assert.equal(safeOneHopReturnPath("https://bad.example", "/"), "/", "external absolute URLs refused");
+  assert.equal(safeOneHopReturnPath("/kitap/".padEnd(1600, "a"), "/"), "/", "oversized context has safe fallback");
+  assert.equal(safeOneHopReturnPath(undefined, "/kitap/demo-tamamlanan-dosya"), "/kitap/demo-tamamlanan-dosya", "passport default preserves current book");
+});
+
+test("legacy book and passport pages normalize return history before rendering outbound links", () => {
+  const book = source("src/app/kitap/[slug]/page.tsx");
+  const passport = source("src/app/kitap/[slug]/pasaport/page.tsx");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+
+  contains(book, 'import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";', "book return sanitizer");
+  contains(book, 'return safeOneHopReturnPath(value, "/");', "book returns bounded route");
+  contains(book, "const returnTo = getSafeReturnPath(query.from);", "book applies sanitizer to inbound context");
+  contains(passport, 'return safeOneHopReturnPath(value, `/kitap/${slug}`);', "passport return sanitizer");
+  contains(passport, "const backHref = safeReturnPath(query.from, slug);", "passport applies sanitizer to inbound context");
+  contains(showcase, "const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);", "preexisting one-hop related-book behavior protected");
+  contains(book, "index: !query.from && !searchIndexExcluded", "contextual duplicate book URLs stay noindex");
 });

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Power-SEO operational drill-down links intentionally use full navigation. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auditPage } from "@power-seo/audit";

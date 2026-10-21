@@ -72,7 +72,7 @@ jobs:
           oyku-sayfa|b5e2aa47-4780-4986-8194-6a9948ee6929|3840|2120077
           oyku-proje|3d16b5ae-adf7-424a-bbd8-7db1766a7821|3840|2266542
           oyku-final|c595cbe3-b5fe-46eb-b625-ff866fb539c9|3840|2099780
-DATA
+          DATA
 
       - name: Report source vs optimized sizes by image
         if: always()

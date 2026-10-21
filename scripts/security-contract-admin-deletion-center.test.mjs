@@ -49,3 +49,35 @@ test("deletion center UI exposes dependency blockers before destructive actions"
   assert.match(page, /aktif okur erişim hakkı/);
   assert.match(page, /Aktif inceleme/);
 });
+
+test("deletion center keeps row-column tables, responsive overflow and all safety actions", async () => {
+  const [page, css] = await Promise.all([
+    read("src/app/admin/silme-merkezi/page.tsx"),
+    read("src/app/admin/deletion.css"),
+  ]);
+  for (const section of ["Yazar", "Eser", "Yayınevi", "Editör"]) {
+    assert.match(page, new RegExp('aria-label="' + section + ' silme kayıtları"'));
+  }
+  assert.equal((page.match(/<table className="admin-delete-table">/g) || []).length, 4);
+  assert.equal((page.match(/<thead><tr>/g) || []).length, 4);
+  assert.equal((page.match(/<tbody>/g) || []).length, 4);
+  assert.equal((page.match(/<th scope="row">/g) || []).length, 4);
+  assert.equal((page.match(/tabIndex=\{0\}/g) || []).length, 4);
+  for (const type of ["writer", "work", "publisher", "editor"]) {
+    assert.match(page, new RegExp('targetType: "' + type + '"'));
+  }
+  for (const column of ["İlkOku ID / Durum", "Silme onayı", "Koruma", "Aktif erişim", "Başarılı sipariş"]) {
+    assert.ok(page.includes(column), "column is preserved: " + column);
+  }
+  assert.match(page, /protectedByCommerce \? <span className="admin-delete-blocker">/);
+  assert.match(page, /hasActiveReview \? <span className="admin-delete-blocker">/);
+  assert.match(page, /blocked: hasActiveReview/);
+  assert.match(page, /blocked: protectedByCommerce/);
+  assert.match(page, /deleteFromAdminCenterAction/);
+  assert.doesNotMatch(page, /admin-delete-card|admin-delete-grid/);
+  assert.match(css, /\.admin-delete-table-scroll\s*\{/);
+  assert.match(css, /overflow-x:\s*auto/);
+  assert.match(css, /\.admin-delete-table\s*\{/);
+  assert.match(css, /\.admin-delete-table \.admin-delete-form/);
+  assert.doesNotMatch(css, /\.admin-delete-grid\s*\{/);
+});

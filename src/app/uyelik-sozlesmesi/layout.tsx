@@ -6,7 +6,7 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 // independently of the dynamic active-agreement database read in page.tsx.
 export const metadata = createPublicPageMetadata({
   title: "Platform Kullanım ve Gizlilik Taahhüdü | İlkOku",
-  description: "İlkOku hesabı oluşturulurken kabul edilen temel platform kullanım ve gizlilik taahhüdü.",
+  description: "İlkOku Platform Kullanım ve Gizlilik Taahhüdü: hesap oluştururken kabul edilen temel üyelik, platform kullanımı ve gizlilik koşullarını inceleyin.",
   canonical: "/uyelik-sozlesmesi",
 });
 

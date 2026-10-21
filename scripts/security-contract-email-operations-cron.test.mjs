@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { runHostingerEmailOperations } from "./email-operations-hostinger.mjs";
 import worker, { callEmailOperations } from "../workers/ilkoku-email-ops-cron/index.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -122,4 +123,64 @@ test("cron heartbeat is persistent, cross-provider serialized, and shows read-on
   assert.match(panel, /Kontrol gecikmesi/);
   assert.match(panel, /lastSuccessAt/);
   assert.match(panel, /90 dakikadan/);
+});
+
+
+test("Hostinger cron calls the existing protected route with runtime-only secret", async () => {
+  let calls = 0;
+  const result = await runHostingerEmailOperations(
+    { EMAIL_OPERATIONS_SECRET: SECRET },
+    async (url, options) => {
+      calls += 1;
+      assert.equal(url, "https://ilkoku.com/api/internal/email-operations");
+      assert.equal(options.method, "POST");
+      assert.equal(options.headers.Authorization, `Bearer ${SECRET}`);
+      assert.equal(options.headers["X-IlkOku-Scheduler"], "hostinger");
+      assert.equal(options.redirect, "error");
+      assert.equal(options.cache, "no-store");
+      assert.ok(options.signal instanceof AbortSignal);
+      return new Response(JSON.stringify({
+        ok: true,
+        skipped: false,
+        checkedAt: "2026-10-21T12:00:00.000Z",
+        failedLastHour: 0,
+        pendingCount: 0,
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  );
+  assert.equal(calls, 1);
+  assert.equal(result.pendingCount, 0);
+});
+
+test("Hostinger cron fails closed on missing secret and unsuccessful results", async () => {
+  let calls = 0;
+  const unexpectedFetch = async () => { calls += 1; throw Error("unexpected network"); };
+  await assert.rejects(runHostingerEmailOperations({}, unexpectedFetch), /SECRET_MISSING/);
+  assert.equal(calls, 0);
+
+  await assert.rejects(
+    runHostingerEmailOperations(
+      { WRITER_DAILY_SUMMARY_SECRET: SECRET },
+      async () => new Response('{"error":"UNAUTHORIZED"}', { status: 401 }),
+    ),
+    /EMAIL_OPERATIONS_HTTP_401/,
+  );
+  await assert.rejects(
+    runHostingerEmailOperations(
+      { EMAIL_OPERATIONS_SECRET: SECRET },
+      async () => new Response('{"ok":true,"skipped":true}', { status: 200 }),
+    ),
+    /EMAIL_OPERATIONS_INVALID_RESPONSE/,
+  );
+});
+
+test("Hostinger heartbeat source is separately identified and never uses public route", () => {
+  const route = file("src/app/api/internal/email-operations/route.ts");
+  const state = file("src/features/email-operations/scheduler-state.ts");
+  const runner = file("scripts/email-operations-hostinger.mjs");
+  assert.match(route, /schedulerHeader === "hostinger"/);
+  assert.match(state, /"github" \| "cloudflare" \| "hostinger"/);
+  assert.match(runner, /EMAIL_OPERATIONS_SECRET/);
+  assert.match(runner, /X-IlkOku-Scheduler/);
+  assert.doesNotMatch(runner, /Bearer (?:[A-Za-z0-9-]{32,})/);
 });

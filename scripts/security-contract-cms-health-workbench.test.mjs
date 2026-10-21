@@ -61,3 +61,16 @@ test("CMS overview promotes health integrity signals without duplicating the hea
   assertNotContains(adapter, "invalidForms", "dashboard does not promote form PII integrity detail globally");
   assertNotContains(adapter, "prisma", "dashboard adapter does not create a second integrity query engine");
 });
+
+test("public FAQ API reports read failures without pretending there are no published FAQs", () => {
+  const route = source("src/app/api/content-faq/route.ts");
+
+  assertContains(route, "WHERE namespace = ${namespace}", "locale-specific FAQ namespace");
+  assertContains(route, "status = 'published'", "only published FAQ records are public");
+  assertContains(route, "return NextResponse.json({ locale, enabled: true, items });", "successful empty or populated reads retain normal API shape");
+  assertContains(route, 'error: "faq_read_failed"', "safe public read error code");
+  assertContains(route, "status: 503", "database read failure is not HTTP 200");
+  assertContains(route, '"Cache-Control": "no-store"', "failed reads must not be cached");
+  assertContains(route, "console.error", "server-side diagnostic is retained");
+  assertNotContains(route, "catch {\n    return NextResponse.json({ locale, enabled: true, items: [] });", "silently masking query failures");
+});

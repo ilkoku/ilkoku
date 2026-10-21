@@ -1,0 +1,152 @@
+name: SEO education pages HTTP timing evidence
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-education-guide-ttfb-evidence.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/seo-education-guide-ttfb-evidence.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-education-guide-ttfb-evidence
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    name: Collect twelve paced read-only HTML requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Collect production revision and paced HTTP data
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          : >/tmp/ilkoku-guide-http-timings.ndjson
+          echo "Runner date UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Expected commit: $GITHUB_SHA"
+          curl --silent --show-error --max-time 15 \
+            --user-agent 'IlkOku-Guide-Timing-Audit/1.0' \
+            https://ilkoku.com/api/build-info || true
+          echo
+
+          probe() {
+            local kind="$1" seq="$2" url="$3" hdr meta code
+            hdr="$(mktemp)"
+            meta="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-Guide-Timing-Audit/1.0' \
+              --dump-header "$hdr" --output /dev/null \
+              --write-out '%{json}' "$url" || true)"
+            if [[ -z "$meta" ]]; then
+              echo "::error::Request produced no timing metadata for $kind / $seq"
+              rm -f "$hdr"
+              exit 1
+            fi
+            KIND="$kind" SEQ="$seq" META="$meta" HDR="$hdr" node <<'NODE' | tee -a /tmp/ilkoku-guide-http-timings.ndjson
+          const fs=require('node:fs');
+          const result=JSON.parse(process.env.META);
+          const full=fs.readFileSync(process.env.HDR,'utf8');
+          const last=full.trim().split(/\r?\n\r?\n/).at(-1)||'';
+          const headers={};
+          for(const line of last.split(/\r?\n/)){
+            const index=line.indexOf(':');
+            if(index<1)continue;
+            const key=line.slice(0,index).trim().toLowerCase();
+            if(['cf-cache-status','cf-ray','x-nextjs-cache','cache-control','age','server-timing','content-type','content-encoding'].includes(key)){
+              headers[key]=line.slice(index+1).trim();
+            }
+          }
+          const millis=v=>Number.isFinite(v)?Math.round(v*1000):null;
+          console.log(JSON.stringify({
+            path:process.env.KIND,sample:Number(process.env.SEQ),
+            status:result.http_code,
+            dnsMs:millis(result.time_namelookup),
+            connectMs:millis(result.time_connect),
+            tlsMs:millis(result.time_appconnect),
+            firstByteMs:millis(result.time_starttransfer),
+            postTlsWaitMs:millis(result.time_starttransfer-result.time_pretransfer),
+            totalMs:millis(result.time_total),
+            bytes:result.size_download,error:result.errormsg||null,headers,
+          }));
+          NODE
+            rm -f "$hdr"
+            code="$(RESULT="$meta" node -p 'JSON.parse(process.env.RESULT).http_code')"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              echo "::error::Cloudflare/WAF circuit breaker HTTP $code; no further probes"
+              exit 1
+            fi
+            if [[ "$code" != "200" ]]; then
+              echo "::error::Guide $kind HTTP $code; stop audit rather than hide failures"
+              exit 1
+            fi
+          }
+          for sample in 1 2 3; do
+            probe manga "$sample" "https://ilkoku.com/yazarlar-icin/cizgi-anlati/manga"
+            sleep 2
+            probe masal "$sample" "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/masal"
+            sleep 2
+            probe fabl "$sample" "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/fabl"
+            sleep 2
+            probe utopya "$sample" "https://ilkoku.com/yazarlar-icin/kurgu/utopya"
+            if [[ "$sample" != 3 ]]; then sleep 8; fi
+          done
+
+      - name: Produce medians, cache context and measurement caveats
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const file='/tmp/ilkoku-guide-http-timings.ndjson';
+          if(!fs.existsSync(file))process.exit(0);
+          const rows=fs.readFileSync(file,'utf8').split('\n').filter(Boolean).map(JSON.parse);
+          const median=xs=>{
+            const valid=xs.filter(x=>typeof x==='number'&&Number.isFinite(x)).sort((a,b)=>a-b);
+            return valid.length?valid[Math.floor(valid.length/2)]:'n/a';
+          };
+          const kinds=['manga','masal','fabl','utopya'];
+          const summary=kinds.map(kind=>{
+            const items=rows.filter(row=>row.path===kind&&row.status===200);
+            return [kind,items.length+'/3',median(items.map(x=>x.firstByteMs)),
+              median(items.map(x=>x.postTlsWaitMs)),median(items.map(x=>x.totalMs)),
+              [...new Set(items.map(x=>x.headers['cf-cache-status']||'unknown'))].join(', '),
+              [...new Set(items.map(x=>x.headers['x-nextjs-cache']||'unknown'))].join(', ')
+            ];
+          });
+          const report=[
+            '# İlkOku — public writing guide timing evidence',
+            '',
+            '12 spaced GET requests from a single GitHub Actions runner. Values are not real-user CrUX/Core Web Vitals. TTFB includes DNS/TLS/edge/origin and cannot isolate Node or database.',
+            '',
+            '| Page | Good samples | Median TTFB ms | Median wait after TLS ms | Median total ms | CF cache | Next cache |',
+            '|---|---:|---:|---:|---:|---|---|',
+            ...summary.map(line=>'| '+line.join(' | ')+' |'),
+            '',
+            '| Page | Sample | HTTP | DNS ms | Connect ms | TLS ms | TTFB ms | After TLS ms | Total ms | Bytes | CF Ray |',
+            '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|',
+            ...rows.map(r=>'| '+[r.path,r.sample,r.status,r.dnsMs,r.connectMs,r.tlsMs,
+              r.firstByteMs,r.postTlsWaitMs,r.totalMs,r.bytes,r.headers['cf-ray']||'?'].join(' | ')+' |'),
+            '',
+            'Observational only: no performance improvement claims and no automatic website changes.'
+          ].join('\n');
+          fs.writeFileSync('/tmp/ilkoku-guide-http-report.md',report);
+          if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,report);
+          console.log(report);
+          NODE
+
+      - name: Upload immutable measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: seo-education-four-guide-http-timings
+          path: |
+            /tmp/ilkoku-guide-http-timings.ndjson
+            /tmp/ilkoku-guide-http-report.md
+          retention-days: 14
+          if-no-files-found: warn

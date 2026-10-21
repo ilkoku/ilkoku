@@ -337,3 +337,19 @@ test("related-book navigation uses a bounded one-hop from param while reading pa
     assert.ok(current.length < 150, "navigation URL growth must remain bounded");
   }
 });
+
+
+test("first-party book covers use responsive Next images without changing remote or missing cover fallback", () => {
+  const cover = source("src/features/showcase/components/BookCover.tsx");
+  contains(cover, 'import Image from "next/image";', "Next image primitive is used only for own CMS");
+  contains(cover, "const firstPartyMediaPath = coverUrl?.match(", "safe CMS-only URL allowlist");
+  contains(cover, "/api\\/media\\/", "CMS media path");
+  contains(cover, "firstPartyMediaPath ? (", "external cover fallback remains in place");
+  contains(cover, "src={firstPartyMediaPath}", "optimized source is own media UUID");
+  contains(cover, 'src={coverUrl}', "existing arbitrary remote cover URL remains untouched");
+  contains(cover, 'className="showcase-cover__image"', "CSS class, aspect ratio and layout retained");
+  contains(cover, 'alt={`${title} kapak görseli`}', "accessible image alt retained");
+  contains(cover, '<span className="showcase-cover__star"', "no-image design preserved");
+  contains(cover, "width={1024}", "image intrinsic dimensions set");
+  contains(cover, "height={1536}", "image intrinsic proportions set");
+});

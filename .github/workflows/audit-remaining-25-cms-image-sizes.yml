@@ -1,0 +1,113 @@
+name: Read-only CMS optimized image transfer audit 25
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/audit-remaining-25-cms-image-sizes.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - name: Measure 25 live image candidates with paced GET requests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          : > /tmp/ilkoku-25-cms-image-requests.ndjson
+          while IFS='|' read -r label id width original; do
+            [[ -z "$label" ]] && continue
+            hdr="$(mktemp)"
+            url="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=$width&q=75"
+            meta="$(curl --silent --show-error --compressed --location --connect-timeout 8 --max-time 38 -A 'IlkOku-CMS-25-Transfer-Audit/1.0' -H 'Accept: image/webp,image/*;q=0.8' --dump-header "$hdr" --output /dev/null --write-out '%{json}' "$url" || true)"
+            if [[ -z "$meta" ]]; then echo "::error::No metadata for $label"; rm -f "$hdr"; exit 1; fi
+            LABEL="$label" IMAGE_ID="$id" WIDTH="$width" ORIGINAL="$original" META="$meta" HDR="$hdr" node <<'NODE' | tee -a /tmp/ilkoku-25-cms-image-requests.ndjson
+          const fs=require('fs'), meta=JSON.parse(process.env.META);
+          const raw=fs.readFileSync(process.env.HDR,'utf8').trim().split(/\r?\n\r?\n/).at(-1)||'';
+          const h={};
+          for(const line of raw.split(/\r?\n/)){
+            const i=line.indexOf(':');if(i<0)continue;
+            const k=line.slice(0,i).trim().toLowerCase();
+            if(['content-type','cf-cache-status','x-nextjs-cache','cf-ray','content-length','cache-control'].includes(k))h[k]=line.slice(i+1).trim();
+          }
+          const orig=Number(process.env.ORIGINAL),bytes=Math.round(meta.size_download||0);
+          console.log(JSON.stringify({
+            label:process.env.LABEL,id:process.env.IMAGE_ID,width:Number(process.env.WIDTH),
+            sourceBytesAhrefs:orig,status:meta.http_code,deliveredBytes:bytes,
+            savingPct:orig?Math.round(10000*(1-bytes/orig))/100:null,
+            ttfbMs:Math.round((meta.time_starttransfer||0)*1000),
+            totalMs:Math.round((meta.time_total||0)*1000),
+            error:meta.errormsg||null,headers:h
+          }));
+          NODE
+            rm -f "$hdr"
+            http="$(META="$meta" node -p 'JSON.parse(process.env.META).http_code')"
+            if [[ "$http" == "403" || "$http" == "429" ]]; then echo "::error::WAF stop HTTP=$http";exit 1;fi
+            if [[ "$http" != "200" ]]; then echo "::error::Image $label HTTP=$http";exit 1;fi
+            sleep 3
+          done <<'DATA'
+          fantastik-hero|527c2d86-00ef-41dc-b49c-39988d82a983|1920|2451629
+          fantastik-fikir|ff969cc8-5428-46ea-88e9-d7fc7f98a957|1920|2624451
+          fantastik-anatomi|d0eee2cd-b4fc-43c9-bd8f-13aff73ff961|1920|2656968
+          fantastik-yapi|7b0a8643-6c93-49dd-af57-4149ffd180bd|3840|2637224
+          fantastik-sayfa|a2d21ab9-a555-41f8-ad6b-59cf49be5261|3840|2675781
+          fantastik-final|d6e0fc3f-979e-4bac-8d0b-6c0d278c5786|3840|2381744
+          bilim-hero|d455bd41-833d-4910-98b4-b87863cef072|1920|2381207
+          bilim-fikir|783b5d10-bde0-4463-84b6-ea0762a4cd32|1920|2615458
+          bilim-yapi|bb04b69b-396a-4bf3-a545-45115e86bfa8|3840|2606615
+          bilim-sayfa|9c52e270-0399-4002-8bc8-eebf52225e61|3840|2562643
+          bilim-proje|643ce0ad-f88e-44d4-a484-296aab584003|3840|2522592
+          bilim-final|bbc8ad2c-bcf0-48be-be31-d0609a470cee|3840|2388575
+          novella-fikir|2a7b97e4-7c26-4a02-bb3e-4a31f373b108|1920|2427672
+          novella-anatomi|92b105f2-e1c0-49fe-b2db-733a1731b1ae|1920|2658115
+          novella-yapi|0f755274-f761-40f5-8d63-1ea4e5bb2e1d|3840|2549850
+          novella-sayfa|2a8924a1-6f98-4cf6-bbc7-5aaa072aecd1|3840|2363910
+          novella-proje|984d2300-4297-40a3-ac77-34672fc0a11a|3840|2458145
+          novella-final|2df49d9b-ee1e-40fa-a40f-d44869c0d9f1|3840|2326120
+          oyku-hero|a56b7890-701a-47f4-8b71-b4bc7d68f735|1920|2036554
+          oyku-fikir|47e9ad77-6b1e-4e67-a700-039308f9603a|1920|2210420
+          oyku-anatomi|ceb3f5ab-0526-479c-8797-189be394558d|1920|2297540
+          oyku-yapi|5d0b4bf7-29b8-421d-bca8-0993c8cc9f78|3840|2077400
+          oyku-sayfa|b5e2aa47-4780-4986-8194-6a9948ee6929|3840|2120077
+          oyku-proje|3d16b5ae-adf7-424a-bbd8-7db1766a7821|3840|2266542
+          oyku-final|c595cbe3-b5fe-46eb-b625-ff866fb539c9|3840|2099780
+DATA
+
+      - name: Report source vs optimized sizes by image
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),p='/tmp/ilkoku-25-cms-image-requests.ndjson';
+          if(!fs.existsSync(p))process.exit(0);
+          const rows=fs.readFileSync(p,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+          const report=[
+            '# İlkOku 25 flagged CMS image transfer results',
+            '',
+            'One request per image from a GitHub runner, at the current browser-selected 1920/3840 px Next image width. Comparison original PNG bytes are from Ahrefs 19 Oct crawl (not re-fetched). Only the image URLs are measured, not whole-page waterfall; browser/mobile may choose a different srcset width. No production mutation.',
+            '',
+            '| Slot | Ahrefs source bytes | Width | HTTP | Content-Type | Optimized bytes | Saved % | TTFB ms | CF cache | Next cache |',
+            '|---|---:|---:|---:|---|---:|---:|---:|---|---|',
+            ...rows.map(x=>'| '+[x.label,x.sourceBytesAhrefs,x.width,x.status,x.headers['content-type']||'?',x.deliveredBytes,x.savingPct,x.ttfbMs,x.headers['cf-cache-status']||'?',x.headers['x-nextjs-cache']||'?'].join(' | ')+' |'),
+            '',
+            'Successful HTTP 200: '+rows.filter(x=>x.status===200).length+'/'+rows.length+'.',
+            'Optimized >= 500000 bytes: '+rows.filter(x=>x.deliveredBytes>=500000).length+'.',
+            'Optimized >= original PNG: '+rows.filter(x=>x.deliveredBytes>=x.sourceBytesAhrefs).length+'.',
+            'This is a performance observation only, not proof of 25 actual user downloads.'
+          ].join('\n');
+          fs.writeFileSync('/tmp/ilkoku-25-cms-image-summary.md',report);
+          if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,report);
+          console.log(report);
+          NODE
+
+      - name: Archive read-only HTTP results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-25-optimized-image-size-audit
+          path: |
+            /tmp/ilkoku-25-cms-image-requests.ndjson
+            /tmp/ilkoku-25-cms-image-summary.md
+          retention-days: 14
+          if-no-files-found: warn

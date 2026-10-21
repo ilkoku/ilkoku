@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-html-link-for-pages -- Admin tab links use full navigation to avoid delayed same-route RSC transitions. */
+/* eslint-disable @next/next/no-html-link-for-pages -- Power-SEO operational drill-down links intentionally use full navigation. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auditPage } from "@power-seo/audit";
@@ -235,13 +235,6 @@ export default async function PowerSeoDashboard({
   const activeTab = ["genel", "tarama", "sayfa", "servisler", "teknik"].includes(requestedTab)
     ? requestedTab : mode ? "tarama" : raw ? "sayfa" : "genel";
   const scanMode = mode || "full-links";
-  const navigation = [
-    { id: "genel", label: "Genel Bakış", href: "/sistem-yonetimi/power-seo" },
-    { id: "tarama", label: "Tam Site ve HTTP", href: "/sistem-yonetimi/power-seo?sekme=tarama&mod=full-links" },
-    { id: "sayfa", label: "Sayfa Denetimi", href: "/sistem-yonetimi/power-seo?sekme=sayfa" },
-    { id: "servisler", label: "GSC ve API Bağlantıları", href: "/sistem-yonetimi/power-seo?sekme=servisler" },
-    { id: "teknik", label: "Teknik Modüller", href: "/sistem-yonetimi/power-seo?sekme=teknik" },
-  ] as const;
   const requestedSlice = typeof params.parca === "string" && /^\d{1,2}$/.test(params.parca) ? Number(params.parca) : 1;
   const path = raw ? safePath(raw) : null;
   let audit: AuditResult | null = null;
@@ -275,18 +268,6 @@ export default async function PowerSeoDashboard({
         </div>
         <Link href="/sistem-yonetimi">← Sistem yönetimi</Link>
       </div>
-      <nav className={styles.taskNav} aria-label="Power-SEO çalışma alanları">
-        {navigation.map((item) => (
-          <a
-            key={item.id}
-            href={item.href}
-            aria-current={activeTab === item.id ? "page" : undefined}
-            className={activeTab === item.id ? styles.taskNavActive : styles.taskNavLink}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
       {activeTab === "genel" ? (
         <>
           <div className={styles.stats}>

@@ -893,6 +893,7 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   await expectResponsiveDocument(page);
 
   await page.getByRole("link", { name: "Tam Site ve HTTP", exact: true }).click();
+  await expect(page).toHaveURL(/sekme=tarama&mod=full-links/u);
   await expect(page.getByRole("link", { name: "Tam site / HTTP doğrulaması" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Parçalı bağlantı grafiği" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Yönlendirmeler" })).toBeVisible();

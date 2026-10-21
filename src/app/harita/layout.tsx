@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { SystemMapHorizontalTabs } from "@/features/system-map/SystemMapHorizontalTabs";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import "../admin/admin.css";
 import "./harita.css";
@@ -42,7 +41,6 @@ export default async function SystemMapLayout({
 
   return (
     <AdminShell embeddedWorkspace user={{ email: user.email, fullName: user.displayName || user.fullName }}>
-      <SystemMapHorizontalTabs />
       {children}
     </AdminShell>
   );

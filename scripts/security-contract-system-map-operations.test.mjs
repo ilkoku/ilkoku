@@ -264,6 +264,7 @@ test("system map tertiary tabs are visible and active on all 19 harita routes wi
   assert.equal(shell.split("isSubmenuExpanded(item.href, pathname, expandedSubmenus)").length - 1, 2, "toggle state and tertiary row use one identical rule");
   contains(shell, "item.children.map((child)", "original admin tertiary links remain");
   contains(shell, "isActiveSubItem(child.href", "active tab stays bound to current route");
+  contains(shell, 'aria-current={active ? "page" : undefined}', "active tab is explicitly identified for accessible navigation");
   contains(shell, "admin-tertiary-row admin-nav-child__items", "original horizontal scroll CSS retained");
   contains(layout, "<AdminShell embeddedWorkspace", "same admin sidebar and layout retained");
   notContains(layout, "<SystemMapHorizontalTabs", "no duplicate /harita navigation strip");

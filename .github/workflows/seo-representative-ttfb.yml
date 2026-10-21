@@ -1,0 +1,65 @@
+name: SEO representative TTFB diagnostic
+on:
+  pull_request:
+    paths:
+      - .github/workflows/seo-representative-ttfb.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    name: Read-only low-impact cold/warm public TTFB
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check seven URL classes twice with pacing
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          BASE="https://ilkoku.com"
+          LABELS=("homepage" "manga" "utopya" "masal" "fabl" "book" "bestsellers")
+          PATHS=("/" "/yazarlar-icin/cizgi-anlati/manga" "/yazarlar-icin/kurgu/utopya" "/yazarlar-icin/cocuk-ve-genclik/masal" "/yazarlar-icin/cocuk-ve-genclik/fabl" "/kitap/demo-ikinci-bakis" "/en-cok-satanlar")
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          header() {
+            local key="$1" file="$2"
+            grep -i "^$key:" "$file" | tail -n1 | cut -d: -f2- | tr -d '\r' | xargs || true
+          }
+          for pass in 1 2; do
+            echo "===== ROUND $pass (fixed location, GitHub-hosted runner) ====="
+            for i in "${!LABELS[@]}"; do
+              name="${LABELS[$i]}"
+              route="${PATHS[$i]}"
+              headers="$tmp/${pass}-${name}.headers"
+              body="$tmp/${pass}-${name}.html"
+              timing="$(curl --silent --show-error --location --compressed --max-time 28 \
+                --user-agent "IlkOku-LowImpact-TTFB-Diagnostic/1.0" \
+                --header 'Accept: text/html' \
+                --dump-header "$headers" --output "$body" \
+                --write-out '%{http_code}|%{time_starttransfer}|%{time_total}|%{size_download}' \
+                "$BASE$route" || true)"
+              IFS='|' read -r code ttfb total bytes <<< "$timing"
+              if [[ -z "${code:-}" || "${code:-}" == 000 ]]; then
+                echo "TRANSPORT-ERROR|pass=$pass|name=$name|$timing"
+                exit 1
+              fi
+              printf 'MEASURE|pass=%s|name=%s|status=%s|ttfb_ms=%s|total_ms=%s|bytes=%s|cf=%s|next=%s|age=%s|cache=%s\n' \
+                "$pass" "$name" "$code" \
+                "$(awk -v x="$ttfb" 'BEGIN{printf "%.0f", x*1000}')" \
+                "$(awk -v x="$total" 'BEGIN{printf "%.0f", x*1000}')" "$bytes" \
+                "$(header cf-cache-status "$headers")" \
+                "$(header x-nextjs-cache "$headers")" \
+                "$(header age "$headers")" \
+                "$(header cache-control "$headers")"
+              if [[ "$code" == 403 || "$code" == 429 ]]; then
+                echo "EDGE-BLOCK: stopping instead of retrying."
+                exit 1
+              fi
+              if [[ "$code" != 200 ]]; then
+                echo "UNEXPECTED HTTP $code on $route"
+                exit 1
+              fi
+              sleep 3
+            done
+          done
+          echo "PASS: measured seven public URL classes without writes or synthetic concurrency."

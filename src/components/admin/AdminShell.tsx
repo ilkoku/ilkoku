@@ -187,6 +187,22 @@ export function AdminShell({
   const selectedGroup = adminNavigationGroups.find((group) => group.id === selectedGroupId);
   const initials = getInitials(user.fullName);
 
+  // Reuse the same open state for the parent toggle and the actual
+  // horizontal submenu row. No duplicate nav is rendered.
+  function isSubmenuExpanded(item: AdminNavItem) {
+    const activeParent = item.href === SYSTEM_MANAGEMENT_PATH
+      ? pathname === item.href
+      : pathname === item.href || pathname.startsWith(item.href + "/");
+    const nestedRouteActive = item.children?.some((child) => {
+      const childPath = child.href.split("?")[0];
+      return pathname === childPath || pathname.startsWith(childPath + "/");
+    }) ?? false;
+    const expansionKey = `${pathname}::${item.href}`;
+    return expandedSubmenus[expansionKey] ?? (activeParent || nestedRouteActive);
+  }
+
+
+
   return (
     <div className="admin-shell">
       <button
@@ -326,14 +342,8 @@ export function AdminShell({
                       ? pathname === item.href
                       : pathname === item.href || pathname.startsWith(item.href + "/");
                   const hasChildren = Boolean(item.children?.length);
-                  // Keep the existing horizontal third-level tabs visible on every
-                  // nested destination; only an explicit click on this route closes them.
-                  const nestedRouteActive = item.children?.some((child) => {
-                    const childPath = child.href.split("?")[0];
-                    return pathname === childPath || pathname.startsWith(childPath + "/");
-                  }) ?? false;
                   const expansionKey = `${pathname}::${item.href}`;
-                  const subExpanded = expandedSubmenus[expansionKey] ?? (isActive || nestedRouteActive);
+                  const subExpanded = isSubmenuExpanded(item);
                   return (
                     <div className="admin-nav-child" key={item.href}>
                       <div className="admin-nav-child__header">
@@ -363,7 +373,7 @@ export function AdminShell({
                 })}
               </nav>
               {selectedGroup.items.map((item, index) =>
-                item.children?.length && expandedSubmenus[item.href] ? (
+                item.children?.length && isSubmenuExpanded(item) ? (
                   <nav
                     key={item.href}
                     id={`admin-submenu-${selectedGroup.id}-${index}`}

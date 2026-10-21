@@ -20,8 +20,8 @@ test("Hostinger is the only automated scheduler; GitHub retains manual emergency
   assert.match(config, /crons = \["12 \* \* \* \*"\]/);
   assert.doesNotMatch(config, /(?:^|\n)routes\s*=/);
   assert.match(github, /workflow_dispatch:/);
-  assert.doesNotMatch(github, /^\\s*schedule:/m);
-  assert.doesNotMatch(github, /^\\s*push:/m);
+  assert.doesNotMatch(github, /^\s*schedule:/m);
+  assert.doesNotMatch(github, /^\s*push:/m);
   assert.match(route, /timingSafeEqual/);
   assert.match(route, /EMAIL_OPERATIONS_SECRET/);
   assert.match(docs, /two|iki|consecutive/i);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { archiveCmsPageAction, saveCmsPageAction } from "@/features/cms/page-actions";
+import { archiveCmsPageAction, saveApprovedHakkimizdaDraftAction, saveCmsPageAction } from "@/features/cms/page-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
@@ -188,17 +188,19 @@ export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPa
         <div className="content-panel cms-editor-notice is-info">
           <strong>Onaylanan Hakkımızda çalışma metni</strong>
           <p>Bu işlem yalnızca CMS çalışma taslağını günceller. Kayıt yayında olsa bile mevcut canlı sürüm değiştirilmez; yayınlama ayrıca onay gerektirir.</p>
-          <form action={saveCmsPageAction}>
-            <input type="hidden" name="id" value={page.id} />
-            <input type="hidden" name="slug" value="hakkimizda" />
-            <input type="hidden" name="title" value={approvedHakkimizdaCmsDraft.title} />
-            <input type="hidden" name="summary" value={approvedHakkimizdaCmsDraft.summary} />
-            <input type="hidden" name="body" value={approvedHakkimizdaCmsDraft.body} />
-            <input type="hidden" name="seoTitle" value={approvedHakkimizdaCmsDraft.seoTitle} />
-            <input type="hidden" name="seoDescription" value={approvedHakkimizdaCmsDraft.seoDescription} />
-            {currentNoIndex ? <input type="hidden" name="noIndex" value="on" /> : null}
-            <button className="cms-button--secondary" type="submit" name="mode" value="draft">
-              Onaylı metni taslak olarak kaydet
+          {hasPendingDraft &&
+          currentTitle === approvedHakkimizdaCmsDraft.title &&
+          currentSummary === approvedHakkimizdaCmsDraft.summary &&
+          currentBody === approvedHakkimizdaCmsDraft.body &&
+          currentSeoTitle === approvedHakkimizdaCmsDraft.seoTitle &&
+          currentSeoDescription === approvedHakkimizdaCmsDraft.seoDescription ? (
+            <p role="status">Onaylanan metin bekleyen CMS taslağıyla birebir eşleşiyor. Canlı sürüm korunuyor.</p>
+          ) : (
+            <p role="status">Bekleyen taslak onaylanan metinle henüz eşleşmiyor; aşağıdaki güvenli aktarım işlemini kullanın.</p>
+          )}
+          <form action={saveApprovedHakkimizdaDraftAction}>
+            <button className="cms-button--secondary" type="submit">
+              Onaylı Hakkımızda metnini taslağa aktar
             </button>
           </form>
         </div>

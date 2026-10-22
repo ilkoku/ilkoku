@@ -14,6 +14,7 @@ import {
   type BookIndexPublicReadModel,
 } from "./public-read-model";
 import { getBookIndexReadinessSnapshot } from "./readiness";
+import { timeBookIndexOperation } from "./performance-trace";
 
 export type BookIndexPublicPageContext = {
   gate: BookIndexSeoGateSnapshot;
@@ -60,8 +61,8 @@ async function buildBookIndexPageContext(
   policy = getBookIndexSeoGatePolicy(),
 ): Promise<BookIndexPublicPageContext> {
   const [evidence, model] = await Promise.all([
-    getCachedPublicBookIndexSeoEvidence(),
-    getBookIndexPublicReadModel(limit),
+    timeBookIndexOperation("publicContext.readinessEvidence", () => getCachedPublicBookIndexSeoEvidence()),
+    timeBookIndexOperation("publicContext.readModel", () => getBookIndexPublicReadModel(limit)),
   ]);
 
   const gate = evaluateBookIndexSeoGate(policy, {

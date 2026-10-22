@@ -174,3 +174,34 @@ test("CMS quality closure keeps fail-closed operational entry points visible", (
   assertContains(readiness, "İçerik hazırlık verileri okunamadı.", "readiness fail-closed state");
   assertContains(readiness, 'href="/icerik/saglik"', "readiness health recovery route");
 });
+
+
+test("nine core public CMS pages compare with exactly their live code source without publishing", () => {
+  const catalog = source("src/lib/public-cms-page-catalog.ts");
+  const copy = source("src/lib/core-public-code-copy.ts");
+  const pages = source("src/app/icerik/sayfalar/page.tsx");
+  const starters = source("src/features/cms/starter-content-actions.ts");
+  const sourceKeys = [...catalog.matchAll(/contentKey: "(page:tr:[a-z-]+)", label:/g)].map((match) => match[1]);
+
+  assert.equal(sourceKeys.length, 9, "exactly nine canonical public route records");
+  for (const key of sourceKeys) {
+    assertContains(copy, '"' + key + '"', key + " has the exact bundled code source");
+  }
+  assertContains(copy, 'import "server-only"', "comparison source is not shipped to browsers");
+  assertContains(copy, "compareCorePageToCode", "draft-to-public diff is read-only");
+  for (const field of ["Başlık", "Kısa özet", "Sayfa metni", "SEO başlığı", "SEO açıklaması", "Canonical", "URL", "Noindex"]) {
+    assertContains(copy, field, "comparison includes " + field);
+  }
+  for (const key of ["slug: aboutPageContent.canonical", "title: aboutPageContent.title", "summary: aboutPageContent.summary", "body: aboutPageContent.body", "seoTitle: aboutPageContent.seoTitle", "seoDescription: aboutPageContent.seoDescription"]) {
+    assertContains(starters, key, "Hakkımızda starter uses current public source " + key);
+  }
+  assertNotContains(starters, "İlkOku, yazarların eserlerini geliştirebildiği, okuyucularla buluşturabildiği", "old Hakkımızda starter copy must not be used");
+  assertContains(pages, "corePublicCodeCopies[item.contentKey]", "per-row canonical public copy");
+  assertContains(pages, "compareCorePageToCode(page, codeCopy)", "stored CMS copy comparison");
+  assertContains(pages, "CMS KAYDI YOK", "missing CMS record is not a missing public route");
+  assertContains(pages, "CANLI: KOD SÜRÜMÜ", "explicit public fallback origin");
+  assertContains(pages, '<Link href={item.slug} target="_blank">Canlı ↗</Link>', "live navigation remains available with no CMS publication");
+  assertContains(pages, "salt okunurdur; hiçbir taslağı değiştirmez veya kendiliğinden yayımlamaz", "no automatic content mutation");
+  assertNotContains(pages, "saveCmsPageAction", "inventory remains read only");
+  assertNotContains(copy, "prisma", "canonical comparison must not access or mutate database");
+});

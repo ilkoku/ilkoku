@@ -25,9 +25,12 @@ function getSafeReturnPath(value: string | undefined) {
   return safeOneHopReturnPath(value, "/");
 }
 
-function getSeoDescription(description: string | null, title: string, authorName: string) {
+function getSeoDescription(description: string | null, title: string, authorName: string, slug: string) {
   const fallback = `${title}, ${authorName} tarafından İlkOku'da yayımlanan bir eser.`;
   const value = description?.trim() || fallback;
+  if (slug === "belki-bir-gun-okursun-997b2d1f" && value === fallback) {
+    return "Sinan Yılmaz'ın İlkOku'da yayımlanan 'Belki bir gün okursun' adlı romanını keşfedin. Eserin yazarı, bölüm bilgileri ve okuma seçeneklerini inceleyin.";
+  }
 
   return value.length > 160 ? `${value.slice(0, 157).trimEnd()}...` : value;
 }
@@ -69,7 +72,7 @@ export async function generateMetadata({
   }
 
   const title = `${work.title} — ${work.authorName} | İlkOku`;
-  const description = getSeoDescription(work.description, work.title, work.authorName);
+  const description = getSeoDescription(work.description, work.title, work.authorName, work.slug);
   const canonical = `/kitap/${work.slug}`;
   const cover = absoluteUrl(work.coverUrl);
   const searchIndexExcluded = isSearchIndexExcludedPublicWorkSlug(slug);
@@ -147,7 +150,7 @@ export default async function DynamicBookShowcasePage({
     "@context": "https://schema.org",
     "@type": "Book",
     name: work.title,
-    description: getSeoDescription(work.description, work.title, work.authorName),
+    description: getSeoDescription(work.description, work.title, work.authorName, work.slug),
     url: `${baseUrl}/kitap/${work.slug}`,
     inLanguage: work.language || "tr",
     genre: work.genre || undefined,

@@ -147,6 +147,20 @@ test("GSC full index census is read-only and bounded to the live İlkOku sitemap
   assert.doesNotMatch(censusScript, /method: "PUT"|method: "DELETE"/u);
 });
 
+test("GSC recrawl watch uses the verified Oct 22 informational content update without resetting the Google baseline", () => {
+  assert.match(
+    censusScript,
+    /"\/yazarlar-icin\/bilgilendirici",\s*"2026-09-30T09:21:54Z",\s*"2026-10-22T20:16:41Z"/u,
+    "last Google crawl remains the observed Sep 30 baseline; the latest approved expert note is dated Oct 22",
+  );
+  assert.doesNotMatch(
+    censusScript,
+    /"\/yazarlar-icin\/bilgilendirici",\s*"2026-09-30T09:21:54Z",\s*"2026-10-12T14:57:07Z"/u,
+    "a Google crawl before the Oct 22 expert note must not count as having seen that latest content",
+  );
+  assert.match(censusScript, /lastCrawlMs >= contentUpdatedMs/u, "post-update status must compare actual Google crawl time with latest content change");
+});
+
 test("full census retries only transient inspection statuses and fails closed for genuine errors", () => {
   assert.match(censusScript, /INSPECTION_TRANSPORT_ATTEMPTS = 3/);
   assert.match(censusScript, /RETRYABLE_INSPECTION_HTTP = new Set\(\[429, 500, 502, 503, 504\]\)/);

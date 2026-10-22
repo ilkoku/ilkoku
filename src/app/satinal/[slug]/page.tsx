@@ -158,9 +158,9 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
   const purchaseUnavailableMessage = stagedZeroCandidate
-    ? "İlkOku'da bu eser 0 TL erişime hazırlanıyor. Satın alma koşulları onaylanıp etkinleştirilince sipariş verilebilecek; şu anda sipariş veya tahsilat yapılmıyor."
+    ? "0 TL edinim akışı İlkOku'da hazırlanıyor. Satın alma koşulları onaylanıp etkinleştirilince sipariş verilebilecek; şu anda sipariş veya tahsilat yapılmıyor."
     : paidAccessEnforced
-      ? "Eserin mevcut ücretli erişim hakları korunuyor. Yeni sipariş oluşturmak için satın alma koşulları ve ödeme yöntemi hazır olmalı."
+      ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
       : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
 
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);

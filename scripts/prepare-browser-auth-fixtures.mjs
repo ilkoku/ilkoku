@@ -124,7 +124,7 @@ try {
   sessions.cmsManager = cmsManagerToken;
   userIds.cmsManager = cmsManagerId;
 
-  for (const role of ["reader", "writer", "editor_pending", "publisher"]) {
+  for (const role of ["reader", "writer", "editor_pending", "editor", "publisher"]) {
     await client.execute(
       `INSERT INTO \`Profile\`
         (id, userId, birthYear, createdAt, updatedAt)

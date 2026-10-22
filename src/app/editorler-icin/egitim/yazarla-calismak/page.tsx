@@ -8,7 +8,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Yazarla Çalışmak | İlkOku Editörlük Okulu",
-  description: "Editör-yazar ilişkisinde hedef, kapsam, revizyon döngüsü, fikir ayrılığı, profesyonel iletişim, müdahale sınırı ve yazarın yaratıcı karar alanını korumayı öğren.",
+  description: "Editör-yazar ilişkisinde hedef, kapsam, revizyon süreci, fikir ayrılığı, profesyonel iletişim ve yazarın yaratıcı karar alanını korumayı öğren.",
   canonical: "/editorler-icin/egitim/yazarla-calismak",
 });
 
@@ -156,7 +156,7 @@ export default function YazarlaCalismakPage() {
     <>
       <EditorEducationStructuredData
         title="Yazarla Çalışmak"
-        description="Editör-yazar ilişkisinde hedef, kapsam, revizyon döngüsü, fikir ayrılığı, profesyonel iletişim, müdahale sınırı ve yazarın yaratıcı karar alanını korumayı öğren."
+        description="Editör-yazar ilişkisinde hedef, kapsam, revizyon süreci, fikir ayrılığı, profesyonel iletişim ve yazarın yaratıcı karar alanını korumayı öğren."
         canonical="/editorler-icin/egitim/yazarla-calismak"
       />
       <EditorEducationShell activeCategory={category}>

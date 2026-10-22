@@ -75,6 +75,16 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
   const sectionMap = new Map(parsed.sections.map((section) => [section.title, section]));
   const roles = sectionMap.get("Dört rol, tek eser yolculuğu");
   const roleParts = splitSections(roles?.body ?? "", "###");
+  // Approved CMS copy keeps the four individual role headings rather than
+  // using the legacy single "Dört rol" wrapper.
+  const approvedRoleHeadings: Record<(typeof roleMeta)[number]["title"], string> = {
+    Yazar: "Yazarın çalışma alanı",
+    Okuyucu: "Okurun katkısı",
+    Editör: "İki aşamalı editör incelemesi",
+    Yayınevi: "Yayınevi keşfi",
+  };
+  const hasApprovedRoleSections = roleMeta.every((role) => sectionMap.has(approvedRoleHeadings[role.title]));
+  const showRoleGrid = Boolean(roles) || hasApprovedRoleSections;
   const updatedLabel = formatUpdatedAt(updatedAt);
 
   return (
@@ -87,7 +97,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
               Bir eserin yolculuğu <span>ilk cümlede başlar.</span>
             </h1>
             <p>{summary}</p>
-            <div className="about-hero__roles" aria-label="İlkOku ekosistemindeki roller">
+            <div className="about-hero__roles" aria-label={hasApprovedRoleSections ? "İlkOku rollerindeki katkılar" : "İlkOku ekosistemindeki roller"}>
               <span>Yazar</span><span>Okuyucu</span><span>Editör</span><span>Yayınevi</span>
             </div>
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
@@ -131,23 +141,25 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
         </section>
       ) : null}
 
-      {roles ? (
+      {showRoleGrid ? (
         <section className="about-roles about-container">
           <header className="about-section-heading">
             <span className="about-eyebrow">Dört farklı bakış, aynı eser</span>
-            <h2>{roles.title}</h2>
-            {roleParts.intro ? <EditorialBody body={roleParts.intro} /> : null}
+            <h2>{roles?.title ?? roleMeta.map((role) => role.title).join(" · ")}</h2>
+            {roles && roleParts.intro ? <EditorialBody body={roleParts.intro} /> : null}
           </header>
           <div className="about-role-grid">
             {roleMeta.map((role) => {
-              const content = roleParts.sections.find((section) => section.title === role.title);
+              const approved = hasApprovedRoleSections ? sectionMap.get(approvedRoleHeadings[role.title]) : null;
+              const legacy = roleParts.sections.find((section) => section.title === role.title);
+              const content = approved ?? legacy;
               return (
                 <article className="about-role-card" key={role.title}>
                   <div className="about-role-card__top">
                     <span className="about-role-card__icon"><AboutIcon name={role.icon} /></span>
                     <small>{role.label}</small>
                   </div>
-                  <h3>{role.title}</h3>
+                  <h3>{approved?.title ?? role.title}</h3>
                   {content ? <EditorialBody body={content.body} /> : null}
                   <Link href={role.href}>{role.title} olarak katıl <span aria-hidden="true">→</span></Link>
                 </article>
@@ -206,7 +218,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
           </div>
           <div className="about-future__cta">
             <strong>Hikâyenin hangi tarafındasın?</strong>
-            <p>Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle ekosisteme dahil ol.</p>
+            <p>{hasApprovedRoleSections ? "Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle bu yolculuğa katıl." : "Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle ekosisteme dahil ol."}</p>
             <div><Link className="about-button about-button--primary" href="/#roller">Rolünü seç <span aria-hidden="true">→</span></Link><Link className="about-button about-button--secondary" href="/nasil-calisir">Nasıl çalışır?</Link></div>
           </div>
         </section>

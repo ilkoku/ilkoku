@@ -202,6 +202,83 @@ export function BookShowcase({
 
             <span className="showcase-author-link">{work.authorName}</span>
 
+            {commerce?.configured && commerce.saleModel === "paid" && !commerce.enforcementActive ? (
+              <p className="showcase-commerce-notice">
+                Ücretli eser · Hazırlıkta. Eserin ücretli modeli kayıtlıdır ancak
+                şu anda satın alma etkin değildir. Mevcut okuma erişimi korunur.
+              </p>
+            ) : null}
+            {commerce?.configured && commerce.saleModel === "free" ? (
+              <p className="showcase-commerce-notice">
+                Ücretsiz eser. Yayımlanmış bölümler üyelikle okunabilir.
+              </p>
+            ) : null}
+            {paidAccessActive && !hasPaidAccess && purchaseAvailable ? (
+              <p className="showcase-commerce-notice">
+                Eser erişimi:{" "}
+                <strong>
+                  {formatCommerceMoney(
+                    commerce?.priceAmount ?? BigInt(0),
+                    commerce?.currency ?? "TRY",
+                  )}
+                </strong>
+                . Ön İzleme bölümleri okunabilir; Kilitli bölümler eser erişimi
+                edinildikten sonra açılır.
+              </p>
+            ) : null}
+
+            {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
+              <p className="showcase-commerce-notice">
+                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
+                yeni satın alma işlemi ödeme yolu yeniden açıldığında yapılabilir.
+              </p>
+            ) : null}
+
+            <div className="showcase-primary-actions">
+              {startHref && (
+                <Link
+                  className="button button--primary showcase-cta"
+                  href={startHref}
+                >
+                  <span className="button__label">
+                    <span aria-hidden="true">📖</span>{" "}
+                    {readingProgress ? "Okumaya Devam Et" : "Okumaya Başla"}
+                  </span>
+                </Link>
+              )}
+
+              <Link
+                className="button button--outline"
+                href={`/kitap/${work.slug}/pasaport?from=${encodedBookContextPath}`}
+              >
+                Eser Pasaportu
+              </Link>
+
+              <WorkShareActions
+                authorName={work.authorName}
+                genre={work.genre}
+                title={work.title}
+                workSlug={work.slug}
+              />
+
+              {canFavorite && (
+                <form action={toggleFavoriteAction}>
+                  <input name="workId" type="hidden" value={work.id} />
+
+                  <input
+                    name="returnPath"
+                    type="hidden"
+                    value={bookContextPath}
+                  />
+                  <button className="button button--outline" type="submit">
+                    {isFavorite
+                      ? "Beğeniyi Kaldır"
+                      : "Beğen"}
+                  </button>
+                </form>
+              )}
+            </div>
+
             <dl className="showcase-metadata">
               <div>
                 <dt>{readingContent.common.category}</dt>
@@ -319,82 +396,6 @@ export function BookShowcase({
               </div>
             )}
 
-            {commerce?.configured && commerce.saleModel === "paid" && !commerce.enforcementActive ? (
-              <p className="showcase-commerce-notice">
-                Ücretli eser · Hazırlıkta. Eserin ücretli modeli kayıtlıdır ancak
-                şu anda satın alma etkin değildir. Mevcut okuma erişimi korunur.
-              </p>
-            ) : null}
-            {commerce?.configured && commerce.saleModel === "free" ? (
-              <p className="showcase-commerce-notice">
-                Ücretsiz eser. Yayımlanmış bölümler üyelikle okunabilir.
-              </p>
-            ) : null}
-            {paidAccessActive && !hasPaidAccess && purchaseAvailable ? (
-              <p className="showcase-commerce-notice">
-                Eser erişimi:{" "}
-                <strong>
-                  {formatCommerceMoney(
-                    commerce?.priceAmount ?? BigInt(0),
-                    commerce?.currency ?? "TRY",
-                  )}
-                </strong>
-                . Ön İzleme bölümleri okunabilir; Kilitli bölümler eser erişimi
-                edinildikten sonra açılır.
-              </p>
-            ) : null}
-
-            {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
-              <p className="showcase-commerce-notice">
-                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
-                yeni satın alma işlemi ödeme yolu yeniden açıldığında yapılabilir.
-              </p>
-            ) : null}
-
-            <div className="book-card__actions">
-              {startHref && (
-                <Link
-                  className="button button--primary showcase-cta"
-                  href={startHref}
-                >
-                  <span className="button__label">
-                    <span aria-hidden="true">📖</span>{" "}
-                    {readingProgress ? "Okumaya Devam Et" : "Okumaya Başla"}
-                  </span>
-                </Link>
-              )}
-
-              <Link
-                className="button button--outline"
-                href={`/kitap/${work.slug}/pasaport?from=${encodedBookContextPath}`}
-              >
-                Eser Pasaportu
-              </Link>
-
-              <WorkShareActions
-                authorName={work.authorName}
-                genre={work.genre}
-                title={work.title}
-                workSlug={work.slug}
-              />
-
-              {canFavorite && (
-                <form action={toggleFavoriteAction}>
-                  <input name="workId" type="hidden" value={work.id} />
-
-                  <input
-                    name="returnPath"
-                    type="hidden"
-                    value={bookContextPath}
-                  />
-                  <button className="button button--outline" type="submit">
-                    {isFavorite
-                      ? "Beğeniyi Kaldır"
-                      : "Beğen"}
-                  </button>
-                </form>
-              )}
-            </div>
           </div>
         </section>
 
@@ -445,11 +446,11 @@ export function BookShowcase({
               </div>
 
               {work.chapters.length > 0 ? (
-                <div className="editor-review-list">
+                <div className="showcase-chapter-list">
                   {work.chapters.map((chapter, index) => {
                     const readable = canReadChapter(chapter.id);
                     const accessType =
-                      commerce?.chapterAccess[chapter.id] ?? "preview";
+                      commerce?.chapterAccess[chapter.id] ?? "locked";
                     const readingMinutes = readable
                       ? estimateReadingMinutes(chapter.content)
                       : null;
@@ -480,11 +481,15 @@ export function BookShowcase({
                             : "Kilitli · Satış geçici olarak kullanılamıyor"
                         : hasPaidAccess && paidAccessActive
                           ? "Satın alındı · Okunabilir"
-                          : "Yayında · Üyelikle okunabilir";
+                          : commerce?.configured && commerce.saleModel === "paid"
+                            ? accessType === "preview"
+                              ? "Ön İzleme · Hazırlıkta okunabilir"
+                              : "Kilitli planlandı · Şimdilik okunabilir"
+                            : "Yayında · Üyelikle okunabilir";
 
                     return (
                       <article
-                        className="editor-review-row"
+                        className="showcase-chapter-card"
                         key={chapter.id}
                       >
                         <div>
@@ -497,7 +502,7 @@ export function BookShowcase({
                           </p>
                         </div>
 
-                        <div className="editor-review-row__report">
+                        <div className="showcase-chapter-card__status">
                           <p>{accessLabel}</p>
                         </div>
 
@@ -666,6 +671,7 @@ export function BookShowcase({
           )}
         </section>
 
+        {work.similarWorks.length > 0 ? (
         <section
           className="showcase-similar"
           id="benzer-eserler"
@@ -719,6 +725,7 @@ export function BookShowcase({
             </Card>
           )}
         </section>
+        ) : null}
       </main>
     </div>
   );

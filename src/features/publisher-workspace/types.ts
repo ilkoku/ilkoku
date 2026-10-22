@@ -39,7 +39,7 @@ export interface PublisherWorkspaceSubmission {
   status: PublisherWorkspaceSubmissionStatus;
   submittedAt: string;
   updatedAt: string;
-  work: { id: string; title: string };
+  work: { id: string; title: string; saleDisclosure: { label: string; detail: string } };
 }
 
 export interface PublisherWorkspaceFilters {

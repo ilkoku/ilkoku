@@ -197,8 +197,8 @@ export default async function CheckoutPreparationPage({
         <header className={`${styles.hero} ${styles.readerCheckoutHero}`}>
           <div>
             <span className={styles.eyebrow}>İlkOku · Dijital eser erişimi</span>
-            <h1>Satın alma</h1>
-            <p><strong>{work.title}</strong> · {work.author.displayName ?? work.author.fullName}</p>
+            <h1>{work.title}</h1>
+            <p>Yazar: {work.author.displayName ?? work.author.fullName}</p>
           </div>
           <Link className={styles.secondaryAction} href={returnTo}>
             Eser sayfasına dön
@@ -370,10 +370,11 @@ export default async function CheckoutPreparationPage({
             </div>
           </div>
 
-          {stagedZeroPurchaseReady ? (
-            <div className={styles.successNotice}>
-              Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı
-              kullanılmadan sipariş tamamlanacak.
+          {stagedZeroCandidate ? (
+            <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
+              {stagedZeroPurchaseReady
+                ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
+                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
             </div>
           ) : (
             <>

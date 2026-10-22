@@ -1,0 +1,99 @@
+name: Ahrefs broken JavaScript read-only audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-stale-js-reference-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Inspect production HTML script references and four current chunks
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const origin = "https://ilkoku.com";
+          const stale = "/_next/static/chunks/webpack-ac1f19fbd819329e.js";
+          const paths = [
+            "/",
+            "/nasil-calisir",
+            "/hakkimizda",
+            "/site-haritasi",
+            "/yazarlar-icin/kurgu/roman",
+            "/editorler-icin/egitim/metin-degerlendirme",
+            "/okurlar-icin",
+            "/yasal/kvkk",
+            "/kitap/belki-bir-gun-okursun-997b2d1f",
+            "/kitap/demo-dis-editor-hazir?from=%2Fkitap%2Fdemo-ikinci-bakis%3Ffrom%3D%2Fkitap%2Fdemo-cifte-koridor"
+          ];
+          const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+          async function get(url) {
+            const res = await fetch(url, {
+              headers: { "user-agent": "IlkOku-Ahrefs-JS-ReadOnlyAudit/1.0", accept: "text/html,application/javascript;q=0.9,*/*;q=0.8" },
+              signal: AbortSignal.timeout(20000),
+              redirect: "follow"
+            });
+            return res;
+          }
+          let failures = [];
+          const usages = new Map();
+          const rows = [];
+          for (const path of paths) {
+            const response = await get(origin + path);
+            const body = await response.text();
+            const refs = [...body.matchAll(/<script\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')/gi)]
+              .map(x => new URL(x[1] || x[2], origin).href);
+            const next = refs.filter(u => u.includes("/_next/static/"));
+            for (const url of new Set(next)) usages.set(url, (usages.get(url) || 0) + 1);
+            const staleUsed = refs.some(u => u.includes(stale)) || body.includes(stale);
+            console.log(JSON.stringify({ type: "HTML", path, http: response.status, scripts: refs.length, nextScripts: next.length, staleUsed, finalUrl: response.url }));
+            rows.push([path, response.status, next.length, staleUsed]);
+            if (response.status !== 200) failures.push("HTML HTTP " + response.status + " at " + path);
+            if (next.length === 0) failures.push("No Next.js script src references: " + path);
+            if (staleUsed) failures.push("Outdated webpack script still referenced: " + path);
+            await sleep(1000);
+          }
+          const common = [...usages.entries()].sort((a,b) => b[1] - a[1]).slice(0,4);
+          const assets = [];
+          for (const [url, usage] of common) {
+            const response = await get(url);
+            const type = response.headers.get("content-type") || "";
+            const bytes = (await response.arrayBuffer()).byteLength;
+            console.log(JSON.stringify({type:"CURRENT_ASSET",url,http:response.status,contentType:type,bytes,usedOn:usage}));
+            assets.push([url, response.status, usage]);
+            if (response.status !== 200) failures.push("Referenced current JS not served: " + url + " HTTP " + response.status);
+            await sleep(1000);
+          }
+          const old = await get(origin + stale);
+          console.log(JSON.stringify({type:"HISTORIC_ASSET",url:origin+stale,http:old.status,referencedByCurrentSamples:rows.some(x=>x[3])}));
+          const report = [
+            "## Ahrefs 623 page / one old JS audit",
+            "",
+            "Read-only public GET requests. This tests 10 representative HTML responses, not 623 Ahrefs URLs.",
+            "",
+            "| Page | HTTP | Current Next scripts | Old hash referenced |",
+            "| --- | ---: | ---: | --- |",
+            ...rows.map(([p,h,n,st]) => "| " + p.replaceAll("|","%7C") + " | " + h + " | " + n + " | " + (st ? "YES" : "NO") + " |"),
+            "",
+            "## Four common current JS files",
+            "| Asset | HTTP | Pages referencing |",
+            "| --- | ---: | ---: |",
+            ...assets.map(([u,h,n]) => "| " + u + " | " + h + " | " + n + " |"),
+            "",
+            "Old JS HTTP: " + old.status + ". Old JS missing alone does NOT imply current pages are broken.",
+            "",
+            "Failures: " + failures.length
+          ];
+          if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report.join("\n"));
+          if (failures.length) {
+            for (const x of failures) console.error("::error::" + x);
+            process.exitCode = 1;
+          }
+          NODE

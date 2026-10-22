@@ -87,3 +87,28 @@ export function resolveEffectiveCommerceState(input: {
     useConfirmedSnapshot: true,
   };
 }
+
+/** Shared read-only disclosure; buying and reading remain server-authorized. */
+export function describeWorkSaleModel(input: {
+  configuration: EffectiveSaleConfiguration | null | undefined;
+  latestConsent: ConfirmedCommerceSnapshot | null | undefined;
+}): { label: string; detail: string } {
+  if (!input.configuration) return { label: "Ayarlanmadı", detail: "Yazar henüz yayın modeli seçmedi." };
+  const current = resolveEffectiveCommerceState(input);
+  if (current.useConfirmedSnapshot) {
+    return { label: "Ücretli · Son onaylı", detail: "Taslak değişiklikler okurlara uygulanmadı; son onaylı ücretli erişim korunuyor." };
+  }
+  if (current.saleModel === "free") {
+    return { label: "Ücretsiz", detail: "Eserin kayıtlı yayın modeli ücretsiz." };
+  }
+  if (current.status === "active") {
+    return { label: "Ücretli", detail: "Ücretli erişim aktif. Satın alma uygunluğu eser sayfasında gösterilir." };
+  }
+  if (current.status === "ready") {
+    return { label: "Ücretli · Hazırlıkta", detail: "Ücretli model kaydedildi. 0 TL hazırlık gerçek satış değildir; satın alma uygunluğu eser sayfasında kontrol edilir." };
+  }
+  return {
+    label: current.status === "paused" ? "Ücretli · Duraklatıldı" : "Ücretli · Taslak",
+    detail: "Bu eser henüz yeni ücretli satışa açılmadı.",
+  };
+}

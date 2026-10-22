@@ -242,10 +242,19 @@ test("approved Hakkımızda content can be saved only through an explicit draft 
   assertContains(saveAction, 'if (existing?.status === "published" && mode !== "publish")', "published page drafts use staged path");
   assertContains(saveAction, 'await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot)', "published page keeps current live row when staging a draft");
   assertContains(saveAction, 'status: mode === "publish" ? "published" : "draft"', "draft snapshot records its safe status");
-  assertContains(editor, '<form action={saveCmsPageAction}>', "uses existing authenticated CMS save action");
-  assertContains(editor, 'name="mode" value="draft"', "explicit draft-only submit");
-  assertContains(editor, "Onaylı metni taslak olarak kaydet", "action label makes draft status clear");
-  assertContains(editor, "currentNoIndex ? <input", "current noindex state preserved");
+  assertContains(editor, '<form action={saveApprovedHakkimizdaDraftAction}>', "approved import uses dedicated authoritative server action");
+  assertContains(editor, "Onaylanan metin bekleyen CMS taslağıyla birebir eşleşiyor", "editor gives exact parity confirmation");
+  assertContains(editor, "Bekleyen taslak onaylanan metinle henüz eşleşmiyor", "editor rejects mismatched drafts");
+  const actions = source("src/features/cms/page-actions.ts");
+  assertContains(actions, "export async function saveApprovedHakkimizdaDraftAction()", "server-only approved importer");
+  assertContains(actions, 'data.set("mode", "draft")', "approved import cannot publish");
+  for (const prop of ["title", "summary", "body", "seoTitle", "seoDescription"]) {
+    assertContains(actions, `data.set("${prop}", approved.${prop})`, "server-authored approved " + prop);
+  }
+  assertContains(actions, 'if (page.noIndex) data.set("noIndex", "on")', "original noindex flag preserved");
+  assertContains(actions, 'await saveCmsPageAction(data)', "approved action goes through existing authenticated CMS save");
+  assertContains(editor, "Onaylı Hakkımızda metnini taslağa aktar", "action label makes draft staging clear");
+  assertNotContains(editor, '<input type="hidden" name="body" value={approvedHakkimizdaCmsDraft.body}', "approved content never sent from browser hidden input");
   assertNotContains(publicCopy, "edebiyatın farklı seslerini aynı hikâyede buluşturur", "approved draft must not silently replace live code");
   assertNotContains(approvedSource, "prisma", "approved data source cannot mutate the database");
 });

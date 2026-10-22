@@ -29,6 +29,7 @@ const now = new Date();
 const sessions = {};
 const userIds = {};
 let writerCommerceWorkId = null;
+let commerceWorkId = null;
 
 function hashToken(token) {
   return createHash("sha256").update(token).digest("hex");
@@ -240,7 +241,7 @@ try {
     [randomUUID(), publisherId, publisherMemberUserId, now, now],
   );
 
-  const commerceWorkId = randomUUID();
+  commerceWorkId = randomUUID();
   const commerceChapterId = randomUUID();
   writerCommerceWorkId = randomUUID();
   const writerCommerceChapterId = randomUUID();

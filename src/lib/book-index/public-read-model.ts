@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 import { BOOK_INDEX_LISTS, getBookIndexList } from "./lists";
+import { timeBookIndexOperation } from "./performance-trace";
 import { getTurkeySourceRankRows } from "./source-rank-table";
 import {
   BOOK_INDEX_SOURCES,
@@ -295,12 +296,12 @@ export async function getBookIndexPublicReadModel(
     (list) => list.enabled && list.publiclyVisible,
   );
   const [turkeyItems, sourceLists] = await Promise.all([
-    getTurkeySourceRankRows(limit),
-    Promise.all(
+    timeBookIndexOperation("publicModel.turkeyRankRows", () => getTurkeySourceRankRows(limit)),
+    timeBookIndexOperation("publicModel.sourceListSnapshots", () => Promise.all(
       enabledLists.map((list) =>
         getBookIndexSourceListSnapshot(list.code, limit),
       ),
-    ),
+    )),
   ]);
 
   const nonNullSourceLists = sourceLists.filter(

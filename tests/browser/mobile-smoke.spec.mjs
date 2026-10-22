@@ -198,6 +198,20 @@ for (const scenario of [
       (element) => getComputedStyle(element).display,
     );
     expect(heroDisplay, "BookShowcase CSS must load on its public detail route").toBe("grid");
+    await expect(page.locator(".showcase-primary-actions")).toBeVisible();
+    await expect(page.locator(".showcase-chapter-list")).toBeVisible();
+    const cards = page.locator(".showcase-chapter-card");
+    expect(await cards.count(), "Published chapters must render as cards").toBeGreaterThan(0);
+    const chapterDisplay = await cards.first().evaluate(
+      (element) => getComputedStyle(element).display,
+    );
+    expect(chapterDisplay, "Chapter cards must keep their scoped layout styles").toBe("flex");
+    const title = page.locator(".showcase-hero h1");
+    const titleOverflow = await title.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(titleOverflow.scrollWidth, "Work titles must wrap inside the hero").toBeLessThanOrEqual(titleOverflow.clientWidth + 2);
     await expectResponsiveDocument(page);
   });
 }

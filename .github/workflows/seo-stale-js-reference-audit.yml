@@ -17,8 +17,8 @@ jobs:
       - name: Inspect production HTML script references and four current chunks
         shell: bash
         run: |
-          node <<'NODE'
-          const fs = require("node:fs");
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
           const origin = "https://ilkoku.com";
           const stale = "/_next/static/chunks/webpack-ac1f19fbd819329e.js";
           const paths = [

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import { selectDefaultInspectionUrls } from "./gsc-url-inspection.mjs";
 import { summarizeWritingGuideFamilies } from "./gsc-writing-guide-family-summary.mjs";
+import { extractSitemapLastmodByUrl, latestVerifiedContentUpdate } from "./gsc-recrawl-freshness.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/gsc-url-inspection.yml", "utf8");
 const script = fs.readFileSync("scripts/gsc-url-inspection.mjs", "utf8");
@@ -159,6 +160,22 @@ test("GSC recrawl watch uses the verified Oct 22 informational content update wi
     "a Google crawl before the Oct 22 expert note must not count as having seen that latest content",
   );
   assert.match(censusScript, /lastCrawlMs >= contentUpdatedMs/u, "post-update status must compare actual Google crawl time with latest content change");
+});
+
+test("GSC recrawl watch trusts latest real sitemap changes instead of stale hard-coded dates", () => {
+  const xml = '<urlset><url><loc>https://ilkoku.com/yazarlar-icin/kurgu/roman</loc><lastmod>2026-10-18T22:43:29Z</lastmod></url><url><loc>https://ilkoku.com/yazarlar-icin/bilgilendirici</loc><lastmod>2026-10-22T20:16:41Z</lastmod></url></urlset>';
+  const dates = extractSitemapLastmodByUrl(xml);
+  const romanUpdatedAt = latestVerifiedContentUpdate("2026-10-06T07:55:57Z", dates.get("https://ilkoku.com/yazarlar-icin/kurgu/roman"));
+  assert.equal(romanUpdatedAt, "2026-10-18T22:43:29.000Z");
+  assert.ok(Date.parse("2026-10-18T09:06:28Z") < Date.parse(romanUpdatedAt), "Google's morning crawl did not see the evening Roman update");
+  assert.equal(latestVerifiedContentUpdate("2026-10-22T20:16:41Z", dates.get("https://ilkoku.com/yazarlar-icin/bilgilendirici")), "2026-10-22T20:16:41.000Z");
+  assert.equal(latestVerifiedContentUpdate("2026-10-22T20:16:41Z", "2026-10-12T14:57:07Z"), "2026-10-22T20:16:41.000Z", "older cached sitemap cannot roll back a verified new update");
+  assert.equal(latestVerifiedContentUpdate(null, null), null);
+  assert.throws(() => extractSitemapLastmodByUrl("<urlset><url><loc>https://ilkoku.com/example</loc><lastmod>invalid</lastmod></url></urlset>"), /Invalid sitemap lastmod/u);
+  assert.match(censusScript, /extractSitemapLastmodByUrl\(xml\)/u);
+  assert.match(censusScript, /latestVerifiedContentUpdate\(contentUpdatedAt, sitemapLastmod\)/u);
+  assert.match(censusScript, /summarizeRecrawlWatch\(results, sitemapLastmodByUrl\)/u);
+  assert.match(censusScript, /newContentCrawled = reCrawledSinceBaseline && latestContentUpdatedAt !== null/u, "a crawl already in the historical baseline is not a newly observed recrawl");
 });
 
 test("full census retries only transient inspection statuses and fails closed for genuine errors", () => {

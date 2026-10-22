@@ -184,10 +184,10 @@ export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPa
 
       {page?.id === "51e2eb80-7192-4cec-ba69-6bf622c569a4" &&
       page.contentKey === approvedHakkimizdaCmsDraft.contentKey &&
-      page.status === "draft" && !corruptDraft ? (
+      page.status !== "archived" && !corruptDraft ? (
         <div className="content-panel cms-editor-notice is-info">
           <strong>Onaylanan Hakkımızda çalışma metni</strong>
-          <p>Bu işlem yalnızca mevcut CMS taslağını onaylanan içerikle günceller. Public Hakkımızda sayfasını yayımlamaz veya değiştirmez.</p>
+          <p>Bu işlem yalnızca CMS çalışma taslağını günceller. Kayıt yayında olsa bile mevcut canlı sürüm değiştirilmez; yayınlama ayrıca onay gerektirir.</p>
           <form action={saveCmsPageAction}>
             <input type="hidden" name="id" value={page.id} />
             <input type="hidden" name="slug" value="hakkimizda" />

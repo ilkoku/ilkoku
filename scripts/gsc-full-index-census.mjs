@@ -336,7 +336,7 @@ function summarizeRecrawlWatch(results, sitemapLastmodByUrl) {
     const latestContentUpdatedAt = latestVerifiedContentUpdate(contentUpdatedAt, sitemapLastmod);
     const contentUpdatedMs = latestContentUpdatedAt ? Date.parse(latestContentUpdatedAt) : NaN;
     const reCrawledSinceBaseline = Number.isFinite(lastCrawlMs) && lastCrawlMs > baselineCrawlMs;
-    const newContentCrawled = latestContentUpdatedAt !== null &&
+    const newContentCrawled = reCrawledSinceBaseline && latestContentUpdatedAt !== null &&
       Number.isFinite(lastCrawlMs) && lastCrawlMs >= contentUpdatedMs;
     let state;
     if (!result) state = "MISSING_FROM_LIVE_SITEMAP";

@@ -254,3 +254,26 @@ test("writer, reader, editor, publisher and admin commerce disclosures stay link
   has(auth, "readerWorkspaceRoles", "reader role allowlist retained");
   lacks(auth, '  "publisher",', "publisher checkout access not silently expanded");
 });
+
+test("reader discovery checkout actions require terms, entitlement and operational providers", () => {
+  const page = source("src/app/kesfet/page.tsx");
+  const table = source("src/features/reader/components/ReaderWorksTable.tsx");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const book = source("src/features/works/member-public-queries.ts");
+
+  has(page, "getActiveReaderPurchaseTerms()", "reader purchase terms are verified server-side");
+  has(page, "isCommerceCheckoutEnabled() && hasOperationalPaymentProvider()", "nonzero checkout requires provider");
+  has(page, "stagedZeroPurchaseAvailable", "0 TL staging controlled by reader purchase terms");
+  has(page, "livePaidPurchaseAvailable", "paid purchase controlled by provider readiness");
+  has(page, 'where: { readerId: userId, status: "active" }', "entitlement belongs to current reader");
+  has(page, "work.entitlements.length > 0", "existing entitlement avoids repeat purchase");
+  has(page, 'chapter.commerceAccess?.accessType ?? "locked"', "unknown chapter plan is closed");
+  has(page, "effective.useConfirmedSnapshot", "confirmed access plan survives draft edits");
+  has(page, 'label: stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al"', "no false checkout label");
+  has(table, "work.purchaseAction.href", "direct purchase from reader discovery row");
+  has(table, "selectedWork.purchaseAction.href", "direct purchase from discovery detail panel");
+  has(table, "!work.paidAccessRestricted", "paid restriction prevents misleading restart");
+  has(checkout, "stagedZeroPurchaseReady", "backend checkout still enforces terms");
+  has(book, "const stagedZeroPurchaseAvailable =", "showcase also enforces terms");
+  lacks(page, "completeZeroTotalCheckoutAction", "discovery cannot create orders");
+});

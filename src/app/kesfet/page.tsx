@@ -8,7 +8,10 @@ import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
-import { describeWorkSaleModel } from "@/features/commerce/effective-state";
+import { describeWorkSaleModel, resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
+import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
   ReaderWorksTable,
@@ -52,11 +55,13 @@ const sortOptions = [
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): ReaderWorkRow {
+function mapReaderWork(
+  work: Awaited<ReturnType<typeof fetchWorks>>[number],
+  readiness: { readerPurchaseTermsActive: boolean; paymentPathReady: boolean },
+): ReaderWorkRow {
   const publishedChapters = work.chapters.filter(
     (chapter) => chapter.status === "published" && chapter.publishedAt !== null,
   );
-  const firstChapter = publishedChapters[0] ?? null;
   const progress = work.readingProgress[0] ?? null;
   const hasPendingChapter = work.chapters.some(
     (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
@@ -65,6 +70,48 @@ function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): Re
     configuration: work.saleConfiguration,
     latestConsent: work.publicationConsents[0] ?? null,
   });
+  const configuration = work.saleConfiguration;
+  const effective = resolveEffectiveCommerceState({
+    configuration,
+    latestConsent: work.publicationConsents[0] ?? null,
+  });
+  const stagedZeroPurchaseAvailable =
+    !configuration?.activatedAt &&
+    readiness.readerPurchaseTermsActive &&
+    effective.saleModel === "paid" &&
+    effective.status === "ready" &&
+    effective.priceAmount === BigInt(0);
+  const livePaidPurchaseAvailable =
+    readiness.paymentPathReady &&
+    readiness.readerPurchaseTermsActive &&
+    effective.saleModel === "paid" &&
+    effective.status === "active" &&
+    effective.priceAmount !== null &&
+    effective.priceAmount > BigInt(0);
+  const hasEntitlement = work.entitlements.length > 0;
+  const purchaseAvailable = stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
+  const paidAccessRestricted =
+    effective.saleModel === "paid" &&
+    (Boolean(configuration?.activatedAt) || purchaseAvailable) &&
+    !hasEntitlement;
+  const canRead = (chapter: typeof publishedChapters[number]) =>
+    !paidAccessRestricted ||
+    (effective.useConfirmedSnapshot
+      ? effective.accessPlan[chapter.id] ?? "locked"
+      : chapter.commerceAccess?.accessType ?? "locked") === "preview";
+  const resumeChapter = publishedChapters.find(
+    (chapter) => chapter.id === progress?.chapter.id,
+  );
+  const readableChapter = resumeChapter && canRead(resumeChapter)
+    ? resumeChapter
+    : publishedChapters.find(canRead) ?? null;
+  const purchaseAction =
+    paidAccessRestricted && purchaseAvailable
+      ? {
+          href: `/satinal/${work.slug}`,
+          label: stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al",
+        }
+      : undefined;
 
   return {
     authorName: work.author.displayName ?? work.author.fullName,
@@ -90,11 +137,11 @@ function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): Re
     publishedAt: work.publishedAt?.toISOString() ?? null,
     readerCount: work._count.readingProgress,
     saleDisclosure,
-    readingHref: progress
-      ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
-      : firstChapter
-        ? `/oku/${work.slug}/bolum-${firstChapter.position}`
-        : null,
+    paidAccessRestricted,
+    purchaseAction,
+    readingHref: readableChapter
+      ? `/oku/${work.slug}/bolum-${readableChapter.position}`
+      : null,
     readingState: progress
       ? progress.completed
         ? "completed"
@@ -148,17 +195,24 @@ function fetchWorks(
         orderBy: { confirmedAt: "desc" }, take: 1,
         select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true },
       },
+      entitlements: {
+        where: { readerId: userId, status: "active" },
+        select: { id: true },
+        take: 1,
+      },
       chapters: {
         where: {
           archivedAt: null,
         },
         orderBy: { position: "asc" },
         select: {
+          id: true,
           content: true,
           position: true,
           publishedAt: true,
           status: true,
           title: true,
+          commerceAccess: { select: { accessType: true } },
         },
       },
       favorites: {
@@ -180,6 +234,7 @@ function fetchWorks(
         select: {
           chapter: {
             select: {
+              id: true,
               position: true,
               title: true,
             },
@@ -209,7 +264,14 @@ export default async function ReaderExplorePage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const adultAccess = await getAdultContentAccess(profile.id);
+  const [adultAccess, activeReaderPurchaseTerms] = await Promise.all([
+    getAdultContentAccess(profile.id),
+    getActiveReaderPurchaseTerms(),
+  ]);
+  const readerOfferReadiness = {
+    readerPurchaseTermsActive: Boolean(activeReaderPurchaseTerms),
+    paymentPathReady: isCommerceCheckoutEnabled() && hasOperationalPaymentProvider(),
+  };
   const ratingOptions = visibleMemberContentRatings(
     adultAccess.canAccessAdultContent,
   );
@@ -266,7 +328,7 @@ export default async function ReaderExplorePage({
   if (usesPostFilters) {
     const allWorks = await fetchWorks(where, profile.id, orderBy);
     const allRows = allWorks
-      .map(mapReaderWork)
+      .map((work) => mapReaderWork(work, readerOfferReadiness))
       .filter((work) => readerWorkMatches(work, filters));
     totalCount = allRows.length;
     totalPages = Math.max(1, Math.ceil(totalCount / READER_LIST_PAGE_SIZE));
@@ -283,7 +345,7 @@ export default async function ReaderExplorePage({
       skip: (currentPage - 1) * READER_LIST_PAGE_SIZE,
       take: READER_LIST_PAGE_SIZE,
     });
-    rows = pageWorks.map(mapReaderWork);
+    rows = pageWorks.map((work) => mapReaderWork(work, readerOfferReadiness));
   }
 
   const normalizedFilters = { ...filters, page: currentPage };

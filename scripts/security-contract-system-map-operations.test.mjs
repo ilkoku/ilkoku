@@ -249,3 +249,28 @@ test("all 18 harita submenu pages use one accessible row-column directory", () =
   notContains(layout, '<SystemMapNavigation />', "no duplicated sidebar menu");
   notContains(directory, "fetch(", "navigation does not fetch private data");
 });
+
+
+test("system map API evidence verifies OIDC denial and anonymous-safe session boundaries", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
+  contains(generator, 'GitHub OIDC JWT authorization', "OIDC evidence classification");
+  contains(generator, 'session profile anonymous boundary', "anonymous-safe account evidence");
+  contains(generator, 'status:\\s*401', "OIDC denial evidence must require HTTP 401");
+  contains(generator, 'signedIn:\\s*false', "account profile evidence requires anonymous response");
+
+  for (const path of [
+    "src/app/api/internal/book-index-readiness/route.ts",
+    "src/app/api/internal/runtime-origin-health/route.ts",
+    "src/app/api/internal/seo-sitemap-inventory/route.ts",
+  ]) {
+    const route = source(path);
+    contains(route, "jwtVerify(", path + " cryptographic token verification");
+    contains(route, "await authorized(request)", path + " request authorization gate");
+    contains(route, "status: 401", path + " unauthorized rejection");
+  }
+  const account = source("src/app/api/public-account/route.ts");
+  contains(account, "getCurrentProfile()", "account session/profile read");
+  contains(account, "if (!profile)", "account anonymous boundary");
+  contains(account, "signedIn: false", "account guest response");
+  contains(account, '"Cache-Control": "private, no-store', "account response is never shared-cached");
+});

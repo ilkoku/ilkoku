@@ -175,6 +175,7 @@ test("GSC recrawl watch trusts latest real sitemap changes instead of stale hard
   assert.match(censusScript, /extractSitemapLastmodByUrl\(xml\)/u);
   assert.match(censusScript, /latestVerifiedContentUpdate\(contentUpdatedAt, sitemapLastmod\)/u);
   assert.match(censusScript, /summarizeRecrawlWatch\(results, sitemapLastmodByUrl\)/u);
+  assert.match(censusScript, /newContentCrawled = reCrawledSinceBaseline && latestContentUpdatedAt !== null/u, "a crawl already in the historical baseline is not a newly observed recrawl");
 });
 
 test("full census retries only transient inspection statuses and fails closed for genuine errors", () => {

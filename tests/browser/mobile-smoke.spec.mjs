@@ -515,6 +515,10 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     page.getByRole("heading", { name: "CI Browser 0 TL Eser" }),
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
+  await expect(page.getByText("Platform: İlkOku", { exact: true })).toBeVisible();
+  await expect(page.locator('[aria-label="Sipariş özeti"]')).toBeVisible();
+  await expectResponsiveDocument(page);
   await expect(
     page.getByText(/Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak/),
   ).toBeVisible();

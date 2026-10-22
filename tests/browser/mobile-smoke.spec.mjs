@@ -852,7 +852,7 @@ test("authenticated contract mutation smoke: admin send, recipient response, own
   await page.locator('input[name="responseConfirmed"]').check();
   await page.getByRole("button", { name: "Kabul et" }).click();
 
-  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}\?durum=accepted`));
+  await expect(page).toHaveURL(new RegExp(`/sozlesmelerim/${contractId}\\?durum=accepted`));
   await expect(page.getByText("Sözleşme kabulünüz kaydedildi.")).toBeVisible();
   await expect(page.getByText("Sözleşme durumu: Kabul edildi")).toBeVisible();
 

@@ -5,6 +5,8 @@ import { deleteFromAdminCenterAction } from "@/features/admin/deletion-actions";
 import { prisma } from "@/lib/prisma";
 
 const LIMIT = 40;
+const DELETION_CENTER_PATH = "/sistem-yonetimi/silme-merkezi";
+type DeletionCategory = "yazar" | "eser" | "yayinevi" | "editor";
 
 const resultMessages: Record<string, { tone: "success" | "warning"; text: string }> = {
   "yazar-silindi": {
@@ -46,6 +48,7 @@ const resultMessages: Record<string, { tone: "success" | "warning"; text: string
 };
 
 type SearchParams = Promise<{
+  bolum?: string;
   durum?: string;
   q?: string;
 }>;
@@ -69,11 +72,13 @@ function deletionForm(input: {
   id: string;
   label: string;
   targetType: "writer" | "editor" | "work" | "publisher";
+  query: string;
 }) {
   return (
     <form action={deleteFromAdminCenterAction} className="admin-delete-form">
       <input name="targetId" type="hidden" value={input.id} />
       <input name="targetType" type="hidden" value={input.targetType} />
+      <input name="q" type="hidden" value={input.query} />
       <label>
         <span>Onay için SİL yaz</span>
         <input
@@ -99,6 +104,14 @@ export default async function AdminDeletionCenterPage({
 }) {
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
+  const selectedCategory: DeletionCategory =
+    params.bolum === "eser" || params.bolum === "yayinevi" || params.bolum === "editor"
+      ? params.bolum : "yazar";
+  const categoryHref = (category: DeletionCategory) => {
+    const query = new URLSearchParams({ bolum: category });
+    if (q) query.set("q", q);
+    return `${DELETION_CENTER_PATH}?${query.toString()}`;
+  };
   const flash = params.durum ? resultMessages[params.durum] ?? null : null;
 
   const writerWhere: Prisma.UserWhereInput = {
@@ -314,15 +327,24 @@ export default async function AdminDeletionCenterPage({
         </div>
       ) : null}
 
-      <section className="admin-archive-summary" aria-label="Silinebilir kayıt özeti">
-        <article><span>Yazar</span><strong>{writerCount}</strong></article>
-        <article><span>Eser</span><strong>{workCount}</strong></article>
-        <article><span>Yayınevi</span><strong>{publisherCount}</strong></article>
-        <article><span>Editör</span><strong>{editorCount}</strong></article>
-      </section>
+      <nav className="admin-archive-summary admin-delete-picker" aria-label="Silinebilir kayıt türü seçimi">
+        <Link href={categoryHref("yazar")} className="admin-delete-picker__link" aria-current={selectedCategory === "yazar" ? "page" : undefined}>
+          <span>Yazar</span><strong>{writerCount}</strong>
+        </Link>
+        <Link href={categoryHref("eser")} className="admin-delete-picker__link" aria-current={selectedCategory === "eser" ? "page" : undefined}>
+          <span>Eser</span><strong>{workCount}</strong>
+        </Link>
+        <Link href={categoryHref("yayinevi")} className="admin-delete-picker__link" aria-current={selectedCategory === "yayinevi" ? "page" : undefined}>
+          <span>Yayınevi</span><strong>{publisherCount}</strong>
+        </Link>
+        <Link href={categoryHref("editor")} className="admin-delete-picker__link" aria-current={selectedCategory === "editor" ? "page" : undefined}>
+          <span>Editör</span><strong>{editorCount}</strong>
+        </Link>
+      </nav>
 
       <section className="admin-panel admin-delete-search">
         <form method="get">
+          <input type="hidden" name="bolum" value={selectedCategory} />
           <label>
             <span>Kayıt ara</span>
             <input
@@ -333,15 +355,16 @@ export default async function AdminDeletionCenterPage({
             />
           </label>
           <button type="submit">Ara</button>
-          {q ? <Link href="/sistem-yonetimi/silme-merkezi">Temizle</Link> : null}
+          {q ? <Link href={`${DELETION_CENTER_PATH}?bolum=${selectedCategory}`}>Temizle</Link> : null}
         </form>
         <small>
           {total.toLocaleString("tr-TR")} eşleşme · Her bölümde en fazla {LIMIT} kayıt gösterilir.
         </small>
       </section>
 
-      <section className="admin-panel admin-delete-section">
-        <div className="admin-panel__heading">
+      {selectedCategory === "yazar" ? (
+        <section id="admin-delete-active-panel" className="admin-panel admin-delete-section" aria-label="Yazar silme ekranı">
+          <div className="admin-panel__heading">
           <div><span>Hesaplar</span><h2>Yazar silme</h2></div>
           <b>{writerCount}</b>
         </div>
@@ -369,7 +392,7 @@ export default async function AdminDeletionCenterPage({
                       <td className="admin-delete-table__number">{writer._count.publisherSubmissions}</td>
                       <td>{protectedByCommerce ? <span className="admin-delete-blocker">Ücretli eser / aktif erişim hakkı bulunduğu için silme korumalı.</span> : <span className="admin-delete-table__safe">—</span>}</td>
                       <td><Link href={"/sistem-yonetimi/eserler?yazar=" + encodeURIComponent(writer.id)}>Yazarın eserlerini gör</Link></td>
-                      <td>{deletionForm({ blocked: protectedByCommerce, id: writer.id, label: "Yazarı sil", targetType: "writer" })}</td>
+                      <td>{deletionForm({ blocked: protectedByCommerce, id: writer.id, label: "Yazarı sil", targetType: "writer", query: q })}</td>
                     </tr>
                   );
                 })}
@@ -377,10 +400,12 @@ export default async function AdminDeletionCenterPage({
             </table>
           </div>
         ) : <p className="admin-profile-empty">Yazar bulunamadı.</p>}
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-panel admin-delete-section">
-        <div className="admin-panel__heading">
+      {selectedCategory === "eser" ? (
+        <section id="admin-delete-active-panel" className="admin-panel admin-delete-section" aria-label="Eser silme ekranı">
+          <div className="admin-panel__heading">
           <div><span>İçerik</span><h2>Eser silme</h2></div>
           <b>{workCount}</b>
         </div>
@@ -409,7 +434,7 @@ export default async function AdminDeletionCenterPage({
                       <td className="admin-delete-table__number">{work._count.commerceOrders}</td>
                       <td>{protectedByCommerce ? <span className="admin-delete-blocker">Okur satın alma/erişim kaydı bulunduğu için silme korumalı.</span> : <span className="admin-delete-table__safe">—</span>}</td>
                       <td><Link href={"/sistem-yonetimi/eserler/" + work.id}>Eser detayını aç</Link></td>
-                      <td>{deletionForm({ blocked: protectedByCommerce, id: work.id, label: "Eseri sil", targetType: "work" })}</td>
+                      <td>{deletionForm({ blocked: protectedByCommerce, id: work.id, label: "Eseri sil", targetType: "work", query: q })}</td>
                     </tr>
                   );
                 })}
@@ -417,10 +442,12 @@ export default async function AdminDeletionCenterPage({
             </table>
           </div>
         ) : <p className="admin-profile-empty">Eser bulunamadı.</p>}
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-panel admin-delete-section">
-        <div className="admin-panel__heading">
+      {selectedCategory === "yayinevi" ? (
+        <section id="admin-delete-active-panel" className="admin-panel admin-delete-section" aria-label="Yayınevi silme ekranı">
+          <div className="admin-panel__heading">
           <div><span>Kurumsal hesaplar</span><h2>Yayınevi silme</h2></div>
           <b>{publisherCount}</b>
         </div>
@@ -444,17 +471,19 @@ export default async function AdminDeletionCenterPage({
                     <td className="admin-delete-table__number">{publisher._count.members}</td>
                     <td className="admin-delete-table__number">{publisher._count.submissions}</td>
                     <td><Link href={"/sistem-yonetimi/yayinevleri/" + publisher.id}>Yayınevi detayını aç</Link></td>
-                    <td>{deletionForm({ id: publisher.id, label: "Yayınevini sil", targetType: "publisher" })}</td>
+                    <td>{deletionForm({ id: publisher.id, label: "Yayınevini sil", targetType: "publisher", query: q })}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : <p className="admin-profile-empty">Yayınevi bulunamadı.</p>}
-      </section>
+        </section>
+      ) : null}
 
-      <section className="admin-panel admin-delete-section">
-        <div className="admin-panel__heading">
+      {selectedCategory === "editor" ? (
+        <section id="admin-delete-active-panel" className="admin-panel admin-delete-section" aria-label="Editör silme ekranı">
+          <div className="admin-panel__heading">
           <div><span>Editoryal ağ</span><h2>Editör silme</h2></div>
           <b>{editorCount}</b>
         </div>
@@ -484,7 +513,7 @@ export default async function AdminDeletionCenterPage({
                       <td className="admin-delete-table__number">{editor._count.feedbackWritten}</td>
                       <td>{hasActiveReview ? <span className="admin-delete-blocker">Aktif inceleme bulunduğu için önce iş akışını kapatın veya devredin.</span> : <span className="admin-delete-table__safe">—</span>}</td>
                       <td><Link href={"/sistem-yonetimi/editorler/" + editor.id}>Editör detayını aç</Link></td>
-                      <td>{deletionForm({ blocked: hasActiveReview, id: editor.id, label: "Editörü sil", targetType: "editor" })}</td>
+                      <td>{deletionForm({ blocked: hasActiveReview, id: editor.id, label: "Editörü sil", targetType: "editor", query: q })}</td>
                     </tr>
                   );
                 })}
@@ -492,7 +521,8 @@ export default async function AdminDeletionCenterPage({
             </table>
           </div>
         ) : <p className="admin-profile-empty">Editör bulunamadı.</p>}
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }

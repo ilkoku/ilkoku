@@ -150,62 +150,18 @@ export default async function CheckoutPreparationPage({
   const checkoutConfigurationActive =
     stagedZeroPurchaseReady || livePaidCheckoutActive;
 
-  if (!paidAccessEnforced) {
-    return (
-      <AppShell profile={profile}>
-        <div className={styles.page}>
-          <header className={styles.hero}>
-            <div>
-              <span className={styles.eyebrow}>Hazırlık modu</span>
-              <h1>{work.title}</h1>
-              <p>
-                Bu ücretli yapılandırma henüz okur edinimine hazır değil.
-                Gerekli satın alma koşulları aktif olana kadar mevcut okuma
-                erişimi açık kalır.
-              </p>
-            </div>
-            <span className={styles.badge}>Tahsilat hazırlıkta</span>
-          </header>
-
-          <div className={styles.notice}>
-            Yazarın ücretli eser ayarları ve bölüm planı saklanıyor. 0 TL
-            edinim akışı hazır olduğunda Kilitli bölümler eser erişimi
-            edinildikten sonra açılır.
-          </div>
-
-          <Link className={styles.action} href={returnTo}>
-            Okumaya dön
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!checkoutConfigurationActive) {
-    return (
-      <AppShell profile={profile}>
-        <div className={styles.page}>
-          <header className={styles.hero}>
-            <div>
-              <span className={styles.eyebrow}>Satın alma geçici olarak kapalı</span>
-              <h1>{work.title}</h1>
-              <p>Bu eser daha önce ücretli erişimde aktive edildi. Mevcut satın alma yolu şu anda kullanılamıyor; eser bu nedenle ücretsiz erişime açılmaz.</p>
-            </div>
-            <span className={styles.badge}>Erişim korunuyor</span>
-          </header>
-
-          <div className={styles.notice}>
-            Aktif erişim hakkı olan okurlar okumaya devam eder. Yeni erişim
-            edinmek için satın alma yolu yeniden açılana kadar beklemek gerekir.
-          </div>
-
-          <Link className={styles.action} href={`/kitap/${work.slug}`}>
-            Eser sayfasına dön
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
+  // Keep the checkout overview visible even when the sale is not yet enabled.
+  // Purchase actions remain behind the existing server-side terms/provider gates.
+  const stagedZeroCandidate =
+    !previouslyActivatedPaid &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "ready" &&
+    effectiveCommerce.priceAmount === BigInt(0);
+  const purchaseUnavailableMessage = stagedZeroCandidate
+    ? "İlkOku'da bu eser 0 TL erişime hazırlanıyor. Satın alma koşulları onaylanıp etkinleştirilince sipariş verilebilecek; şu anda sipariş veya tahsilat yapılmıyor."
+    : paidAccessEnforced
+      ? "Eserin mevcut ücretli erişim hakları korunuyor. Yeni sipariş oluşturmak için satın alma koşulları ve ödeme yöntemi hazır olmalı."
+      : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
 
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
@@ -237,21 +193,162 @@ export default async function CheckoutPreparationPage({
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
-        <header className={styles.hero}>
+      <div className={`${styles.page} ${styles.readerCheckoutPage}`}>
+        <header className={`${styles.hero} ${styles.readerCheckoutHero}`}>
           <div>
-            <span className={styles.eyebrow}>Satın Alma</span>
-            <h1>{work.title}</h1>
-            <p>{work.author.displayName ?? work.author.fullName}</p>
+            <span className={styles.eyebrow}>İlkOku · Dijital eser erişimi</span>
+            <h1>Satın alma</h1>
+            <p><strong>{work.title}</strong> · {work.author.displayName ?? work.author.fullName}</p>
           </div>
           <Link className={styles.secondaryAction} href={returnTo}>
-            Vazgeç
+            Eser sayfasına dön
           </Link>
         </header>
 
-        {flash ? <div className={styles.flash}>{flash}</div> : null}
+        {flash ? <div role="alert" className={styles.flash}>{flash}</div> : null}
+        {!checkoutConfigurationActive ? (
+          <div role="status" className={styles.notice}>
+            {purchaseUnavailableMessage}
+          </div>
+        ) : null}
 
-        <section className={styles.panel}>
+        <div className={styles.readerCheckoutLayout}>
+          <div className={styles.readerCheckoutMain}>
+        <section className={`${styles.panel} ${styles.readerCheckoutForm}`}>
+          <span className={styles.eyebrow}>Sipariş adımı</span>
+          <h2>{pricing.finalAmount === BigInt(0) ? "Eser erişimi" : "Ödeme yöntemi"}</h2>
+          <p className={styles.helper}>
+            Satın alma yalnızca bu eserin dijital okuma erişimini kapsar.
+            Aktif erişim hakkı kütüphanene eklenir; fiziksel kitap gönderilmez.
+          </p>
+
+          {purchaseTerms ? (
+            <div className={styles.contractBox}>
+              <div className={styles.contractHeading}>
+                <strong>{purchaseTerms.title}</strong>
+                <span>Sürüm {purchaseTerms.version}</span>
+              </div>
+              <div className={styles.contractText}>{purchaseTerms.body}</div>
+            </div>
+          ) : null}
+
+          {!purchaseTerms ? (
+            <div className={styles.notice}>
+              Dijital içerik satın alma koşulları henüz aktif değil. Hukuki
+              inceleme ve yönetim aktivasyonu tamamlanmadan sipariş
+              oluşturulmayacak.
+            </div>
+          ) : null}
+
+          {checkoutConfigurationActive && pricing.finalAmount === BigInt(0) && purchaseTerms ? (
+            <>
+              <div className={styles.successNotice}>
+                {coupon
+                  ? "Kupon toplam tutarı 0 TL'ye düşürdü. Harici ödeme sağlayıcısına gidilmeden eser erişimi açılacak."
+                  : "Eser erişim fiyatı 0 TL. Sipariş ücretsiz olarak tamamlanacak ve eser kütüphanene eklenecek."}
+              </div>
+
+              <form action={completeZeroTotalCheckoutAction}>
+                <input name="slug" type="hidden" value={work.slug} />
+                <input
+                  name="couponCode"
+                  type="hidden"
+                  value={coupon?.code ?? ""}
+                />
+                <input name="returnTo" type="hidden" value={returnTo} />
+
+                <label className={styles.confirmation}>
+                  <input name="acceptDigitalContent" type="checkbox" />
+                  <span>
+                    {purchaseTerms.title} (sürüm {purchaseTerms.version}) metnini
+                    okudum ve kabul ediyorum.
+                  </span>
+                </label>
+
+                <button className={styles.action} type="submit">
+                  0 TL ile satın al
+                </button>
+              </form>
+            </>
+          ) : !checkoutConfigurationActive ? (
+            <div className={styles.readerCheckoutNotReady}>
+              <strong>{stagedZeroCandidate ? "0 TL erişim hazırlıkta" : "Satın alma şu an kapalı"}</strong>
+              <p>
+                {stagedZeroCandidate
+                  ? "Eserin toplam tutarı 0 TL. İlkOku satın alma koşulları aktif olunca kart bilgisi istenmeden sipariş oluşturulabilecek."
+                  : "Sipariş veya ödeme alınmıyor. Mevcut okuma hakkın korunur."}
+              </p>
+              <button type="button" className={styles.action} disabled>
+                {stagedZeroCandidate ? "0 TL ile edin — henüz aktif değil" : "Satın alma kapalı"}
+              </button>
+              <Link className={styles.quietAction} href={returnTo}>Eser sayfasına dön</Link>
+            </div>
+          ) : (
+            <form action={beginPaidCheckoutAction}>
+              <input name="slug" type="hidden" value={work.slug} />
+              <input
+                name="couponCode"
+                type="hidden"
+                value={coupon?.code ?? ""}
+              />
+              <input name="returnTo" type="hidden" value={returnTo} />
+
+              <div className={styles.saleOptions}>
+                {paymentMethods.map((method) => (
+                  <label className={styles.saleOption} key={method.method}>
+                    <input
+                      disabled={!method.available || !purchaseTerms}
+                      name="paymentMethod"
+                      type="radio"
+                      value={method.method}
+                    />
+                    <span>
+                      <strong>{method.label}</strong>
+                      <br />
+                      {method.available
+                        ? "Ödeme sağlayıcısı hazır."
+                        : "Provider entegrasyonu henüz aktif değil."}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <label className={styles.confirmation}>
+                <input
+                  disabled={!hasAvailableProvider || !purchaseTerms}
+                  name="acceptDigitalContent"
+                  type="checkbox"
+                />
+                <span>
+                  {purchaseTerms
+                    ? `${purchaseTerms.title} (sürüm ${purchaseTerms.version}) metnini okudum ve kabul ediyorum.`
+                    : "Dijital içerik satın alma koşulları henüz aktif değil."}
+                </span>
+              </label>
+
+              <button
+                className={styles.action}
+                disabled={!hasAvailableProvider || !purchaseTerms}
+                type="submit"
+              >
+                {hasAvailableProvider
+                  ? `${formatMoney(pricing.finalAmount, effectiveCommerce.currency)} ÖDE`
+                  : "Ödeme sağlayıcısı bekleniyor"}
+              </button>
+            </form>
+          )}
+        </section>
+          </div>
+          <aside className={styles.readerCheckoutAside} aria-label="Sipariş özeti">
+        <section className={`${styles.panel} ${styles.readerCheckoutSummary}`}>
+          <span className={styles.eyebrow}>Ödeme özeti</span>
+          <h2>Sipariş özeti</h2>
+          <div className={styles.readerCheckoutWorkMeta}>
+            <strong>{work.title}</strong>
+            <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
+            <span>Platform: İlkOku</span>
+            <span>Ürün: Eserin dijital okuma erişimi</span>
+          </div>
           <div className={styles.summaryGrid}>
             <div>
               <span>Eser fiyatı</span>
@@ -312,112 +409,8 @@ export default async function CheckoutPreparationPage({
           )}
         </section>
 
-        <section className={styles.panel}>
-          <h2>{pricing.finalAmount === BigInt(0) ? "Siparişi tamamla" : "Ödeme yöntemi"}</h2>
-
-          {purchaseTerms ? (
-            <div className={styles.contractBox}>
-              <div className={styles.contractHeading}>
-                <strong>{purchaseTerms.title}</strong>
-                <span>Sürüm {purchaseTerms.version}</span>
-              </div>
-              <div className={styles.contractText}>{purchaseTerms.body}</div>
-            </div>
-          ) : null}
-
-          {!purchaseTerms ? (
-            <div className={styles.notice}>
-              Dijital içerik satın alma koşulları henüz aktif değil. Hukuki
-              inceleme ve yönetim aktivasyonu tamamlanmadan sipariş
-              oluşturulmayacak.
-            </div>
-          ) : null}
-
-          {pricing.finalAmount === BigInt(0) && purchaseTerms ? (
-            <>
-              <div className={styles.successNotice}>
-                {coupon
-                  ? "Kupon toplam tutarı 0 TL'ye düşürdü. Harici ödeme sağlayıcısına gidilmeden eser erişimi açılacak."
-                  : "Eser erişim fiyatı 0 TL. Sipariş ücretsiz olarak tamamlanacak ve eser kütüphanene eklenecek."}
-              </div>
-
-              <form action={completeZeroTotalCheckoutAction}>
-                <input name="slug" type="hidden" value={work.slug} />
-                <input
-                  name="couponCode"
-                  type="hidden"
-                  value={coupon?.code ?? ""}
-                />
-                <input name="returnTo" type="hidden" value={returnTo} />
-
-                <label className={styles.confirmation}>
-                  <input name="acceptDigitalContent" type="checkbox" />
-                  <span>
-                    {purchaseTerms.title} (sürüm {purchaseTerms.version}) metnini
-                    okudum ve kabul ediyorum.
-                  </span>
-                </label>
-
-                <button className={styles.action} type="submit">
-                  0 TL ile satın al
-                </button>
-              </form>
-            </>
-          ) : (
-            <form action={beginPaidCheckoutAction}>
-              <input name="slug" type="hidden" value={work.slug} />
-              <input
-                name="couponCode"
-                type="hidden"
-                value={coupon?.code ?? ""}
-              />
-              <input name="returnTo" type="hidden" value={returnTo} />
-
-              <div className={styles.saleOptions}>
-                {paymentMethods.map((method) => (
-                  <label className={styles.saleOption} key={method.method}>
-                    <input
-                      disabled={!method.available || !purchaseTerms}
-                      name="paymentMethod"
-                      type="radio"
-                      value={method.method}
-                    />
-                    <span>
-                      <strong>{method.label}</strong>
-                      <br />
-                      {method.available
-                        ? "Ödeme sağlayıcısı hazır."
-                        : "Provider entegrasyonu henüz aktif değil."}
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <label className={styles.confirmation}>
-                <input
-                  disabled={!hasAvailableProvider || !purchaseTerms}
-                  name="acceptDigitalContent"
-                  type="checkbox"
-                />
-                <span>
-                  {purchaseTerms
-                    ? `${purchaseTerms.title} (sürüm ${purchaseTerms.version}) metnini okudum ve kabul ediyorum.`
-                    : "Dijital içerik satın alma koşulları henüz aktif değil."}
-                </span>
-              </label>
-
-              <button
-                className={styles.action}
-                disabled={!hasAvailableProvider || !purchaseTerms}
-                type="submit"
-              >
-                {hasAvailableProvider
-                  ? `${formatMoney(pricing.finalAmount, effectiveCommerce.currency)} ÖDE`
-                  : "Ödeme sağlayıcısı bekleniyor"}
-              </button>
-            </form>
-          )}
-        </section>
+          </aside>
+        </div>
       </div>
     </AppShell>
   );

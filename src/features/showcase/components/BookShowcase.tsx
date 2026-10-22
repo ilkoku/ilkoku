@@ -202,6 +202,29 @@ export function BookShowcase({
 
             <span className="showcase-author-link">{work.authorName}</span>
 
+            <section
+              className="showcase-content-rating"
+              data-unrated={work.contentRating === "unrated" ? "true" : undefined}
+              aria-labelledby="icerik-sinifi"
+            >
+              <div>
+                <span id="icerik-sinifi">İçerik ve yaş sınıfı</span>
+                <strong>{rating.shortLabel}</strong>
+              </div>
+              {contentWarnings.length > 0 ? (
+                <ul aria-label="İçerik uyarıları">
+                  {contentWarnings.map((warning) => (
+                    <li key={warning}>{workContentWarningDetails[warning].label}</li>
+                  ))}
+                </ul>
+              ) : work.contentRating === "unrated" ? (
+                <p>Bu eski eser henüz yazar tarafından sınıflandırılmadı. Okumadan önce eser açıklamasını değerlendirin.</p>
+              ) : (
+                <p>Yazar ek bir içerik uyarısı belirtmedi.</p>
+              )}
+              <Link href="/icerik-ve-yas-politikasi">Sınıflandırma ölçütlerini gör →</Link>
+            </section>
+
             {commerce?.configured && commerce.saleModel === "paid" && !commerce.enforcementActive ? (
               <p className="showcase-commerce-notice">
                 Ücretli eser · Hazırlıkta. Eserin ücretli modeli kayıtlıdır ancak
@@ -335,29 +358,6 @@ export function BookShowcase({
                 <dd>{formatDate(work.publishedAt)}</dd>
               </div>
             </dl>
-
-            <section
-              className="showcase-content-rating"
-              data-unrated={work.contentRating === "unrated" ? "true" : undefined}
-              aria-labelledby="icerik-sinifi"
-            >
-              <div>
-                <span id="icerik-sinifi">İçerik ve yaş sınıfı</span>
-                <strong>{rating.shortLabel}</strong>
-              </div>
-              {contentWarnings.length > 0 ? (
-                <ul aria-label="İçerik uyarıları">
-                  {contentWarnings.map((warning) => (
-                    <li key={warning}>{workContentWarningDetails[warning].label}</li>
-                  ))}
-                </ul>
-              ) : work.contentRating === "unrated" ? (
-                <p>Bu eski eser henüz yazar tarafından sınıflandırılmadı. Okumadan önce eser açıklamasını değerlendirin.</p>
-              ) : (
-                <p>Yazar ek bir içerik uyarısı belirtmedi.</p>
-              )}
-              <Link href="/icerik-ve-yas-politikasi">Sınıflandırma ölçütlerini gör →</Link>
-            </section>
 
             <div className="showcase-progress">
               <div>

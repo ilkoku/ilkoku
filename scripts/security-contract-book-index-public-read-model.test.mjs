@@ -698,7 +698,7 @@ test("batched public source snapshots reproduce the original single-list reader 
     },
   };
 
-  const module = { exports: {} };
+  const mockModule = { exports: {} };
   const deps = {
     "server-only": {},
     "@/lib/prisma": { prisma },
@@ -717,9 +717,9 @@ test("batched public source snapshots reproduce the original single-list reader 
   evaluate(name => {
     assert.ok(Object.hasOwn(deps, name), "unknown source dependency: " + name);
     return deps[name];
-  }, module, module.exports);
+  }, mockModule, mockModule.exports);
 
-  const { getBookIndexPublicReadModel, getBookIndexSourceListSnapshot } = module.exports;
+  const { getBookIndexPublicReadModel, getBookIndexSourceListSnapshot } = mockModule.exports;
   for (const limit of [1, 100, 1200]) {
     const prior = await Promise.all(definitions.map(x => getBookIndexSourceListSnapshot(x.code, limit)));
     const before = { singleListQueries, latestRunQueries, batchCalls };

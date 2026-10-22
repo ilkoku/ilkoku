@@ -315,7 +315,7 @@ async function getBookIndexPublicSourceListSnapshots(
     persistedLists.map((row) => [`${row.source.code}:${row.code}`, row] as const),
   );
 
-  return listCodes.map((listCode) => {
+  return listCodes.map((listCode): BookIndexSourceListSnapshot | null => {
     const definition = getBookIndexList(listCode);
     if (!definition) return null;
     const sourceDefinition = getBookIndexSource(definition.sourceCode);

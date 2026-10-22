@@ -359,13 +359,14 @@ test("SEO content-depth phase 9 adds seven useful category examples and a reader
     "/yazarlar-icin/kurgu",
     "/yazarlar-icin/edebiyat",
     "/yazarlar-icin/akademik",
-    "/yazarlar-icin/bilgilendirici",
     "/yazarlar-icin/senaryo-ve-sahne",
     "/yazarlar-icin/cocuk-ve-genclik",
     "/yazarlar-icin/cizgi-anlati",
   ]) {
     assertContains(freshness, `["${route}", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT]`, `material update is tracked for ${route}`);
   }
+  assertContains(freshness, 'const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z")', "verified Oct 22 informational content update timestamp");
+  assertContains(freshness, '["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT]', "only the informational hub tracks the later expert disclaimer update");
   assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "unrelated flagship freshness remains unchanged");
 });
 

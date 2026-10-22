@@ -1,0 +1,46 @@
+name: SEO guide TTFB read-only probe
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-guide-ttfb-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Sample real public guide TTFB without changing production
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          paths=(
+            "/"
+            "/yazarlar-icin/cizgi-anlati/manga"
+            "/yazarlar-icin/cocuk-ve-genclik/masal"
+            "/yazarlar-icin/cocuk-ve-genclik/fabl"
+            "/yazarlar-icin/kurgu/utopya"
+          )
+          printf '| Round | Path | HTTP | TTFB (s) | Total (s) | CF cache | Next cache |\n|---:|---|---:|---:|---:|---|---|\n' | tee -a "$GITHUB_STEP_SUMMARY"
+          for round in 1 2; do
+            for path in "${paths[@]}"; do
+              headers="$(mktemp)"
+              metrics="$(curl --silent --show-error --compressed --retry 0 --max-time 25 --connect-timeout 8 --user-agent "IlkOku-Public-Guide-TTFB-Audit/1.0" --dump-header "$headers" --output /dev/null --write-out '%{http_code}|%{time_starttransfer}|%{time_total}' "https://ilkoku.com$path" || true)"
+              IFS='|' read -r status ttfb total <<< "$metrics"
+              edge_cache="$(grep -i '^cf-cache-status:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+              next_cache="$(grep -i '^x-nextjs-cache:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+              rm -f "$headers"
+              printf '| %s | %s | %s | %s | %s | %s | %s |\n' "$round" "$path" "${status:-000}" "${ttfb:--}" "${total:--}" "${edge_cache:--}" "${next_cache:--}" | tee -a "$GITHUB_STEP_SUMMARY"
+              case "$status" in
+                200) ;;
+                403|429) echo "::error::Circuit breaker: edge blocked HTTP $status; aborting." >&2; exit 1 ;;
+                *) echo "::error::HTTP $status; aborting without retries." >&2; exit 1 ;;
+              esac
+              sleep 2
+            done
+          done
+          echo "Read-only probe complete: 10 bounded public GETs; no database, cache or CMS writes." | tee -a "$GITHUB_STEP_SUMMARY"

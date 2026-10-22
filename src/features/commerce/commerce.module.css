@@ -1335,3 +1335,155 @@
     width: 100%;
   }
 }
+
+
+/* Reader checkout; isolated from author commerce and shared application chrome. */
+.readerCheckoutPage {
+  width: min(100%, 72rem);
+  min-width: 0;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw, 1.75rem);
+  gap: 1.1rem;
+}
+
+.readerCheckoutHero {
+  align-items: center;
+  background: color-mix(in srgb, #6d28d9 6%, #fff);
+  border-color: #e3dbea;
+  border-radius: 18px;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.readerCheckoutHero h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  color: #241a31;
+}
+
+.readerCheckoutHero p { margin: 0; }
+
+.readerCheckoutLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem);
+  align-items: start;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.readerCheckoutMain,
+.readerCheckoutAside { min-width: 0; }
+
+.readerCheckoutForm,
+.readerCheckoutSummary {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.readerCheckoutForm h2,
+.readerCheckoutSummary h2 {
+  color: #241a31;
+  font-size: clamp(1.16rem, 2vw, 1.5rem);
+  line-height: 1.3;
+}
+
+.readerCheckoutForm .contractBox { margin: 0.35rem 0; }
+
+.readerCheckoutForm .helper { margin: 0; }
+
+.readerCheckoutForm .confirmation,
+.readerCheckoutForm .saleOptions { margin-block: 0.8rem; }
+
+.readerCheckoutForm .contractText {
+  max-height: 17rem;
+  font-size: 0.875rem;
+}
+
+.readerCheckoutForm form { min-width: 0; }
+
+.readerCheckoutWorkMeta {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid #ece6f3;
+}
+
+.readerCheckoutWorkMeta strong {
+  color: #251a34;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.readerCheckoutWorkMeta span {
+  font-size: 0.83rem;
+  color: #61576e;
+  overflow-wrap: anywhere;
+}
+
+.readerCheckoutSummary .summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin: 0.4rem 0;
+  gap: 0.35rem;
+}
+
+.readerCheckoutSummary .summaryGrid > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 0;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid #f0ebf5;
+  background: transparent;
+}
+
+.readerCheckoutSummary .summaryGrid > div:last-child {
+  margin-top: 0.35rem;
+  border-top: 1px solid #e2d5f2;
+  border-bottom: 0;
+}
+
+.readerCheckoutSummary .summaryGrid > div:last-child strong {
+  color: #5b21b6;
+  font-size: 1.15rem;
+}
+
+.readerCheckoutSummary .summaryGrid strong { white-space: nowrap; }
+
+.readerCheckoutSummary .couponApplyForm { margin: 0.35rem 0; }
+
+.readerCheckoutNotReady {
+  display: grid;
+  justify-items: start;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #e3dbea;
+  border-radius: 14px;
+  background: #faf8fd;
+}
+
+.readerCheckoutNotReady > strong { color: #37234f; }
+
+.readerCheckoutNotReady p { margin: 0; }
+
+.readerCheckoutNotReady .action { opacity: 0.6; }
+
+@media (max-width: 800px) {
+  .readerCheckoutLayout { grid-template-columns: minmax(0, 1fr); }
+  .readerCheckoutAside { grid-row: 1; }
+  .readerCheckoutSummary .summaryGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 440px) {
+  .readerCheckoutPage { padding: 0.65rem; }
+  .readerCheckoutHero { gap: 0.8rem; align-items: stretch; }
+  .readerCheckoutHero .secondaryAction { align-self: flex-start; }
+  .readerCheckoutForm,
+  .readerCheckoutSummary { padding: 1rem; }
+  .readerCheckoutNotReady .action { width: 100%; white-space: normal; }
+}

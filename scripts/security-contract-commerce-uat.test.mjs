@@ -295,3 +295,18 @@ test("reader checkout placeholders cannot pass the admin approval or acquisition
   has(lifecycleUi, "0 TL edinim de kapalı kalır", "plain-language readiness explanation");
   has(zero, "if (!terms)", "zero-total action requires active terms");
 });
+
+test("checkout maintains normal İlkOku overview while preparation is not purchasable", () => {
+  const page = source("src/app/satinal/[slug]/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+  has(page, "readerCheckoutLayout", "two-column normal purchase layout");
+  has(page, "Platform: İlkOku", "platform seller display label");
+  has(page, "stagedZeroCandidate", "staged offer is represented without false charge");
+  has(page, "!checkoutConfigurationActive", "unready checkout stays inactive");
+  has(page, "type=\"button\" className={styles.action} disabled", "blocked checkout cannot submit");
+  has(page, "checkoutConfigurationActive && pricing.finalAmount === BigInt(0) && purchaseTerms", "0 TL action requires live terms");
+  has(page, "completeZeroTotalCheckoutAction", "real provider-free acquisition path retained");
+  has(page, "beginPaidCheckoutAction", "existing paid checkout action retained");
+  has(css, ".readerCheckoutSummary", "dedicated order summary UI styles");
+  has(css, "@media (max-width: 800px)", "checkout responsive layout");
+});

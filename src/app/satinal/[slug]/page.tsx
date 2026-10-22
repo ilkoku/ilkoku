@@ -150,62 +150,18 @@ export default async function CheckoutPreparationPage({
   const checkoutConfigurationActive =
     stagedZeroPurchaseReady || livePaidCheckoutActive;
 
-  if (!paidAccessEnforced) {
-    return (
-      <AppShell profile={profile}>
-        <div className={styles.page}>
-          <header className={styles.hero}>
-            <div>
-              <span className={styles.eyebrow}>Hazırlık modu</span>
-              <h1>{work.title}</h1>
-              <p>
-                Bu ücretli yapılandırma henüz okur edinimine hazır değil.
-                Gerekli satın alma koşulları aktif olana kadar mevcut okuma
-                erişimi açık kalır.
-              </p>
-            </div>
-            <span className={styles.badge}>Tahsilat hazırlıkta</span>
-          </header>
-
-          <div className={styles.notice}>
-            Yazarın ücretli eser ayarları ve bölüm planı saklanıyor. 0 TL
-            edinim akışı hazır olduğunda Kilitli bölümler eser erişimi
-            edinildikten sonra açılır.
-          </div>
-
-          <Link className={styles.action} href={returnTo}>
-            Okumaya dön
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!checkoutConfigurationActive) {
-    return (
-      <AppShell profile={profile}>
-        <div className={styles.page}>
-          <header className={styles.hero}>
-            <div>
-              <span className={styles.eyebrow}>Satın alma geçici olarak kapalı</span>
-              <h1>{work.title}</h1>
-              <p>Bu eser daha önce ücretli erişimde aktive edildi. Mevcut satın alma yolu şu anda kullanılamıyor; eser bu nedenle ücretsiz erişime açılmaz.</p>
-            </div>
-            <span className={styles.badge}>Erişim korunuyor</span>
-          </header>
-
-          <div className={styles.notice}>
-            Aktif erişim hakkı olan okurlar okumaya devam eder. Yeni erişim
-            edinmek için satın alma yolu yeniden açılana kadar beklemek gerekir.
-          </div>
-
-          <Link className={styles.action} href={`/kitap/${work.slug}`}>
-            Eser sayfasına dön
-          </Link>
-        </div>
-      </AppShell>
-    );
-  }
+  // Keep the checkout overview visible even when the sale is not yet enabled.
+  // Purchase actions remain behind the existing server-side terms/provider gates.
+  const stagedZeroCandidate =
+    !previouslyActivatedPaid &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "ready" &&
+    effectiveCommerce.priceAmount === BigInt(0);
+  const purchaseUnavailableMessage = stagedZeroCandidate
+    ? "0 TL edinim akışı İlkOku'da hazırlanıyor. Satın alma koşulları onaylanıp etkinleştirilince sipariş verilebilecek; şu anda sipariş veya tahsilat yapılmıyor."
+    : paidAccessEnforced
+      ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
+      : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
 
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
@@ -237,83 +193,34 @@ export default async function CheckoutPreparationPage({
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
-        <header className={styles.hero}>
+      <div className={`${styles.page} ${styles.readerCheckoutPage}`}>
+        <header className={`${styles.hero} ${styles.readerCheckoutHero}`}>
           <div>
-            <span className={styles.eyebrow}>Satın Alma</span>
+            <span className={styles.eyebrow}>İlkOku · Dijital eser erişimi</span>
             <h1>{work.title}</h1>
-            <p>{work.author.displayName ?? work.author.fullName}</p>
+            <p>Yazar: {work.author.displayName ?? work.author.fullName}</p>
           </div>
           <Link className={styles.secondaryAction} href={returnTo}>
-            Vazgeç
+            Eser sayfasına dön
           </Link>
         </header>
 
-        {flash ? <div className={styles.flash}>{flash}</div> : null}
-
-        <section className={styles.panel}>
-          <div className={styles.summaryGrid}>
-            <div>
-              <span>Eser fiyatı</span>
-              <strong>
-                {formatMoney(originalAmount, effectiveCommerce.currency)}
-              </strong>
-            </div>
-            <div>
-              <span>İndirim</span>
-              <strong>
-                -{formatMoney(pricing.discountAmount, effectiveCommerce.currency)}
-              </strong>
-            </div>
-            <div>
-              <span>Toplam</span>
-              <strong>
-                {formatMoney(pricing.finalAmount, effectiveCommerce.currency)}
-              </strong>
-            </div>
+        {flash ? <div role="alert" className={styles.flash}>{flash}</div> : null}
+        {!checkoutConfigurationActive ? (
+          <div role="status" className={styles.notice}>
+            {purchaseUnavailableMessage}
           </div>
+        ) : null}
 
-          {stagedZeroPurchaseReady ? (
-            <div className={styles.successNotice}>
-              Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı
-              kullanılmadan sipariş tamamlanacak.
-            </div>
-          ) : (
-            <>
-              <form className={styles.couponApplyForm} method="get">
-                <input name="from" type="hidden" value={returnTo} />
-                <label className={styles.field}>
-                  <span>Kupon kodunuz var mı?</span>
-                  <input
-                    defaultValue={requestedCouponCode}
-                    name="kupon"
-                    placeholder="Kupon kodu"
-                    type="text"
-                  />
-                </label>
-                <button className={styles.secondaryAction} type="submit">
-                  Uygula
-                </button>
-              </form>
-
-              {requestedCouponCode && !coupon ? (
-                <div className={styles.notice}>
-                  Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
-                  eser için geçerli değil.
-                </div>
-              ) : null}
-
-              {coupon ? (
-                <div className={styles.successNotice}>
-                  {coupon.code} kuponu uygulandı.
-                </div>
-              ) : null}
-            </>
-          )}
-        </section>
-
-        <section className={styles.panel}>
-          <h2>{pricing.finalAmount === BigInt(0) ? "Siparişi tamamla" : "Ödeme yöntemi"}</h2>
+        <div className={styles.readerCheckoutLayout}>
+          <div className={styles.readerCheckoutMain}>
+        <section className={`${styles.panel} ${styles.readerCheckoutForm}`}>
+          <span className={styles.eyebrow}>Sipariş adımı</span>
+          <h2>{pricing.finalAmount === BigInt(0) ? "Eser erişimi" : "Ödeme yöntemi"}</h2>
+          <p className={styles.helper}>
+            Satın alma yalnızca bu eserin dijital okuma erişimini kapsar.
+            Aktif erişim hakkı kütüphanene eklenir; fiziksel kitap gönderilmez.
+          </p>
 
           {purchaseTerms ? (
             <div className={styles.contractBox}>
@@ -333,7 +240,7 @@ export default async function CheckoutPreparationPage({
             </div>
           ) : null}
 
-          {pricing.finalAmount === BigInt(0) && purchaseTerms ? (
+          {checkoutConfigurationActive && pricing.finalAmount === BigInt(0) && purchaseTerms ? (
             <>
               <div className={styles.successNotice}>
                 {coupon
@@ -363,6 +270,19 @@ export default async function CheckoutPreparationPage({
                 </button>
               </form>
             </>
+          ) : !checkoutConfigurationActive ? (
+            <div className={styles.readerCheckoutNotReady}>
+              <strong>{stagedZeroCandidate ? "0 TL erişim hazırlıkta" : "Satın alma şu an kapalı"}</strong>
+              <p>
+                {stagedZeroCandidate
+                  ? "Eserin toplam tutarı 0 TL. İlkOku satın alma koşulları aktif olunca kart bilgisi istenmeden sipariş oluşturulabilecek."
+                  : "Sipariş veya ödeme alınmıyor. Mevcut okuma hakkın korunur."}
+              </p>
+              <button type="button" className={styles.action} disabled>
+                {stagedZeroCandidate ? "0 TL ile edin — henüz aktif değil" : "Satın alma kapalı"}
+              </button>
+              <Link className={styles.quietAction} href={returnTo}>Eser sayfasına dön</Link>
+            </div>
           ) : (
             <form action={beginPaidCheckoutAction}>
               <input name="slug" type="hidden" value={work.slug} />
@@ -418,6 +338,80 @@ export default async function CheckoutPreparationPage({
             </form>
           )}
         </section>
+          </div>
+          <aside className={styles.readerCheckoutAside} aria-label="Sipariş özeti">
+        <section className={`${styles.panel} ${styles.readerCheckoutSummary}`}>
+          <span className={styles.eyebrow}>Ödeme özeti</span>
+          <h2>Sipariş özeti</h2>
+          <div className={styles.readerCheckoutWorkMeta}>
+            <strong>{work.title}</strong>
+            <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
+            <span>Platform: İlkOku</span>
+            <span>Ürün: Eserin dijital okuma erişimi</span>
+          </div>
+          <div className={styles.summaryGrid}>
+            <div>
+              <span>Eser fiyatı</span>
+              <strong>
+                {formatMoney(originalAmount, effectiveCommerce.currency)}
+              </strong>
+            </div>
+            <div>
+              <span>İndirim</span>
+              <strong>
+                -{formatMoney(pricing.discountAmount, effectiveCommerce.currency)}
+              </strong>
+            </div>
+            <div>
+              <span>Toplam</span>
+              <strong>
+                {formatMoney(pricing.finalAmount, effectiveCommerce.currency)}
+              </strong>
+            </div>
+          </div>
+
+          {stagedZeroCandidate ? (
+            <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
+              {stagedZeroPurchaseReady
+                ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
+                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
+            </div>
+          ) : (
+            <>
+              <form className={styles.couponApplyForm} method="get">
+                <input name="from" type="hidden" value={returnTo} />
+                <label className={styles.field}>
+                  <span>Kupon kodunuz var mı?</span>
+                  <input
+                    defaultValue={requestedCouponCode}
+                    name="kupon"
+                    placeholder="Kupon kodu"
+                    type="text"
+                  />
+                </label>
+                <button className={styles.secondaryAction} type="submit">
+                  Uygula
+                </button>
+              </form>
+
+              {requestedCouponCode && !coupon ? (
+                <div className={styles.notice}>
+                  Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
+                  eser için geçerli değil.
+                </div>
+              ) : null}
+
+              {coupon ? (
+                <div className={styles.successNotice}>
+                  {coupon.code} kuponu uygulandı.
+                </div>
+              ) : null}
+            </>
+          )}
+        </section>
+
+          </aside>
+        </div>
       </div>
     </AppShell>
   );

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 import { BOOK_INDEX_LISTS } from "./lists";
+import { timeBookIndexOperation } from "./performance-trace";
 
 export type SourceRankMovement = "up" | "down" | "same" | "new" | "unknown";
 
@@ -30,7 +31,7 @@ export async function getTurkeySourceRankRows(limit = 1000) {
     )
     .map((list) => list.code);
 
-  const lists = await prisma.bookIndexList.findMany({
+  const lists = await timeBookIndexOperation("rankRows.activeListsSql", () => prisma.bookIndexList.findMany({
     where: {
       active: true,
       code: { in: publicTurkeyListCodes },
@@ -50,9 +51,9 @@ export async function getTurkeySourceRankRows(limit = 1000) {
       },
     },
     orderBy: [{ source: { code: "asc" } }, { code: "asc" }],
-  });
+  }));
 
-  const latestRuns = await Promise.all(
+  const latestRuns = await timeBookIndexOperation("rankRows.latestRunsSql", () => Promise.all(
     lists.map(async (list) => {
       const runs = await prisma.bookIndexFetchRun.findMany({
         where: {
@@ -94,7 +95,7 @@ export async function getTurkeySourceRankRows(limit = 1000) {
         previousRun: runs[1] ?? null,
       };
     }),
-  );
+  ));
 
   type SourceState = TurkeySourceRankRow["sources"][number];
   type RowAccumulator = Omit<TurkeySourceRankRow, "sources"> & {

@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
+import { timeBookIndexOperation } from "./performance-trace";
 
 import {
   getBookIndexSource,
@@ -141,7 +142,7 @@ function historyDays(first: Date, last: Date) {
 }
 
 async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
-  const lists = await prisma.bookIndexList.findMany({
+  const lists = await timeBookIndexOperation("insights.sourceSnapshotSql", () => prisma.bookIndexList.findMany({
     where: {
       active: true,
       includeInComposite: true,
@@ -187,7 +188,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
         },
       },
     },
-  });
+  }));
 
   return lists
     .filter((list) => list.fetchRuns.length > 0)
@@ -200,7 +201,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
 }
 
 async function loadLongSellers(limit: number) {
-  const rows = await prisma.$queryRaw<LongSellerRow[]>`
+  const rows = await timeBookIndexOperation("insights.longSellerHistorySql", () => prisma.$queryRaw<LongSellerRow[]>`
     SELECT
       externalBook.masterBookId AS masterBookId,
       MIN(observation.observedAt) AS firstObservedAt,
@@ -226,11 +227,11 @@ async function loadLongSellers(limit: number) {
     ORDER BY
       DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC,
       COUNT(*) DESC
-  `;
+  `);
 
   if (!rows.length) return [];
 
-  const books = await prisma.bookIndexBook.findMany({
+  const books = await timeBookIndexOperation("insights.longSellerBookMetadataSql", () => prisma.bookIndexBook.findMany({
     where: {
       id: { in: rows.map((row) => row.masterBookId) },
     },
@@ -239,7 +240,7 @@ async function loadLongSellers(limit: number) {
       title: true,
       authorName: true,
     },
-  });
+  }));
   const bookById = new Map(books.map((book) => [book.id, book] as const));
 
   return rows

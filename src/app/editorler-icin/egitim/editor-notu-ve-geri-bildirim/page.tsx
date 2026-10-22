@@ -8,7 +8,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Editör Notu ve Geri Bildirim | İlkOku Editörlük Okulu",
-  description: "Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren.",
+  description: "Editöryal tespiti kanıta, okur etkisine ve uygulanabilir revizyona dönüştürmeyi; editör mektubu ile satır içi notu doğru kullanmayı öğren.",
   canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim",
 });
 
@@ -152,7 +152,7 @@ export default function EditorNotuVeGeriBildirimPage() {
     <>
       <EditorEducationStructuredData
         title="Editör Notu ve Geri Bildirim"
-        description="Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren."
+        description="Editöryal tespiti kanıta, okur etkisine ve uygulanabilir revizyona dönüştürmeyi; editör mektubu ile satır içi notu doğru kullanmayı öğren."
         canonical="/editorler-icin/egitim/editor-notu-ve-geri-bildirim"
       />
       <EditorEducationShell activeCategory={category}>

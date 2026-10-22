@@ -12,6 +12,7 @@ import "./about-final-mark.css";
 import "../nasil-calisir/public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";
+const previousSeoDescription = "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin yazım, yayın, gelişim ve profesyonel değerlendirme yolculuğunda nasıl buluşturduğunu öğrenin.";
 const socialImage = `${baseUrl}/og/ilkoku-social-selected-2026.webp`;
 const requiredHeadings = [
   "## Neden İlkOku var?",
@@ -36,7 +37,10 @@ const resolvePage = cache(async () => {
       body: state.page.body,
       canonical: state.page.canonicalUrl || aboutPageContent.canonical,
       noIndex: state.page.noIndex,
-      seoDescription: state.page.seoDescription || state.page.summary || aboutPageContent.seoDescription,
+      seoDescription:
+        state.page.seoDescription === previousSeoDescription
+          ? aboutPageContent.seoDescription
+          : state.page.seoDescription || state.page.summary || aboutPageContent.seoDescription,
       seoTitle: state.page.seoTitle || state.page.title,
       summary: state.page.summary || aboutPageContent.summary,
       title: state.page.title,

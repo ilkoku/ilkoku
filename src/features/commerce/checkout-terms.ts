@@ -7,6 +7,20 @@ import { prisma } from "@/lib/prisma";
 export const READER_DIGITAL_CONTENT_TERMS_CODE =
   "ILKOKU_READER_DIGITAL_CONTENT_PURCHASE";
 
+/**
+ * Fail closed for the unchanged seeded drafting placeholder, even if an
+ * administrative lifecycle action accidentally marks it active.
+ * This does not assess the legal sufficiency of a new, non-placeholder text.
+ */
+export function isReaderPurchaseTermsPlaceholder(body: string): boolean {
+  const normalized = body.trim().normalize("NFC").toLocaleLowerCase("tr-TR");
+  return (
+    !normalized ||
+    normalized.startsWith("çalışma taslağı") ||
+    normalized.includes("nihai hukuki metnin hazırlanacağı çalışma alanıdır")
+  );
+}
+
 type RawReaderPurchaseTerms = {
   active: number | boolean;
   activatedAt: Date | null;
@@ -37,7 +51,8 @@ export async function getActiveReaderPurchaseTerms() {
     !row ||
     row.code !== READER_DIGITAL_CONTENT_TERMS_CODE ||
     !(row.active === true || row.active === 1) ||
-    row.lifecycleStatus !== "active"
+    row.lifecycleStatus !== "active" ||
+    isReaderPurchaseTermsPlaceholder(row.body)
   ) {
     return null;
   }

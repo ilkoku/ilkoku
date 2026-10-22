@@ -253,6 +253,134 @@ export async function getBookIndexSourceListSnapshot(
   };
 }
 
+
+/**
+ * Read the enabled public lists in a single bounded Prisma relation query.
+ * Keep per-source availability, latest successful snapshot, rank ordering,
+ * and the 100-observation limit identical to the legacy single-list reader.
+ * The legacy getter remains unchanged for independent global list routes.
+ */
+async function getBookIndexPublicSourceListSnapshots(
+  listCodes: string[],
+  limit: number,
+): Promise<Array<BookIndexSourceListSnapshot | null>> {
+  if (!listCodes.length) return [];
+
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 100);
+  const persistedLists = await timeBookIndexOperation(
+    "publicModel.batchedSourceSnapshotsSql",
+    () => prisma.bookIndexList.findMany({
+      where: { code: { in: [...new Set(listCodes)] } },
+      select: {
+        code: true,
+        active: true,
+        source: {
+          select: { code: true, status: true },
+        },
+        fetchRuns: {
+          where: { status: { in: ["success", "no_change"] } },
+          orderBy: { startedAt: "desc" },
+          take: 1,
+          select: {
+            startedAt: true,
+            observations: {
+              orderBy: { rank: "asc" },
+              take: safeLimit,
+              select: {
+                rank: true,
+                priceAmount: true,
+                currency: true,
+                externalBook: {
+                  select: {
+                    title: true,
+                    authorName: true,
+                    publisherName: true,
+                    isbn13: true,
+                    isbn10: true,
+                    productUrl: true,
+                    imageUrl: true,
+                    masterBookId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  );
+
+  // Code is unique within a source, not globally. Match both registry keys.
+  const rowsBySourceAndCode = new Map(
+    persistedLists.map((row) => [`${row.source.code}:${row.code}`, row] as const),
+  );
+
+  return listCodes.map((listCode) => {
+    const definition = getBookIndexList(listCode);
+    if (!definition) return null;
+    const sourceDefinition = getBookIndexSource(definition.sourceCode);
+    if (!sourceDefinition) return null;
+
+    const row = rowsBySourceAndCode.get(`${definition.sourceCode}:${definition.code}`);
+    const base = {
+      listCode: definition.code,
+      sourceCode: sourceDefinition.code,
+      sourceName: sourceDefinition.name,
+      market: sourceDefinition.market,
+      title: definition.title,
+      categoryKey: definition.categoryKey,
+      period: definition.period,
+      sourceUrl: definition.sourceUrl,
+    };
+
+    if (!row?.active) {
+      return {
+        ...base,
+        availability: availabilityFromCollectionState(sourceDefinition.collectionState),
+        observedAt: null,
+        items: [],
+      };
+    }
+    if (row.source.status === "blocked" || row.source.status === "paused") {
+      return {
+        ...base,
+        availability: row.source.status,
+        observedAt: null,
+        items: [],
+      };
+    }
+
+    const run = row.fetchRuns[0];
+    if (!run) {
+      return {
+        ...base,
+        availability: availabilityFromCollectionState(sourceDefinition.collectionState),
+        observedAt: null,
+        items: [],
+      };
+    }
+
+    return {
+      ...base,
+      availability: "available",
+      observedAt: run.startedAt,
+      items: run.observations.map((observation) => ({
+        rank: observation.rank,
+        title: observation.externalBook.title,
+        authorName: observation.externalBook.authorName,
+        publisherName: observation.externalBook.publisherName,
+        isbn13: observation.externalBook.isbn13,
+        isbn10: observation.externalBook.isbn10,
+        productUrl: observation.externalBook.productUrl,
+        imageUrl: observation.externalBook.imageUrl,
+        priceAmount: observation.priceAmount?.toString() ?? null,
+        currency: observation.currency,
+        masterBookId: observation.externalBook.masterBookId,
+      })),
+    };
+  });
+}
+
 async function getMarketSourceState(
   sourceCode: "amazon-tr" | "amazon-us",
   sourceLists: BookIndexSourceListSnapshot[],
@@ -297,11 +425,9 @@ export async function getBookIndexPublicReadModel(
   );
   const [turkeyItems, sourceLists] = await Promise.all([
     timeBookIndexOperation("publicModel.turkeyRankRows", () => getTurkeySourceRankRows(limit)),
-    timeBookIndexOperation("publicModel.sourceListSnapshots", () => Promise.all(
-      enabledLists.map((list) =>
-        getBookIndexSourceListSnapshot(list.code, limit),
-      ),
-    )),
+    timeBookIndexOperation("publicModel.sourceListSnapshots", () =>
+      getBookIndexPublicSourceListSnapshots(enabledLists.map((list) => list.code), limit),
+    ),
   ]);
 
   const nonNullSourceLists = sourceLists.filter(

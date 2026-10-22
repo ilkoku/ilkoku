@@ -22,6 +22,10 @@ const EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT = new Date("2026-10-12T15:16:36Z");
 // Substantive Oct 12 reading hub guidance and seven unique writing-category practice cases.
 const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:07Z");
 
+// PR #1867 added a meaningful expert-verification disclaimer to the informational category only.
+// Keep its sitemap lastmod faithful to the production content change; do not bump other hubs.
+const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z");
+
 // Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
 const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
 
@@ -51,7 +55,7 @@ const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
   ["/yazarlar-icin/kurgu", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/edebiyat", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/akademik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
-  ["/yazarlar-icin/bilgilendirici", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT],
   ["/yazarlar-icin/senaryo-ve-sahne", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/cocuk-ve-genclik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/cizgi-anlati", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],

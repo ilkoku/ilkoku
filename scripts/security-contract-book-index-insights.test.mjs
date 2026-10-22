@@ -252,7 +252,7 @@ test("Book Index auto-matches refresh corrected metadata only through exact ISBN
 test("Book Index insight SQL reads are parallel and de-duplicated within one server request", () => {
   const insights = source("src/lib/book-index/insights.ts");
   contains(insights, 'import { cache } from "react";', "request-local React cache");
-  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number)", "per-limit cached computation");
+  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true)", "per-limit and history-mode cached computation");
   contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads are parallel");
   contains(insights, "loadSourceSnapshots(),", "current/previous source evidence still collected");
   contains(insights, "includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),", "historical evidence collected only where needed");

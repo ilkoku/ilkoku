@@ -342,6 +342,7 @@ export async function getMemberPublicWorkBySlug(
     authorPublicId: work.author.publicId,
     chapterCount: publishedChapters.length,
     commerce: {
+      configured: Boolean(saleConfiguration),
       chapterAccess,
       currency: effectiveCommerce.currency,
       enforcementActive: commerceEnforcementActive,

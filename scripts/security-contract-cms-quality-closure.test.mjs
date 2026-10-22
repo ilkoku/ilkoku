@@ -237,7 +237,11 @@ test("approved Hakkımızda content can be saved only through an explicit draft 
   assertNotContains(approved.body, "## Yazar gelişir, okur keşfeder", "repetitive role recap must remain excluded");
   assertContains(editor, 'page?.id === "51e2eb80-7192-4cec-ba69-6bf622c569a4"', "only the approved CMS record");
   assertContains(editor, 'page.contentKey === approvedHakkimizdaCmsDraft.contentKey', "strict content key guard");
-  assertContains(editor, 'page.status === "draft" && !corruptDraft', "draft-only, healthy record guard");
+  assertContains(editor, 'page.status !== "archived" && !corruptDraft', "published record can stage safe draft; archived record excluded");
+  const saveAction = source("src/features/cms/page-actions.ts");
+  assertContains(saveAction, 'if (existing?.status === "published" && mode !== "publish")', "published page drafts use staged path");
+  assertContains(saveAction, 'await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot)', "published page keeps current live row when staging a draft");
+  assertContains(saveAction, 'status: mode === "publish" ? "published" : "draft"', "draft snapshot records its safe status");
   assertContains(editor, '<form action={saveCmsPageAction}>', "uses existing authenticated CMS save action");
   assertContains(editor, 'name="mode" value="draft"', "explicit draft-only submit");
   assertContains(editor, "Onaylı metni taslak olarak kaydet", "action label makes draft status clear");

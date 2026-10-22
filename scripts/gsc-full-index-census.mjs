@@ -15,8 +15,9 @@ const CONCURRENCY = 6;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 const censusCohortSource = "live-sitemap";
 
-// Immutable observation baseline from Google URL Inspection on 18 Oct 2026.
-// [path, last Google crawl observed, relevant visible/structured/link update].
+// Baseline crawl observations from Google URL Inspection on 18 Oct 2026.
+// [path, last Google crawl observed, latest independently verified content update].
+// The Oct 22 informational-hub update is the approved expert-disclaimer change in PR #1867.
 // A null update means no independently verified update timestamp.
 // Read-only reporting. Does not change indexing rules or request recrawling.
 const TRACKED_NOT_INDEXED_BASELINE = [
@@ -28,7 +29,7 @@ const TRACKED_NOT_INDEXED_BASELINE = [
   [
     "/yazarlar-icin/bilgilendirici",
     "2026-09-30T09:21:54Z",
-    "2026-10-12T14:57:07Z"
+    "2026-10-22T20:16:41Z"
   ],
   [
     "/yazarlar-icin/senaryo-ve-sahne",

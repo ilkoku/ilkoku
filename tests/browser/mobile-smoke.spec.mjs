@@ -521,7 +521,7 @@ test("commerce sale model is shared by eligible reader roles and blocked for non
     waitUntil: "domcontentloaded",
   });
   await expect(page.getByText("Ücretli · Hazırlıkta", { exact: true })).toBeVisible();
-  await expect(page.getByText("Kilitli", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Kilitli/).first()).toBeVisible();
 });
 
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {

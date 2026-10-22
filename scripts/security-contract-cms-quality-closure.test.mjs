@@ -258,3 +258,41 @@ test("approved Hakkımızda content can be saved only through an explicit draft 
   assertNotContains(publicCopy, "edebiyatın farklı seslerini aynı hikâyede buluşturur", "approved draft must not silently replace live code");
   assertNotContains(approvedSource, "prisma", "approved data source cannot mutate the database");
 });
+
+
+test("approved Hakkımızda has a complete public renderer without silently falling back to legacy copy", () => {
+  const page = source("src/app/hakkimizda/page.tsx");
+  const experience = source("src/components/content/AboutExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  const approvedSource = source("src/content/approved-hakkimizda-cms-draft.ts");
+  const match = approvedSource.match(/export const approvedHakkimizdaCmsDraft = (\{[\s\S]*\}) as const;/);
+  assert.ok(match, "approved source must remain readable for structural checks");
+  const approved = JSON.parse(match[1]);
+
+  for (const heading of [
+    "Yazarın çalışma alanı", "Okurun katkısı", "İki aşamalı editör incelemesi",
+    "Yayınevi keşfi", "Bir eseri yalnızca son hâliyle görmüyoruz",
+    "Güvenin temeli: herkesin rolü belli", "Nereye gidiyoruz?",
+  ]) {
+    assertContains(approved.body, "## " + heading, "approved CMS has " + heading);
+    assertContains(page, '"## ' + heading + '"', "public gate accepts " + heading);
+  }
+
+  assertContains(page, "function hasApprovedAboutStructure(body: string)", "approved gate is distinct from legacy gate");
+  assertContains(page, "|| hasApprovedAboutStructure(body)", "public page accepts the approved seven-heading structure");
+  assertContains(page, "hasApprovedAboutStructure(state.page.body)", "approved SEO is taken from its CMS record");
+  assertContains(experience, "const hasApprovedRoleSections = roleMeta.every", "role cards recognize the approved individual sections");
+  assertContains(experience, "const showRoleGrid = Boolean(roles) || hasApprovedRoleSections", "four-card layout supports both content formats");
+
+  for (const title of ["Yazarın çalışma alanı", "Okurun katkısı", "İki aşamalı editör incelemesi", "Yayınevi keşfi"]) {
+    assertContains(experience, '"' + title + '"', title + " appears in role mapping");
+  }
+  assertContains(experience, '<h3>{approved?.title ?? role.title}</h3>', "render exact approved role card heading");
+  assertContains(experience, 'const content = approved ?? legacy;', "render exact approved role body");
+  assertContains(preview, 'page.contentKey === "page:tr:hakkimizda"', "CMS About draft gets special preview");
+  assertContains(preview, '<AboutExperience title={title} summary={summary} body={body} updatedAt={page.updatedAt} />', "preview reuses public visual experience");
+  assertContains(preview, "<PublicTrustFooter />", "preview contains shared public footer");
+  assertContains(preview, 'const draft = state.state === "valid" ? state.record.payload : undefined', "preview uses draft, never published body when present");
+  assertContains(preview, "robots: { index: false, follow: false }", "staged preview is noindex");
+  assertNotContains(page, "approvedHakkimizdaCmsDraft", "public route must never read the draft source as a live replacement");
+});

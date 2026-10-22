@@ -6,6 +6,7 @@ import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
+import { approvedHakkimizdaCmsDraft } from "@/content/approved-hakkimizda-cms-draft";
 import { isCorePublicCmsPage } from "@/lib/public-cms-page-catalog";
 
 type PageRow = {
@@ -178,6 +179,28 @@ export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPa
           ) : (
             <p>Yeni sayfayı önce taslak olarak da kaydedebilirsiniz. Yayın sırasında başlık, özet, içerik, canonical ve indexlenebilir sayfalarda arama metadata kalitesi sunucu tarafında doğrulanır.</p>
           )}
+        </div>
+      ) : null}
+
+      {page?.id === "51e2eb80-7192-4cec-ba69-6bf622c569a4" &&
+      page.contentKey === approvedHakkimizdaCmsDraft.contentKey &&
+      page.status === "draft" && !corruptDraft ? (
+        <div className="content-panel cms-editor-notice is-info">
+          <strong>Onaylanan Hakkımızda çalışma metni</strong>
+          <p>Bu işlem yalnızca mevcut CMS taslağını onaylanan içerikle günceller. Public Hakkımızda sayfasını yayımlamaz veya değiştirmez.</p>
+          <form action={saveCmsPageAction}>
+            <input type="hidden" name="id" value={page.id} />
+            <input type="hidden" name="slug" value="hakkimizda" />
+            <input type="hidden" name="title" value={approvedHakkimizdaCmsDraft.title} />
+            <input type="hidden" name="summary" value={approvedHakkimizdaCmsDraft.summary} />
+            <input type="hidden" name="body" value={approvedHakkimizdaCmsDraft.body} />
+            <input type="hidden" name="seoTitle" value={approvedHakkimizdaCmsDraft.seoTitle} />
+            <input type="hidden" name="seoDescription" value={approvedHakkimizdaCmsDraft.seoDescription} />
+            {currentNoIndex ? <input type="hidden" name="noIndex" value="on" /> : null}
+            <button className="cms-button--secondary" type="submit" name="mode" value="draft">
+              Onaylı metni taslak olarak kaydet
+            </button>
+          </form>
         </div>
       ) : null}
 

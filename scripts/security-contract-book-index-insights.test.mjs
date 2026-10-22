@@ -258,3 +258,48 @@ test("Book Index insight SQL reads are parallel and de-duplicated within one ser
   contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "public insight function uses request-local cache");
   contains(insights, "longSellers,", "historical evidence returned unmodified");
 });
+
+test("Book Index query timing diagnostic is admin-only, read-only and request-scoped", () => {
+  const route = source("src/app/api/admin/book-index-query-timing/route.ts");
+  const trace = source("src/lib/book-index/performance-trace.ts");
+  const insights = source("src/lib/book-index/insights.ts");
+  const publicAccess = source("src/lib/book-index/public-access.ts");
+  const publicModel = source("src/lib/book-index/public-read-model.ts");
+  const rankings = source("src/lib/book-index/source-rank-table.ts");
+  const insightPage = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+
+  contains(route, "const user = await getCurrentUser();", "real authenticated admin session");
+  contains(route, 'if (!user || user.role !== "admin")', "no profiling or results for non-admin requests");
+  assert.ok(
+    route.indexOf('user.role !== "admin"') < route.indexOf("collectBookIndexTimings(async ()"),
+    "access authorization must precede any query profiling",
+  );
+  contains(route, '"Cache-Control": "private, no-store, max-age=0"', "timing response is not cached");
+  contains(route, '"X-Robots-Tag": "noindex, nofollow, noarchive"', "timing route is not indexed");
+  contains(route, 'error: "diagnostic_failed"', "SQL errors are not returned to users");
+  contains(route, "getBookIndexSoftLaunchPageContext(100)", "same 100-row context as insight page");
+  contains(route, "getBookIndexInsights(50)", "same 50-row insight evidence as page");
+  contains(route, "await Promise.all([", "production-like concurrent calculation");
+  contains(route, "spans include connection queue, Prisma and database time", "measurements do not claim pure SQL execution");
+
+  contains(trace, "new AsyncLocalStorage<BookIndexTiming[]>()", "no global cross-request metrics");
+  contains(trace, "if (!entries) return fn();", "regular page view carries no timing collector");
+  contains(trace, 'outcome: "error"', "failed query timings are not silently marked successful");
+  notContains(trace, "console.log(", "performance records do not pollute production logs");
+
+  contains(insights, 'timeBookIndexOperation("insights.sourceSnapshotSql"', "source evidence database span");
+  contains(insights, 'timeBookIndexOperation("insights.longSellerHistorySql"', "historical GROUP BY span");
+  contains(insights, 'timeBookIndexOperation("insights.longSellerBookMetadataSql"', "metadata fetch span");
+  contains(rankings, 'timeBookIndexOperation("rankRows.activeListsSql"', "Turkey active list SQL span");
+  contains(rankings, 'timeBookIndexOperation("rankRows.latestRunsSql"', "Turkey observation SQL span");
+  contains(publicAccess, 'timeBookIndexOperation("publicContext.readinessEvidence"', "readiness and evidence span");
+  contains(publicAccess, 'timeBookIndexOperation("publicContext.readModel"', "model assembly span");
+  contains(publicModel, 'timeBookIndexOperation("publicModel.turkeyRankRows"', "Turkey row assembly span");
+  contains(publicModel, 'timeBookIndexOperation("publicModel.sourceListSnapshots"', "source snapshot assembly span");
+  contains(insightPage, 'export const dynamic = "force-dynamic";', "freshness model is unchanged");
+  contains(insightPage, "getBookIndexInsights(50)", "ranking and insight limit unchanged");
+  contains(insights, "GROUP BY externalBook.masterBookId", "historical SQL grouping preserved");
+  contains(insights, ".slice(0, limit);", "existing long-seller ranking and limit preserved");
+  notContains(route, "executeRaw", "diagnostic does not write to database");
+  notContains(route, "POST(", "no state-mutating diagnostic action");
+});

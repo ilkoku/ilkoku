@@ -471,6 +471,59 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
+test("commerce sale model is shared by eligible reader roles and blocked for non-reader purchase roles", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  // All accounts are ephemeral CI-only identities, never production sessions.
+  for (const role of ["reader", "editor_pending", "editor"]) {
+    const token = authFixture.sessions?.[role];
+    expect(token, `Missing isolated ${role} session fixture`).toBeTruthy();
+    await page.context().clearCookies();
+    await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+    await page.setViewportSize(viewports.phone430);
+
+    const response = await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+      waitUntil: "domcontentloaded",
+    });
+    expect(response?.status()).toBeLessThan(400);
+
+    const workRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+    await expect(workRow).toBeVisible();
+    await expect(workRow.getByText("Ücretli · Hazırlıkta", { exact: true })).toBeVisible();
+    await expect(workRow.getByRole("link", { name: "0 TL ile edin" }))
+      .toHaveAttribute("href", /\\/satinal\\/ci-browser-zero-total-work/);
+    await expectResponsiveDocument(page);
+  }
+
+  for (const role of ["writer", "publisher", "admin"]) {
+    const token = authFixture.sessions?.[role];
+    expect(token, `Missing isolated ${role} session fixture`).toBeTruthy();
+    await page.context().clearCookies();
+    await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+    await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\\/erisim-reddedildi(?:\\?|$)/);
+  }
+
+  // Distinct publisher/editor discovery views remain read-only; no purchase-role escalation.
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.editor, url: authCookieUrl }]);
+  await page.goto("/editor/kesfet", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: false }).first()).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.publisher, url: authCookieUrl }]);
+  await page.goto("/yayinevi/kesfet/eserler", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: false }).first()).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.admin, url: authCookieUrl }]);
+  await page.goto(`/admin/eserler/${authFixture.workIds.zeroTotalCommerceWork}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: true })).toBeVisible();
+  await expect(page.getByText("Kilitli", { exact: true })).toBeVisible();
+});
+
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 
@@ -508,6 +561,16 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     page.getByText("CI Browser Reader Purchase Terms", { exact: true }),
   ).toBeVisible();
 
+  // Return to the reader discovery entry point and exercise the actual 0 TL CTA.
+  await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+    waitUntil: "domcontentloaded",
+  });
+  const paidWorkRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+  await expect(paidWorkRow.getByRole("link", { name: "0 TL ile edin" })).toBeVisible();
+  await paidWorkRow.getByRole("link", { name: "0 TL ile edin" }).click();
+  await expect(page).toHaveURL(/\\/satinal\\/ci-browser-zero-total-work(?:\\?|$)/);
+  await expect(page.getByRole("heading", { name: "CI Browser 0 TL Eser" })).toBeVisible();
+
   await page.locator('input[name="acceptDigitalContent"]').check();
   await page.getByRole("button", { name: "0 TL ile satın al" }).click();
 
@@ -524,6 +587,13 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
   ).toBeVisible();
+
+  await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+    waitUntil: "domcontentloaded",
+  });
+  const entitledRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+  await expect(entitledRow).toBeVisible();
+  await expect(entitledRow.getByRole("link", { name: "0 TL ile edin" })).toHaveCount(0);
 
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",

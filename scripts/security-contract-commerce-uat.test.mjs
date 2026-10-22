@@ -277,3 +277,21 @@ test("reader discovery checkout actions require terms, entitlement and operation
   has(book, "const stagedZeroPurchaseAvailable =", "showcase also enforces terms");
   lacks(page, "completeZeroTotalCheckoutAction", "discovery cannot create orders");
 });
+
+test("reader checkout placeholders cannot pass the admin approval or acquisition gate", () => {
+  const terms = source("src/features/commerce/checkout-terms.ts");
+  const lifecycle = source("src/features/contracts/template-lifecycle.ts");
+  const lifecycleUi = source("src/features/contracts/ContractTemplateLifecyclePanel.tsx");
+  const zero = source("src/features/commerce/checkout-actions.ts");
+
+  has(terms, "export function isReaderPurchaseTermsPlaceholder", "placeholder detector");
+  has(terms, 'normalized.startsWith("çalışma taslağı")', "seeded placeholder heading");
+  has(terms, 'normalized.includes("nihai hukuki metnin hazırlanacağı çalışma alanıdır")', "seeded draft description");
+  has(terms, "isReaderPurchaseTermsPlaceholder(row.body)", "reader checkout fails closed");
+  has(lifecycle, 'input.transition === "approve" || input.transition === "activate"', "both approval and activation guarded");
+  has(lifecycle, 'status: "purchase_terms_placeholder"', "placeholder status");
+  has(lifecycle, "template.code === READER_DIGITAL_CONTENT_TERMS_CODE", "no unrelated contract affected");
+  has(lifecycleUi, "purchaseTermsPlaceholder", "admin sees clear restriction");
+  has(lifecycleUi, "0 TL edinim de kapalı kalır", "plain-language readiness explanation");
+  has(zero, "if (!terms)", "zero-total action requires active terms");
+});

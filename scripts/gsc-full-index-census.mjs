@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { extractSitemapLastmodByUrl, latestVerifiedContentUpdate } from "./gsc-recrawl-freshness.mjs";
 import { summarizeWritingGuideFamilies } from "./gsc-writing-guide-family-summary.mjs";
 
 const SITE_URL = process.env.GSC_SITE_URL || "sc-domain:ilkoku.com";
@@ -175,7 +176,7 @@ async function loadSitemapUrls() {
   }
 
   console.log(`Census sitemap: ${unique.length} URL(s), ${bytes} byte(s)`);
-  return unique;
+  return { urls: unique, sitemapLastmodByUrl: extractSitemapLastmodByUrl(xml) };
 }
 
 async function getAccessToken() {
@@ -324,16 +325,18 @@ function newestCrawl(results) {
   return dated[0]?.toISOString() ?? null;
 }
 
-function summarizeRecrawlWatch(results) {
+function summarizeRecrawlWatch(results, sitemapLastmodByUrl) {
   const byUrl = new Map(results.map((result) => [result.inspectionUrl, result]));
   const pages = TRACKED_NOT_INDEXED_BASELINE.map(([path, baselineCrawl, contentUpdatedAt]) => {
     const result = byUrl.get(`${BASE_URL}${path}`);
     const lastCrawlTime = result?.lastCrawlTime ?? null;
     const lastCrawlMs = lastCrawlTime ? Date.parse(lastCrawlTime) : NaN;
     const baselineCrawlMs = Date.parse(baselineCrawl);
-    const contentUpdatedMs = contentUpdatedAt ? Date.parse(contentUpdatedAt) : NaN;
+    const sitemapLastmod = sitemapLastmodByUrl.get(`${BASE_URL}${path}`) ?? null;
+    const latestContentUpdatedAt = latestVerifiedContentUpdate(contentUpdatedAt, sitemapLastmod);
+    const contentUpdatedMs = latestContentUpdatedAt ? Date.parse(latestContentUpdatedAt) : NaN;
     const reCrawledSinceBaseline = Number.isFinite(lastCrawlMs) && lastCrawlMs > baselineCrawlMs;
-    const newContentCrawled = contentUpdatedAt !== null &&
+    const newContentCrawled = latestContentUpdatedAt !== null &&
       Number.isFinite(lastCrawlMs) && lastCrawlMs >= contentUpdatedMs;
     let state;
     if (!result) state = "MISSING_FROM_LIVE_SITEMAP";
@@ -343,7 +346,7 @@ function summarizeRecrawlWatch(results) {
     else if (reCrawledSinceBaseline) state = "RECRAWLED_NOT_INDEXED";
     else state = "AWAITING_NEW_CRAWL";
     return {
-      path, baselineCrawl, contentUpdatedAt, lastCrawlTime,
+      path, baselineCrawl, contentUpdatedAt: latestContentUpdatedAt, sitemapLastmod, lastCrawlTime,
       coverageState: result?.coverageState ?? null,
       verdict: result?.verdict ?? null,
       reCrawledSinceBaseline, newContentCrawled, state,
@@ -417,7 +420,7 @@ async function main() {
   requireSecret("GSC_OAUTH_CLIENT_SECRET", CLIENT_SECRET);
   requireSecret("GSC_OAUTH_REFRESH_TOKEN", REFRESH_TOKEN);
 
-  const urls = await loadSitemapUrls();
+  const { urls, sitemapLastmodByUrl } = await loadSitemapUrls();
   const accessToken = await getAccessToken();
   const results = await inspectAll(accessToken, urls);
 
@@ -436,7 +439,7 @@ async function main() {
       indexingState: countBy(results, "indexingState"),
       newestCrawl: newestCrawl(results),
       writingGuideFamilies: summarizeWritingGuideFamilies(results),
-      recrawlWatch: summarizeRecrawlWatch(results),
+      recrawlWatch: summarizeRecrawlWatch(results, sitemapLastmodByUrl),
     },
     results,
   };

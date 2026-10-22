@@ -1561,17 +1561,18 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
 });
 
 
-test("deletion center records render as responsive row-column tables with intact protected actions", async ({ page }) => {
+test("deletion center category cards open the selected row-column screen on desktop and 390px", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  test.setTimeout(120_000);
   const token = authFixture.sessions?.admin;
   expect(token, "Missing admin session fixture").toBeTruthy();
   await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
 
   const sections = [
-    { title: "Yazar silme", label: "Yazar silme kayıtları", columns: ["Yazar", "E-posta", "Eser", "Yayınevi başvurusu", "Silme onayı"] },
-    { title: "Eser silme", label: "Eser silme kayıtları", columns: ["Eser", "Yazar", "Bölüm", "Aktif erişim", "Başarılı sipariş", "Silme onayı"] },
-    { title: "Yayınevi silme", label: "Yayınevi silme kayıtları", columns: ["Yayınevi", "Slug", "Aktif üye", "Başvuru", "Silme onayı"] },
-    { title: "Editör silme", label: "Editör silme kayıtları", columns: ["Editör", "E-posta", "Aktif inceleme", "Tamamlanan rapor", "Silme onayı"] },
+    { key: "yazar", title: "Yazar silme", label: "Yazar silme kayıtları", columns: ["Yazar", "E-posta", "Eser", "Yayınevi başvurusu", "Silme onayı"] },
+    { key: "eser", title: "Eser silme", label: "Eser silme kayıtları", columns: ["Eser", "Yazar", "Bölüm", "Aktif erişim", "Başarılı sipariş", "Silme onayı"] },
+    { key: "yayinevi", title: "Yayınevi silme", label: "Yayınevi silme kayıtları", columns: ["Yayınevi", "Slug", "Aktif üye", "Başvuru", "Silme onayı"] },
+    { key: "editor", title: "Editör silme", label: "Editör silme kayıtları", columns: ["Editör", "E-posta", "Aktif inceleme", "Tamamlanan rapor", "Silme onayı"] },
   ];
 
   for (const viewport of [viewports.desktop, viewports.phone390]) {
@@ -1581,10 +1582,20 @@ test("deletion center records render as responsive row-column tables with intact
     await expect(page.getByRole("heading", { name: "Silme Merkezi", exact: true })).toBeVisible();
     await expect(page.getByRole("note")).toContainText("Güvenli silme kullanılıyor.");
     await expect(page.locator(".admin-deletion-center .admin-delete-card")).toHaveCount(0);
+    const picker = page.getByRole("navigation", { name: "Silinebilir kayıt türü seçimi" });
+    await expect(picker.getByRole("link")).toHaveCount(4);
+    await expect(picker.locator('a[href*="bolum=yazar"]')).toHaveAttribute("aria-current", "page");
 
     for (const scenario of sections) {
-      const section = page.locator(".admin-delete-section").filter({ has: page.getByRole("heading", { name: scenario.title, exact: true }) });
+      const card = picker.locator('a[href*="bolum=' + scenario.key + '"]');
+      await card.click();
+      await expect(page).toHaveURL(new RegExp("bolum=" + scenario.key));
+      await expect(card).toHaveAttribute("aria-current", "page");
+      await expect(picker.locator('a[aria-current="page"]')).toHaveCount(1);
+      const section = page.locator(".admin-delete-section");
       await expect(section).toHaveCount(1);
+      await expect(section.getByRole("heading", { name: scenario.title, exact: true })).toBeVisible();
+
       const table = section.getByRole("table");
       if (await table.count()) {
         const region = section.getByRole("region", { name: scenario.label });
@@ -1599,16 +1610,31 @@ test("deletion center records render as responsive row-column tables with intact
         await expect(rows.first().locator('input[name="confirmation"]')).toHaveCount(1);
         await expect(rows.first().locator('input[name="targetId"]')).toHaveCount(1);
         await expect(rows.first().locator('input[name="targetType"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="q"]')).toHaveCount(1);
         await expect(rows.first().getByRole("button")).toHaveCount(1);
         if (viewport.width === 390) {
-          const geometry = await region.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth, overflow: getComputedStyle(el).overflowX }));
+          const geometry = await region.evaluate((el) => ({
+            scroll: el.scrollWidth, client: el.clientWidth, overflow: getComputedStyle(el).overflowX,
+          }));
           expect(geometry.scroll).toBeGreaterThan(geometry.client);
           expect(geometry.overflow).toBe("auto");
         }
       } else {
         await expect(section.locator(".admin-profile-empty")).toBeVisible();
       }
+      await expectResponsiveDocument(page);
     }
+
+    // Searching and resetting the filter must not switch to another category.
+    await page.locator('.admin-delete-search input[name="q"]').fill("unlikely-test-record-20261022");
+    await page.locator('.admin-delete-search button[type="submit"]').click();
+    await expect(page).toHaveURL(/bolum=editor/u);
+    await expect(page).toHaveURL(/q=unlikely-test-record-20261022/u);
+    await expect(page.locator(".admin-delete-section")).toHaveCount(1);
+    await page.locator(".admin-delete-search a").click();
+    await expect(page).toHaveURL(/bolum=editor/u);
+    await expect(page.locator('.admin-delete-search input[name="q"]')).toHaveValue("");
+
     await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
     await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
     await expectResponsiveDocument(page);

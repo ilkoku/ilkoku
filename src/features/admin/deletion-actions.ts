@@ -52,21 +52,32 @@ function revalidateDeletionViews() {
   }
 }
 
-function deletionResult(status: string) {
-  redirect(`${DELETION_CENTER_PATH}?durum=${encodeURIComponent(status)}`);
+function deletionResult(status: string, targetType: string, query: string) {
+  const params = new URLSearchParams({ durum: status });
+  const sections: Record<DeletionTarget, string> = {
+    writer: "yazar",
+    work: "eser",
+    publisher: "yayinevi",
+    editor: "editor",
+  };
+  if (isDeletionTarget(targetType)) params.set("bolum", sections[targetType]);
+  if (query) params.set("q", query);
+  redirect(`${DELETION_CENTER_PATH}?${params.toString()}`);
 }
 
 export async function deleteFromAdminCenterAction(formData: FormData) {
   const currentUser = await requireAdmin();
   const targetType = String(formData.get("targetType") ?? "");
   const targetId = String(formData.get("targetId") ?? "");
+  // Only carry the original search text into the result page; never into a redirect origin.
+  const query = String(formData.get("q") ?? "").trim().slice(0, 120);
 
   if (
     !targetId ||
     !isDeletionTarget(targetType) ||
     normalizeConfirmation(formData.get("confirmation")) !== DELETE_CONFIRMATION
   ) {
-    deletionResult("onay-gerekli");
+    deletionResult("onay-gerekli", targetType, query);
   }
 
   const result = await prisma.$transaction(async (transaction) => {
@@ -308,5 +319,5 @@ export async function deleteFromAdminCenterAction(formData: FormData) {
   });
 
   revalidateDeletionViews();
-  deletionResult(result.reason);
+  deletionResult(result.reason, targetType, query);
 }

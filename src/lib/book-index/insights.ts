@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { prisma } from "@/lib/prisma";
 import { timeBookIndexOperation } from "./performance-trace";
+import type { BookIndexInsightKey } from "./insight-pages";
 
 import {
   getBookIndexSource,
@@ -285,10 +286,12 @@ async function loadLongSellers(limit: number) {
 
 // Page and generateMetadata request the same evidence. Compute it once per
 // request, while running the independent snapshot and history SQL in parallel.
-const getBookIndexInsightsForLimit = cache(async (safeLimit: number): Promise<BookIndexInsights> => {
+const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true): Promise<BookIndexInsights> => {
   const [snapshots, longSellers] = await Promise.all([
     loadSourceSnapshots(),
-    loadLongSellers(safeLimit),
+    // Only the long-seller page needs the historical aggregation. Other
+    // insight views select one of the three source-snapshot collections.
+    includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),
   ]);
 
   const currentSourcesByBook = new Map<string, Set<string>>();
@@ -503,4 +506,17 @@ const getBookIndexInsightsForLimit = cache(async (safeLimit: number): Promise<Bo
 export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsights> {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
   return getBookIndexInsightsForLimit(safeLimit);
+}
+
+/**
+ * The four insight routes only render the selected insight collection.
+ * Skip the full historical GROUP BY outside the long-seller route.
+ * All other consumers of getBookIndexInsights retain complete evidence.
+ */
+export async function getBookIndexPageInsights(
+  key: BookIndexInsightKey,
+  limit = 20,
+): Promise<BookIndexInsights> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+  return getBookIndexInsightsForLimit(safeLimit, key === "longSellers");
 }

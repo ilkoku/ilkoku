@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Category switches must hard-navigate to refresh server-rendered query-specific tables. */
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -328,18 +329,18 @@ export default async function AdminDeletionCenterPage({
       ) : null}
 
       <nav className="admin-archive-summary admin-delete-picker" aria-label="Silinebilir kayıt türü seçimi">
-        <Link href={categoryHref("yazar")} className="admin-delete-picker__link" aria-current={selectedCategory === "yazar" ? "page" : undefined}>
+        <a href={categoryHref("yazar")} className="admin-delete-picker__link" aria-current={selectedCategory === "yazar" ? "page" : undefined}>
           <span>Yazar</span><strong>{writerCount}</strong>
-        </Link>
-        <Link href={categoryHref("eser")} className="admin-delete-picker__link" aria-current={selectedCategory === "eser" ? "page" : undefined}>
+        </a>
+        <a href={categoryHref("eser")} className="admin-delete-picker__link" aria-current={selectedCategory === "eser" ? "page" : undefined}>
           <span>Eser</span><strong>{workCount}</strong>
-        </Link>
-        <Link href={categoryHref("yayinevi")} className="admin-delete-picker__link" aria-current={selectedCategory === "yayinevi" ? "page" : undefined}>
+        </a>
+        <a href={categoryHref("yayinevi")} className="admin-delete-picker__link" aria-current={selectedCategory === "yayinevi" ? "page" : undefined}>
           <span>Yayınevi</span><strong>{publisherCount}</strong>
-        </Link>
-        <Link href={categoryHref("editor")} className="admin-delete-picker__link" aria-current={selectedCategory === "editor" ? "page" : undefined}>
+        </a>
+        <a href={categoryHref("editor")} className="admin-delete-picker__link" aria-current={selectedCategory === "editor" ? "page" : undefined}>
           <span>Editör</span><strong>{editorCount}</strong>
-        </Link>
+        </a>
       </nav>
 
       <section className="admin-panel admin-delete-search">
@@ -355,7 +356,7 @@ export default async function AdminDeletionCenterPage({
             />
           </label>
           <button type="submit">Ara</button>
-          {q ? <Link href={`${DELETION_CENTER_PATH}?bolum=${selectedCategory}`}>Temizle</Link> : null}
+          {q ? <a href={`${DELETION_CENTER_PATH}?bolum=${selectedCategory}`}>Temizle</a> : null}
         </form>
         <small>
           {total.toLocaleString("tr-TR")} eşleşme · Her bölümde en fazla {LIMIT} kayıt gösterilir.

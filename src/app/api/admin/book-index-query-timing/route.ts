@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
-import { getBookIndexInsights } from "@/lib/book-index/insights";
+import { getBookIndexInsights, getBookIndexPageInsights } from "@/lib/book-index/insights";
+import type { BookIndexInsightKey } from "@/lib/book-index/insight-pages";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import {
   collectBookIndexTimings,
@@ -15,7 +16,7 @@ const responseHeaders = {
   "X-Robots-Tag": "noindex, nofollow, noarchive",
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   // No profile, database work or timing data is exposed to unauthenticated
   // visitors or non-admin users. This endpoint performs read-only queries.
   const user = await getCurrentUser();
@@ -25,6 +26,18 @@ export async function GET() {
       headers: responseHeaders,
     });
   }
+
+  const requested = new URL(request.url).searchParams.get("insight");
+  const validKeys: BookIndexInsightKey[] = [
+    "newEntries", "risers", "everywhereSellers", "longSellers",
+  ];
+  if (requested !== null && !validKeys.some((key) => key === requested)) {
+    return NextResponse.json({ ok: false, error: "invalid_insight" }, {
+      status: 400,
+      headers: responseHeaders,
+    });
+  }
+  const insightKey = requested as BookIndexInsightKey | null;
 
   try {
     const { value, wallMs, timings } = await collectBookIndexTimings(async () => {
@@ -36,7 +49,9 @@ export async function GET() {
         ),
         timeBookIndexOperation(
           "route.insightsCalculation",
-          () => getBookIndexInsights(50),
+          () => insightKey
+            ? getBookIndexPageInsights(insightKey, 50)
+            : getBookIndexInsights(50),
         ),
       ]);
 
@@ -56,7 +71,9 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       observedAtUtc: new Date().toISOString(),
-      workload: "insight-page: publicContext(100) + insights(50)",
+      workload: insightKey
+        ? `insight-page:${insightKey} publicContext(100) + selectedInsights(50)`
+        : "insight-page: publicContext(100) + insights(50)",
       // Timed SQL calls include driver/connection queue time. Because the
       // shared MariaDB adapter connectionLimit is 1, parallel spans overlap.
       // This is not EXPLAIN ANALYZE or a pure database execution-time trace.

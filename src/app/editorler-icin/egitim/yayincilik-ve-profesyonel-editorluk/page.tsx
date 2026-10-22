@@ -8,7 +8,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Yayıncılık ve Profesyonel Editörlük | İlkOku Editörlük Okulu",
-  description: "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren.",
+  description: "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, teslim standardı, sürüm, onay disiplini ve yayın kararı sınırlarını öğren.",
   canonical: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
 });
 
@@ -175,7 +175,7 @@ export default function YayincilikVeProfesyonelEditorlukPage() {
     <>
       <EditorEducationStructuredData
         title="Yayıncılık ve Profesyonel Editörlük"
-        description="Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren."
+        description="Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, teslim standardı, sürüm, onay disiplini ve yayın kararı sınırlarını öğren."
         canonical="/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk"
       />
       <EditorEducationShell activeCategory={category}>

@@ -31,6 +31,19 @@ interface PublisherWorkspaceRecord {
     genre: string | null;
     id: string;
     title: string;
+    saleConfiguration: {
+      saleModel: "free" | "paid";
+      priceAmount: bigint | null;
+      currency: string;
+      status: "draft" | "ready" | "active" | "paused";
+      activatedAt: Date | null;
+    } | null;
+    publicationConsents: Array<{
+      publicationModel: "free" | "paid";
+      priceAmount: bigint | null;
+      currency: string;
+      accessPlanSnapshot: unknown;
+    }>;
   };
 }
 
@@ -189,7 +202,15 @@ export async function getPublisherWorkspaceRecords(
         status: true,
         submittedAt: true,
         updatedAt: true,
-        work: { select: { editorReviewStatus: true, genre: true, id: true, title: true } },
+        work: { select: {
+          editorReviewStatus: true, genre: true, id: true, title: true,
+          saleConfiguration: { select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true } },
+          publicationConsents: {
+            orderBy: { confirmedAt: "desc" },
+            take: 1,
+            select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true },
+          },
+        } },
       },
       orderBy: { updatedAt: "desc" },
     }),

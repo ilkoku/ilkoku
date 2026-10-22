@@ -40,6 +40,7 @@ export type ReaderWorkRow = {
   progressPercent?: number | null;
   publishedAt?: string | null;
   readerCount: number;
+  saleDisclosure?: { label: string; detail: string };
   readingHref?: string | null;
   readingState?: "unread" | "in_progress" | "completed";
   slug: string;
@@ -228,6 +229,7 @@ export function ReaderWorksTable({
                             <span>{work.authorName}</span>
                             <span aria-hidden="true">·</span>
                             <span>{formatNumber(work.chapterCount)} bölüm</span>
+                            {work.saleDisclosure ? <><span aria-hidden="true">·</span><span>{work.saleDisclosure.label}</span></> : null}
                           </div>
                         </div>
                       </div>
@@ -416,6 +418,9 @@ export function ReaderWorksTable({
                 <dt>Editör durumu</dt>
                 <dd>{reviewLabel(selectedWork.editorReviewStatus)}</dd>
               </div>
+              {selectedWork.saleDisclosure ? (
+                <div><dt>Satış modeli</dt><dd>{selectedWork.saleDisclosure.label} · {selectedWork.saleDisclosure.detail}</dd></div>
+              ) : null}
 
               {selectedWork.publishedAt && (
                 <div>

@@ -218,7 +218,7 @@ export function AboutExperience({ title, summary, body, updatedAt }: AboutExperi
           </div>
           <div className="about-future__cta">
             <strong>Hikâyenin hangi tarafındasın?</strong>
-            <p>{hasApprovedRoleSections ? "Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle bu yolculuğa katıl." : "Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle ekosisteme dahil ol."}</p>
+            {!hasApprovedRoleSections ? <p>Okur olarak katıl, yazar olarak ilk cümleni yaz veya profesyonel rolünle ekosisteme dahil ol.</p> : null}
             <div><Link className="about-button about-button--primary" href="/#roller">Rolünü seç <span aria-hidden="true">→</span></Link><Link className="about-button about-button--secondary" href="/nasil-calisir">Nasıl çalışır?</Link></div>
           </div>
         </section>

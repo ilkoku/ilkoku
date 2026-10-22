@@ -213,3 +213,44 @@ test("UAT W: completed final commerce confirmation hides the repeat submit until
   has(page, "Eser 0 TL edinim için hazır", "current staged zero acquisition guidance");
   has(page, "Gerçek ödeme sistemi", "future live activation guidance");
 });
+
+
+test("writer, reader, editor, publisher and admin commerce disclosures stay linked without purchase privilege widening", () => {
+  const model = source("src/features/commerce/effective-state.ts");
+  const writer = source("src/app/satis-erisim/page.tsx");
+  const reader = source("src/app/kesfet/page.tsx");
+  const readerTable = source("src/features/reader/components/ReaderWorksTable.tsx");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const publisherRepo = source("src/features/publisher-workspace/repository.ts");
+  const publisherDiscovery = source("src/features/publisher-discovery/work-query.ts");
+  const publisherWorksTable = source("src/features/publisher-discovery/components/PublisherWorksTable.tsx");
+  const editorDiscovery = source("src/features/editor-workspace/common-discovery-query.ts");
+  const editorWorksTable = source("src/features/editor-workspace/components/EditorWorksTable.tsx");
+  const publisherQuery = source("src/features/publisher-workspace/queries.ts");
+  const publisherUi = source("src/features/publisher-workspace/components/PublisherDashboard.tsx");
+  const admin = source("src/app/admin/eserler/[workId]/page.tsx");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const auth = source("src/features/auth/data.ts");
+
+  has(model, "describeWorkSaleModel", "shared read-only model source");
+  has(model, "resolveEffectiveCommerceState(input)", "confirmed paid snapshot disclosure");
+  has(writer, "Okur eser sayfasını gör", "writer links published work to reader");
+  has(reader, "saleConfiguration:", "reader sees sale model");
+  has(reader, "publicationConsents:", "reader sees last confirmed sale snapshot");
+  has(reader, "describeWorkSaleModel", "reader/editor/editor candidate reuse same model");
+  has(readerTable, "work.saleDisclosure.label", "reader row shows sale state");
+  has(readerTable, "selectedWork.saleDisclosure.detail", "reader details explain state");
+  has(showcase, "Ücretli eser · Hazırlıkta", "public book display distinguishes staged paid");
+  has(publisherRepo, "publisherId: membership.publisherId", "publisher submission tenant boundary");
+  has(publisherDiscovery, "saleDisclosure: describeWorkSaleModel", "publisher discovery lists sale model");
+  has(publisherWorksTable, "work.saleDisclosure.label", "publisher discovery UI shows sale model");
+  has(editorDiscovery, "saleDisclosure: describeWorkSaleModel", "editor discovery uses same sale model");
+  has(editorWorksTable, "work.saleDisclosure.label", "editor discovery UI shows sale model");
+  has(publisherQuery, "saleDisclosure: describeWorkSaleModel", "publisher shows authorized submitted-work model");
+  has(publisherUi, "submission.work.saleDisclosure.label", "publisher user-facing sale label");
+  has(admin, "chapter.commerceAccess?.accessType", "admin sees chapter preview/locked state");
+  has(admin, "disclosure.detail", "admin sees reader-facing sale state");
+  has(checkout, "canAccessReaderWorkspace(profile.role)", "checkout reader role guard remains");
+  has(auth, "readerWorkspaceRoles", "reader role allowlist retained");
+  lacks(auth, '  "publisher",', "publisher checkout access not silently expanded");
+});

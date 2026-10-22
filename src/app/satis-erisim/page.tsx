@@ -120,6 +120,9 @@ export default async function WriterCommercePage() {
                   <Link className={styles.action} href={`/satis-erisim/${work.id}`}>
                     Erişimi planla
                   </Link>
+                  {work.status === "published" && work.visibility === "public" ? (
+                    <Link className={styles.quietAction} href={`/kitap/${work.slug}`}>Okur eser sayfasını gör</Link>
+                  ) : null}
                 </article>
               );
             })}

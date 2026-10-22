@@ -319,6 +319,17 @@ export function BookShowcase({
               </div>
             )}
 
+            {commerce?.configured && commerce.saleModel === "paid" && !commerce.enforcementActive ? (
+              <p className="showcase-commerce-notice">
+                Ücretli eser · Hazırlıkta. Eserin ücretli modeli kayıtlıdır ancak
+                şu anda satın alma etkin değildir. Mevcut okuma erişimi korunur.
+              </p>
+            ) : null}
+            {commerce?.configured && commerce.saleModel === "free" ? (
+              <p className="showcase-commerce-notice">
+                Ücretsiz eser. Yayımlanmış bölümler üyelikle okunabilir.
+              </p>
+            ) : null}
             {paidAccessActive && !hasPaidAccess && purchaseAvailable ? (
               <p className="showcase-commerce-notice">
                 Eser erişimi:{" "}

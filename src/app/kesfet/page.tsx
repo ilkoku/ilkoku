@@ -8,6 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { describeWorkSaleModel } from "@/features/commerce/effective-state";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
   ReaderWorksTable,
@@ -60,6 +61,10 @@ function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): Re
   const hasPendingChapter = work.chapters.some(
     (chapter) => chapter.status !== "published" || chapter.publishedAt === null,
   );
+  const saleDisclosure = describeWorkSaleModel({
+    configuration: work.saleConfiguration,
+    latestConsent: work.publicationConsents[0] ?? null,
+  });
 
   return {
     authorName: work.author.displayName ?? work.author.fullName,
@@ -84,6 +89,7 @@ function mapReaderWork(work: Awaited<ReturnType<typeof fetchWorks>>[number]): Re
     progressPercent: progress?.progressPercent ?? null,
     publishedAt: work.publishedAt?.toISOString() ?? null,
     readerCount: work._count.readingProgress,
+    saleDisclosure,
     readingHref: progress
       ? `/oku/${work.slug}/bolum-${progress.chapter.position}`
       : firstChapter
@@ -134,6 +140,13 @@ function fetchWorks(
           fullName: true,
           username: true,
         },
+      },
+      saleConfiguration: {
+        select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true },
+      },
+      publicationConsents: {
+        orderBy: { confirmedAt: "desc" }, take: 1,
+        select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true },
       },
       chapters: {
         where: {

@@ -15,6 +15,8 @@ export async function getAuthorCommerceWorks(authorId: string) {
       id: true,
       publicId: true,
       title: true,
+      slug: true,
+      visibility: true,
       coverUrl: true,
       status: true,
       updatedAt: true,

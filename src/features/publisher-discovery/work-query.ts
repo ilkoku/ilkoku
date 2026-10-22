@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { describeWorkSaleModel } from "@/features/commerce/effective-state";
 import { countWords } from "@/features/editor-workspace/eligibility";
 import {
   hasDiscoveryAdvancedFilters,
@@ -58,6 +59,7 @@ export interface PublisherWorkDiscoveryRow {
   language: string;
   publishedAt: string;
   readerCount: number;
+  saleDisclosure?: { label: string; detail: string };
   slug: string;
   subtitle: string | null;
   title: string;
@@ -165,6 +167,8 @@ const workSelect = {
   author: {
     select: { displayName: true, username: true },
   },
+  saleConfiguration: { select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true } },
+  publicationConsents: { orderBy: { confirmedAt: "desc" as const }, take: 1, select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true } },
   chapters: {
     where: { archivedAt: null },
     orderBy: { position: "asc" as const },
@@ -214,6 +218,7 @@ function mapWork(work: SelectedWork): PublisherWorkDiscoveryRow {
     publishedAt:
       work.publishedAt?.toISOString() ?? new Date(0).toISOString(),
     readerCount: work._count.readingProgress,
+    saleDisclosure: describeWorkSaleModel({ configuration: work.saleConfiguration, latestConsent: work.publicationConsents[0] ?? null }),
     slug: work.slug,
     subtitle: work.subtitle,
     title: work.title,

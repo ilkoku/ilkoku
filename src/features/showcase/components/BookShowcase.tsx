@@ -687,43 +687,34 @@ export function BookShowcase({
             </h2>
           </div>
 
-          {work.similarWorks.length > 0 ? (
-            <div className="showcase-similar__grid">
-              {work.similarWorks.map((related, index) => (
-                <Card
-                  className="showcase-similar-card"
-                  key={related.id}
-                  variant="hover"
-                >
-                  <BookCover
-                    compact
-                    title={related.title}
-                    variant={
-                      (["one", "two", "three"] as const)[index % 3]
-                    }
-                  />
-                  <div>
-                    <span>{related.genre ?? "Tür belirtilmedi"}</span>
-                    <h3>{related.title}</h3>
-                    <p>{related.authorName}</p>
-                    <Link
-                      className="showcase-text-link"
-                      href={`/kitap/${related.slug}?from=${encodedRelatedBookReturnPath}`}
-                    >
-                      Eseri İncele <span aria-hidden="true">→</span>
-                    </Link>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="workspace-empty">
-              <h3>Benzer eser bulunmuyor</h3>
-              <p>
-                Aynı türde yeni eserler yayımlandığında burada yer alacak.
-              </p>
-            </Card>
-          )}
+          <div className="showcase-similar__grid">
+            {work.similarWorks.map((related, index) => (
+              <Card
+                className="showcase-similar-card"
+                key={related.id}
+                variant="hover"
+              >
+                <BookCover
+                  compact
+                  title={related.title}
+                  variant={
+                    (["one", "two", "three"] as const)[index % 3]
+                  }
+                />
+                <div>
+                  <span>{related.genre ?? "Tür belirtilmedi"}</span>
+                  <h3>{related.title}</h3>
+                  <p>{related.authorName}</p>
+                  <Link
+                    className="showcase-text-link"
+                    href={`/kitap/${related.slug}?from=${encodedRelatedBookReturnPath}`}
+                  >
+                    Eseri İncele <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+              </Card>
+            ))}
+          </div>
         </section>
         ) : null}
       </main>

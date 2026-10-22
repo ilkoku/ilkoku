@@ -81,3 +81,30 @@ test("deletion center keeps row-column tables, responsive overflow and all safet
   assert.match(css, /\.admin-delete-table \.admin-delete-form/);
   assert.doesNotMatch(css, /\.admin-delete-grid\s*\{/);
 });
+
+
+test("deletion summary controls open only their own panel and keep search and safe redirects", async () => {
+  const [page, css, action] = await Promise.all([
+    read("src/app/admin/silme-merkezi/page.tsx"),
+    read("src/app/admin/deletion.css"),
+    read("src/features/admin/deletion-actions.ts"),
+  ]);
+  assert.match(page, /aria-label="Silinebilir kayıt türü seçimi"/);
+  assert.equal((page.match(/className="admin-delete-picker__link"/g) || []).length, 4);
+  assert.equal((page.match(/id="admin-delete-active-panel"/g) || []).length, 4);
+  for (const [category, name] of [
+    ["yazar", "Yazar"], ["eser", "Eser"], ["yayinevi", "Yayınevi"], ["editor", "Editör"],
+  ]) {
+    assert.ok(page.includes('href={categoryHref("' + category + '")}'), name + " has a real link");
+    assert.ok(page.includes('selectedCategory === "' + category + '"'), name + " activates only its section");
+    assert.ok(page.includes('aria-label="' + name + ' silme ekranı"'), name + " has a named screen");
+  }
+  assert.match(page, /aria-current=\{selectedCategory === "yazar"/);
+  assert.match(page, /name="bolum" value=\{selectedCategory\}/);
+  assert.match(page, /name="q" type="hidden" value=\{input\.query\}/);
+  assert.match(page, /if \(q\) query\.set\("q", q\)/);
+  assert.match(action, /if \(isDeletionTarget\(targetType\)\) params\.set\("bolum", sections\[targetType\]\)/);
+  assert.match(action, /deletionResult\(result\.reason, targetType, query\)/);
+  assert.match(css, /\.admin-delete-picker__link\[aria-current="page"\]/);
+  assert.match(css, /\.admin-delete-picker__link:focus-visible/);
+});

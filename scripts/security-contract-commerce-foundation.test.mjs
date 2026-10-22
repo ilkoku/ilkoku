@@ -1040,3 +1040,26 @@ test("author publication access v2 replaces the placeholder but remains inactive
     "migration cannot bypass the activation gate",
   );
 });
+
+
+test("admin works lists saved paid/free models without treating missing configuration as free", () => {
+  const page = source("src/app/admin/eserler/page.tsx");
+  const css = source("src/app/admin/directory.css");
+
+  contains(page, 'saleConfiguration: { is: { saleModel: saleModelFilter } }', "paid and free relational filters");
+  contains(page, 'saleConfiguration: { is: null }', "unconfigured work filter");
+  contains(page, 'name="model"', "sale model filter input");
+  contains(page, 'value="paid">Ücretli', "paid option");
+  contains(page, 'value="free">Ücretsiz', "free option");
+  contains(page, 'value="unset">Ayarlanmadı', "unconfigured option");
+  contains(page, 'configuration?.saleModel === "paid"', "saved paid model reads commerce configuration");
+  contains(page, 'configuration?.saleModel === "free"', "saved free model is explicit");
+  contains(page, 'configuration.priceAmount === BigInt(0)', "staged zero price is distinguished from free");
+  contains(page, 'resolveEffectiveCommerceState', "confirmed paid reader state remains visible during draft changes");
+  contains(page, 'effective.useConfirmedSnapshot', "last-confirmed paid state notice");
+  contains(page, 'saleModelFilter, safePage - 1', "previous-page filter persistence");
+  contains(page, 'saleModelFilter, safePage + 1', "next-page filter persistence");
+  contains(page, 'admin-works-sale-filters', "scoped works filter layout");
+  contains(css, '.admin-directory-filters.admin-works-sale-filters', "works-only filter grid");
+  notContains(page, 'action={', "admin works list stays read-only");
+});

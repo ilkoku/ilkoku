@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { describeWorkSaleModel } from "@/features/commerce/effective-state";
 import {
   getCustomizablePublisherPermissions,
   hasPublisherPermission,
@@ -78,7 +79,14 @@ export const getPublisherWorkspace = cache(
         status: submission.status,
         submittedAt: submission.submittedAt.toISOString(),
         updatedAt: submission.updatedAt.toISOString(),
-        work: { id: submission.work.id, title: submission.work.title },
+        work: {
+          id: submission.work.id,
+          title: submission.work.title,
+          saleDisclosure: describeWorkSaleModel({
+            configuration: submission.work.saleConfiguration,
+            latestConsent: submission.work.publicationConsents[0] ?? null,
+          }),
+        },
       })),
     };
   },

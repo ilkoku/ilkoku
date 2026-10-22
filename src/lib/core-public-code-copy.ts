@@ -68,7 +68,7 @@ export function compareCorePageToCode(
     ["Canonical", stored.canonicalUrl, code.canonical],
     ["URL", stored.slug, code.canonical],
   ] as const;
-  const differences = values
+  const differences: string[] = values
     .filter(([, actual, expected]) => normalized(actual) !== normalized(expected))
     .map(([label]) => label);
   if (stored.noIndex) differences.push("Noindex");

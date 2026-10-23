@@ -9,6 +9,7 @@ import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
 import { getPaymentProviderAdapter, type CommercePaymentMethod } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
+import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type PaidCheckoutStartResult =
   | {
@@ -29,6 +30,7 @@ export type PaidCheckoutStartResult =
         | "checkout_disabled"
         | "provider_unavailable"
         | "work_unavailable"
+        | "seller_unverified"
         | "already_entitled"
         | "order_pending"
         | "coupon_invalid"
@@ -157,6 +159,14 @@ export async function startPaidCheckout(input: {
       effectiveCommerce.priceAmount <= BigInt(0)
     ) {
       return { ok: false, reason: "work_unavailable" } as const;
+    }
+
+    // Provider-backed checkouts must satisfy the same legal seller/rights
+    // precondition as provider-free 0 TL acquisitions. This is checked
+    // before creating any order, payment, consent, or coupon reservation.
+    const verifiedSeller = await getVerifiedWorkSeller(work.id, transaction);
+    if (!verifiedSeller) {
+      return { ok: false, reason: "seller_unverified" } as const;
     }
 
     const entitlement = await transaction.workEntitlement.findUnique({
@@ -319,6 +329,24 @@ export async function startPaidCheckout(input: {
         }),
         orderNo: orderNumber(),
         status: "pending_payment",
+      },
+    });
+
+    // Freeze the approved seller and work rights at order creation. Later
+    // amendments/revocations must not silently rewrite the historical seller.
+    await transaction.orderLegalSnapshot.create({
+      data: {
+        orderId: order.id,
+        legalPartyId: verifiedSeller.party.id,
+        sellerAssignmentId: verifiedSeller.assignmentId,
+        authorizationId: verifiedSeller.rights.id,
+        sellerMode: verifiedSeller.mode,
+        sellerName: verifiedSeller.party.legalName!,
+        sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!,
+        sellerAddress: verifiedSeller.party.legalAddress!,
+        sellerEmail: verifiedSeller.party.contactEmail!,
+        sellerPhone: verifiedSeller.party.contactPhone,
+        rightsDocumentHash: verifiedSeller.rights.documentHash!,
       },
     });
 

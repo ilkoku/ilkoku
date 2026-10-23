@@ -46,7 +46,7 @@ test("P0 schema addition does not activate production payments", () => {
 
 test("P0 seller authorization expiry cannot normalize a nonexistent calendar day", () => {
   const actions = source("src/features/commerce/seller-admin-actions.ts");
-  assert.ok(actions.includes('rawValidUntil && !/^\d{4}-\d{2}-\d{2}$/.test(rawValidUntil)'), "seller rights expiry must use strict YYYY-MM-DD");
+  assert.ok(actions.includes('rawValidUntil && !/^\\d{4}-\\d{2}-\\d{2}$/.test(rawValidUntil)'), "seller rights expiry must use strict YYYY-MM-DD");
   assert.ok(actions.includes("calendarDate.setUTCFullYear(year, month - 1, day)"), "calendar day must be reconstructed explicitly");
   assert.ok(actions.includes("calendarDate.getUTCDate() !== day"), "invalid day must not roll over");
   assert.ok(actions.includes('go("yetki-gecerlilik-tarihi-hatali")'), "invalid date must keep existing error path");

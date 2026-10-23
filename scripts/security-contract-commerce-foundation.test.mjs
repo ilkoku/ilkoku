@@ -194,7 +194,7 @@ test("reader commerce gate protects staged locked chapters independently from ch
   const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
-  contains(access, "previouslyActivatedPaid = Boolean(configuration.activatedAt)", "paid activation history");
+  contains(access, "shouldEnforcePaidChapterAccess", "paid work history protection");
   contains(access, "shouldEnforcePaidChapterAccess", "independent reader chapter protection");
   contains(access, "if (!enforcePaidChapterAccess)", "draft-only access boundary");
   notContains(access, 'return { allowed: true, reason: "checkout_disabled" }', "checkout outage never leaks paid chapter");
@@ -496,7 +496,7 @@ test("new paid work activation stays staged without a provider while previously 
   contains(actions, "hasOperationalPaymentProvider", "writer activation provider readiness");
   contains(actions, "(checkoutEnabled && paymentProviderReady)", "new paid activation requires checkout plus provider");
   contains(actions, "previouslyActivatedPaid", "existing paid activation history");
-  contains(access, "previouslyActivatedPaid", "reader paid activation history");
+  contains(access, "shouldEnforcePaidChapterAccess", "reader paid activation protection");
   contains(guard, "const previouslyActivatedPaid = Boolean(configuration.activatedAt)", "publication guard activation history");
 });
 
@@ -801,7 +801,7 @@ test("previously activated paid work never becomes free because checkout or prov
   const memberQuery = source("src/features/works/member-public-queries.ts");
   const actions = source("src/features/commerce/actions.ts");
 
-  contains(access, "previouslyActivatedPaid", "reader activation history guard");
+  contains(access, "shouldEnforcePaidChapterAccess", "reader activation history guard");
   contains(access, "shouldEnforcePaidChapterAccess", "previously activated paid content stays protected");
 
   contains(memberQuery, "shouldEnforcePaidChapterAccess", "public work activation history guard");

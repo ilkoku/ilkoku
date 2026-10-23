@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/seo-cms-image-optimization-canary.yml
       - src/app/yazarlar-icin/kurgu/novella/page.tsx
+      - src/components/content/ReaderEducationPage.tsx
+      - src/components/content/EditorEducationShell.tsx
 
 permissions:
   contents: read

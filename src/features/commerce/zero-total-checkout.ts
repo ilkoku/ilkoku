@@ -482,5 +482,5 @@ export async function completeZeroTotalCheckout(input: {
       orderId: order.id,
       orderNo: order.orderNo,
     } as const;
-  });
+  }, { isolationLevel: "ReadCommitted" });
 }

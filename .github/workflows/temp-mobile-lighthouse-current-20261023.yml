@@ -1,0 +1,56 @@
+name: TEMP current-live mobile Lighthouse three-run diagnostic
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-mobile-lighthouse-current-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Check production build identity
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -Eeuo pipefail
+          status="$(curl -sS --max-time 20 -A 'IlkOku-ReadOnly-Mobile-QA/20261023' -o /tmp/live-build-info.json -w '%{http_code}' https://ilkoku.com/api/build-info)"
+          [[ "$status" == 200 ]] || { echo "STOP build info HTTP=$status" >&2; exit 1; }
+          LIVE="$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("/tmp/live-build-info.json","utf8")).commitSha)')"
+          echo "EXPECTED=$EXPECTED_SHA LIVE=$LIVE"
+          [[ "$LIVE" == "$EXPECTED_SHA" ]] || { echo 'STOP: deployment mismatch; no Lighthouse traffic' >&2; exit 1; }
+      - name: Run three spaced mobile Lighthouse tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if command -v google-chrome >/dev/null 2>&1; then export CHROME_PATH="$(command -v google-chrome)"; else export CHROME_PATH="$(command -v google-chrome-stable)"; fi
+          for n in 1 2 3; do
+            status="$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' -A 'IlkOku-ReadOnly-Mobile-QA/20261023' https://ilkoku.com/)"
+            echo "PRECHECK_$n HTTP=$status"
+            [[ "$status" == "200" ]] || { echo "CIRCUIT BREAKER: unexpected HTTP=$status" >&2; exit 1; }
+            npx --yes lighthouse@12.8.2 https://ilkoku.com/ --only-categories=performance --form-factor=mobile --throttling-method=simulate --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output=json --output-path="/tmp/mobile-current-$n.json" --quiet
+            if [[ "$n" != 3 ]]; then sleep 30; fi
+          done
+          node <<'NODE'
+          const fs=require("node:fs");
+          for(let i=1;i<=3;i++){
+            const j=JSON.parse(fs.readFileSync("/tmp/mobile-current-"+i+".json","utf8"));
+            const v=k=>j.audits[k]?.numericValue??null;
+            const o={run:i,score:Math.round((j.categories.performance?.score??0)*100),FCP_ms:v("first-contentful-paint"),LCP_ms:v("largest-contentful-paint"),TBT_ms:v("total-blocking-time"),CLS:v("cumulative-layout-shift"),SI_ms:v("speed-index"),finalUrl:j.finalUrl};
+            console.log("MOBILE_METRIC "+JSON.stringify(o));
+          }
+          console.log("MOBILE_AUDIT_COMPLETE=3");
+          NODE
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: temp-current-mobile-lighthouse
+          path: /tmp/mobile-current-*.json
+          retention-days: 3
+          if-no-files-found: ignore

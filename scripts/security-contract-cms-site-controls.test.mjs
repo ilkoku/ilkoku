@@ -190,7 +190,7 @@ test("book cover media is not falsely marked unused and cannot be archived from 
   assertContains(references, "coverUrl LIKE 'https://www.ilkoku.com/api/media/%'", "www first-party work cover references");
   assertContains(references, "FROM \`Work\`", "source-of-truth Work table queried through safe SQL");
   assertContains(references, "workCoverVariants[0]", "protect relative and absolute variant cover URLs");
-  assertContains(references, "workCount > 0", "never archive cover assets referenced by works, including drafts");
+  assertContains(references, "Number(workCounts[0]?.total ?? 0) > 0", "never archive cover assets referenced by works, including drafts");
   assertContains(workbench, '"site" | "page" | "work"', "media UI accepts work references");
   assertContains(actions, "isMediaReferencedByPublishedContent(asset.url)", "server-side archive reference guard retained");
 });

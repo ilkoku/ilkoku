@@ -1,0 +1,53 @@
+name: Read-only 7-page live 404 source audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/audit-live-email-404-once.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check raw live HTML source links for Cloudflare-generated dead URL
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const pages = [
+            "/yardim",
+            "/telif-bildirimi",
+            "/yasal/kvkk",
+            "/yasal/gizlilik-politikasi",
+            "/yasal/telif-hakki-politikasi",
+            "/yasal/kullanim-sartlari",
+            "/yasal/cerez-politikasi"
+          ];
+          const problematic = "/cdn-cgi/l/email-protection";
+          const results = [];
+          for (const path of pages) {
+            const u = "https://ilkoku.com" + path;
+            const response = await fetch(u, {
+              redirect: "follow",
+              headers: { accept: "text/html", "user-agent": "IlkOku-SEO-ReadOnlyAudit/1.0" },
+              signal: AbortSignal.timeout(20000)
+            });
+            const html = await response.text();
+            const anchors = [...html.matchAll(/<a\b[^>]*\bhref\s*=\s*["']([^"']+)["']/gi)].map(m => m[1]);
+            const bad = anchors.filter(href => href.includes(problematic));
+            const present = html.includes(problematic);
+            const protection = html.includes("<!--email_off-->") && html.includes("<!--/email_off-->");
+            const mail = anchors.filter(href => href.startsWith("mailto:")).length;
+            const result = { path, status: response.status, htmlBytes: html.length, anchorCount: anchors.length, mailLinks: mail, badLinks: bad, badTokenAnywhere: present, protectionMarkers: protection };
+            results.push(result);
+            console.log("EMAIL_404_AUDIT " + JSON.stringify(result));
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+          const badResults = results.filter(r => r.status !== 200 || r.badLinks.length > 0 || r.badTokenAnywhere || r.mailLinks === 0);
+          console.log("EMAIL_404_SUMMARY " + JSON.stringify({ scanned: results.length, failed: badResults.length, clean: results.length - badResults.length, failures: badResults }));
+          if (badResults.length) process.exitCode = 1;
+          NODE

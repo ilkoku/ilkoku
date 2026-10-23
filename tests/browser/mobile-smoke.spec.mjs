@@ -913,14 +913,23 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
     page.getByText("Kampanya için gerekli alanları tamamlayın."),
   ).toBeVisible();
 
-  // Regression: invalid calendar dates must not be saved without restriction.
+  // A submitted invalid per-user limit must never silently revert to 1.
   await page.locator('input[name="code"]').fill(couponCode);
   await page.locator('input[name="discountValue"]').fill("15");
-  const startsAtInput = page.locator('input[name="startsAt"]');
-  await startsAtInput.evaluate((element) => {
-    element.type = "text";
-  });
-  await startsAtInput.fill("2026-02-31");
+  const perUserInput = page.locator('input[name="perUserUsageLimit"]');
+  await perUserInput.evaluate((element) => element.removeAttribute("min"));
+  await perUserInput.fill("0");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(
+    page.getByText("Kampanya için gerekli alanları tamamlayın."),
+  ).toBeVisible();
+
+  // Native date controls enforce valid calendar input. Reversed valid dates
+  // exercise the real submission flow without changing the DOM input type.
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  await page.locator('input[name="startsAt"]').fill("2026-12-31");
+  await page.locator('input[name="endsAt"]').fill("2026-12-30");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
   await expect(
     page.getByText("Bitiş tarihi başlangıç tarihinden önce olamaz."),

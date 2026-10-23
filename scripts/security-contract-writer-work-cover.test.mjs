@@ -30,5 +30,29 @@ test("writer work cover upload stays ownership-bound and fail-closed", () => {
 
   assert.match(workspace, /<WorkCoverUpload workId=\{work\.id\} \/>/);
   assert.ok(workspace.includes("work.coverUrl ?"), "workspace must render stored coverUrl when present");
-  assert.match(workspace, /unoptimized/);
+  assert.match(workspace, /<WorkCoverImage/);
+  assert.ok(!workspace.includes("unoptimized"), "workspace no longer bypasses Next optimization");
+  assert.ok(workspace.includes('sizes="(max-width: 640px) 180px, 240px"'), "responsive author workspace covers");
+});
+
+test("all work-cover thumbnails use Next optimization only for safe first-party CMS media", () => {
+  const component = source("src/components/media/WorkCoverImage.tsx");
+  const reader = source("src/features/reader/components/ReaderWorksTable.tsx");
+  const writer = source("src/features/writer/components/WriterPublishExperienceEnhancer.tsx");
+  const workspace = source("src/features/works/components/WorksWorkspace.tsx");
+
+  assert.match(component, /import Image from "next\/image"/);
+  assert.match(component, /const firstPartyMediaPath = src\.match\(/);
+  assert.match(component, /\/api\\\/media\\\//);
+  assert.match(component, /quality=\{75\}/);
+  assert.match(component, /sizes=\{sizes\}/);
+  assert.match(component, /src=\{firstPartyMediaPath\}/);
+  assert.match(component, /if \(!firstPartyMediaPath\)/);
+  assert.match(component, /<img src=\{src\} alt=\{alt\}/);
+  for (const [name, sourceCode] of [["reader", reader], ["workspace", workspace], ["full-book-preview", writer]]) {
+    assert.match(sourceCode, /<WorkCoverImage/, name + " should use shared CMS optimization");
+  }
+  assert.ok(!reader.includes('<img alt="" src={work.coverUrl}'), "reader list must not serve raw CMS files");
+  assert.ok(!workspace.includes("unoptimized"), "writer workspace must not request original CMS PNG");
+  assert.ok(!writer.includes("<img"), "writer publication preview must not request original CMS PNG");
 });

@@ -26,7 +26,7 @@ concurrency:
 jobs:
   audit:
     name: Count real GA4 hits in fresh reject/accept sessions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 14
     steps:
       - uses: actions/checkout@v6

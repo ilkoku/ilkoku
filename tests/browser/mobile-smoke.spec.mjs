@@ -879,7 +879,7 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   });
 
   const relativeLuminance = (rgb) => {
-    const channels = rgb.match(/[\\d.]+/gu)?.slice(0, 3).map(Number);
+    const channels = rgb.match(/[\d.]+/gu)?.slice(0, 3).map(Number);
     expect(channels, "Computed RGB channels should be available").toHaveLength(3);
     const linear = channels.map((channel) => {
       const normalized = channel / 255;

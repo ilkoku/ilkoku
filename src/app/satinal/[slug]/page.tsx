@@ -164,7 +164,7 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
   const purchaseUnavailableMessage = stagedZeroCandidate
-    ? "0 TL edinim için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
+    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
     : paidAccessEnforced
       ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
       : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";

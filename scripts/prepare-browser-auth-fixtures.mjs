@@ -419,6 +419,128 @@ try {
     ],
   );
 
+
+  // Exercise preview and locked access on the same paid-ready work.
+  const previewChapterId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Chapter\`
+      (id, workId, authorId, title, content, position, status, publishedAt,
+       createdAt, updatedAt)
+     VALUES (?, ?, ?, 'CI Ücretsiz Ön İzleme',
+       'CI preview chapter public content.', 2, 'published', ?, ?, ?)`,
+    [previewChapterId, commerceWorkId, userIds.writer, now, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`ChapterAccess\`
+      (id, chapterId, workId, accessType, createdAt, updatedAt)
+     VALUES (?, ?, ?, 'preview', ?, ?)`,
+    [randomUUID(), previewChapterId, commerceWorkId, now, now],
+  );
+
+  // 100%-discounted positive-price works test both writer- and
+  // platform-funded coupons with checkout and all payment adapters disabled.
+  for (const variant of [
+    {
+      slug: "ci-browser-author-coupon-work",
+      publicId: "CI26COUPONAU01",
+      title: "CI Author 100 Coupon",
+      owner: "author",
+      couponCode: "CIAUTHOR100",
+      documentHash: "b".repeat(64),
+    },
+    {
+      slug: "ci-browser-platform-coupon-work",
+      publicId: "CI26COUPONPL01",
+      title: "CI Platform 100 Coupon",
+      owner: "platform",
+      couponCode: "CIPLATFORM100",
+      documentHash: "c".repeat(64),
+    },
+  ]) {
+    const workId = randomUUID();
+    const chapterId = randomUUID();
+    const authorizationId = randomUUID();
+    const couponId = randomUUID();
+    await client.execute(
+      `INSERT INTO \`Work\`
+       (id, publicId, authorId, title, slug, status, visibility, isActive,
+        publishedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, 'published', 'public', true, ?, ?, ?)`,
+      [workId, variant.publicId, userIds.writer, variant.title, variant.slug, now, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`Chapter\`
+       (id, workId, authorId, title, content, position, status, publishedAt,
+        createdAt, updatedAt)
+       VALUES (?, ?, ?, 'CI coupon kilitli bölüm',
+        'Provider-free 100% coupon chapter content.', 1, 'published', ?, ?, ?)`,
+      [chapterId, workId, userIds.writer, now, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`ChapterAccess\`
+       (id, chapterId, workId, accessType, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'locked', ?, ?)`,
+      [randomUUID(), chapterId, workId, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`WorkSaleConfiguration\`
+       (id, workId, authorId, saleModel, priceAmount, currency, status,
+        agreementVersion, confirmedAt, activatedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'paid', 1500, 'TRY', 'active', ?, ?, ?, ?, ?)`,
+      [randomUUID(), workId, userIds.writer, commerceAgreementVersion, now, now, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`WorkPublicationConsent\`
+       (id, workId, authorId, publicationModel, priceAmount, currency,
+        accessPlanSnapshot, agreementVersion, confirmedAt, createdAt)
+       VALUES (?, ?, ?, 'paid', 1500, 'TRY', ?, ?, ?, ?)`,
+      [
+        randomUUID(), workId, userIds.writer,
+        JSON.stringify([{ chapterId, accessType: "locked", position: 1 }]),
+        commerceAgreementVersion, now, now,
+      ],
+    );
+    await client.execute(
+      `INSERT INTO \`WorkSalesAuthorization\`
+       (id, workId, legalPartyId, version, status, rightsScope,
+        documentHash, validFrom, verifiedById, verifiedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, 1, 'verified', ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        authorizationId, workId, ciLegalPartyId,
+        JSON.stringify({ right: "digital_read_access", territory: "TR", testOnly: true }),
+        variant.documentHash, now, userIds.admin, now, now, now,
+      ],
+    );
+    await client.execute(
+      `INSERT INTO \`WorkSellerAssignment\`
+       (id, workId, legalPartyId, authorizationId, mode, status,
+        version, currentKey, approvedById, approvedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, 'platform_direct', 'approved', 1, ?, ?, ?, ?, ?)`,
+      [randomUUID(), workId, ciLegalPartyId, authorizationId, workId,
+       userIds.admin, now, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`Coupon\`
+       (id, code, owner, authorId, creatorId, discountType, discountValue,
+        scope, status, totalUsageLimit, perUserUsageLimit, usageCount,
+        createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, 'percent', 100, 'selected_works', 'active',
+        2, 1, 0, ?, ?)`,
+      [
+        couponId, variant.couponCode, variant.owner,
+        variant.owner === "author" ? userIds.writer : null,
+        variant.owner === "author" ? userIds.writer : userIds.admin,
+        now, now,
+      ],
+    );
+    await client.execute(
+      `INSERT INTO \`CouponWorkScope\`
+       (id, couponId, workId, createdAt)
+       VALUES (?, ?, ?, ?)`,
+      [randomUUID(), couponId, workId, now],
+    );
+  }
+
   await client.commit();
 } catch (error) {
   await client.rollback();

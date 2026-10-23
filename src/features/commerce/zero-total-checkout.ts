@@ -7,7 +7,6 @@ import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
-import { isCommerceCheckoutEnabled } from "./runtime";
 import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type ZeroTotalCheckoutResult =
@@ -224,10 +223,8 @@ export async function completeZeroTotalCheckout(input: {
       } as const;
     }
 
-    if (!isCommerceCheckoutEnabled()) {
-      return { ok: false, reason: "checkout_disabled" } as const;
-    }
-
+    // Fully discounted orders are strictly 0 TL; no provider/rollout flag
+    // is necessary. The seller, work, coupon rules and consent remain checked.
     if (!normalizedCode) {
       return { ok: false, reason: "coupon_invalid" } as const;
     }

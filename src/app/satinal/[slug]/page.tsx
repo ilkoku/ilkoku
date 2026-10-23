@@ -133,13 +133,51 @@ export default async function CheckoutPreparationPage({
     : null;
   const previouslyActivatedPaid =
     Boolean(configuration?.activatedAt);
-  const stagedZeroPurchaseReady =
+  const stagedZeroCandidate =
     !previouslyActivatedPaid &&
-    Boolean(purchaseTerms) &&
-    Boolean(verifiedSeller) &&
     effectiveCommerce.saleModel === "paid" &&
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
+
+  const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
+  const requestedCouponCode = query.kupon?.trim() ?? "";
+  // Coupons on a zero-base-price work do not offer any further discount.
+  // An already activated positive-price work may be reduced to exactly 0 TL.
+  const couponEligibleWork =
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    originalAmount > BigInt(0);
+  const coupon = couponEligibleWork && requestedCouponCode
+    ? await getApplicableCheckoutCoupon({
+        authorId: work.authorId,
+        code: requestedCouponCode,
+        readerId: profile.id,
+        workId: work.id,
+      })
+    : null;
+  const pricing = calculateCommercePricing(
+    originalAmount,
+    coupon
+      ? {
+          discountType: coupon.discountType,
+          discountValue: coupon.discountValue,
+          owner: coupon.owner,
+        }
+      : null,
+  );
+
+  const stagedZeroPurchaseReady =
+    stagedZeroCandidate &&
+    Boolean(purchaseTerms) &&
+    Boolean(verifiedSeller);
+  // Coupon-funded 0 TL acquisition needs no bank/carrier or payment flag.
+  // Nonzero checkout remains provider-dependent and unavailable.
+  const couponZeroPurchaseReady =
+    couponEligibleWork &&
+    Boolean(coupon) &&
+    pricing.finalAmount === BigInt(0) &&
+    Boolean(purchaseTerms) &&
+    Boolean(verifiedSeller);
   const livePaidCheckoutActive =
     checkoutEnabled &&
     hasAvailableProvider &&
@@ -151,34 +189,17 @@ export default async function CheckoutPreparationPage({
   const paidAccessEnforced =
     effectiveCommerce.saleModel === "paid" &&
     (previouslyActivatedPaid ||
+      effectiveCommerce.status === "ready" ||
       stagedZeroPurchaseReady ||
       livePaidCheckoutActive);
   const checkoutConfigurationActive =
-    stagedZeroPurchaseReady || livePaidCheckoutActive;
+    stagedZeroPurchaseReady || couponZeroPurchaseReady || livePaidCheckoutActive;
 
-  // Keep the checkout overview visible even when the sale is not yet enabled.
-  // Purchase actions remain behind the existing server-side terms/provider gates.
-  const stagedZeroCandidate =
-    !previouslyActivatedPaid &&
-    effectiveCommerce.saleModel === "paid" &&
-    effectiveCommerce.status === "ready" &&
-    effectiveCommerce.priceAmount === BigInt(0);
   const purchaseUnavailableMessage = stagedZeroCandidate
-    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
+    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bölüm kilitli kalır; yeni sipariş ancak bunlar tamamlandığında oluşturulur."
     : paidAccessEnforced
       ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
       : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
-
-  const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
-  const requestedCouponCode = query.kupon?.trim() ?? "";
-  const coupon = !stagedZeroPurchaseReady && requestedCouponCode
-    ? await getApplicableCheckoutCoupon({
-        authorId: work.authorId,
-        code: requestedCouponCode,
-        readerId: profile.id,
-        workId: work.id,
-      })
-    : null;
 
   const flash = query.durum
     ? `${checkoutMessages[query.durum] ?? query.durum}${
@@ -186,16 +207,6 @@ export default async function CheckoutPreparationPage({
       }`
     : null;
 
-  const pricing = calculateCommercePricing(
-    originalAmount,
-    coupon
-      ? {
-          discountType: coupon.discountType,
-          discountValue: coupon.discountValue,
-          owner: coupon.owner,
-        }
-      : null,
-  );
   // An available 0 TL option is not itself a completed purchase: the existing
   // server-side contract, seller and authorization gates still decide whether
   // the submit action can run. Card/carrier remain disabled in this UI.
@@ -437,27 +448,33 @@ export default async function CheckoutPreparationPage({
             <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
               {stagedZeroPurchaseReady
                 ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
-                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
+                : "Eserin Bölüm 2 gibi kilitli bölümleri erişim hakkı gerektirir. Onaylı koşullar tamamlanınca 0 TL edinim açılır."}
             </div>
-          ) : (
-            <>
-              <form className={styles.couponApplyForm} method="get">
-                <input name="from" type="hidden" value={returnTo} />
-                <label className={styles.field}>
-                  <span>Kupon kodunuz var mı?</span>
-                  <input
-                    defaultValue={requestedCouponCode}
-                    name="kupon"
-                    placeholder="Kupon kodu"
-                    type="text"
-                  />
-                </label>
-                <button className={styles.secondaryAction} type="submit">
-                  Uygula
-                </button>
-              </form>
+          ) : null}
 
-              {requestedCouponCode && !coupon ? (
+          {effectiveCommerce.saleModel === "paid" ? (
+            <div>
+              {couponEligibleWork ? (
+                <form className={styles.couponApplyForm} method="get">
+                  <input name="from" type="hidden" value={returnTo} />
+                  <label className={styles.field}>
+                    <span>Kupon kodunuz var mı?</span>
+                    <input
+                      defaultValue={requestedCouponCode}
+                      name="kupon"
+                      placeholder="Kupon kodu"
+                      type="text"
+                    />
+                  </label>
+                  <button className={styles.secondaryAction} type="submit">
+                    Uygula
+                  </button>
+                </form>
+              ) : (
+                <p className={styles.helper}>Bu eserin erişim bedeli 0 TL; kuponla daha fazla indirilemez.</p>
+              )}
+
+              {requestedCouponCode && couponEligibleWork && !coupon ? (
                 <div className={styles.notice}>
                   Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
                   eser için geçerli değil.
@@ -467,10 +484,13 @@ export default async function CheckoutPreparationPage({
               {coupon ? (
                 <div className={styles.successNotice}>
                   {coupon.code} kuponu uygulandı.
+                  {pricing.finalAmount === BigInt(0)
+                    ? " Toplam 0 TL: gerçek ödeme almadan sipariş verilebilir."
+                    : " Kalan tutar için ödeme sağlayıcısı bağlı olmadığından sipariş kapalıdır."}
                 </div>
               ) : null}
-            </>
-          )}
+            </div>
+          ) : null}
         </section>
 
           </aside>

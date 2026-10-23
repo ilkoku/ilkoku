@@ -170,9 +170,14 @@ export async function getMemberPublicWorkBySlug(
     Boolean(await getVerifiedWorkSeller(work.id));
   const livePaidPurchaseAvailable =
     livePaidCandidate && Boolean(readerPurchaseTerms);
+  const preparedPaidChapterGate =
+    !saleConfiguration?.activatedAt &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "ready";
   const commerceEnforcementActive =
     effectiveCommerce.saleModel === "paid" &&
-    (Boolean(saleConfiguration?.activatedAt) ||
+    (preparedPaidChapterGate ||
+      Boolean(saleConfiguration?.activatedAt) ||
       stagedZeroPurchaseAvailable ||
       livePaidPurchaseAvailable);
   const purchaseAvailable =

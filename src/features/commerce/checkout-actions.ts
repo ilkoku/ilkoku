@@ -114,6 +114,7 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
     work_unavailable: "eser-hazir-degil",
     coupon_invalid: "kupon-gecersiz",
     not_zero_total: "sifir-toplam-gerekli",
+    seller_unverified: "satici-yetkisi-dogrulanmadi",
   } as const;
 
   redirect(destination(slug, statusByReason[result.reason], returnTo));

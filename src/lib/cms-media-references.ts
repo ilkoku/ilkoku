@@ -96,7 +96,7 @@ export async function isCmsMediaReferencedByPublishedContent(mediaUrl: string) {
   // Work in this check includes draft/private covers so archiving remains fail-closed.
   const workCounts = await prisma.$queryRaw<Array<{ total: bigint | number }>>`
     SELECT COUNT(*) AS total
-    FROM `Work`
+    FROM \`Work\`
     WHERE coverUrl = ${workCoverVariants[0]} OR coverUrl LIKE CONCAT(${workCoverVariants[0]}, '?%')
        OR coverUrl = ${workCoverVariants[1]} OR coverUrl LIKE CONCAT(${workCoverVariants[1]}, '?%')
        OR coverUrl = ${workCoverVariants[2]} OR coverUrl LIKE CONCAT(${workCoverVariants[2]}, '?%')
@@ -128,7 +128,7 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
     `;
   const workRows = await prisma.$queryRaw<WorkCoverReferenceRow[]>`
     SELECT coverUrl
-    FROM `Work`
+    FROM \`Work\`
     WHERE coverUrl LIKE '/api/media/%'
        OR coverUrl LIKE 'https://ilkoku.com/api/media/%'
        OR coverUrl LIKE 'https://www.ilkoku.com/api/media/%'

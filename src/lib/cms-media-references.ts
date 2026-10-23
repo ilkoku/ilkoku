@@ -15,12 +15,7 @@ type SiteReferenceRow = {
   valueJson: string;
 };
 
-type WorkCoverReferenceRow = {
-  id: string;
-  slug: string;
-  title: string;
-  coverUrl: string | null;
-};
+type WorkCoverReferenceRow = { coverUrl: string | null };
 
 function firstPartyMediaVariants(path: string) {
   return [path, `https://ilkoku.com${path}`, `https://www.ilkoku.com${path}`];
@@ -137,7 +132,7 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
           { coverUrl: { startsWith: "https://www.ilkoku.com/api/media/" } },
         ],
       },
-      select: { id: true, slug: true, title: true, coverUrl: true },
+      select: { coverUrl: true },
     }),
   ]);
 
@@ -163,8 +158,9 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
     if (!path) continue;
     result.get(path)?.push({
       source: "work",
-      label: row.title,
-      detail: "Eser kapağı · taslak/yayındaki kayıt",
+      // CMS publishers need a deletion lock, not disclosure of private draft titles.
+      label: "Eser kapağı",
+      detail: "Eser kaydında kullanılıyor (taslak veya yayında)",
       editHref: "/sistem-yonetimi/eserler",
     });
   }

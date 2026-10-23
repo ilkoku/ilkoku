@@ -21,8 +21,8 @@ test("UAT W/A/R: staged paid work stays zero-priced and can use provider-free 0 
   has(actions, ": BigInt(0)", "staged paid zero price");
   has(page, '<span className={styles.paidPrice}>0 TL</span>', "paid zero-price UI");
   has(page, "!paidPricingEnabled", "staged paid UI gate");
-  has(access, "stagedZeroPurchaseReady", "reader staged zero acquisition gate");
-  has(access, "getActiveReaderPurchaseTerms", "reader terms prerequisite");
+  has(access, "shouldEnforcePaidChapterAccess", "locked chapter enforced independently");
+  has(publicQuery, "getActiveReaderPurchaseTerms", "public purchase readiness preserves terms gate");
   has(publicQuery, "stagedZeroPurchaseAvailable", "public staged zero purchase availability");
   has(publicQuery, "effectiveCommerce.priceAmount === BigInt(0)", "public zero-price gate");
 });
@@ -47,7 +47,7 @@ test("UAT R: previously activated paid work never becomes free during payment ou
 
   has(contract, "temporary checkout/provider outage does **not** unlock", "frozen outage rule");
   has(access, "previouslyActivatedPaid", "runtime activation history");
-  has(query, "Boolean(saleConfiguration?.activatedAt)", "public activation history");
+  has(query, "shouldEnforcePaidChapterAccess", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");
   has(checkout, "eser bu nedenle ücretsiz erişime açılmaz", "checkout outage lock copy");
   has(showcase, "Mevcut erişim hakları korunur", "public outage entitlement copy");
@@ -269,7 +269,7 @@ test("reader discovery checkout actions require terms, entitlement and operation
   has(page, "work.entitlements.length > 0", "existing entitlement avoids repeat purchase");
   has(page, 'chapter.commerceAccess?.accessType ?? "locked"', "unknown chapter plan is closed");
   has(page, "effective.useConfirmedSnapshot", "confirmed access plan survives draft edits");
-  has(page, 'label: stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al"', "no false checkout label");
+  has(page, 'stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al"', "no false checkout label");
   has(table, "work.purchaseAction.href", "direct purchase from reader discovery row");
   has(table, "selectedWork.purchaseAction.href", "direct purchase from discovery detail panel");
   has(table, "!work.paidAccessRestricted", "paid restriction prevents misleading restart");

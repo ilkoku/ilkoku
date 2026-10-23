@@ -1,0 +1,42 @@
+name: SEO cold warm TTFB read-only audit
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-cold-warm-ttfb-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Measure production HTML response headers and TTFB
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "| Route | Attempt | HTTP | TTFB ms | Total ms | Cache-Control | x-nextjs-cache | CF-Cache-Status | Age |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          paths=("/yazarlar-icin/cizgi-anlati/manga" "/yazarlar-icin/cocuk-ve-genclik/masal" "/yazarlar-icin/cocuk-ve-genclik/fabl" "/yazarlar-icin/kurgu/utopya" "/nasil-calisir")
+          failures=0
+          for path in "$""{paths[@]}"; do
+            for attempt in 1 2 3; do
+              h=$(mktemp)
+              b=$(mktemp)
+              result=$(curl -sSL --connect-timeout 8 --max-time 25 -D "$h" -o "$b" -w '%{http_code}|%{time_starttransfer}|%{time_total}|%{size_download}' -H 'Accept: text/html' -A 'IlkOku-SEO-TTFB-Audit/1.0' "https://ilkoku.com$path" || true)
+              IFS='|' read -r code ttfb total size <<< "$result"
+              ttfb_ms=$(awk -v n="$ttfb" 'BEGIN {printf "%.0f",n*1000}')
+              total_ms=$(awk -v n="$total" 'BEGIN {printf "%.0f",n*1000}')
+              cache=$(grep -im1 '^cache-control:' "$h" | cut -d: -f2- | tr -d '\r\n' | sed 's/^ *//;s/|/_/g' || true)
+              next=$(grep -im1 '^x-nextjs-cache:' "$h" | cut -d: -f2- | tr -d '\r\n' | sed 's/^ *//;s/|/_/g' || true)
+              cf=$(grep -im1 '^cf-cache-status:' "$h" | cut -d: -f2- | tr -d '\r\n' | sed 's/^ *//;s/|/_/g' || true)
+              age=$(grep -im1 '^age:' "$h" | cut -d: -f2- | tr -d '\r\n' || true)
+              echo "TTFB_AUDIT|$path|$attempt|$code|$ttfb_ms|$total_ms|$size|$cache|$next|$cf|$age"
+              echo "| $path | $attempt | $code | $ttfb_ms | $total_ms | $cache | $next | $cf | $age |" >> "$GITHUB_STEP_SUMMARY"
+              if [[ "$code" != "200" || "$size" == "0" ]]; then failures=$((failures+1)); fi
+              rm -f "$h" "$b"
+              sleep 1
+            done
+          done
+          echo "TTFB_AUDIT_SUMMARY|failures=$failures|observations=15"
+          (( failures == 0 ))

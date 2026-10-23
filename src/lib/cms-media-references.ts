@@ -76,29 +76,30 @@ export async function isCmsMediaReferencedByPublishedContent(mediaUrl: string) {
 
   // Protect every work cover, including drafts/private works, from media deletion.
   const workCoverVariants = firstPartyMediaVariants(mediaUrl);
-  const [siteRows, pageRows, workCount] = await Promise.all([
-    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+  // Hostinger uses a single MariaDB adapter connection per app process.
+  // Serialize the three reads to avoid pool contention; on any error the
+  // caller must continue to fail closed and deny media deletion.
+  const siteRows = await prisma.$queryRaw<Array<{ total: bigint | number }>>`
       SELECT COUNT(*) AS total
       FROM SiteContent
       WHERE status = 'published'
         AND namespace NOT IN ('media', 'media_blob', 'form_submission', 'cms_draft')
         AND LOCATE(${mediaUrl}, valueJson) > 0
-    `,
-    prisma.$queryRaw<Array<{ total: bigint | number }>>`
+    `;
+  const pageRows = await prisma.$queryRaw<Array<{ total: bigint | number }>>`
       SELECT COUNT(*) AS total
       FROM ContentPage
       WHERE status = 'published'
         AND LOCATE(${mediaUrl}, bodyJson) > 0
-    `,
-    prisma.work.count({
+    `;
+  const workCount = await prisma.work.count({
       where: {
         OR: workCoverVariants.flatMap((url) => [
           { coverUrl: url },
           { coverUrl: { startsWith: `${url}?` } },
         ]),
       },
-    }),
-  ]);
+    });
 
   return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) + workCount > 0;
 }
@@ -108,23 +109,23 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
   const result = new Map<string, CmsMediaReference[]>(urls.map((url) => [url, []]));
   if (urls.length === 0) return result;
 
-  const [siteRows, pageRows, workRows] = await Promise.all([
-    prisma.$queryRaw<SiteReferenceRow[]>`
+  // One MariaDB pool connection: avoid firing concurrent inventory queries.
+  const siteRows = await prisma.$queryRaw<SiteReferenceRow[]>`
       SELECT namespace, contentKey, valueJson
       FROM SiteContent
       WHERE status = 'published'
         AND namespace NOT IN ('media', 'media_blob', 'form_submission', 'cms_draft')
       ORDER BY updatedAt DESC
       LIMIT 2000
-    `,
-    prisma.$queryRaw<PageReferenceRow[]>`
+    `;
+  const pageRows = await prisma.$queryRaw<PageReferenceRow[]>`
       SELECT id, contentKey, slug, title, bodyJson
       FROM ContentPage
       WHERE status = 'published'
       ORDER BY updatedAt DESC
       LIMIT 1000
-    `,
-    prisma.work.findMany({
+    `;
+  const workRows = await prisma.work.findMany({
       where: {
         OR: [
           { coverUrl: { startsWith: "/api/media/" } },
@@ -133,8 +134,7 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
         ],
       },
       select: { coverUrl: true },
-    }),
-  ]);
+    });
 
   for (const row of siteRows) {
     for (const url of urls) {

@@ -82,9 +82,9 @@ export default async function CommerceOrdersPage({
           <p>Provider sonucu beklenen siparişler.</p>
         </article>
         <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Ödendi</span>
+          <span className="admin-eyebrow">Tamamlanan siparişler</span>
           <h2>{(counts.paid ?? 0).toLocaleString("tr-TR")}</h2>
-          <p>Erişim açılması gereken başarılı siparişler.</p>
+          <p>0 TL edinimler de dahildir; tamamlanan sipariş gerçek tahsilat anlamına gelmez.</p>
         </article>
         <article className="admin-panel admin-settings-card">
           <span className="admin-eyebrow">İade</span>
@@ -166,7 +166,9 @@ export default async function CommerceOrdersPage({
                         className="admin-table-badge"
                         data-status={order.status}
                       >
-                        {orderStatusLabels[order.status]}
+                        {order.status === "paid" && order.finalAmount === BigInt(0)
+                          ? "0 TL edinildi"
+                          : orderStatusLabels[order.status]}
                       </span>
                     </td>
                     <td>
@@ -223,7 +225,11 @@ export default async function CommerceOrdersPage({
                       )}
                     </td>
                     <td>
-                      <strong>{order._count.payments} ödeme denemesi</strong>
+                      <strong>
+                        {order.status === "paid" && order.finalAmount === BigInt(0)
+                          ? "Tahsilat yok · 0 TL"
+                          : `${order._count.payments} ödeme denemesi`}
+                      </strong>
                       <small>{order._count.refunds} iade kaydı</small>
                       <small>
                         Erişim:{" "}
@@ -235,7 +241,9 @@ export default async function CommerceOrdersPage({
                     <td>
                       <strong>{formatCommerceDate(order.createdAt)}</strong>
                       <small>
-                        Ödeme: {formatCommerceDate(order.paidAt)}
+                        {order.status === "paid" && order.finalAmount === BigInt(0)
+                          ? "Edinim tamamlandı"
+                          : "Ödeme"}: {formatCommerceDate(order.paidAt)}
                       </small>
                       <small>
                         Koşul:{" "}

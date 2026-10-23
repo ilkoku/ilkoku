@@ -827,7 +827,7 @@ test("public paid showcase distinguishes access enforcement from purchase availa
   contains(query, "const purchaseAvailable =", "purchase availability resolver");
   contains(query, "stagedZeroPurchaseAvailable", "provider-free staged zero purchase availability");
   contains(query, "livePaidPurchaseAvailable", "non-zero purchase still requires live payment path");
-  contains(showcase, "Satış geçici olarak kullanılamıyor", "outage paid-work state");
+  contains(showcase, "Kilitli · Erişim koşulları hazırlanıyor", "locked paid work retains access control even if purchase inactive");
   contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
   contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
   contains(bookPage, "work.commerce?.purchaseAvailable", "structured offer purchase availability");

@@ -50,7 +50,7 @@ test("UAT R: previously activated paid work never becomes free during payment ou
   has(query, "Boolean(saleConfiguration?.activatedAt)", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");
   has(checkout, "eser bu nedenle ücretsiz erişime açılmaz", "checkout outage lock copy");
-  has(showcase, "Mevcut erişim hakları korunur", "public outage entitlement copy");
+  has(showcase, "Kilitli bölümler erişim hakkı gerektirir", "public outage keeps locked sections protected");
 });
 
 test("UAT R: locked chapter content is redacted before reader rendering", () => {

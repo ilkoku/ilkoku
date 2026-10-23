@@ -486,6 +486,86 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
+test("provider-free 100% platform coupon: preview open, chapter 2 locked, order and finance reconcile at 0 TL", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.reader;
+  expect(token, "Missing reader fixture session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+
+  // Even while real providers are absent, the locked content never leaks.
+  await page.goto("/oku/ci-browser-coupon-work/bolum-1", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/satinal\/ci-browser-coupon-work\?from=/u);
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toHaveCount(0);
+
+  // Coupon entry belongs to the reader checkout (not admin or author forms).
+  await page.goto("/satinal/ci-browser-coupon-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "CI Browser Kupon Eseri" })).toBeVisible();
+  await expect(page.locator('input[name="kupon"]')).toBeVisible();
+  await page.locator('input[name="kupon"]').fill("CIBROWSER100");
+  await page.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/kupon=CIBROWSER100/u);
+  await expect(page.getByText(/CIBROWSER100 kuponu uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/İndirim İlkOku tarafından karşılanır/u)).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+
+  await page.locator('input[name="acceptDigitalContent"]').check();
+  await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+  await expect(page).toHaveURL(/\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/u);
+  const orderNo = new URL(page.url()).searchParams.get("siparis");
+  expect(orderNo).toMatch(/^ILK-/u);
+
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toBeVisible();
+
+  if (process.env.DATABASE_URL) {
+    const dbUrl = new URL(process.env.DATABASE_URL);
+    const db = await mysql.createConnection({
+      host: dbUrl.hostname,
+      port: Number(dbUrl.port || 3306),
+      user: decodeURIComponent(dbUrl.username),
+      password: decodeURIComponent(dbUrl.password),
+      database: decodeURIComponent(dbUrl.pathname.slice(1)),
+    });
+    try {
+      const sql = [
+        "SELECT o.status, o.originalAmount, o.discountAmount, o.finalAmount,",
+        "(SELECT COUNT(*) FROM Payment p WHERE p.orderId=o.id) paymentCount,",
+        "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId=o.id) consentCount,",
+        "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId=o.id) legalSnapshotCount,",
+        "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId=o.id AND e.status='active') entitlementCount,",
+        "(SELECT COUNT(*) FROM CouponRedemption cr WHERE cr.orderId=o.id AND cr.status='used' AND cr.discountAmount=10000) couponUseCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='sale_gross' AND l.amount=10000) grossCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='platform_coupon_discount' AND l.amount=10000) discountCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='author_coupon_discount') wrongFundingCount,",
+        "(SELECT usageCount FROM Coupon WHERE code='CIBROWSER100') usageCount",
+        "FROM \x60Order\x60 o WHERE o.orderNo=?",
+      ].join(" ");
+      const [records] = await db.execute(sql, [orderNo]);
+      expect(records).toHaveLength(1);
+      const x = records[0];
+      expect(x.status).toBe("paid");
+      expect(Number(x.originalAmount)).toBe(10000);
+      expect(Number(x.discountAmount)).toBe(10000);
+      expect(Number(x.finalAmount)).toBe(0);
+      for (const key of ["consentCount", "legalSnapshotCount", "entitlementCount", "couponUseCount", "grossCount", "discountCount", "usageCount"]) {
+        expect(Number(x[key]), key).toBe(1);
+      }
+      expect(Number(x.paymentCount)).toBe(0);
+      expect(Number(x.wrongFundingCount)).toBe(0);
+    } finally {
+      await db.end();
+    }
+  }
+});
+
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

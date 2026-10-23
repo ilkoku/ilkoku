@@ -84,6 +84,12 @@ export default async function PlatformCouponsPage({
             </p>
           </div>
           <span className={styles.badge}>Platform finansmanlı</span>
+          <p className={styles.helper}>
+            0 TL bedelli eserde kupon ek indirim oluşturmaz. Pozitif tutarlı
+            aktif ücretli eserde %100 kupon son toplamı 0 TL'ye indirebilir.
+            Bu işlemde gerçek ödeme sağlayıcısı kullanılmaz; indirim kaydı
+            finans hareketlerine yansır.
+          </p>
         </div>
 
         <form action={createPlatformCouponAction} className={styles.formGrid}>

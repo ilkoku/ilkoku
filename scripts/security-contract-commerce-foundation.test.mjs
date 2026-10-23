@@ -568,6 +568,19 @@ test("admin operations avoid exposing payment credentials", () => {
 });
 
 
+test("coupon-backed purchases appear in admin coupon filter without rewriting entitlement source", () => {
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+  const page = source("src/app/admin/odeme-sistemi/erisim-haklari/page.tsx");
+  contains(repository, 'input.source === "coupon"', "coupon special source filter");
+  contains(repository, 'source: "purchase" as const', "order-derived coupon provenance");
+  contains(repository, 'couponCodeSnapshot: { not: null }', "coupon order relation");
+  contains(repository, "AND: [", "coupon filter and query search compose safely");
+  contains(repository, "couponCodeSnapshot: true", "admin source projection");
+  contains(page, 'entitlement.order?.couponCodeSnapshot', "coupon purchase display source");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  contains(zero, 'source: "purchase"', "persist source as purchase for order-backed access");
+});
+
 test("admin entitlement operations remain entitlement-driven", () => {
   const overview = source("src/app/admin/odeme-sistemi/page.tsx");
   const repository = source("src/features/commerce/admin-operations-repository.ts");

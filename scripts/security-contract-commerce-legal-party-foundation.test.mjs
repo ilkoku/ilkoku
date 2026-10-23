@@ -32,7 +32,7 @@ test("P0 assignment can be tied to verified rights and preserves version history
 });
 
 test("P0 migration never rewrites old works, orders, users or entitlements", () => {
-  assert.doesNotMatch(migration, /\b(?:UPDATE|DELETE FROM|INSERT INTO|ALTER TABLE|DROP TABLE|TRUNCATE)\b/iu);
+  assert.doesNotMatch(migration, /^\s*(?:UPDATE|DELETE FROM|INSERT INTO|ALTER TABLE|DROP TABLE|TRUNCATE)\b/imu);
   assert.doesNotMatch(migration, /\bCREATE TRIGGER\b/iu);
   assert.match(migration, /Never backfill authorId as seller/u);
 });

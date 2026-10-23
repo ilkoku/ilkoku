@@ -810,6 +810,16 @@ test("chapter access plan rejects missing or tampered selections instead of defa
 });
 
 
+test("writer coupons reject explicit invalid limits and malformed calendar days", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  assert.ok(actions.includes('rawTotalUsageLimit && totalUsageLimit === null'), "invalid total usage must not become unlimited");
+  assert.ok(actions.includes('rawPerUserUsageLimit && parsedPerUserUsageLimit === null'), "invalid per-reader usage must not default to 1");
+  assert.ok(actions.includes('rawStartsAt && !startsAt'), "invalid start dates cannot remove start restriction");
+  assert.ok(actions.includes('rawEndsAt && !endsAt'), "invalid end dates cannot remove end restriction");
+  assert.ok(actions.includes("calendarDay.getUTCDate() !== day"), "nonexistent calendar dates are rejected");
+  assert.ok(actions.includes('const perUserUsageLimit = parsedPerUserUsageLimit ?? 1'), "blank per-reader limit retains default");
+});
+
 test("author coupon numeric parsers accept normal digit input", () => {
   const actions = source("src/features/commerce/actions.ts");
 

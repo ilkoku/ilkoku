@@ -171,3 +171,21 @@ test("revision center is a comparison workbench and restore remains on the canon
   assertContains(actions, "prisma.$transaction", "revision restore transaction boundary");
   assertContains(actions, "isCmsLocaleEnabled(locale)", "revision restore locale publish boundary");
 });
+
+test("book cover media is not falsely marked unused and cannot be archived from CMS", () => {
+  const references = source("src/lib/cms-media-references.ts");
+  const actions = source("src/features/cms/media-actions.ts");
+  const workbench = source("src/components/content/MediaLibraryWorkbench.tsx");
+
+  assertContains(references, "prisma.work.findMany({", "CMS inventory scans work cover references");
+  assertContains(references, "prisma.work.count({", "CMS archive action blocks referenced work covers");
+  assertContains(references, 'source: "work"', "work references appear in media inventory");
+  assertContains(references, 'startsWith: "/api/media/"', "relative first-party work cover references");
+  assertContains(references, 'startsWith: "https://ilkoku.com/api/media/"', "absolute first-party work cover references");
+  assertContains(references, 'startsWith: "https://www.ilkoku.com/api/media/"', "www first-party work cover references");
+  assertContains(references, "workCoverVariants.flatMap", "protect exact and query-suffixed cover media URLs");
+  assertContains(references, "workCount > 0", "never archive cover assets referenced by works, including drafts");
+  assertContains(workbench, '"site" | "page" | "work"', "media UI accepts work references");
+  assertContains(actions, "isMediaReferencedByPublishedContent(asset.url)", "server-side archive reference guard retained");
+});
+

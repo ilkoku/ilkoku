@@ -909,9 +909,16 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   await totalLimitInput.evaluate((element) => element.removeAttribute("min"));
   await totalLimitInput.fill("0");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
   await expect(
     page.getByText("Kampanya için gerekli alanları tamamlayın."),
   ).toBeVisible();
+
+  // Clear the previous redirect so a stale matching flash cannot satisfy
+  // the next assertion before its own server action has finished.
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
 
   // A submitted invalid per-user limit must never silently revert to 1.
   await page.locator('input[name="code"]').fill(couponCode);
@@ -920,9 +927,14 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   await perUserInput.evaluate((element) => element.removeAttribute("min"));
   await perUserInput.fill("0");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
   await expect(
     page.getByText("Kampanya için gerekli alanları tamamlayın."),
   ).toBeVisible();
+
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
 
   // Native date controls enforce valid calendar input. Reversed valid dates
   // exercise the real submission flow without changing the DOM input type.
@@ -931,6 +943,7 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   await page.locator('input[name="startsAt"]').fill("2026-12-31");
   await page.locator('input[name="endsAt"]').fill("2026-12-30");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=gecersiz-tarih/u);
   await expect(
     page.getByText("Bitiş tarihi başlangıç tarihinden önce olamaz."),
   ).toBeVisible();

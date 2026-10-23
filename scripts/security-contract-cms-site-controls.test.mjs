@@ -185,9 +185,9 @@ test("book cover media is not falsely marked unused and cannot be archived from 
   assert.equal(references.includes("Promise.all(["), false, "reference query scans must not contend for the single MariaDB connection");
   assertContains(references, "const workCounts = await prisma.$queryRaw", "CMS archive action blocks referenced work covers");
   assertContains(references, 'source: "work"', "work references appear in media inventory");
-  assertContains(references, 'startsWith: "/api/media/"', "relative first-party work cover references");
-  assertContains(references, 'startsWith: "https://ilkoku.com/api/media/"', "absolute first-party work cover references");
-  assertContains(references, 'startsWith: "https://www.ilkoku.com/api/media/"', "www first-party work cover references");
+  assertContains(references, "coverUrl LIKE '/api/media/%'", "relative first-party work cover references");
+  assertContains(references, "coverUrl LIKE 'https://ilkoku.com/api/media/%'", "absolute first-party work cover references");
+  assertContains(references, "coverUrl LIKE 'https://www.ilkoku.com/api/media/%'", "www first-party work cover references");
   assertContains(references, "FROM `Work`", "source-of-truth Work table queried through safe SQL");
   assertContains(references, "workCoverVariants[0]", "protect relative and absolute variant cover URLs");
   assertContains(references, "workCount > 0", "never archive cover assets referenced by works, including drafts");

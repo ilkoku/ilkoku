@@ -503,7 +503,7 @@ test("admin seller rights workbench is connected to 0 TL readiness without activ
   await expect(page.getByRole("heading", { name: /3\. Eser için satış yetkisi/u })).toBeVisible();
   await expect(page.getByRole("heading", { name: /4\. Eser satış yetkisini/u })).toBeVisible();
   await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toBeVisible();
-  await expect(page.getByText("CI ONLY MOCK SELLER - NOT A REAL ENTITY")).toBeVisible();
+  await expect(page.getByRole("option", { name: "CI ONLY MOCK SELLER - NOT A REAL ENTITY" })).toHaveCount(1);
   await expectResponsiveDocument(page);
 
   await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", {

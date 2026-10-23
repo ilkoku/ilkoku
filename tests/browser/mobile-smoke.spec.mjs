@@ -611,6 +611,93 @@ test("provider-free 100% platform coupon: preview open, chapter 2 locked, order 
   await expect(page.locator("table tbody tr").filter({ hasText: "CI Browser Kupon Eseri" })).toBeVisible();
 });
 
+test("coupon last-use concurrency: two different readers cannot both consume the last 100% voucher", async ({ browser }) => {
+  test.skip(!authFixture || !process.env.DATABASE_URL, "Disposable multi-reader CI fixture required.");
+  const tokenA = authFixture.sessions?.readerRaceA;
+  const tokenB = authFixture.sessions?.readerRaceB;
+  expect(tokenA && tokenB, "Two independent reader identities must be configured").toBeTruthy();
+
+  const dbUrl = new URL(process.env.DATABASE_URL);
+  const db = await mysql.createConnection({
+    host: dbUrl.hostname,
+    port: Number(dbUrl.port || 3306),
+    user: decodeURIComponent(dbUrl.username),
+    password: decodeURIComponent(dbUrl.password),
+    database: decodeURIComponent(dbUrl.pathname.slice(1)),
+  });
+  const couponCode = "CIRACE" + Date.now().toString(36).toUpperCase();
+  const couponId = crypto.randomUUID();
+  try {
+    const [workRows] = await db.execute(
+      "SELECT id FROM Work WHERE slug = 'ci-browser-coupon-work'",
+    );
+    const [adminRows] = await db.execute(
+      "SELECT id FROM User WHERE email = 'ci-browser-admin@example.invalid'",
+    );
+    expect(workRows).toHaveLength(1);
+    expect(adminRows).toHaveLength(1);
+    await db.execute(
+      "INSERT INTO Coupon (id, code, owner, creatorId, discountType, discountValue, " +
+      "scope, status, totalUsageLimit, perUserUsageLimit, usageCount, createdAt, updatedAt) " +
+      "VALUES (?, ?, 'platform', ?, 'percent', 100, 'selected_works', 'active', 1, 1, 0, NOW(), NOW())",
+      [couponId, couponCode, adminRows[0].id],
+    );
+    await db.execute(
+      "INSERT INTO CouponWorkScope (id, couponId, workId, createdAt) VALUES (UUID(), ?, ?, NOW())",
+      [couponId, workRows[0].id],
+    );
+
+    const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+    try {
+      const pages = await Promise.all(contexts.map((c) => c.newPage()));
+      for (let i = 0; i < 2; i++) {
+        await contexts[i].addCookies([{
+          name: authFixture.cookieName,
+          value: [tokenA, tokenB][i],
+          url: authCookieUrl,
+        }]);
+      }
+      await Promise.all(pages.map((p) =>
+        p.goto("/satinal/ci-browser-coupon-work?kupon=" + couponCode, { waitUntil: "domcontentloaded" }),
+      ));
+      for (const p of pages) {
+        await expect(p.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+        await p.locator('input[name="acceptDigitalContent"]').check();
+      }
+      await Promise.all(pages.map((p) =>
+        p.getByRole("button", { name: "0 TL ile satın al" }).click(),
+      ));
+      await Promise.all(pages.map((p) =>
+        p.waitForURL(/durum=(?:eklendi|kupon-gecersiz)/u),
+      ));
+      const successful = pages.filter((p) => p.url().includes("durum=eklendi"));
+      expect(successful, "Exactly one reader may consume the global last coupon use").toHaveLength(1);
+      const rejected = pages.filter((p) => p.url().includes("durum=kupon-gecersiz"));
+      expect(rejected, "The other reader must be rejected without an order").toHaveLength(1);
+    } finally {
+      await Promise.all(contexts.map((c) => c.close()));
+    }
+
+    const [rows] = await db.execute(
+      "SELECT c.usageCount, " +
+      "(SELECT COUNT(*) FROM CouponRedemption r WHERE r.couponId=c.id AND r.status='used') usedCount, " +
+      "(SELECT COUNT(*) FROM \`Order\` o WHERE o.couponId=c.id) orderCount, " +
+      "(SELECT COUNT(*) FROM Payment p JOIN \`Order\` o ON o.id=p.orderId WHERE o.couponId=c.id) paymentCount, " +
+      "(SELECT COUNT(*) FROM WorkEntitlement e JOIN \`Order\` o ON o.id=e.orderId WHERE o.couponId=c.id AND e.status='active') entitlementCount, " +
+      "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.couponId=c.id AND l.entryType='platform_coupon_discount') discountCount " +
+      "FROM Coupon c WHERE c.id=?",
+      [couponId],
+    );
+    expect(rows).toHaveLength(1);
+    for (const key of ["usageCount", "usedCount", "orderCount", "entitlementCount", "discountCount"]) {
+      expect(Number(rows[0][key]), key).toBe(1);
+    }
+    expect(Number(rows[0].paymentCount)).toBe(0);
+  } finally {
+    await db.end();
+  }
+});
+
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

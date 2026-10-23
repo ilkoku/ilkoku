@@ -123,6 +123,57 @@ try {
   sessions.cmsManager = cmsManagerToken;
   userIds.cmsManager = cmsManagerId;
 
+  // Two independent real reader sessions test a single last coupon use racing
+  // across DIFFERENT users (the existing same-reader mutex is insufficient).
+  for (const suffix of ["A", "B"]) {
+    const id = randomUUID();
+    const token = randomBytes(32).toString("base64url");
+    await client.execute(
+      `INSERT INTO \`User\`
+        (id, publicId, email, passwordHash, fullName, role, status,
+         emailVerified, termsAcceptedAt, lastLoginAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, 'reader', 'active', ?, ?, ?, ?, ?)`,
+      [
+        id,
+        "CI26RACE" + suffix,
+        "ci-browser-reader-race-" + suffix.toLowerCase() + "@example.invalid",
+        "ci-browser-session-only",
+        "CI Reader Race " + suffix,
+        now, now, now, now, now,
+      ],
+    );
+    await client.execute(
+      `INSERT INTO \`Session\`
+        (id, tokenHash, userId, expiresAt, createdAt)
+       VALUES (?, ?, ?, ?, ?)`,
+      [randomUUID(), hashToken(token), id, expiresAt, now],
+    );
+    await client.execute(
+      `INSERT INTO \`Profile\`
+        (id, userId, birthYear, createdAt, updatedAt)
+       VALUES (?, ?, 1990, ?, ?)`,
+      [randomUUID(), id, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`AuditLog\`
+        (id, actorId, action, entityType, entityId, metadata, createdAt)
+       VALUES (?, ?, 'profile_updated', 'AgeVerification', ?, ?, ?)`,
+      [
+        randomUUID(),
+        id,
+        id,
+        JSON.stringify({
+          adultEligibleAt: "2008-01-01T00:00:00.000Z",
+          birthYear: 1990,
+          source: "ci_browser_fixture",
+        }),
+        now,
+      ],
+    );
+    sessions["readerRace" + suffix] = token;
+    userIds["readerRace" + suffix] = id;
+  }
+
   for (const role of ["reader", "writer", "publisher"]) {
     await client.execute(
       `INSERT INTO \`Profile\`

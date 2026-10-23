@@ -123,6 +123,22 @@ test("UAT K/R: zero-total orders skip provider and grant entitlement atomically"
   lacks(zero, "adapter.createPayment", "zero-total provider handoff");
 });
 
+test("UAT K: a locked coupon must be re-read with fresh committed global and per-reader usage", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+
+  for (const [name, code] of [["zero-total", zero], ["provider checkout", paid]]) {
+    has(code, 'isolationLevel: "ReadCommitted"', name + " uses fresh snapshots after coupon row lock");
+    const lock = code.indexOf("FROM Coupon");
+    const freshRead = code.indexOf("const coupon = await transaction.coupon.findUnique") >= 0
+      ? code.indexOf("const coupon = await transaction.coupon.findUnique")
+      : code.indexOf("const record = await transaction.coupon.findUnique");
+    const validation = code.indexOf("const validation = validateCouponRules");
+    assert.ok(lock >= 0 && freshRead > lock && validation > freshRead,
+      name + " must re-read coupon usage only after acquiring the coupon mutex");
+  }
+});
+
 test("UAT K: concurrent 0 TL requests serialize by reader before entitlement and order reads", () => {
   const zero = source("src/features/commerce/zero-total-checkout.ts");
   const paid = source("src/features/commerce/paid-checkout.ts");

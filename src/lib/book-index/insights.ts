@@ -248,10 +248,7 @@ const getCachedLongSellerHistoryRows = unstable_cache(
 );
 
 async function loadLongSellers(limit: number) {
-  const cachedRows = await timeBookIndexOperation(
-    "insights.longSellerHistorySql",
-    getCachedLongSellerHistoryRows,
-  );
+  const cachedRows = await timeBookIndexOperation("insights.longSellerHistorySql", getCachedLongSellerHistoryRows);
   // Restore Date objects because downstream sort/format logic expects them.
   const rows: LongSellerRow[] = cachedRows.map((row) => ({
     ...row,

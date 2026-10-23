@@ -486,6 +486,32 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
+test("admin seller rights workbench is connected to 0 TL readiness without activating payment providers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Satıcı ve Satış Yetkisi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1\. Resmi satıcı kimliği oluştur/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2\. Resmî kanıtı incele/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /3\. Eser için satış yetkisi/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /4\. Eser satış yetkisini/u })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toBeVisible();
+  await expect(page.getByText("CI ONLY MOCK SELLER - NOT A REAL ENTITY")).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("link", { name: /Satıcı ve satış yetkisi çalışma alanını aç/u })).toBeVisible();
+});
+
 test("provider-free 100% platform coupon: preview open, chapter 2 locked, order and finance reconcile at 0 TL", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.reader;

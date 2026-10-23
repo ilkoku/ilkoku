@@ -81,8 +81,10 @@ export async function getReaderPurchaseTermsStatus() {
   if (!row) return null;
 
   return {
+    id: row.id,
     active: row.active === true || row.active === 1,
     lifecycleStatus: row.lifecycleStatus,
+    placeholder: isReaderPurchaseTermsPlaceholder(row.body),
     title: row.title,
     version: String(Number(row.version)),
   };

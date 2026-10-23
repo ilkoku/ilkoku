@@ -5,6 +5,7 @@ import { getActiveReaderPurchaseTerms } from "./checkout-terms";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { hasOperationalPaymentProvider } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
+import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type CommerceAccessDecision =
   | { allowed: true; reason: "checkout_disabled" | "provider_unavailable" | "free_work" | "staged_paid_work" | "preview" | "entitled" }
@@ -81,7 +82,8 @@ export async function getCommerceChapterAccessDecision(input: {
     effective.status === "ready" &&
     effective.priceAmount === BigInt(0);
   const stagedZeroPurchaseReady = stagedZeroCandidate
-    ? Boolean(await getActiveReaderPurchaseTerms())
+    ? Boolean(await getActiveReaderPurchaseTerms()) &&
+      Boolean(await getVerifiedWorkSeller(input.workId))
     : false;
 
   if (!previouslyActivatedPaid && !stagedZeroPurchaseReady && !checkoutEnabled) {

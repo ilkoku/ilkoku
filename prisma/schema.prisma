@@ -1060,12 +1060,35 @@ model Order {
   refunds                  Refund[]
   financialLedgerEntries   FinancialLedger[]
   consent                  OrderConsent?
+  legalSnapshot            OrderLegalSnapshot?
 
   @@index([readerId, createdAt])
   @@index([authorId, createdAt])
   @@index([workId, createdAt])
   @@index([status, createdAt])
   @@index([couponId, createdAt])
+}
+
+// Immutable legal seller identity at 0 TL or paid order creation.
+// Never rewrite this snapshot if the active work seller changes.
+model OrderLegalSnapshot {
+  id                  String         @id @default(uuid()) @db.Char(36)
+  orderId             String         @unique @db.Char(36)
+  legalPartyId        String         @db.Char(36)
+  sellerAssignmentId  String         @db.Char(36)
+  authorizationId     String         @db.Char(36)
+  sellerMode          WorkSellerMode
+  sellerName          String         @db.VarChar(240)
+  sellerTaxIdentifier String         @db.VarChar(32)
+  sellerAddress       String         @db.Text
+  sellerEmail         String         @db.VarChar(320)
+  sellerPhone         String?        @db.VarChar(32)
+  rightsDocumentHash  String         @db.Char(64)
+  createdAt           DateTime       @default(now())
+  order               Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([legalPartyId, createdAt])
+  @@index([sellerAssignmentId])
 }
 
 model OrderConsent {

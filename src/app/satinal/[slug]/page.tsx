@@ -19,6 +19,7 @@ import { resolveEffectiveCommerceState } from "@/features/commerce/effective-sta
 import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
 import { calculateCommercePricing } from "@/features/commerce/pricing";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
+import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ const checkoutMessages: Record<string, string> = {
   "kosul-onayi-gerekli": "Devam etmek için dijital içerik satın alma koşullarını kabul etmelisin.",
   "tahsilat-kapali": "Satın alma işlemi henüz aktif değil.",
   "eser-hazir-degil": "Bu eser henüz ücretli satın almaya hazır değil.",
+  "satici-yetkisi-dogrulanmadi": "Bu eser için hukukî satıcı ve satış yetkisi henüz doğrulanmadı.",
   "kupon-gecersiz": "Kupon artık geçerli değil veya kullanım hakkı kalmadı.",
   "sifir-toplam-gerekli": "Bu işlem yalnız toplam tutarı 0 TL olan siparişlerde tamamlanabilir.",
   "eser-bulunamadi": "Eser bulunamadı.",
@@ -126,11 +128,15 @@ export default async function CheckoutPreparationPage({
     );
   }
 
+  const verifiedSeller = effectiveCommerce.saleModel === "paid"
+    ? await getVerifiedWorkSeller(work.id)
+    : null;
   const previouslyActivatedPaid =
     Boolean(configuration?.activatedAt);
   const stagedZeroPurchaseReady =
     !previouslyActivatedPaid &&
     Boolean(purchaseTerms) &&
+    Boolean(verifiedSeller) &&
     effectiveCommerce.saleModel === "paid" &&
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
@@ -158,7 +164,7 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
   const purchaseUnavailableMessage = stagedZeroCandidate
-    ? "0 TL edinim akışı İlkOku'da hazırlanıyor. Satın alma koşulları onaylanıp etkinleştirilince sipariş verilebilecek; şu anda sipariş veya tahsilat yapılmıyor."
+    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
     : paidAccessEnforced
       ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
       : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
@@ -347,6 +353,14 @@ export default async function CheckoutPreparationPage({
             <strong>{work.title}</strong>
             <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
             <span>Platform: İlkOku</span>
+            {verifiedSeller ? (
+              <>
+                <span>Hukukî satıcı: {verifiedSeller.party.legalName}</span>
+                <span>Satıcı adresi: {verifiedSeller.party.legalAddress}</span>
+                <span>Satıcı iletişim: {verifiedSeller.party.contactEmail}</span>
+                <span>İlkOku rolü: {verifiedSeller.mode === "platform_direct" ? "Doğrudan satıcı" : "Aracı platform"}</span>
+              </>
+            ) : null}
             <span>Ürün: Eserin dijital okuma erişimi</span>
           </div>
           <div className={styles.summaryGrid}>

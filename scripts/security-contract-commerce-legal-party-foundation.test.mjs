@@ -48,6 +48,7 @@ test("P0 seller workbench requires admin identity, independent evidence review a
   const actions = source("src/features/commerce/seller-admin-actions.ts");
   const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
   const settings = source("src/app/admin/odeme-sistemi/ayarlar/page.tsx");
+  const navigation = source("src/lib/admin-navigation.ts");
 
   assert.ok(actions.includes('user.role !== "admin"'), "all seller mutations must be admin-only");
   assert.ok(actions.includes('verificationStatus: "pending"'), "new seller starts unverified");
@@ -65,4 +66,5 @@ test("P0 seller workbench requires admin identity, independent evidence review a
   assert.ok(page.includes("registerWorkSalesRightsDraftAction"), "rights draft form wired");
   assert.ok(page.includes("approveWorkSellerRightsAction"), "rights approval wired");
   assert.ok(settings.includes("/sistem-yonetimi/odeme-sistemi/satici-yetkileri"), "activation diagnostics link to admin workbench");
+  assert.ok(navigation.includes("Satıcı & Satış Yetkisi"), "seller workbench appears in payment submenu");
 });

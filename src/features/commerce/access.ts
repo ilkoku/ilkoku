@@ -81,16 +81,23 @@ export async function getCommerceChapterAccessDecision(input: {
     effective.saleModel === "paid" &&
     effective.status === "ready" &&
     effective.priceAmount === BigInt(0);
+  // A published, ready paid work enforces its chapter plan even when the
+  // legal onboarding or checkout is not yet ready. No locked content leaks.
+  const preparedPaidChapterGate =
+    !previouslyActivatedPaid &&
+    effective.saleModel === "paid" &&
+    effective.status === "ready";
   const stagedZeroPurchaseReady = stagedZeroCandidate
     ? Boolean(await getActiveReaderPurchaseTerms()) &&
       Boolean(await getVerifiedWorkSeller(input.workId))
     : false;
 
-  if (!previouslyActivatedPaid && !stagedZeroPurchaseReady && !checkoutEnabled) {
+  if (!preparedPaidChapterGate && !previouslyActivatedPaid && !stagedZeroPurchaseReady && !checkoutEnabled) {
     return { allowed: true, reason: "checkout_disabled" };
   }
 
   if (
+    !preparedPaidChapterGate &&
     !previouslyActivatedPaid &&
     !stagedZeroPurchaseReady &&
     !paymentProviderReady
@@ -99,6 +106,7 @@ export async function getCommerceChapterAccessDecision(input: {
   }
 
   if (
+    !preparedPaidChapterGate &&
     !previouslyActivatedPaid &&
     !stagedZeroPurchaseReady &&
     configuration.status !== "active"
@@ -107,6 +115,7 @@ export async function getCommerceChapterAccessDecision(input: {
   }
 
   if (
+    !preparedPaidChapterGate &&
     !previouslyActivatedPaid &&
     !stagedZeroPurchaseReady
   ) {

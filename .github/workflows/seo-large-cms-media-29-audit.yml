@@ -1,10 +1,8 @@
 name: SEO large CMS media 29-file audit
 
 on:
+  # Heavy 29-image audit is opt-in to avoid needless Hostinger CPU use.
   workflow_dispatch:
-  pull_request:
-    paths:
-      - ".github/workflows/seo-large-cms-media-29-audit.yml"
 
 permissions:
   contents: read

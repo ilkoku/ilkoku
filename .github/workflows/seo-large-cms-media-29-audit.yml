@@ -1,0 +1,111 @@
+name: SEO large CMS media 29-file audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-large-cms-media-29-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  image-metrics:
+    name: Audit historic Ahrefs originals vs responsive delivery
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Verify 29 distinct media IDs via paced HEAD and optimized GET
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ids=(
+            "39abb993-16b0-4e2e-b688-d2a10cf32ae0"
+            "20cdbe7f-0df1-4cfd-a6cb-dc1ca3df8a91"
+            "a2d21ab9-a555-41f8-ad6b-59cf49be5261"
+            "92b105f2-e1c0-49fe-b2db-733a1731b1ae"
+            "d0eee2cd-b4fc-43c9-bd8f-13aff73ff961"
+            "7b0a8643-6c93-49dd-af57-4149ffd180bd"
+            "ff969cc8-5428-46ea-88e9-d7fc7f98a957"
+            "783b5d10-bde0-4463-84b6-ea0762a4cd32"
+            "bb04b69b-396a-4bf3-a545-45115e86bfa8"
+            "9c52e270-0399-4002-8bc8-eebf52225e61"
+            "0f755274-f761-40f5-8d63-1ea4e5bb2e1d"
+            "643ce0ad-f88e-44d4-a484-296aab584003"
+            "984d2300-4297-40a3-ac77-34672fc0a11a"
+            "527c2d86-00ef-41dc-b49c-39988d82a983"
+            "2a7b97e4-7c26-4a02-bb3e-4a31f373b108"
+            "bbc8ad2c-bcf0-48be-be31-d0609a470cee"
+            "d6e0fc3f-979e-4bac-8d0b-6c0d278c5786"
+            "d455bd41-833d-4910-98b4-b87863cef072"
+            "2a8924a1-6f98-4cf6-bbc7-5aaa072aecd1"
+            "2df49d9b-ee1e-40fa-a40f-d44869c0d9f1"
+            "ceb3f5ab-0526-479c-8797-189be394558d"
+            "3d16b5ae-adf7-424a-bbd8-7db1766a7821"
+            "47e9ad77-6b1e-4e67-a700-039308f9603a"
+            "459c18b8-39ea-4565-9663-0be6cace30e6"
+            "27570dd7-f232-4313-af83-33ff62476881"
+            "b5e2aa47-4780-4986-8194-6a9948ee6929"
+            "c595cbe3-b5fe-46eb-b625-ff866fb539c9"
+            "5d0b4bf7-29b8-421d-bca8-0993c8cc9f78"
+            "a56b7890-701a-47f4-8b71-b4bc7d68f735"
+          )
+          [[ "${#ids[@]}" == 29 ]]
+          temp="$(mktemp -d)"
+          trap 'rm -rf "$temp"' EXIT
+          header() {
+            grep -i "^$2:" "$1" | tail -1 | cut -d: -f2- | tr -d '\r' | xargs || true
+          }
+          echo '| # | Media ID | Original bytes | HTTP | Optimized bytes | Format | Saved |'
+          echo '|---:|---|---:|---:|---:|---|---:|'
+          success=0
+          failure=0
+          for i in "${!ids[@]}"; do
+            id="${ids[$i]}"
+            original="https://ilkoku.com/api/media/$id"
+            optimized="https://ilkoku.com/_next/image?url=%2Fapi%2Fmedia%2F$id&w=640&q=75"
+            hdr="$temp/head-$i"
+            status="$(curl -sS -L -I --connect-timeout 10 --max-time 35 \
+              -A 'IlkOku-CMS-Media-Audit/20261023' -D "$hdr" -o /dev/null \
+              -w '%{http_code}' "$original" || true)"
+            bytes="$(header "$hdr" content-length)"
+            mime="$(header "$hdr" content-type)"
+            if [[ "$status" == 403 || "$status" == 429 ]]; then
+              echo "CIRCUIT BREAKER original HTTP $status: $id" >&2
+              exit 1
+            fi
+            if [[ "$status" == 500 || "$status" == 502 || "$status" == 503 || "$status" == 504 ]]; then
+              echo "CIRCUIT BREAKER origin HTTP $status: $id" >&2
+              exit 1
+            fi
+            if [[ "$status" != 200 || ! "$mime" == image/* || ! "$bytes" =~ ^[0-9]+$ || "$bytes" -lt 1000 ]]; then
+              echo "$id original unexpected: HTTP=$status bytes=$bytes mime=$mime" >&2
+              failure=$((failure+1))
+              sleep 4
+              continue
+            fi
+            sleep 4
+            result="$(curl -sS -L --compressed --connect-timeout 10 --max-time 45 \
+              -H 'Accept: image/webp,image/*;q=0.8' \
+              -A 'IlkOku-CMS-Media-Audit/20261023' \
+              -o /dev/null \
+              -w '%{http_code}|%{size_download}|%{content_type}|%{time_total}' \
+              "$optimized" || true)"
+            IFS='|' read -r http compressed format total <<< "$result"
+            if [[ "$http" == 403 || "$http" == 429 || "$http" == 500 || "$http" == 502 || "$http" == 503 || "$http" == 504 ]]; then
+              echo "CIRCUIT BREAKER optimized HTTP $http: $id" >&2
+              exit 1
+            fi
+            if [[ "$http" != 200 || "$format" != image/webp || ! "$compressed" =~ ^[0-9]+$ || "$compressed" -lt 1000 || "$compressed" -ge "$bytes" ]]; then
+              echo "$id optimizer unexpected: HTTP=$http bytes=$compressed format=$format duration=$total" >&2
+              failure=$((failure+1))
+              sleep 4
+              continue
+            fi
+            saved=$((100-(100*compressed/bytes)))
+            echo "| $((i+1)) | $id | $bytes | $http | $compressed | $format | ${saved}% |"
+            success=$((success+1))
+            sleep 4
+          done
+          echo "RESULT: PASS=$success FAIL=$failure TOTAL=${#ids[@]}"
+          [[ "$success" == 29 && "$failure" == 0 ]]

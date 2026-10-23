@@ -23,8 +23,8 @@ test("P0 legal party, seller assignment and rights authorization are separate", 
 });
 
 test("P0 assignment can be tied to verified rights and preserves version history", () => {
-  assert.match(schema, /@@unique\\(\\[workId, version\\]\\)/u);
-  assert.match(schema, /@@unique\\(\\[workId, legalPartyId, version\\]\\)/u);
+  assert.match(schema, /@@unique\(\[workId, version\]\)/u);
+  assert.match(schema, /@@unique\(\[workId, legalPartyId, version\]\)/u);
   assert.match(migration, /WorkSellerAssignment_authorizationId_fkey/u);
   assert.match(migration, /WorkSellerAssignment_currentKey_key/u);
   assert.match(migration, /ON DELETE RESTRICT/u);
@@ -32,8 +32,8 @@ test("P0 assignment can be tied to verified rights and preserves version history
 });
 
 test("P0 migration never rewrites old works, orders, users or entitlements", () => {
-  assert.doesNotMatch(migration, /\\b(?:UPDATE|DELETE FROM|INSERT INTO|ALTER TABLE|DROP TABLE|TRUNCATE)\\b/iu);
-  assert.doesNotMatch(migration, /\\bCREATE TRIGGER\\b/iu);
+  assert.doesNotMatch(migration, /\b(?:UPDATE|DELETE FROM|INSERT INTO|ALTER TABLE|DROP TABLE|TRUNCATE)\b/iu);
+  assert.doesNotMatch(migration, /\bCREATE TRIGGER\b/iu);
   assert.match(migration, /Never backfill authorId as seller/u);
 });
 

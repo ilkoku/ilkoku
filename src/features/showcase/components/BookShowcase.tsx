@@ -100,7 +100,9 @@ export function BookShowcase({
         chapter.position === readingProgress?.chapterPosition &&
         canReadChapter(chapter.id),
     ) ?? firstReadableChapter;
-  const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;
+  // Keep reading, purchase and passport links one hop from the current book.
+  // Preserving the previous page inside this query caused recursive ?from= URLs.
+  const bookContextPath = `/kitap/${work.slug}`;
   const encodedBookContextPath = encodeURIComponent(bookContextPath);
   // Related-book navigation only needs the immediate previous book, not the full history.
   const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);

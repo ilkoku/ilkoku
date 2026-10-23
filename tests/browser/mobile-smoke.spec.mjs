@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import mysql from "mysql2/promise";
 
 import { expect, test } from "@playwright/test";
 
@@ -532,6 +533,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page).toHaveURL(
     /\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/,
   );
+  const completedZeroTotalOrderNo = new URL(page.url()).searchParams.get("siparis");
   await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
 
   const purchasedCard = page
@@ -555,6 +557,77 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     }),
   ).toBeVisible();
   await expectResponsiveDocument(page);
+
+  // Cross-check the provider-free transaction across reader and admin surfaces.
+  expect(completedZeroTotalOrderNo).toMatch(/^ILK-/u);
+  await page.goto("/hesabim/odeme-gecmisi", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Ödeme Geçmişi" })).toBeVisible();
+  const historyCard = page.locator("article").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(historyCard).toBeVisible();
+  await expect(historyCard.getByText("CI Browser 0 TL Eser")).toBeVisible();
+  await expect(historyCard.getByText("Başarılı", { exact: true })).toBeVisible();
+  await expect(historyCard.getByText(/₺\s?0,00/u).last()).toBeVisible();
+
+  if (process.env.DATABASE_URL) {
+    const databaseUrl = new URL(process.env.DATABASE_URL);
+    const db = await mysql.createConnection({
+      host: databaseUrl.hostname,
+      port: Number(databaseUrl.port || 3306),
+      user: decodeURIComponent(databaseUrl.username),
+      password: decodeURIComponent(databaseUrl.password),
+      database: decodeURIComponent(databaseUrl.pathname.slice(1)),
+    });
+    try {
+      const sql = [
+        "SELECT o.status, o.finalAmount,",
+        "(SELECT COUNT(*) FROM Payment p WHERE p.orderId = o.id) AS paymentCount,",
+        "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId = o.id) AS consentCount,",
+        "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId = o.id AND e.status = 'active') AS entitlementCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType = 'sale_gross' AND l.amount = 0) AS zeroGrossCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType IN ('author_earning', 'platform_commission', 'payment_provider_fee')) AS moneyMoveCount",
+        "FROM \x60Order\x60 o WHERE o.orderNo = ?",
+      ].join(" ");
+      const [records] = await db.execute(sql, [completedZeroTotalOrderNo]);
+      expect(records, "A single 0 TL order must match").toHaveLength(1);
+      const record = records[0];
+      expect(record.status).toBe("paid");
+      expect(Number(record.finalAmount)).toBe(0);
+      expect(Number(record.paymentCount)).toBe(0);
+      expect(Number(record.consentCount)).toBe(1);
+      expect(Number(record.entitlementCount)).toBe(1);
+      expect(Number(record.zeroGrossCount)).toBe(1);
+      expect(Number(record.moneyMoveCount)).toBe(0);
+    } finally {
+      await db.end();
+    }
+  }
+
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/siparisler?q=" + encodeURIComponent(completedZeroTotalOrderNo),
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByRole("heading", { name: "Siparişler" })).toBeVisible();
+  const orderRow = page.locator("table tbody tr").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(orderRow).toBeVisible();
+  await expect(orderRow.getByText("Ödendi", { exact: true })).toBeVisible();
+  await expect(orderRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
+
+  await page.goto(
+    "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByRole("heading", { name: "Finans Hareketleri" })).toBeVisible();
+  const financeRow = page.locator("table tbody tr").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(financeRow).toBeVisible();
+  await expect(financeRow.getByText("sale_gross", { exact: true })).toBeVisible();
+  await expect(financeRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
 });
 
 test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {

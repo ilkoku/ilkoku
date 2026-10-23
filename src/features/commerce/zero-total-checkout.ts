@@ -40,6 +40,17 @@ export async function completeZeroTotalCheckout(input: {
   const normalizedCode = input.couponCode.trim().toUpperCase();
 
   return prisma.$transaction(async (transaction) => {
+    // Serialize checkouts by reader, including paid/provider starts that use
+    // the same lock. A second concurrent 0 TL request must observe the first
+    // transaction's entitlement rather than creating another order/ledger.
+    // Acquire before any consistent reads (InnoDB REPEATABLE READ).
+    await transaction.$queryRaw`
+      SELECT id
+      FROM User
+      WHERE id = ${input.readerId}
+      FOR UPDATE
+    `;
+
     const work = await transaction.work.findFirst({
       where: {
         id: input.workId,

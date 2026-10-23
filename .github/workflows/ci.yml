@@ -166,15 +166,15 @@ jobs:
         run: node scripts/prepare-browser-auth-fixtures.mjs
 
       - name: Install Playwright test runner
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && success() }}
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0
 
       - name: Install Chromium for browser QA
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && success() }}
         run: npx playwright install --with-deps chromium
 
       - name: Run mobile and browser QA gate
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && success() }}
         env:
           BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"

@@ -73,6 +73,42 @@ test("UAT R: active editor review can bypass commerce without opening normal rea
   has(query, "options.bypassCommerce", "query-level explicit bypass");
 });
 
+test("UAT C: provider checkout enforces verified seller and freezes immutable legal snapshot", () => {
+  const paid = source("src/features/commerce/paid-checkout.ts");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+
+  for (const [name, code] of [["provider", paid], ["0 TL", zero]]) {
+    has(code, "getVerifiedWorkSeller(work.id, transaction)", name + " checks verified seller in checkout transaction");
+    has(code, 'reason: "seller_unverified"', name + " fails closed on missing seller");
+    has(code, "transaction.orderLegalSnapshot.create", name + " persists immutable legal seller snapshot");
+    for (const field of [
+      "legalPartyId: verifiedSeller.party.id",
+      "sellerAssignmentId: verifiedSeller.assignmentId",
+      "authorizationId: verifiedSeller.rights.id",
+      "sellerName: verifiedSeller.party.legalName!",
+      "sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!",
+      "rightsDocumentHash: verifiedSeller.rights.documentHash!",
+    ]) {
+      has(code, field, name + " legal evidence " + field);
+    }
+  }
+
+  const sellerGate = paid.indexOf("const verifiedSeller = await getVerifiedWorkSeller");
+  const orderWrite = paid.indexOf("const order = await transaction.order.create");
+  const legalWrite = paid.indexOf("await transaction.orderLegalSnapshot.create");
+  const consentWrite = paid.indexOf("await transaction.orderConsent.create");
+  const paymentWrite = paid.indexOf("const payment = await transaction.payment.create");
+  const handoff = paid.indexOf("await adapter.createPayment");
+  assert.ok(
+    sellerGate >= 0 && sellerGate < orderWrite &&
+    orderWrite < legalWrite && legalWrite < consentWrite &&
+    consentWrite < paymentWrite && paymentWrite < handoff,
+    "provider checkout must verify seller before all writes and persist legal snapshot before handoff",
+  );
+  has(action, 'seller_unverified: "satici-yetkisi-dogrulanmadi"', "same denial shown to reader for both checkout routes");
+});
+
 test("UAT C: non-zero checkout persists pending state before provider handoff", () => {
   const checkout = source("src/features/commerce/paid-checkout.ts");
 

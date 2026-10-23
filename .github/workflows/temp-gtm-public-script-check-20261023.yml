@@ -56,3 +56,14 @@ jobs:
               print("GTM_SCRIPT_DIAGNOSTIC",json.dumps({"source":src,**results[src]}))
           print("RESULT bothScriptsReadable=True")
           PY
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Install temporary browser QA tools
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Compare consent-approved live versus Google GTM script in isolated contexts
+        run: node scripts/temp-gtm-compare-live-20261023.mjs

@@ -1,0 +1,102 @@
+name: TEMP GSC 105 URL public internal link census
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-gsc-105-link-census-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  link-census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify static HTML links to Google's 105 unknown URLs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-gsc-public-census
+          sites=(
+            '/'
+            '/site-haritasi'
+            '/yazarlar-icin'
+            '/yazarlar-icin/kurgu'
+            '/yazarlar-icin/edebiyat'
+            '/yazarlar-icin/senaryo-ve-sahne'
+            '/yazarlar-icin/akademik'
+            '/yazarlar-icin/bilgilendirici'
+            '/yazarlar-icin/cocuk-ve-genclik'
+            '/yazarlar-icin/cizgi-anlati'
+            '/okurlar-icin'
+            '/editorler-icin'
+            '/hakkimizda'
+          )
+          i=0
+          for p in "${sites[@]}"; do
+            file="/tmp/ilkoku-gsc-public-census/${i}.html"
+            metrics="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 10 --max-time 35 \
+              --user-agent 'IlkOku-ReadOnly-GSC-Link-Census/20261023' \
+              -o "$file" -w '%{http_code}|%{size_download}|%{time_starttransfer}' \
+              "https://ilkoku.com$p" || true)"
+            IFS='|' read -r status size ttfb <<< "$metrics"
+            echo "SOURCE $i $p HTTP=${status:-000} BYTES=${size:-0} TTFB=${ttfb:-0}"
+            if [[ "$status" == 403 || "$status" == 429 ]]; then
+              echo "CIRCUIT BREAKER: bot block; stopping" >&2
+              exit 1
+            fi
+            [[ "$status" == 200 && -s "$file" ]]
+            i=$((i+1))
+            sleep 3
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from collections import defaultdict
+          from urllib.parse import urlsplit, urljoin
+          from pathlib import Path
+
+          targets=["/yazarlar-icin/cizgi-anlati","/yazarlar-icin/kurgu/fantastik","/yazarlar-icin/kurgu/novella","/yazarlar-icin/kurgu/oyku","/yazarlar-icin/kurgu/bilim-kurgu","/yazarlar-icin/kurgu/distopya","/yazarlar-icin/kurgu/utopya","/yazarlar-icin/kurgu/polisiye","/yazarlar-icin/kurgu/dedektif","/yazarlar-icin/kurgu/gerilim","/yazarlar-icin/kurgu/casusluk","/yazarlar-icin/kurgu/korku","/yazarlar-icin/kurgu/aksiyon","/yazarlar-icin/kurgu/tarihi-roman","/yazarlar-icin/kurgu/macera","/yazarlar-icin/kurgu/psikolojik-roman","/yazarlar-icin/kurgu/mizah","/yazarlar-icin/kurgu/romantik","/yazarlar-icin/kurgu/hiciv","/yazarlar-icin/kurgu/dram","/yazarlar-icin/kurgu/alternatif-tarih","/yazarlar-icin/kurgu/gotik","/yazarlar-icin/kurgu/mitoloji","/yazarlar-icin/edebiyat/siir","/yazarlar-icin/kurgu/paranormal","/yazarlar-icin/edebiyat/deneme","/yazarlar-icin/kurgu/post-apokaliptik","/yazarlar-icin/edebiyat/ani","/yazarlar-icin/edebiyat/gunluk","/yazarlar-icin/edebiyat/mektup","/yazarlar-icin/edebiyat/gezi-yazisi","/yazarlar-icin/edebiyat/biyografi","/yazarlar-icin/edebiyat/otobiyografi","/yazarlar-icin/edebiyat/elestiri","/yazarlar-icin/edebiyat/edebi-kurmaca","/yazarlar-icin/edebiyat/inceleme","/yazarlar-icin/edebiyat/soylesi","/yazarlar-icin/edebiyat/portre","/yazarlar-icin/senaryo-ve-sahne/film-senaryosu","/yazarlar-icin/senaryo-ve-sahne/dizi-senaryosu","/yazarlar-icin/senaryo-ve-sahne/tiyatro","/yazarlar-icin/senaryo-ve-sahne/kisa-film-senaryosu","/yazarlar-icin/senaryo-ve-sahne/radyo-tiyatrosu","/yazarlar-icin/senaryo-ve-sahne/podcast-senaryosu","/yazarlar-icin/senaryo-ve-sahne/belgesel-senaryosu","/yazarlar-icin/akademik/makale","/yazarlar-icin/akademik/tez","/yazarlar-icin/akademik/arastirma","/yazarlar-icin/akademik/bildiri","/yazarlar-icin/akademik/vaka-analizi","/yazarlar-icin/akademik/akademik-inceleme","/yazarlar-icin/bilgilendirici/tarih","/yazarlar-icin/bilgilendirici/psikoloji","/yazarlar-icin/bilgilendirici/felsefe","/yazarlar-icin/bilgilendirici/sosyoloji","/yazarlar-icin/bilgilendirici/kisisel-gelisim","/yazarlar-icin/bilgilendirici/is-dunyasi","/yazarlar-icin/bilgilendirici/girisimcilik","/yazarlar-icin/bilgilendirici/finans","/yazarlar-icin/bilgilendirici/ekonomi","/yazarlar-icin/bilgilendirici/yapay-zeka","/yazarlar-icin/bilgilendirici/teknoloji","/yazarlar-icin/bilgilendirici/programlama","/yazarlar-icin/bilgilendirici/hukuk","/yazarlar-icin/bilgilendirici/iletisim","/yazarlar-icin/bilgilendirici/egitim","/yazarlar-icin/bilgilendirici/sanat","/yazarlar-icin/bilgilendirici/siyaset","/yazarlar-icin/bilgilendirici/mimarlik","/yazarlar-icin/bilgilendirici/saglik","/yazarlar-icin/bilgilendirici/seyahat","/yazarlar-icin/bilgilendirici/spor","/yazarlar-icin/bilgilendirici/yemek-ve-gastronomi","/yazarlar-icin/bilgilendirici/din-ve-inanc","/yazarlar-icin/cocuk-ve-genclik/masal","/yazarlar-icin/cocuk-ve-genclik/fabl","/yazarlar-icin/cocuk-ve-genclik/genc-yetiskin","/yazarlar-icin/cocuk-ve-genclik/cocuk-hikayesi","/yazarlar-icin/cocuk-ve-genclik/cocuk-romani","/yazarlar-icin/cizgi-anlati/cizgi-roman","/yazarlar-icin/cocuk-ve-genclik/egitici-cocuk-kitabi","/yazarlar-icin/cizgi-anlati/grafik-roman","/yazarlar-icin/cizgi-anlati/karikatur","/yazarlar-icin/cizgi-anlati/webtoon","/yazarlar-icin/cizgi-anlati/manga","/okurlar-icin/aktif-okuma","/okurlar-icin/edebi-okuma","/okurlar-icin/karakter-ve-hikaye-analizi","/okurlar-icin/turleri-okumak","/okurlar-icin/yorum-ve-elestiri-yazma","/okurlar-icin/elestirel-okuma","/okurlar-icin/okuma-kulturu","/editorler-icin/egitim/editorluge-baslama","/editorler-icin/egitim/yapisal-editorluk","/editorler-icin/egitim/tur-editorlugu","/editorler-icin/egitim/editor-notu-ve-geri-bildirim","/editorler-icin/egitim/yazarla-calismak","/iletisim","/uyelik-sozlesmesi","/icerik-ve-yas-politikasi","/topluluk-kurallari","/telif-bildirimi","/yasal/gizlilik-politikasi","/kitap/belki-bir-gun-okursun-997b2d1f","/yasal/telif-hakki-politikasi"]
+          sources=["/","/site-haritasi","/yazarlar-icin","/yazarlar-icin/kurgu","/yazarlar-icin/edebiyat","/yazarlar-icin/senaryo-ve-sahne","/yazarlar-icin/akademik","/yazarlar-icin/bilgilendirici","/yazarlar-icin/cocuk-ve-genclik","/yazarlar-icin/cizgi-anlati","/okurlar-icin","/editorler-icin","/hakkimizda"]
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.links=set()
+                  self.robots=None
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=="a" and a.get("href"):
+                      href=urljoin("https://ilkoku.com",a["href"])
+                      url=urlsplit(href)
+                      if url.netloc in ("ilkoku.com","www.ilkoku.com"):
+                          self.links.add(url.path.rstrip("/") or "/")
+                  if tag=="meta" and a.get("name","").lower()=="robots":
+                      self.robots=a.get("content")
+          counts=defaultdict(int)
+          link_sources=defaultdict(list)
+          for i,source in enumerate(sources):
+              html=Path(f"/tmp/ilkoku-gsc-public-census/{i}.html").read_text(encoding="utf-8",errors="replace")
+              parser=Links()
+              parser.feed(html)
+              print(f"SOURCE_GRAPH {source} hyperlinks={len(parser.links)} robots={parser.robots}")
+              for target in targets:
+                  if target in parser.links:
+                      counts[target]+=1
+                      link_sources[target].append(source)
+          linked=[p for p in targets if counts[p]]
+          unlinked=[p for p in targets if not counts[p]]
+          categories=defaultdict(lambda: [0,0])
+          for p in targets:
+              parts=p.strip("/").split("/")
+              g=parts[0] if len(parts)<2 else "/".join(parts[:2])
+              categories[g][0]+=1
+              categories[g][1]+=int(counts[p]>0)
+          print("RESULT UNKNOWN=105 LINKED="+str(len(linked))+" UNLINKED="+str(len(unlinked)))
+          for name,n in sorted(categories.items()):
+              print(f"CATEGORY {name} total={n[0]} linked={n[1]}")
+          for p in unlinked:
+              print("UNLINKED "+p)
+          for p in targets:
+              if counts[p]==1:
+                  print("SINGLE_LINK "+p+" from "+link_sources[p][0])
+          print("AUDIT_FINISHED")
+          PY

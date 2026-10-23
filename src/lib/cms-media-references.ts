@@ -92,16 +92,17 @@ export async function isCmsMediaReferencedByPublishedContent(mediaUrl: string) {
       WHERE status = 'published'
         AND LOCATE(${mediaUrl}, bodyJson) > 0
     `;
-  const workCount = await prisma.work.count({
-      where: {
-        OR: workCoverVariants.flatMap((url) => [
-          { coverUrl: url },
-          { coverUrl: { startsWith: `${url}?` } },
-        ]),
-      },
-    });
+  // Query Work through the same bounded MariaDB raw-SQL adapter as the CMS tables.
+  // Work in this check includes draft/private covers so archiving remains fail-closed.
+  const workCounts = await prisma.$queryRaw<Array<{ total: bigint | number }>>`
+    SELECT COUNT(*) AS total
+    FROM \`Work\`
+    WHERE coverUrl = ${workCoverVariants[0]} OR coverUrl LIKE CONCAT(${workCoverVariants[0]}, '?%')
+       OR coverUrl = ${workCoverVariants[1]} OR coverUrl LIKE CONCAT(${workCoverVariants[1]}, '?%')
+       OR coverUrl = ${workCoverVariants[2]} OR coverUrl LIKE CONCAT(${workCoverVariants[2]}, '?%')
+  `;
 
-  return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) + workCount > 0;
+  return Number(siteRows[0]?.total ?? 0) + Number(pageRows[0]?.total ?? 0) + Number(workCounts[0]?.total ?? 0) > 0;
 }
 
 export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
@@ -125,16 +126,13 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
       ORDER BY updatedAt DESC
       LIMIT 1000
     `;
-  const workRows = await prisma.work.findMany({
-      where: {
-        OR: [
-          { coverUrl: { startsWith: "/api/media/" } },
-          { coverUrl: { startsWith: "https://ilkoku.com/api/media/" } },
-          { coverUrl: { startsWith: "https://www.ilkoku.com/api/media/" } },
-        ],
-      },
-      select: { coverUrl: true },
-    });
+  const workRows = await prisma.$queryRaw<WorkCoverReferenceRow[]>`
+    SELECT coverUrl
+    FROM \`Work\`
+    WHERE coverUrl LIKE '/api/media/%'
+       OR coverUrl LIKE 'https://ilkoku.com/api/media/%'
+       OR coverUrl LIKE 'https://www.ilkoku.com/api/media/%'
+  `;
 
   for (const row of siteRows) {
     for (const url of urls) {
@@ -153,7 +151,7 @@ export async function getCmsMediaReferenceMap(mediaUrls: string[]) {
 
   // Work covers live outside the CMS SiteContent/ContentPage tables.
   // A media asset referenced by a draft or private work is also not safe to delete.
-  for (const row of workRows as WorkCoverReferenceRow[]) {
+  for (const row of workRows) {
     const path = workCoverMediaPath(row.coverUrl);
     if (!path) continue;
     result.get(path)?.push({

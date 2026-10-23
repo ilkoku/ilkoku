@@ -1,0 +1,97 @@
+name: TEMP Ahrefs historical slow 24-route live closure
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-ahrefs-24-route-closure-20261023.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Read-only historical slow page canonical and TTFB audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify 24 distinct base paths with bounded traffic
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          paths=(
+            "/kitap/demo-tamamlanan-dosya"
+            "/kitap/demo-dis-editor-hazir"
+            "/kitap/demo-ikinci-bakis"
+            "/kitap/demo-cifte-koridor"
+            "/kitap/demo-dis-editor-hazir/pasaport"
+            "/kitap/demo-cifte-koridor/pasaport"
+            "/kitap/demo-tamamlanan-dosya/pasaport"
+            "/kitap/demo-level-05-duru-erdem"
+            "/kitap/demo-ikinci-bakis/pasaport"
+            "/kitap/belki-bir-gun-okursun-997b2d1f"
+            "/kitap/demo-kayip-harfler"
+            "/kitap/belki-bir-gun-okursun-997b2d1f/pasaport"
+            "/kitap/demo-level-05-duru-erdem/pasaport"
+            "/yazarlar-icin/cizgi-anlati/manga"
+            "/yazarlar-icin/kurgu/utopya"
+            "/yazarlar-icin/cocuk-ve-genclik/masal"
+            "/yazarlar-icin/cocuk-ve-genclik/fabl"
+            "/en-cok-satanlar"
+            "/editorler"
+            "/en-cok-satanlar/turkiye"
+            "/en-cok-satanlar/cok-satanlarda-yukselenler"
+            "/en-cok-satanlar/birden-fazla-listede-cok-satanlar"
+            "/en-cok-satanlar/uzun-suredir-cok-satanlar"
+            "/en-cok-satanlar/cok-satanlara-yeni-girenler"
+          )
+          [[ "${#paths[@]}" == 24 ]]
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          echo '| No | Route | HTTP | TTFB s | Total s | Final path | Canonical | Robots |'
+          echo '|---:|---|---:|---:|---:|---|---|---|'
+          count=0
+          for path in "${paths[@]}"; do
+            body="$tmp/body-$count.html"
+            headers="$tmp/headers-$count.txt"
+            metrics="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 10 --max-time 35 \
+              --user-agent 'IlkOku-ReadOnly-Historical-Ahrefs-Closure/20261023' \
+              --output "$body" --dump-header "$headers" \
+              --write-out '%{http_code}|%{time_starttransfer}|%{time_total}|%{url_effective}' \
+              "https://ilkoku.com$path" || true)"
+            IFS='|' read -r http ttfb total final <<< "$metrics"
+            if [[ "${http:-000}" == 403 || "${http:-000}" == 429 ]]; then
+              echo "CIRCUIT BREAKER: edge policy $http for $path" >&2
+              exit 1
+            fi
+            if [[ "${http:-000}" == 500 || "${http:-000}" == 502 || "${http:-000}" == 503 || "${http:-000}" == 504 ]]; then
+              echo "CIRCUIT BREAKER: origin $http for $path" >&2
+              exit 1
+            fi
+            tags="$(python3 - "$body" <<'PY'
+          import sys
+          from html.parser import HTMLParser
+          class H(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.canonical = "-"
+                  self.robots = "-"
+              def handle_starttag(self,tag,attrs):
+                  a = dict(attrs)
+                  if tag == "link" and a.get("rel") == "canonical":
+                      self.canonical = a.get("href", "-")
+                  if tag == "meta" and a.get("name", "").lower() == "robots":
+                      self.robots = a.get("content", "-")
+          h = H()
+          with open(sys.argv[1],encoding="utf-8",errors="replace") as f:
+              h.feed(f.read())
+          print(h.canonical + "|" + h.robots)
+          PY
+            )"
+            IFS='|' read -r canonical robots <<< "$tags"
+            final_path="${final#https://ilkoku.com}"
+            echo "| $((count+1)) | $path | ${http:-000} | ${ttfb:--} | ${total:--} | ${final_path:--} | ${canonical:--} | ${robots:--} |"
+            count=$((count+1))
+            sleep 3
+          done
+          echo "AUDIT_COMPLETE=24"

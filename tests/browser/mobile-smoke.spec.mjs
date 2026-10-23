@@ -901,6 +901,35 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
   await expect(page.getByTestId("platform-coupon-list")).toBeVisible();
 
   const couponCode = `CIADMIN${Date.now().toString(36).toUpperCase()}`;
+
+  // Regression: an explicit invalid usage limit must not become "unlimited".
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  const totalLimitInput = page.locator('input[name="totalUsageLimit"]');
+  await totalLimitInput.evaluate((element) => element.removeAttribute("min"));
+  await totalLimitInput.fill("0");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(
+    page.getByText("Kampanya için gerekli alanları tamamlayın."),
+  ).toBeVisible();
+
+  // Regression: invalid calendar dates must not be saved without restriction.
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  const startsAtInput = page.locator('input[name="startsAt"]');
+  await startsAtInput.evaluate((element) => {
+    element.type = "text";
+  });
+  await startsAtInput.fill("2026-02-31");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(
+    page.getByText("Bitiş tarihi başlangıç tarihinden önce olamaz."),
+  ).toBeVisible();
+
+  // No live records are created: all mutation tests use disposable CI data.
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
   await page.locator('input[name="code"]').fill(couponCode);
   await page.locator('input[name="discountValue"]').fill("15");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();

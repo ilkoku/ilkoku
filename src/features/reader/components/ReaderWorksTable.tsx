@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WorkCoverImage } from "@/components/media/WorkCoverImage";
 import { useEffect, useMemo, useState } from "react";
 
 import { toggleFavoriteAction } from "@/features/reader/favorites";
@@ -213,8 +214,13 @@ export function ReaderWorksTable({
                           type="button"
                         >
                           {work.coverUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img alt="" src={work.coverUrl} />
+                            <WorkCoverImage
+                              alt=""
+                              src={work.coverUrl}
+                              width={96}
+                              height={144}
+                              sizes="44px"
+                            />
                           ) : (
                             <span aria-hidden="true">İO</span>
                           )}

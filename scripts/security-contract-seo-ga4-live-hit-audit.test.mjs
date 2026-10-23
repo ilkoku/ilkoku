@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { classifyGa4Request, summarizeHits } from "./seo-ga4-live-hit-rules.mjs";
+import { classifyGa4Request, summarizeHits, assessCtaHitDelivery } from "./seo-ga4-live-hit-rules.mjs";
 
 test("First-party GA4 page_view is recognized without user/session parameters", () => {
   const record = classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?v=2&tid=G-MCF2YN9SL8&en=page_view&cid=SECRET&dl=https%3A%2F%2Filkoku.com%2Ffoo");
@@ -65,8 +65,23 @@ test("Browser GA4 audit does not submit forms, inject synthetic hits or log raw 
   assert.match(script, /NO_GA4_HITS_AFTER_ACCEPT/);
   assert.match(script, /safe-cta-click/);
   assert.match(script, /ctaEvidence/);
-  assert.match(script, /CTA_DATALAYER_EVENT_MISSING/);
-  assert.match(script, /CTA_GA4_HIT_NOT_EXACTLY_ONE/);
+  assert.doesNotMatch(script, /CTA_DATALAYER_EVENT_MISSING/);
+  assert.match(script, /assessCtaHitDelivery/);
   assert.match(script, /gtagEventNames/);
+  assert.match(script, /gtagEventPresent/);
+  assert.match(script, /ga4SuccessfulHitCount/);
   assert.match(script, /preventDefault\(\)/);
+});
+
+test("CTA succeeds on exactly one successful network hit even after the GTM event-object pathway is removed", () => {
+  const hits = [{ type: "ga4-hit", phase: "safe-cta-click", event: "site_cta_click", status: 204 }];
+  assert.deepEqual(assessCtaHitDelivery(true, hits), { violations: [], successfulHitCount: 1 });
+});
+
+test("CTA network gate rejects absent, duplicated, unsuccessful or unclicked hits", () => {
+  const good = { type: "ga4-hit", event: "site_cta_click", status: 204 };
+  assert.deepEqual(assessCtaHitDelivery(true, []).violations, ["CTA_GA4_HIT_NOT_EXACTLY_ONE"]);
+  assert.deepEqual(assessCtaHitDelivery(true, [good, good]).violations, ["CTA_GA4_HIT_NOT_EXACTLY_ONE"]);
+  assert.deepEqual(assessCtaHitDelivery(true, [{ ...good, status: 403 }]).violations, ["CTA_GA4_HIT_NOT_SUCCESSFUL"]);
+  assert.deepEqual(assessCtaHitDelivery(false, [good]).violations, ["CTA_NOT_CLICKED"]);
 });

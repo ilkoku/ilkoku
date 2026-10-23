@@ -1,0 +1,59 @@
+name: Temporary İlkOku writing guide TTFB diagnostic
+on:
+  pull_request:
+    paths:
+      - .github/workflows/seo-writing-ttfb-diagnostic-20261023.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metrics:
+    name: Read-only four-guide HTTP timing
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Bounded, paced production GET measurements
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          paths=(
+            "/yazarlar-icin/cizgi-anlati/manga"
+            "/yazarlar-icin/cocuk-ve-genclik/masal"
+            "/yazarlar-icin/cocuk-ve-genclik/fabl"
+            "/yazarlar-icin/kurgu/utopya"
+          )
+          read_header() {
+            local file="$1" name="$2"
+            grep -i "^$name:" "$file" | tail -1 | cut -d: -f2- | tr -d '\r' | xargs || true
+          }
+          echo '| Attempt | Path | HTTP | TTFB (s) | Total (s) | CF cache | Next cache | Age | Cache-Control |'
+          echo '|---|---|---:|---:|---:|---|---|---|---|'
+          for attempt in 1 2; do
+            for path in "${paths[@]}"; do
+              hdr="$(mktemp)"
+              metric="$(curl -sS -L --compressed --connect-timeout 10 --max-time 30 \
+                --user-agent 'IlkOku-ReadOnly-Perf-Diagnostic/20261023' \
+                --dump-header "$hdr" --output /dev/null \
+                --write-out '%{http_code}|%{time_starttransfer}|%{time_total}' \
+                "https://ilkoku.com${path}" || true)"
+              IFS='|' read -r status ttfb total <<< "$metric"
+              cf="$(read_header "$hdr" cf-cache-status)"
+              next="$(read_header "$hdr" x-nextjs-cache)"
+              age="$(read_header "$hdr" age)"
+              cc="$(read_header "$hdr" cache-control)"
+              rm -f "$hdr"
+              echo "| $attempt | $path | ${status:-000} | ${ttfb:--} | ${total:--} | ${cf:--} | ${next:--} | ${age:--} | ${cc:--} |"
+              if [[ "${status:-000}" == 403 || "${status:-000}" == 429 ]]; then
+                echo 'CIRCUIT BREAKER: edge bot restriction; stop requests; do not report an app error' >&2
+                exit 1
+              fi
+              if [[ "${status:-000}" != 200 ]]; then
+                echo "Non-200 result on $path; preserve as diagnostic, no production changes" >&2
+                exit 1
+              fi
+              sleep 4
+            done
+          done
+          echo 'DIAGNOSTIC DONE: no production content or code modified.'

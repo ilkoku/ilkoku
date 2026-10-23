@@ -319,7 +319,7 @@ test("UAT ready paid section 2 stays locked when checkout contracts are missing"
 
   has(access, "preparedPaidChapterGate", "published ready paid chapters remain locked");
   has(publicQuery, "preparedPaidChapterGate", "locked content redacted without terms");
-  has(publicQuery, "chapterAccess[chapter.id] === \"preview\"", "preview remains readable");
+  has(publicQuery, "chapterAccess[chapterId] === \"preview\"", "preview remains readable");
   has(showcase, ": purchaseHref;", "locked chapter always points to checkout");
   has(readingPage, "getCommerceChapterAccessDecision", "chapter route enforces server-side gate");
 });

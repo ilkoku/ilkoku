@@ -5,9 +5,9 @@ import {
   useState,
 } from "react";
 
-import Image from "next/image";
 import Link from "next/link";
 
+import { WorkCoverImage } from "@/components/media/WorkCoverImage";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { workspaceContent } from "@/content";
@@ -367,13 +367,13 @@ export function WorksWorkspace({
                     role="img"
                   >
                     {work.coverUrl ? (
-                      <Image
+                      <WorkCoverImage
                         alt={`${work.title} kapak görseli`}
                         className="workspace-cover__image"
                         height={360}
                         src={work.coverUrl}
-                        unoptimized
                         width={240}
+                        sizes="(max-width: 640px) 180px, 240px"
                       />
                     ) : (
                       <>

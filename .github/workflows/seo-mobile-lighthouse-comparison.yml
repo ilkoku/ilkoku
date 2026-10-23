@@ -1,6 +1,9 @@
 name: SEO mobile post-merge three-run comparison
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/seo-mobile-lighthouse-comparison.yml
   workflow_dispatch:
   push:
     branches:

@@ -123,6 +123,30 @@ test("UAT K/R: zero-total orders skip provider and grant entitlement atomically"
   lacks(zero, "adapter.createPayment", "zero-total provider handoff");
 });
 
+test("UAT K: concurrent 0 TL requests serialize by reader before entitlement and order reads", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+
+  for (const [name, code] of [["zero-total", zero], ["provider checkout", paid]]) {
+    assert.match(
+      code,
+      /SELECT id\s+FROM User\s+WHERE id = \$\{input\.readerId\}\s+FOR UPDATE/u,
+      name + " must lock the same reader row",
+    );
+  }
+  const mutexIndex = zero.indexOf("await transaction.$queryRaw");
+  const workReadIndex = zero.indexOf("const work = await transaction.work.findFirst");
+  const entitlementIndex = zero.indexOf("const entitlement = await transaction.workEntitlement.findUnique");
+  const orderIndex = zero.indexOf("const order = await transaction.order.create");
+  assert.ok(
+    mutexIndex >= 0 &&
+      mutexIndex < workReadIndex &&
+      workReadIndex < entitlementIndex &&
+      entitlementIndex < orderIndex,
+    "reader lock must precede work/entitlement snapshot and all zero-total order writes",
+  );
+});
+
 test("UAT K/F: coupon funder determines earning base without mixing platform campaign cost into writer deductions", () => {
   const pricing = source("src/features/commerce/pricing.ts");
   const writerFinance = source("src/app/gelirler/page.tsx");

@@ -148,27 +148,13 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "active" &&
     effectiveCommerce.priceAmount !== null &&
     effectiveCommerce.priceAmount > BigInt(0);
-  const paidAccessEnforced =
-    effectiveCommerce.saleModel === "paid" &&
-    (previouslyActivatedPaid ||
-      stagedZeroPurchaseReady ||
-      livePaidCheckoutActive);
-  const checkoutConfigurationActive =
-    stagedZeroPurchaseReady || livePaidCheckoutActive;
-
-  // Keep the checkout overview visible even when the sale is not yet enabled.
-  // Purchase actions remain behind the existing server-side terms/provider gates.
+  // Keep the checkout overview visible even when purchase is not ready.
+  // 0 TL is the only provider-free completion path.
   const stagedZeroCandidate =
     !previouslyActivatedPaid &&
     effectiveCommerce.saleModel === "paid" &&
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
-  const purchaseUnavailableMessage = stagedZeroCandidate
-    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
-    : paidAccessEnforced
-      ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
-      : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
-
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
   const coupon = !stagedZeroPurchaseReady && requestedCouponCode
@@ -196,6 +182,33 @@ export default async function CheckoutPreparationPage({
         }
       : null,
   );
+  const couponZeroPurchaseReady =
+    Boolean(purchaseTerms) &&
+    Boolean(verifiedSeller) &&
+    Boolean(coupon) &&
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    effectiveCommerce.priceAmount !== null &&
+    effectiveCommerce.priceAmount > BigInt(0) &&
+    pricing.finalAmount === BigInt(0);
+
+  // A 100%-off coupon may complete as 0 TL even with card/phone disabled;
+  // a nonzero remaining balance must NEVER start a provider-free order.
+  const checkoutConfigurationActive =
+    stagedZeroPurchaseReady || couponZeroPurchaseReady || livePaidCheckoutActive;
+  const paidAccessEnforced =
+    effectiveCommerce.saleModel === "paid" &&
+    (previouslyActivatedPaid ||
+      effectiveCommerce.status === "ready" ||
+      effectiveCommerce.status === "active");
+  const purchaseUnavailableMessage = stagedZeroCandidate
+    ? "0 TL edinim akışı için doğrulanmış satıcı, satış yetkisi ve aktif okur koşulları gereklidir. Bunlar tamamlanıncaya kadar yeni sipariş oluşturulmaz."
+    : effectiveCommerce.status === "active" && originalAmount > BigInt(0)
+      ? "Gerçek tahsilat kapalı. Geçerli bir %100 indirim kuponu toplamı 0 TL'ye indirirse, onaylı satıcı ve sözleşme koşullarıyla sipariş tamamlanabilir."
+      : paidAccessEnforced
+        ? "Erişim korunuyor. Eserin mevcut ücretli erişim hakları geçerlidir; yeni satın alma yolu geçici olarak kapalı olsa bile eser bu nedenle ücretsiz erişime açılmaz."
+        : "Bu eser henüz satın almaya açık değil. Yayın ve satış ayarları tamamlanıncaya kadar sipariş oluşturulmaz.";
+
   // An available 0 TL option is not itself a completed purchase: the existing
   // server-side contract, seller and authorization gates still decide whether
   // the submit action can run. Card/carrier remain disabled in this UI.
@@ -463,10 +476,21 @@ export default async function CheckoutPreparationPage({
                   eser için geçerli değil.
                 </div>
               ) : null}
+              {requestedCouponCode ? (
+                <Link className={styles.quietAction} href={`/satinal/${work.slug}?from=${encodeURIComponent(returnTo)}`}>
+                  Kuponu kaldır
+                </Link>
+              ) : null}
 
               {coupon ? (
                 <div className={styles.successNotice}>
                   {coupon.code} kuponu uygulandı.
+                  {pricing.finalAmount === BigInt(0)
+                    ? " Toplam 0 TL; kart veya telefon tahsilatı yapılmayacak."
+                    : " Kalan toplam 0 TL olmadığı için ödeme olmadan edinim yapılamaz."}
+                  {coupon.owner === "platform"
+                    ? " İndirim İlkOku tarafından karşılanır."
+                    : " İndirim yazar tarafından karşılanır."}
                 </div>
               ) : null}
             </>

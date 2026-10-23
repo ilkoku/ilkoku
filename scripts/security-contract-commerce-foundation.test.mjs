@@ -828,7 +828,7 @@ test("public paid showcase distinguishes access enforcement from purchase availa
   contains(query, "stagedZeroPurchaseAvailable", "provider-free staged zero purchase availability");
   contains(query, "livePaidPurchaseAvailable", "non-zero purchase still requires live payment path");
   contains(showcase, "Kilitli · Erişim koşulları hazırlanıyor", "locked paid work retains access control even if purchase inactive");
-  contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
+  contains(showcase, "Kilitli bölümler erişim hakkı gerektirir", "locked paid access is preserved during seller or checkout outage");
   contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
   contains(bookPage, "work.commerce?.purchaseAvailable", "structured offer purchase availability");
 });

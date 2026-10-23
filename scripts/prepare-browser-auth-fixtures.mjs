@@ -154,6 +154,22 @@ try {
        VALUES (?, ?, 1990, ?, ?)`,
       [randomUUID(), id, now, now],
     );
+    await client.execute(
+      `INSERT INTO \`AuditLog\`
+        (id, actorId, action, entityType, entityId, metadata, createdAt)
+       VALUES (?, ?, 'profile_updated', 'AgeVerification', ?, ?, ?)`,
+      [
+        randomUUID(),
+        id,
+        id,
+        JSON.stringify({
+          adultEligibleAt: "2008-01-01T00:00:00.000Z",
+          birthYear: 1990,
+          source: "ci_browser_fixture",
+        }),
+        now,
+      ],
+    );
     sessions["readerRace" + suffix] = token;
     userIds["readerRace" + suffix] = id;
   }

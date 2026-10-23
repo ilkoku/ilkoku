@@ -92,7 +92,7 @@ function mapReaderWork(
   const purchaseAvailable = stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
   const paidAccessRestricted =
     effective.saleModel === "paid" &&
-    (Boolean(configuration?.activatedAt) || purchaseAvailable) &&
+    (Boolean(configuration?.activatedAt) || configuration?.status === "ready" || purchaseAvailable) &&
     !hasEntitlement;
   const canRead = (chapter: typeof publishedChapters[number]) =>
     !paidAccessRestricted ||

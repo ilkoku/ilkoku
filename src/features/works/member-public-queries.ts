@@ -12,7 +12,7 @@ import {
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
-import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { resolveEffectiveCommerceState, shouldEnforcePaidChapterAccess } from "@/features/commerce/effective-state";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
@@ -170,11 +170,11 @@ export async function getMemberPublicWorkBySlug(
     Boolean(await getVerifiedWorkSeller(work.id));
   const livePaidPurchaseAvailable =
     livePaidCandidate && Boolean(readerPurchaseTerms);
-  const commerceEnforcementActive =
-    effectiveCommerce.saleModel === "paid" &&
-    (Boolean(saleConfiguration?.activatedAt) ||
-      stagedZeroPurchaseAvailable ||
-      livePaidPurchaseAvailable);
+  const commerceEnforcementActive = shouldEnforcePaidChapterAccess({
+    activatedAt: saleConfiguration?.activatedAt,
+    saleModel: effectiveCommerce.saleModel,
+    status: effectiveCommerce.status,
+  });
   const purchaseAvailable =
     stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
 

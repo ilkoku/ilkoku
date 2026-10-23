@@ -224,6 +224,7 @@ export async function beginPaidCheckoutAction(formData: FormData) {
     checkout_disabled: "tahsilat-kapali",
     provider_unavailable: "odeme-saglayicisi-hazir-degil",
     work_unavailable: "eser-hazir-degil",
+    seller_unverified: "satici-yetkisi-dogrulanmadi",
     coupon_invalid: "kupon-gecersiz",
     zero_total_required: "sifir-toplam-akisi",
     provider_error: "odeme-baslatilamadi",

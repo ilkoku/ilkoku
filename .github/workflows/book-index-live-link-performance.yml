@@ -6,6 +6,7 @@ on:
     branches:
       - main
     paths:
+      - ".github/workflows/book-index-live-link-performance.yml"
       - "next.config.ts"
       - "src/app/en-cok-satanlar/**"
       - "src/app/yeni-cikanlar/**"

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { timeBookIndexOperation } from "./performance-trace";
@@ -201,8 +202,13 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     }));
 }
 
-async function loadLongSellers(limit: number) {
-  const rows = await timeBookIndexOperation("insights.longSellerHistorySql", () => prisma.$queryRaw<LongSellerRow[]>`
+// Heavy historical GROUP BY is identical across public requests until fresh
+// observations arrive. Cache only this derived history for 30 seconds; the
+// current rankings, publication gate and search policy remain request-fresh.
+// Normalize dates and bigint before Next's JSON data-cache serialization.
+const getCachedLongSellerHistoryRows = unstable_cache(
+  async () => {
+    const rows = await prisma.$queryRaw<LongSellerRow[]>`
     SELECT
       externalBook.masterBookId AS masterBookId,
       MIN(observation.observedAt) AS firstObservedAt,
@@ -228,7 +234,30 @@ async function loadLongSellers(limit: number) {
     ORDER BY
       DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC,
       COUNT(*) DESC
-  `);
+  `;
+    return rows.map((row) => ({
+      masterBookId: row.masterBookId,
+      firstObservedAt: row.firstObservedAt.toISOString(),
+      lastObservedAt: row.lastObservedAt.toISOString(),
+      sourceCodes: row.sourceCodes,
+      observationCount: Number(row.observationCount),
+    }));
+  },
+  ["ilkoku-book-index-long-seller-history-20261023-v1"],
+  { revalidate: 30 },
+);
+
+async function loadLongSellers(limit: number) {
+  const cachedRows = await timeBookIndexOperation(
+    "insights.longSellerHistorySql",
+    getCachedLongSellerHistoryRows,
+  );
+  // Restore Date objects because downstream sort/format logic expects them.
+  const rows: LongSellerRow[] = cachedRows.map((row) => ({
+    ...row,
+    firstObservedAt: new Date(row.firstObservedAt),
+    lastObservedAt: new Date(row.lastObservedAt),
+  }));
 
   if (!rows.length) return [];
 

@@ -1,0 +1,60 @@
+name: Temporary seven Ahrefs slow routes TTFB diagnostic
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-seven-slow-routes-diagnostic-20261023.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  metrics:
+    name: Read-only seven-route timing and cache status
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Paced, bounded live route verification
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          paths=(
+            "/editorler"
+            "/en-cok-satanlar"
+            "/en-cok-satanlar/turkiye"
+            "/en-cok-satanlar/cok-satanlarda-yukselenler"
+            "/en-cok-satanlar/birden-fazla-listede-cok-satanlar"
+            "/en-cok-satanlar/uzun-suredir-cok-satanlar"
+            "/en-cok-satanlar/cok-satanlara-yeni-girenler"
+          )
+          get_header() {
+            grep -i "^$2:" "$1" | tail -1 | cut -d: -f2- | tr -d '\r' | xargs || true
+          }
+          echo '| Attempt | Path | HTTP | TTFB s | Total s | CF cache | Next cache | Cache-Control | X-Robots |'
+          echo '|---:|---|---:|---:|---:|---|---|---|---|'
+          for attempt in 1 2; do
+            for path in "${paths[@]}"; do
+              hdr="$(mktemp)"
+              measurements="$(curl --silent --show-error --location --compressed --connect-timeout 10 --max-time 35 \
+                --user-agent 'IlkOku-ReadOnly-SEO-TTFB-20261023/1.0' \
+                --dump-header "$hdr" --output /dev/null \
+                --write-out '%{http_code}|%{time_starttransfer}|%{time_total}' \
+                "https://ilkoku.com${path}" || true)"
+              IFS='|' read -r http ttfb total <<< "$measurements"
+              cf="$(get_header "$hdr" cf-cache-status)"
+              next="$(get_header "$hdr" x-nextjs-cache)"
+              cache="$(get_header "$hdr" cache-control)"
+              robots="$(get_header "$hdr" x-robots-tag)"
+              rm -f "$hdr"
+              echo "| $attempt | $path | ${http:-000} | ${ttfb:--} | ${total:--} | ${cf:--} | ${next:--} | ${cache:--} | ${robots:--} |"
+              if [[ "${http:-000}" == 403 || "${http:-000}" == 429 ]]; then
+                echo 'CIRCUIT BREAKER: edge rejected diagnostic user-agent. No further requests.' >&2
+                exit 1
+              fi
+              if [[ "${http:-000}" != 200 ]]; then
+                echo "HTTP non-200: $path; cannot claim success" >&2
+                exit 1
+              fi
+              sleep 4
+            done
+          done
+          echo 'PASS: 14 read-only GET responses. No public content or code changed.'

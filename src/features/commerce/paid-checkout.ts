@@ -367,7 +367,7 @@ export async function startPaidCheckout(input: {
       paymentId: payment.id,
       workId: work.id,
     } as const;
-  });
+  }, { isolationLevel: "ReadCommitted" });
 
   if (!prepared.ok) return prepared;
 

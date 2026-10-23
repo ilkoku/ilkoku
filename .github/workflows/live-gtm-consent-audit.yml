@@ -1,6 +1,9 @@
 name: Live Google Tag Gateway and consent audit
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/live-gtm-consent-audit.yml
   workflow_dispatch:
   push:
     branches: [main]

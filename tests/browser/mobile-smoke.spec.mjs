@@ -501,6 +501,18 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   ]);
   await page.setViewportSize(viewports.phone430);
 
+  // A ready paid work must never expose its locked chapter contents,
+  // while its explicitly configured preview remains readable.
+  await page.goto("/oku/ci-browser-zero-total-work/bolum-2", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page).toHaveURL(/\/oku\/ci-browser-zero-total-work\/bolum-2(?:\?|$)/);
+  await expect(page.getByText("CI preview chapter public content.")).toBeVisible();
+
+  await page.goto("/kitap/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Kilitli · Eser erişimi 0 TL")).toBeVisible();
+  await expect(page.getByText("Ön İzleme · Ücretsiz okunabilir")).toBeVisible();
+
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
   });
@@ -638,6 +650,94 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(financeRow).toBeVisible();
   await expect(financeRow.getByText("sale_gross", { exact: true })).toBeVisible();
   await expect(financeRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
+});
+
+test("provider-free full discount: author and platform 100% coupons acquire locked works and write accounting evidence", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  const token = authFixture.sessions?.reader;
+  expect(token, "Reader fixture missing").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+
+  for (const sample of [
+    {
+      slug: "ci-browser-author-coupon-work",
+      coupon: "CIAUTHOR100",
+      entryType: "author_coupon_discount",
+      earningBaseAmount: 0,
+    },
+    {
+      slug: "ci-browser-platform-coupon-work",
+      coupon: "CIPLATFORM100",
+      entryType: "platform_coupon_discount",
+      earningBaseAmount: 1500,
+    },
+  ]) {
+    await page.goto("/oku/" + sample.slug + "/bolum-1", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(new RegExp("/satinal/" + sample.slug + "\\?from="));
+    await expect(page.getByText("Provider-free 100% coupon chapter content.")).toHaveCount(0);
+
+    await page.goto("/satinal/" + sample.slug + "?kupon=" + sample.coupon, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByText(sample.coupon + " kuponu uygulandı.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Toplam 0 TL: gerçek ödeme almadan sipariş verilebilir.", { exact: false })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
+    await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+    await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+
+    await page.locator('input[name="acceptDigitalContent"]').check();
+    await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+    await expect(page).toHaveURL(/\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/);
+    const orderNo = new URL(page.url()).searchParams.get("siparis");
+    expect(orderNo).toMatch(/^ILK-/u);
+
+    await page.goto("/oku/" + sample.slug + "/bolum-1", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("Provider-free 100% coupon chapter content.")).toBeVisible();
+
+    if (process.env.DATABASE_URL) {
+      const url = new URL(process.env.DATABASE_URL);
+      const db = await mysql.createConnection({
+        host: url.hostname,
+        port: Number(url.port || 3306),
+        user: decodeURIComponent(url.username),
+        password: decodeURIComponent(url.password),
+        database: decodeURIComponent(url.pathname.slice(1)),
+      });
+      try {
+        const [rows] = await db.execute(
+          "SELECT o.originalAmount, o.finalAmount, o.authorEarningBaseAmount, o.couponCodeSnapshot," +
+          " (SELECT COUNT(*) FROM Payment p WHERE p.orderId=o.id) AS paymentCount," +
+          " (SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId=o.id) AS consentCount," +
+          " (SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId=o.id AND e.status='active') AS entitlementCount," +
+          " (SELECT COUNT(*) FROM CouponRedemption r WHERE r.orderId=o.id AND r.status='used' AND r.discountAmount=1500) AS redemptionCount," +
+          " (SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId=o.id) AS legalCount," +
+          " (SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='sale_gross') AS grossCount," +
+          " (SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType=?) AS discountCount" +
+          " FROM \x60Order\x60 o WHERE o.orderNo=?",
+          [sample.entryType, orderNo],
+        );
+        expect(rows).toHaveLength(1);
+        const a = rows[0];
+        expect(Number(a.originalAmount)).toBe(1500);
+        expect(Number(a.finalAmount)).toBe(0);
+        expect(Number(a.authorEarningBaseAmount)).toBe(sample.earningBaseAmount);
+        expect(a.couponCodeSnapshot).toBe(sample.coupon);
+        for (const field of ["consentCount","entitlementCount","redemptionCount","legalCount","grossCount","discountCount"]) {
+          expect(Number(a[field]), field).toBe(1);
+        }
+        expect(Number(a.paymentCount)).toBe(0);
+        const [usage] = await db.execute("SELECT usageCount FROM Coupon WHERE code=?", [sample.coupon]);
+        expect(Number(usage[0].usageCount)).toBe(1);
+      } finally {
+        await db.end();
+      }
+    }
+  }
 });
 
 test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {

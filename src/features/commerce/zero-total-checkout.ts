@@ -8,6 +8,7 @@ import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
 import { isCommerceCheckoutEnabled } from "./runtime";
+import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type ZeroTotalCheckoutResult =
   | { ok: true; orderId: string; orderNo: string }
@@ -18,7 +19,8 @@ export type ZeroTotalCheckoutResult =
         | "work_unavailable"
         | "already_entitled"
         | "coupon_invalid"
-        | "not_zero_total";
+        | "not_zero_total"
+        | "seller_unverified";
     };
 
 function orderNumber() {
@@ -102,6 +104,12 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "work_unavailable" } as const;
     }
 
+    // Both staged 0 TL and 100%-coupon acquisitions require approved rights.
+    const verifiedSeller = await getVerifiedWorkSeller(work.id, transaction);
+    if (!verifiedSeller) {
+      return { ok: false, reason: "seller_unverified" } as const;
+    }
+
     const entitlement = await transaction.workEntitlement.findUnique({
       where: {
         readerId_workId: {
@@ -138,6 +146,22 @@ export async function completeZeroTotalCheckout(input: {
         },
       });
 
+      await transaction.orderLegalSnapshot.create({
+        data: {
+          orderId: order.id,
+          legalPartyId: verifiedSeller.party.id,
+          sellerAssignmentId: verifiedSeller.assignmentId,
+          authorizationId: verifiedSeller.rights.id,
+          sellerMode: verifiedSeller.mode,
+          sellerName: verifiedSeller.party.legalName!,
+          sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!,
+          sellerAddress: verifiedSeller.party.legalAddress!,
+          sellerEmail: verifiedSeller.party.contactEmail!,
+          sellerPhone: verifiedSeller.party.contactPhone,
+          rightsDocumentHash: verifiedSeller.rights.documentHash!,
+        },
+      });
+      
       await transaction.orderConsent.create({
         data: {
           orderId: order.id,
@@ -329,6 +353,22 @@ export async function completeZeroTotalCheckout(input: {
       },
     });
 
+    await transaction.orderLegalSnapshot.create({
+      data: {
+        orderId: order.id,
+        legalPartyId: verifiedSeller.party.id,
+        sellerAssignmentId: verifiedSeller.assignmentId,
+        authorizationId: verifiedSeller.rights.id,
+        sellerMode: verifiedSeller.mode,
+        sellerName: verifiedSeller.party.legalName!,
+        sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!,
+        sellerAddress: verifiedSeller.party.legalAddress!,
+        sellerEmail: verifiedSeller.party.contactEmail!,
+        sellerPhone: verifiedSeller.party.contactPhone,
+        rightsDocumentHash: verifiedSeller.rights.documentHash!,
+      },
+    });
+    
     await transaction.orderConsent.create({
       data: {
         orderId: order.id,

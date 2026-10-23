@@ -196,6 +196,13 @@ export default async function CheckoutPreparationPage({
         }
       : null,
   );
+  // An available 0 TL option is not itself a completed purchase: the existing
+  // server-side contract, seller and authorization gates still decide whether
+  // the submit action can run. Card/carrier remain disabled in this UI.
+  const zeroTotalOptionSelected =
+    effectiveCommerce.saleModel === "paid" &&
+    pricing.finalAmount === BigInt(0);
+
 
   return (
     <AppShell profile={profile}>
@@ -227,6 +234,48 @@ export default async function CheckoutPreparationPage({
             Satın alma yalnızca bu eserin dijital okuma erişimini kapsar.
             Aktif erişim hakkı kütüphanene eklenir; fiziksel kitap gönderilmez.
           </p>
+          <section
+            className={styles.readerCheckoutPaymentOptions}
+            aria-labelledby="reader-payment-options-title"
+          >
+            <h3 id="reader-payment-options-title">İşlem seçeneği</h3>
+            <div className={styles.readerCheckoutPaymentGrid}>
+              <label className={`${styles.readerCheckoutPaymentChoice} ${styles.readerCheckoutPaymentChoiceDisabled}`}>
+                <input type="radio" name="purchasePath" value="card" disabled />
+                <span className={styles.readerCheckoutPaymentCopy}>
+                  <strong>Kredi Kartı</strong>
+                  <small>Pasif</small>
+                </span>
+              </label>
+              <label className={`${styles.readerCheckoutPaymentChoice} ${styles.readerCheckoutPaymentChoiceDisabled}`}>
+                <input type="radio" name="purchasePath" value="carrier" disabled />
+                <span className={styles.readerCheckoutPaymentCopy}>
+                  <strong>Telefon Faturası</strong>
+                  <small>Pasif</small>
+                </span>
+              </label>
+              <label
+                className={`${styles.readerCheckoutPaymentChoice} ${
+                  zeroTotalOptionSelected
+                    ? styles.readerCheckoutPaymentChoiceSelected
+                    : styles.readerCheckoutPaymentChoiceDisabled
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="purchasePath"
+                  value="zero"
+                  checked={zeroTotalOptionSelected}
+                  disabled={!zeroTotalOptionSelected}
+                  readOnly
+                />
+                <span className={styles.readerCheckoutPaymentCopy}>
+                  <strong>Ücretli <span className={styles.readerCheckoutPaymentAmount}>0 TL</span></strong>
+                  <small>{zeroTotalOptionSelected ? "Seçili · Gerçek ödeme yok" : "Bu eser için kullanılamıyor"}</small>
+                </span>
+              </label>
+            </div>
+          </section>
 
           {purchaseTerms ? (
             <div className={styles.contractBox}>

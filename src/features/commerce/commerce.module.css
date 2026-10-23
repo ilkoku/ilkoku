@@ -1457,6 +1457,94 @@
 
 .readerCheckoutSummary .couponApplyForm { margin: 0.35rem 0; }
 
+/* Provider-free checkout choices. The two provider options never submit. */
+.readerCheckoutPaymentOptions {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.readerCheckoutPaymentOptions h3 {
+  margin: 0;
+  font-size: 0.97rem;
+  color: #37234f;
+}
+
+.readerCheckoutPaymentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.readerCheckoutPaymentChoice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-height: 5.75rem;
+  padding: 0.85rem 0.7rem;
+  border: 1px solid #dcd3e8;
+  border-radius: 14px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.readerCheckoutPaymentChoice input {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  accent-color: #6d28d9;
+}
+
+.readerCheckoutPaymentChoiceDisabled {
+  color: #827b8c;
+  background: #f7f5f9;
+  border-color: #e3deea;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPaymentChoiceSelected {
+  color: #3a1d66;
+  background: #f2ebff;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 1px #7c3aed;
+  cursor: default;
+}
+
+.readerCheckoutPaymentCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.35;
+}
+
+.readerCheckoutPaymentCopy strong {
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.readerCheckoutPaymentCopy small {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: inherit;
+}
+
+.readerCheckoutPaymentAmount {
+  display: inline-block;
+  margin-left: 0.12rem;
+  color: #5b21b6;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .readerCheckoutPaymentGrid {
+    grid-template-columns: 1fr;
+  }
+  .readerCheckoutPaymentChoice {
+    min-height: 3.9rem;
+    padding: 0.75rem 0.9rem;
+  }
+}
+
 .readerCheckoutNotReady {
   display: grid;
   justify-items: start;

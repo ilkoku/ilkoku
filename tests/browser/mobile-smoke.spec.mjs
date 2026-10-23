@@ -518,6 +518,14 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
   await expect(page.getByText("Platform: İlkOku", { exact: true })).toBeVisible();
+  const choiceGroup = page.getByRole("region", { name: "İşlem seçeneği" });
+  await expect(choiceGroup).toBeVisible();
+  await expect(choiceGroup.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(choiceGroup.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(choiceGroup.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
+  await expect(choiceGroup.getByRole("radio")).toHaveCount(3);
+  await expect(choiceGroup.getByText("Seçili · Gerçek ödeme yok")).toBeVisible();
+  await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
   await expect(page.locator('[aria-label="Sipariş özeti"]')).toBeVisible();
   await expectResponsiveDocument(page);
   await expect(

@@ -503,6 +503,84 @@
   color: #736c79;
 }
 
+/* Admin coupons are rendered inside the dark system-management shell.
+   Scope all overrides to this screen: reader/writer commerce panels
+   intentionally keep their existing light theme. */
+.adminCouponPanel {
+  color-scheme: dark;
+  border-color: #303650;
+  background: #111624;
+  color: #eff2fc;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.adminCouponPanel .panelHeader h2,
+.adminCouponPanel .couponCard h3 {
+  color: #f5f6ff;
+}
+
+.adminCouponPanel .panelHeader p,
+.adminCouponPanel .couponCard p,
+.adminCouponPanel .couponCard small {
+  color: #b6bfd2;
+}
+
+.adminCouponPanel .eyebrow {
+  color: #b794ff;
+}
+
+.adminCouponPanel .badge {
+  border: 1px solid #503875;
+  background: #2c2045;
+  color: #e2d3ff;
+}
+
+.adminCouponPanel .field span {
+  color: #d6dbea;
+}
+
+.adminCouponPanel .field input,
+.adminCouponPanel .field select {
+  border-color: #3b465d;
+  background: #0d1220;
+  color: #f4f6fd;
+  color-scheme: dark;
+}
+
+.adminCouponPanel .field input::placeholder {
+  color: #a7b0c5;
+  opacity: 1;
+}
+
+.adminCouponPanel .field input:focus-visible,
+.adminCouponPanel .field select:focus-visible {
+  border-color: #ad91ff;
+  outline: 2px solid #a98bff;
+  outline-offset: 1px;
+}
+
+.adminCouponPanel .field select option {
+  background: #0d1220;
+  color: #f4f6fd;
+}
+
+.adminCouponPanel .empty {
+  border-color: #42445e;
+  background: #171b2b;
+  color: #cbd2e1;
+}
+
+.adminCouponPanel .couponCard {
+  border-color: #343c54;
+  background: #181e30;
+}
+
+.adminCouponPanel .secondaryAction {
+  border-color: #62498d;
+  background: #2b2042;
+  color: #e2d3ff;
+}
+
 @media (max-width: 720px) {
   .formGrid {
     grid-template-columns: 1fr;

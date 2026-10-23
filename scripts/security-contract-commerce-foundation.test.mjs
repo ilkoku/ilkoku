@@ -152,6 +152,16 @@ test("platform coupon workspace preserves author earning base and supports expli
 });
 
 
+test("platform coupons reject malformed usage limits and calendar dates instead of dropping restrictions", () => {
+  const actions = source("src/features/commerce/admin-actions.ts");
+  contains(actions, 'rawTotalUsageLimit && totalUsageLimit === null', "invalid limit is not unlimited");
+  contains(actions, 'rawPerUserUsageLimit && parsedPerUserUsageLimit === null', "invalid per-reader limit is not silently defaulted");
+  contains(actions, 'rawStartsAt && !startsAt', "invalid starting date is rejected");
+  contains(actions, 'rawEndsAt && !endsAt', "invalid ending date is rejected");
+  contains(actions, "calendarDay.getUTCDate() !== day", "invalid calendar days do not roll into the next month");
+  contains(actions, 'parsedPerUserUsageLimit ?? 1', "empty per-reader limit preserves the current default");
+});
+
 test("commerce routes are private and writer-gated", () => {
   const security = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");

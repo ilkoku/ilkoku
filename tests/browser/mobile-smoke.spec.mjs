@@ -653,7 +653,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   const historyCard = page.locator("article").filter({ hasText: completedZeroTotalOrderNo });
   await expect(historyCard).toBeVisible();
   await expect(historyCard.getByText("CI Browser 0 TL Eser")).toBeVisible();
-  await expect(historyCard.getByText("Başarılı", { exact: true })).toBeVisible();
+  await expect(historyCard.getByText("0 TL edinildi · Tahsilat yok", { exact: true })).toBeVisible();
   await expect(historyCard.getByText(/₺\s?0,00/u).last()).toBeVisible();
 
   if (process.env.DATABASE_URL) {
@@ -706,7 +706,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.getByRole("heading", { name: "Siparişler" })).toBeVisible();
   const orderRow = page.locator("table tbody tr").filter({ hasText: completedZeroTotalOrderNo });
   await expect(orderRow).toBeVisible();
-  await expect(orderRow.getByText("Ödendi", { exact: true })).toBeVisible();
+  await expect(orderRow.getByText("0 TL edinildi", { exact: true })).toBeVisible();
   await expect(orderRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
 
   await page.goto(

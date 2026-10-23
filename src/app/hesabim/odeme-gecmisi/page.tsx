@@ -62,7 +62,7 @@ export default async function ReaderPaymentHistoryPage() {
             <h1>Ödeme Geçmişi</h1>
             <p>
               Eser siparişlerinin tutar ve işlem durumlarını burada
-              görüntüleyebilirsin.
+              görüntüleyebilirsin. 0 TL edinimlerde banka veya kart tahsilatı yapılmaz.
             </p>
           </div>
           <Link className={styles.secondaryAction} href="/hesabim">
@@ -103,7 +103,11 @@ export default async function ReaderPaymentHistoryPage() {
                   </span>
                   <span>
                     Durum
-                    <strong>{statusLabels[order.status]}</strong>
+                    <strong>
+                      {order.status === "paid" && order.finalAmount === BigInt(0)
+                        ? "0 TL edinildi · Tahsilat yok"
+                        : statusLabels[order.status]}
+                    </strong>
                   </span>
                 </div>
 

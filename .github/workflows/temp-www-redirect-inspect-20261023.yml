@@ -1,0 +1,27 @@
+name: TEMP www redirect chain inspect
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-www-redirect-inspect-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Read HTTP redirect chain without modifying site
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for url in http://www.ilkoku.com/ https://www.ilkoku.com/ http://ilkoku.com/ https://ilkoku.com/; do
+            echo "CHECK $url"
+            curl --silent --show-error --head --location \
+              --max-time 25 --max-redirs 6 \
+              --user-agent 'IlkOku-ReadOnly-Redirect-QA/20261023' \
+              --output /dev/null \
+              --write-out 'HTTP=%{http_code} REDIRECTS=%{num_redirects} FINAL=%{url_effective} TTFB=%{time_starttransfer}\n' \
+              "$url"
+            sleep 3
+          done
+          echo 'AUDIT_FINISHED'

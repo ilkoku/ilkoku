@@ -131,10 +131,10 @@ export default async function AuthorCouponsPage({
 
         {!paymentPathReady ? (
           <div className={styles.notice}>
-            Kupon altyapısı hazır. Gerçek checkout ve operasyonel ödeme
-            sağlayıcısı birlikte hazır olmadığı için kuponlar şu anda gerçek
-            tahsilatlı sipariş üretmez; ödeme yolu açıldığında aynı kayıtlar
-            kullanılacak.
+            Kuponlar yazarın ücretli eserlerinde oluşturulabilir. Ancak 0 TL
+            hazırlık fiyatında kupon ek indirim sağlamaz. Pozitif fiyatlı
+            eserlerde kupon son tutarı 0 TL yapıyorsa banka veya kart
+            kullanılmadan edinim yapılır; diğer tutarlar için tahsilat kapalıdır.
           </div>
         ) : null}
 

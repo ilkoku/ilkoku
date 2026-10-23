@@ -88,6 +88,26 @@ export function resolveEffectiveCommerceState(input: {
   };
 }
 
+/**
+ * A submitted/ready paid work protects its explicitly locked chapters before
+ * sale activation. Purchase readiness is a separate concern: missing seller,
+ * contract or provider must never turn a locked chapter into free content.
+ * Draft-only paid plans stay in preparation; historically activated plans stay
+ * protected even while paused or edited.
+ */
+export function shouldEnforcePaidChapterAccess(input: {
+  activatedAt: Date | null | undefined;
+  saleModel: "free" | "paid";
+  status: "draft" | "ready" | "active" | "paused";
+}) {
+  return (
+    input.saleModel === "paid" &&
+    (Boolean(input.activatedAt) ||
+      input.status === "ready" ||
+      input.status === "active")
+  );
+}
+
 /** Shared read-only disclosure; buying and reading remain server-authorized. */
 export function describeWorkSaleModel(input: {
   configuration: EffectiveSaleConfiguration | null | undefined;

@@ -7,7 +7,6 @@ import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
 import { calculateCommercePricing } from "./pricing";
-import { isCommerceCheckoutEnabled } from "./runtime";
 import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type ZeroTotalCheckoutResult =
@@ -224,10 +223,10 @@ export async function completeZeroTotalCheckout(input: {
       } as const;
     }
 
-    if (!isCommerceCheckoutEnabled()) {
-      return { ok: false, reason: "checkout_disabled" } as const;
-    }
-
+    // A coupon that reduces an ACTIVE paid work to zero is provider-free.
+    // Full revalidation below still enforces coupon scope/limits, verified
+    // seller, immutable order, reader consent, entitlement and ledger.
+    // Nonzero purchases continue to use the separate provider rollout gate.
     if (!normalizedCode) {
       return { ok: false, reason: "coupon_invalid" } as const;
     }

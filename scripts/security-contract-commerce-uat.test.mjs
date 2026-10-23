@@ -310,3 +310,30 @@ test("checkout maintains normal İlkOku overview while preparation is not purcha
   has(css, ".readerCheckoutSummary", "dedicated order summary UI styles");
   has(css, "@media (max-width: 800px)", "checkout responsive layout");
 });
+
+test("UAT ready paid section 2 stays locked when checkout contracts are missing", () => {
+  const access = source("src/features/commerce/access.ts");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const showcase = source("src/features/showcase/components/BookShowcase.tsx");
+  const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+
+  has(access, "preparedPaidChapterGate", "published ready paid chapters remain locked");
+  has(publicQuery, "preparedPaidChapterGate", "locked content redacted without terms");
+  has(publicQuery, "chapterAccess[chapter.id] === \"preview\"", "preview remains readable");
+  has(showcase, ": purchaseHref;", "locked chapter always points to checkout");
+  has(readingPage, "getCommerceChapterAccessDecision", "chapter route enforces server-side gate");
+});
+
+test("UAT 100 percent author and platform coupons complete provider free but nonzero cannot", () => {
+  const page = source("src/app/satinal/[slug]/page.tsx");
+  const service = source("src/features/commerce/zero-total-checkout.ts");
+
+  has(page, "couponZeroPurchaseReady", "zero-price coupon checkout path");
+  has(page, "getApplicableCheckoutCoupon", "coupon eligibility on active paid work");
+  has(page, "pricing.finalAmount === BigInt(0)", "zero-total only submit");
+  has(service, "validateCouponRules", "coupon rules rechecked under lock");
+  has(service, "couponRedemption.create", "coupon usage recorded");
+  has(service, "financialLedger.create", "funding recorded");
+  lacks(service, "isCommerceCheckoutEnabled()", "zero-total coupons are not provider-gated");
+  lacks(service, "transaction.payment.create", "no real payment");
+});

@@ -153,3 +153,17 @@ test("Book Index gains a gated site-wide footer discovery link after publication
     "footer link only appears when publication is actually allowed",
   );
 });
+
+test("Book Index Turkey TTFB threshold is confirmed twice without changing the other route gate", () => {
+  const audit = source(".github/workflows/book-index-live-link-performance.yml");
+  contains(audit, '"/en-cok-satanlar/turkiye"', "same Turkey live URL");
+  contains(audit, "Turkey TTFB confirmation:", "slow Turkey first response triggers second sample");
+  contains(audit, "n>1.5", "Turkey alert uses stricter 1.5 second threshold");
+  contains(audit, "sleep 4", "repeated read is paced");
+  contains(audit, "isolated TTFB spike did not repeat", "transient spikes do not raise false alarm");
+  contains(audit, "CIRCUIT BREAKER: Turkey calibration blocked by edge", "repeat sample stops on bot block");
+  contains(audit, "n>2.5", "other eight-route alert threshold remains unchanged");
+  contains(audit, '[[ "${check_status:-000}" != "200" ]]', "second response must be HTTP 200");
+  contains(audit, "failed=1", "HTTP failure is never hidden by calibration");
+  notContains(audit, "prisma", "read-only canary never writes to application database");
+});

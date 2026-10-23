@@ -73,16 +73,16 @@ test("CMS-only work cover optimizer keeps external image provider and safe URL n
     "next/image": { __esModule: true, default: "NextImage" },
     "react/jsx-runtime": { jsx, jsxs: jsx },
   };
-  const module = { exports: {} };
+  const testModule = { exports: {} };
   new Function("require", "module", "exports", compiled)(
     name => {
       assert.ok(Object.hasOwn(mocks, name), "unexpected image dependency: " + name);
       return mocks[name];
     },
-    module,
-    module.exports,
+    testModule,
+    testModule.exports,
   );
-  const WorkCoverImage = module.exports.WorkCoverImage;
+  const WorkCoverImage = testModule.exports.WorkCoverImage;
   const id = "459c18b8-39ea-4565-9663-0be6cace30e6";
   const coverPath = "/api/media/" + id;
   const props = { alt: "Test kapak", width: 96, height: 144, sizes: "44px", className: "cover-img" };

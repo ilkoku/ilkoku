@@ -4,6 +4,8 @@
  * An explicit send_to routes each event to the already loaded Google tag
  * without a GTM custom-event trigger or a second GA4 installation.
  */
+import { ILKOKU_GA4_ID } from "@/lib/site-analytics-settings";
+
 
 export type PublicInteractionEvent =
   | "site_cta_click"
@@ -62,15 +64,15 @@ export function emitPublicInteraction(
   const ga4Ready = state.ilkokuAnalyticsGa4 === "loaded";
   if (!gtmReady && !ga4Ready) return false;
 
-  // This is a GTM Custom Event, not a gtag('event') command. Google Tag
-  // Manager's Custom Event triggers only match the object's 'event' key.
-  // GTM owns the destination and consent remains a hard prerequisite.
-  if (["loaded", "loading", "fallback-loading", "present"]
-    .includes(state.ilkokuAnalyticsGtm || "") && window.dataLayer) {
-    window.dataLayer.push({ event, ...payload });
+  // The published GTM container loads the Google tag. An explicit GA4
+  // destination delivers this allowlisted event without relying on a GTM
+  // custom-event tag. Do not also push an object with an event key: that
+  // would trigger the existing GTM tag and risk duplicate analytics hits.
+  if (gtmReady) {
+    window.gtag("event", event, { ...payload, send_to: ILKOKU_GA4_ID });
     return true;
   }
-  // Preserve the old GA4-only fallback when no GTM container is active.
+  // Preserve GA4-only fallback when no GTM container is active.
   if (state.ilkokuAnalyticsGa4 === "loaded" && typeof window.gtag === "function") {
     window.gtag("event", event, payload);
     return true;

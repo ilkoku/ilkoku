@@ -1,0 +1,58 @@
+name: TEMP public GTM manual vs Google tag script probe
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-gtm-public-script-check-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Compare live JS delivery without event emission
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-gtm-check
+          urls=(
+            "https://ilkoku.com/ilkgtm/?id=GTM-W6NVSMNV"
+            "https://www.googletagmanager.com/gtm.js?id=GTM-W6NVSMNV"
+          )
+          names=(manual direct)
+          for i in 0 1; do
+            hdr="/tmp/ilkoku-gtm-check/${names[$i]}.hdr"
+            body="/tmp/ilkoku-gtm-check/${names[$i]}.js"
+            info="$(curl --silent --show-error --location --compressed --connect-timeout 10 --max-time 35 \
+              -H "Accept: */*" \
+              -A "IlkOku-ReadOnly-GTM-Content-QA/20261023" \
+              --dump-header "$hdr" --output "$body" \
+              --write-out "%{http_code}|%{content_type}|%{size_download}" "${urls[$i]}" || true)"
+            IFS='|' read -r http mime bytes <<< "$info"
+            echo "SCRIPT ${names[$i]} HTTP=${http:-000} MIME=${mime:--} BYTES=${bytes:--}"
+            if [[ "$http" == 403 || "$http" == 429 ]]; then
+              echo "Circuit breaker: tag script denied" >&2
+              exit 1
+            fi
+            [[ "$http" == 200 && -s "$body" ]] || { echo "Unhealthy script" >&2; exit 1; }
+            sleep 4
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,re
+          results={}
+          for src in ['manual','direct']:
+              blob=Path(f"/tmp/ilkoku-gtm-check/{src}.js").read_bytes()
+              text=blob.decode('utf8','replace')
+              results[src]={
+                  "bytes":len(blob),
+                  "sha256":hashlib.sha256(blob).hexdigest(),
+                  "containsGtmContainerId":'GTM-W6NVSMNV' in text,
+                  "containsGa4MeasurementId":'G-MCF2YN9SL8' in text,
+                  "containsCtaCustomEvent":'site_cta_click' in text,
+                  "containsOtherFirstPartyGtag":'/ilkgtm/' in text,
+                  "jsLooksLikeGtm":bool(re.search(r'google_tag_manager|dataLayer|gtm\.start|GTM-W6NVSMNV',text))
+              }
+              print("GTM_SCRIPT_DIAGNOSTIC",json.dumps({"source":src,**results[src]}))
+          print("RESULT bothScriptsReadable=True")
+          PY

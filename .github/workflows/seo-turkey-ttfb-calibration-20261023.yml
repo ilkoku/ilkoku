@@ -1,0 +1,51 @@
+name: TEMP read-only Turkey Book Index TTFB calibration
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/seo-turkey-ttfb-calibration-20261023.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  timing:
+    name: Compare 100-row overview and 1200-row Turkey response
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Pace and compare real production HTTP requests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          paths=("/en-cok-satanlar" "/en-cok-satanlar/turkiye")
+          echo '| Attempt | URL | HTTP | TTFB sec | Total sec | HTML bytes | CF cache | Next cache | Cache control |'
+          echo '|---:|---|---:|---:|---:|---:|---|---|---|'
+          for attempt in 1 2 3; do
+            for path in "${paths[@]}"; do
+              hdr="$(mktemp)"
+              metric="$(curl --silent --show-error --location --compressed \
+                --connect-timeout 10 --max-time 35 \
+                --user-agent 'IlkOku-ReadOnly-Turkey-Perf-Diagnostic/20261023' \
+                --dump-header "$hdr" --output /dev/null \
+                --write-out '%{http_code}|%{time_starttransfer}|%{time_total}|%{size_download}' \
+                "https://ilkoku.com${path}" || true)"
+              IFS='|' read -r http ttfb total size <<< "$metric"
+              get_header() { grep -i "^$2:" "$1" | tail -1 | cut -d: -f2- | tr -d '\r' | xargs || true; }
+              cf="$(get_header "$hdr" cf-cache-status)"
+              next="$(get_header "$hdr" x-nextjs-cache)"
+              cache="$(get_header "$hdr" cache-control)"
+              rm -f "$hdr"
+              echo "| $attempt | $path | ${http:-000} | ${ttfb:--} | ${total:--} | ${size:--} | ${cf:--} | ${next:--} | ${cache:--} |"
+              if [[ "${http:-000}" == 403 || "${http:-000}" == 429 ]]; then
+                echo 'CIRCUIT BREAKER: Cloudflare blocked read-only calibration' >&2
+                exit 1
+              fi
+              if [[ "${http:-000}" != 200 ]]; then
+                echo "HTTP non-200: $path" >&2
+                exit 1
+              fi
+              sleep 5
+            done
+          done
+          echo 'PASS: 6 paced, read-only requests; no content, DB or runtime settings changed.'

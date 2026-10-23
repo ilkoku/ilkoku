@@ -21,7 +21,7 @@ concurrency:
 jobs:
   quality:
     name: Lint, security contracts, DB recovery/contracts and build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     services:
       mariadb:

@@ -178,6 +178,11 @@ test("book cover media is not falsely marked unused and cannot be archived from 
   const workbench = source("src/components/content/MediaLibraryWorkbench.tsx");
 
   assertContains(references, "prisma.work.findMany({", "CMS inventory scans work cover references");
+  assertContains(references, "const siteRows = await prisma.$queryRaw", "media SiteContent scan serialized");
+  assertContains(references, "const pageRows = await prisma.$queryRaw", "media ContentPage scan serialized");
+  assertContains(references, "const workRows = await prisma.work.findMany({", "media Work cover scan serialized");
+  assertContains(references, "const workCount = await prisma.work.count({", "media deletion Work cover scan serialized");
+  assert.equal(references.includes("Promise.all(["), false, "reference query scans must not contend for the single MariaDB connection");
   assertContains(references, "prisma.work.count({", "CMS archive action blocks referenced work covers");
   assertContains(references, 'source: "work"', "work references appear in media inventory");
   assertContains(references, 'startsWith: "/api/media/"', "relative first-party work cover references");

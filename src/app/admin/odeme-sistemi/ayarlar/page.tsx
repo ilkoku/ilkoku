@@ -96,6 +96,10 @@ export default async function CommerceSettingsPage() {
             Okur sözleşmesi çalışma masasını aç →
           </Link>
           {" · "}
+          <Link href="/sistem-yonetimi/odeme-sistemi/satici-yetkileri">
+            Satıcı ve satış yetkisi çalışma alanını aç →
+          </Link>
+          {" · "}
           <Link href="/sistem-yonetimi/eserler/6ebb633f-4356-459c-ac12-4fbd253a49e7">
             YENİ TEST209 eserini aç →
           </Link>

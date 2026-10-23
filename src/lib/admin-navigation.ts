@@ -58,6 +58,7 @@ const paymentSubNavigation: readonly AdminNavSubItem[] = [
   { href: "/sistem-yonetimi/odeme-sistemi/iadeler", label: "İadeler" },
   { href: "/sistem-yonetimi/odeme-sistemi/erisim-haklari", label: "Erişim Hakları" },
   { href: "/sistem-yonetimi/odeme-sistemi/kuponlar", label: "Kuponlar" },
+  { href: "/sistem-yonetimi/odeme-sistemi/satici-yetkileri", label: "Satıcı & Satış Yetkisi" },
   { href: "/sistem-yonetimi/odeme-sistemi/saglayicilar", label: "Ödeme Sağlayıcıları" },
   { href: "/sistem-yonetimi/odeme-sistemi/ayarlar", label: "Commerce Ayarları" },
 ];

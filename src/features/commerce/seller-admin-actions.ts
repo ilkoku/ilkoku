@@ -29,7 +29,7 @@ const rightsSchema = z.object({
   validUntil: z.string().trim().max(10),
 });
 
-function go(status: string) {
+function go(status: string): never {
   redirect(`${basePath}?durum=${encodeURIComponent(status)}`);
 }
 

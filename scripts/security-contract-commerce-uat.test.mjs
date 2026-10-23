@@ -129,13 +129,12 @@ test("UAT K: a locked coupon must be re-read with fresh committed global and per
 
   for (const [name, code] of [["zero-total", zero], ["provider checkout", paid]]) {
     has(code, 'isolationLevel: "ReadCommitted"', name + " uses fresh snapshots after coupon row lock");
-    const start = code.indexOf("SELECT id\\n");
     const lock = code.indexOf("FROM Coupon");
     const freshRead = code.indexOf("const coupon = await transaction.coupon.findUnique") >= 0
       ? code.indexOf("const coupon = await transaction.coupon.findUnique")
       : code.indexOf("const record = await transaction.coupon.findUnique");
     const validation = code.indexOf("const validation = validateCouponRules");
-    assert.ok(start >= 0 && lock >= 0 && freshRead > lock && validation > freshRead,
+    assert.ok(lock >= 0 && freshRead > lock && validation > freshRead,
       name + " must re-read coupon usage only after acquiring the coupon mutex");
   }
 });

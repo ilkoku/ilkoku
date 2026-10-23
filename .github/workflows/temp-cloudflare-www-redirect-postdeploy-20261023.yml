@@ -1,0 +1,38 @@
+name: TEMP Cloudflare www redirect post-deploy audit
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-cloudflare-www-redirect-postdeploy-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify redirect count final host and query preservation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          urls=(
+            "http://www.ilkoku.com/"
+            "https://www.ilkoku.com/"
+            "http://ilkoku.com/"
+            "https://ilkoku.com/"
+            "http://www.ilkoku.com/yazarlar-icin/kurgu/roman?test_redirect_check=1"
+            "https://www.ilkoku.com/yazarlar-icin/kurgu/roman?test_redirect_check=1"
+          )
+          for url in "${urls[@]}"; do
+            echo "CHECK $url"
+            result="$(curl --silent --show-error --location --max-redirs 5 \
+              --connect-timeout 10 --max-time 30 \
+              --user-agent 'IlkOku-ReadOnly-Cloudflare-Redirect-QA/20261023' \
+              --output /dev/null \
+              --write-out 'HTTP=%{http_code} REDIRECTS=%{num_redirects} FINAL=%{url_effective} TTFB=%{time_starttransfer}' \
+              "$url" || true)"
+            echo "$result"
+            http="$(sed -n 's/^HTTP=\([0-9]*\).*/\1/p' <<< "$result")"
+            [[ "$http" == "200" ]] || { echo "Unexpected HTTP response" >&2; exit 1; }
+            sleep 3
+          done
+          echo AUDIT_FINISHED

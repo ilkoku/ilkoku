@@ -116,9 +116,7 @@ export function BookShowcase({
     paidAccessActive && !hasPaidAccess
       ? resumeChapter
         ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
-        : purchaseAvailable
-          ? purchaseHref
-          : null
+        : purchaseHref
       : readingProgress && resumeChapter
         ? `/oku/${work.slug}/bolum-${resumeChapter.position}?from=${encodedBookContextPath}`
         : coverHref;
@@ -469,9 +467,7 @@ export function BookShowcase({
                       ? index === 0 && !readingProgress && startHref
                         ? startHref
                         : `/oku/${work.slug}/bolum-${chapter.position}?from=${encodedBookContextPath}`
-                      : purchaseAvailable
-                        ? purchaseHref
-                        : null;
+                      : purchaseHref;
                     const accessLabel =
                       paidAccessActive && !hasPaidAccess
                         ? accessType === "preview"
@@ -516,7 +512,9 @@ export function BookShowcase({
                             {!readable
                               ? zeroPricePurchase
                                 ? "0 TL ile satın al"
-                                : "Erişimi Aç"
+                                : purchaseAvailable
+                                  ? "Erişimi Aç"
+                                  : "Erişim koşullarını gör"
                               : index === 0
                                 ? "Okumaya Başla"
                                 : "Bölümü Oku"}

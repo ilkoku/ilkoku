@@ -215,8 +215,8 @@ export default async function SellerRightsAdminPage({
         {pendingRights.map((rights) => (
           <form action={approveWorkSellerRightsAction} key={rights.id} className="admin-panel">
             <h3>{rights.work.title} · {rights.legalParty.legalName}</h3>
-            <p>Belge SHA-256: <code>{rights.documentHash ?? "—"}</code></p>
-            <p>Kanıt kaydı: {JSON.stringify(rights.rightsScope)}</p>
+            <p style={{ overflowWrap: "anywhere" }}>Belge SHA-256: <code>{rights.documentHash ?? "—"}</code></p>
+            <p style={{ overflowWrap: "anywhere" }}>Kanıt kaydı: {JSON.stringify(rights.rightsScope)}</p>
             <input type="hidden" name="authorizationId" value={rights.id}/>
             <label>Belge inceleme ve hak sahipliği değerlendirmesi
               <textarea name="reviewNote" rows={2} minLength={25} required/>

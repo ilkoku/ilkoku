@@ -858,6 +858,48 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
     page.getByRole("heading", { name: "Kuponlar & Kampanyalar" }),
   ).toBeVisible();
 
+  // Coupon management lives inside the dark admin shell. Light-commerce
+  // component defaults must not produce white panels or white-on-white fields.
+  const couponColors = await page.getByTestId("platform-coupon-create").evaluate((panel) => {
+    const css = (selector, property) => {
+      const element = panel.querySelector(selector);
+      if (!element) throw new Error("Missing coupon contrast target: " + selector);
+      return getComputedStyle(element)[property];
+    };
+    const panelColor = getComputedStyle(panel).backgroundColor;
+    return {
+      panelColor,
+      heading: css("h2", "color"),
+      field: css('input[name="code"]', "color"),
+      fieldBackground: css('input[name="code"]', "backgroundColor"),
+      placeholder: getComputedStyle(
+        panel.querySelector('input[name="code"]'), "::placeholder",
+      ).color,
+    };
+  });
+
+  const relativeLuminance = (rgb) => {
+    const channels = rgb.match(/[\\d.]+/gu)?.slice(0, 3).map(Number);
+    expect(channels, "Computed RGB channels should be available").toHaveLength(3);
+    const linear = channels.map((channel) => {
+      const normalized = channel / 255;
+      return normalized <= 0.04045
+        ? normalized / 12.92
+        : ((normalized + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+  const ratio = (one, two) => {
+    const [bright, dark] = [relativeLuminance(one), relativeLuminance(two)]
+      .sort((left, right) => right - left);
+    return (bright + 0.05) / (dark + 0.05);
+  };
+  expect(relativeLuminance(couponColors.panelColor)).toBeLessThan(0.035);
+  expect(ratio(couponColors.heading, couponColors.panelColor)).toBeGreaterThan(4.5);
+  expect(ratio(couponColors.field, couponColors.fieldBackground)).toBeGreaterThan(4.5);
+  expect(ratio(couponColors.placeholder, couponColors.fieldBackground)).toBeGreaterThan(4.5);
+  await expect(page.getByTestId("platform-coupon-list")).toBeVisible();
+
   const couponCode = `CIADMIN${Date.now().toString(36).toUpperCase()}`;
   await page.locator('input[name="code"]').fill(couponCode);
   await page.locator('input[name="discountValue"]').fill("15");

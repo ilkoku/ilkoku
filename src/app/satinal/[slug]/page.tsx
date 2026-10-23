@@ -453,9 +453,9 @@ export default async function CheckoutPreparationPage({
           ) : null}
 
           {effectiveCommerce.saleModel === "paid" ? (
-            <div className={styles.couponApplyForm}>
+            <div>
               {couponEligibleWork ? (
-                <form method="get">
+                <form className={styles.couponApplyForm} method="get">
                   <input name="from" type="hidden" value={returnTo} />
                   <label className={styles.field}>
                     <span>Kupon kodunuz var mı?</span>

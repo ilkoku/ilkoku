@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import ts from "typescript";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -55,4 +56,53 @@ test("all work-cover thumbnails use Next optimization only for safe first-party 
   assert.ok(!reader.includes('<img alt="" src={work.coverUrl}'), "reader list must not serve raw CMS files");
   assert.ok(!workspace.includes("unoptimized"), "writer workspace must not request original CMS PNG");
   assert.ok(!writer.includes("<img"), "writer publication preview must not request original CMS PNG");
+});
+
+test("CMS-only work cover optimizer keeps external image provider and safe URL normalization", () => {
+  const component = source("src/components/media/WorkCoverImage.tsx");
+  const compiled = ts.transpileModule(component, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      jsx: ts.JsxEmit.ReactJSX,
+      esModuleInterop: true,
+    },
+  }).outputText;
+  const jsx = (type, props) => ({ type, props });
+  const mocks = {
+    "next/image": { __esModule: true, default: "NextImage" },
+    "react/jsx-runtime": { jsx, jsxs: jsx },
+  };
+  const module = { exports: {} };
+  new Function("require", "module", "exports", compiled)(
+    name => {
+      assert.ok(Object.hasOwn(mocks, name), "unexpected image dependency: " + name);
+      return mocks[name];
+    },
+    module,
+    module.exports,
+  );
+  const WorkCoverImage = module.exports.WorkCoverImage;
+  const id = "459c18b8-39ea-4565-9663-0be6cace30e6";
+  const coverPath = "/api/media/" + id;
+  const props = { alt: "Test kapak", width: 96, height: 144, sizes: "44px", className: "cover-img" };
+  for (const url of [coverPath, "https://ilkoku.com" + coverPath, "https://www.ilkoku.com" + coverPath + "?v=1"]) {
+    const optimized = WorkCoverImage({ ...props, src: url });
+    assert.equal(optimized.type, "NextImage", "First-party cover must use Next/Image");
+    assert.equal(optimized.props.src, coverPath, "First-party URL normalized to same-origin media");
+    assert.equal(optimized.props.quality, 75, "Image quality is explicit and supported by next.config");
+    assert.equal(optimized.props.sizes, "44px", "Responsive size preserved");
+    assert.equal(optimized.props.className, "cover-img", "Existing layout class preserved");
+    assert.equal(optimized.props.alt, "Test kapak", "Existing alt preserved");
+  }
+  for (const url of [
+    "https://external.example.com/covers/123.png",
+    "/assets/legacy-cover.png",
+    "//evil.example.com/api/media/" + id,
+  ]) {
+    const fallback = WorkCoverImage({ ...props, src: url });
+    assert.equal(fallback.type, "img", "Non-CMS sources retain native image support");
+    assert.equal(fallback.props.src, url, "External URL must never be rewritten");
+    assert.equal(fallback.props.alt, "Test kapak", "Fallback alt remains unchanged");
+  }
 });

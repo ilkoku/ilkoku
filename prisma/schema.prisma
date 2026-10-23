@@ -78,6 +78,10 @@ model User {
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
   orderConsents                OrderConsent[]               @relation("OrderConsentReader")
+  ownedLegalParties            LegalParty[]                  @relation("LegalPartyOwner")
+  verifiedLegalParties         LegalParty[]                  @relation("LegalPartyVerifier")
+  approvedSellerAssignments    WorkSellerAssignment[]        @relation("WorkSellerAssignmentApprover")
+  verifiedSalesAuthorizations  WorkSalesAuthorization[]      @relation("WorkSalesAuthorizationVerifier")
 
   publisherWorkLikesCreated        PublisherWorkLike[]       @relation("PublisherWorkLikeCreator")
   publisherWorkFavoritesCreated    PublisherWorkFavorite[]   @relation("PublisherWorkFavoriteCreator")
@@ -285,6 +289,8 @@ model Work {
   entitlements            WorkEntitlement[]
   financialLedgerEntries  FinancialLedger[]
   priceHistory            WorkPriceHistory[]
+  sellerAssignments       WorkSellerAssignment[]
+  salesAuthorizations     WorkSalesAuthorization[]
 
   publisherWorkLikes       PublisherWorkLike[]
   publisherWorkFavorites   PublisherWorkFavorite[]
@@ -652,6 +658,7 @@ model Publisher {
   invitations           PublisherInvitation[]
   applications          PublisherApplication[]
   permissionRequests    PublisherPermissionRequest[]
+  legalParties           LegalParty[]
 
   workLikes       PublisherWorkLike[]
   workFavorites   PublisherWorkFavorite[]
@@ -1981,4 +1988,121 @@ model EmailOperationsSchedulerState {
   updatedAt         DateTime  @updatedAt
 
   @@index([lastSuccessAt])
+}
+
+ 
+// P0-01/02/03: additive commerce legal-identity foundation.
+// Deliberately does not infer parties from authors or backfill historic orders.
+// New purchases must remain behind separate server-side authorization gates.
+model LegalParty {
+  id                 String                         @id @default(uuid()) @db.Char(36)
+  kind               LegalPartyKind
+  ownerUserId        String?                        @db.Char(36)
+  publisherId        String?                        @db.Char(36)
+  legalName          String?                        @db.VarChar(240)
+  tradeName          String?                        @db.VarChar(240)
+  taxIdentifier      String?                        @db.VarChar(32)
+  taxOffice          String?                        @db.VarChar(160)
+  registryNumber     String?                        @db.VarChar(64)
+  legalAddress       String?                        @db.Text
+  contactEmail       String?                        @db.VarChar(320)
+  contactPhone       String?                        @db.VarChar(32)
+  countryCode        String                         @default("TR") @db.Char(2)
+  verificationStatus LegalPartyVerificationStatus   @default(pending)
+  verifiedById       String?                        @db.Char(36)
+  verifiedAt         DateTime?
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+  ownerUser          User?                          @relation("LegalPartyOwner", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  publisher          Publisher?                     @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  verifiedBy         User?                          @relation("LegalPartyVerifier", fields: [verifiedById], references: [id], onDelete: Restrict)
+  sellerAssignments  WorkSellerAssignment[]
+  salesAuthorizations WorkSalesAuthorization[]
+
+  @@index([kind, verificationStatus])
+  @@index([ownerUserId, verificationStatus])
+  @@index([publisherId, verificationStatus])
+}
+
+model WorkSalesAuthorization {
+  id             String                       @id @default(uuid()) @db.Char(36)
+  workId         String                       @db.Char(36)
+  legalPartyId   String                       @db.Char(36)
+  version        Int                          @default(1) @db.UnsignedInt
+  status         WorkSalesAuthorizationStatus @default(pending)
+  rightsScope    Json?
+  documentHash   String?                      @db.Char(64)
+  validFrom      DateTime?
+  validUntil     DateTime?
+  verifiedById   String?                      @db.Char(36)
+  verifiedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  work           Work                         @relation(fields: [workId], references: [id], onDelete: Restrict)
+  legalParty     LegalParty                   @relation(fields: [legalPartyId], references: [id], onDelete: Restrict)
+  verifiedBy     User?                        @relation("WorkSalesAuthorizationVerifier", fields: [verifiedById], references: [id], onDelete: Restrict)
+  sellerAssignments WorkSellerAssignment[]
+
+  @@unique([workId, legalPartyId, version])
+  @@index([legalPartyId, status])
+  @@index([workId, status, validUntil])
+}
+
+model WorkSellerAssignment {
+  id              String                     @id @default(uuid()) @db.Char(36)
+  workId          String                     @db.Char(36)
+  legalPartyId    String                     @db.Char(36)
+  authorizationId String?                    @db.Char(36)
+  mode            WorkSellerMode
+  status          WorkSellerAssignmentStatus @default(pending)
+  version         Int                        @default(1) @db.UnsignedInt
+  currentKey      String?                    @unique @db.Char(36)
+  approvedById    String?                    @db.Char(36)
+  approvedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  work            Work                       @relation(fields: [workId], references: [id], onDelete: Restrict)
+  legalParty      LegalParty                 @relation(fields: [legalPartyId], references: [id], onDelete: Restrict)
+  authorization   WorkSalesAuthorization?    @relation(fields: [authorizationId], references: [id], onDelete: Restrict)
+  approvedBy      User?                      @relation("WorkSellerAssignmentApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@unique([workId, version])
+  @@index([legalPartyId, status])
+  @@index([workId, status])
+  @@index([authorizationId, status])
+}
+
+enum LegalPartyKind {
+  platform
+  individual
+  organization
+}
+
+enum LegalPartyVerificationStatus {
+  pending
+  verified
+  rejected
+  suspended
+}
+
+enum WorkSalesAuthorizationStatus {
+  pending
+  verified
+  rejected
+  revoked
+  expired
+}
+
+enum WorkSellerMode {
+  platform_direct
+  third_party
+}
+
+enum WorkSellerAssignmentStatus {
+  pending
+  approved
+  rejected
+  revoked
 }

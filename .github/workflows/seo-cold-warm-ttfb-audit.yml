@@ -19,7 +19,7 @@ jobs:
           echo "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
           paths=("/yazarlar-icin/cizgi-anlati/manga" "/yazarlar-icin/cocuk-ve-genclik/masal" "/yazarlar-icin/cocuk-ve-genclik/fabl" "/yazarlar-icin/kurgu/utopya" "/nasil-calisir")
           failures=0
-          for path in "$""{paths[@]}"; do
+          for path in "/yazarlar-icin/cizgi-anlati/manga" "/yazarlar-icin/cocuk-ve-genclik/masal" "/yazarlar-icin/cocuk-ve-genclik/fabl" "/yazarlar-icin/kurgu/utopya" "/nasil-calisir"; do
             for attempt in 1 2 3; do
               h=$(mktemp)
               b=$(mktemp)

@@ -1,0 +1,110 @@
+name: TEMP GSC 20 crawled-not-indexed live SEO attributes
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-gsc-20-seo-attrs-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Read-only 20-page canonical and metadata uniqueness validation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-gsc-20
+          paths=(
+            '/yazarlar-icin/akademik'
+            '/yazarlar-icin/edebiyat'
+            '/yazarlar-icin/kurgu'
+            '/yazarlar-icin/bilgilendirici'
+            '/yazarlar-icin/senaryo-ve-sahne'
+            '/yazarlar-icin/cocuk-ve-genclik'
+            '/yazarlar-icin/kurgu/roman'
+            '/okurlar-icin/okumaya-baslama'
+            '/editorler-icin/egitim/metin-degerlendirme'
+            '/editorler-icin/egitim/dil-ve-anlatim-editorlugu'
+            '/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk'
+            '/okurlar-icin'
+            '/yardim'
+            '/site-haritasi'
+            '/hakkimizda'
+            '/nasil-calisir'
+            '/editoryal-standartlar'
+            '/yazarlar-icin'
+            '/editorler-icin'
+            '/yayinevleri-icin'
+          )
+          n=0
+          for route in "${paths[@]}"; do
+            data="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 10 --max-time 35 \
+              --user-agent 'IlkOku-ReadOnly-GSC-CrawledQuality/20261023' \
+              --output "/tmp/ilkoku-gsc-20/$n.html" \
+              --write-out '%{http_code}|%{time_starttransfer}|%{size_download}' \
+              "https://ilkoku.com$route" || true)"
+            IFS='|' read -r status ttfb size <<< "$data"
+            echo "SOURCE $n $route HTTP=${status:-000} TTFB=${ttfb:--} SIZE=${size:--}"
+            if [[ "$status" == 403 || "$status" == 429 ]]; then
+              echo "CIRCUIT BREAKER edge rejected inspection" >&2
+              exit 1
+            fi
+            [[ "$status" == "200" ]]
+            n=$((n+1))
+            sleep 3
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit
+          from pathlib import Path
+          from collections import defaultdict
+          import json
+          routes=["/yazarlar-icin/akademik","/yazarlar-icin/edebiyat","/yazarlar-icin/kurgu","/yazarlar-icin/bilgilendirici","/yazarlar-icin/senaryo-ve-sahne","/yazarlar-icin/cocuk-ve-genclik","/yazarlar-icin/kurgu/roman","/okurlar-icin/okumaya-baslama","/editorler-icin/egitim/metin-degerlendirme","/editorler-icin/egitim/dil-ve-anlatim-editorlugu","/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk","/okurlar-icin","/yardim","/site-haritasi","/hakkimizda","/nasil-calisir","/editoryal-standartlar","/yazarlar-icin","/editorler-icin","/yayinevleri-icin"]
+          class SEO(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.title=""; self.title_active=False
+                  self.desc=""; self.robots=""; self.canonical=""
+                  self.h1=""; self.h1active=False
+                  self.main_depth=0; self.main_text=0; self.blocked=0
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=="title": self.title_active=True
+                  if tag=="h1": self.h1active=True
+                  if tag=="main": self.main_depth+=1
+                  if tag in ("script","style","noscript"): self.blocked+=1
+                  if tag=="meta" and a.get("name","").lower()=="description": self.desc=a.get("content","")
+                  if tag=="meta" and a.get("name","").lower()=="robots": self.robots=a.get("content","")
+                  if tag=="link" and "canonical" in a.get("rel",""): self.canonical=a.get("href","")
+              def handle_endtag(self,tag):
+                  if tag=="title": self.title_active=False
+                  if tag=="h1": self.h1active=False
+                  if tag=="main": self.main_depth=max(self.main_depth-1,0)
+                  if tag in ("script","style","noscript"): self.blocked=max(self.blocked-1,0)
+              def handle_data(self,data):
+                  if self.title_active: self.title+=data
+                  if self.h1active: self.h1+=data
+                  if self.main_depth and not self.blocked: self.main_text+=len(data.strip())
+          titles=defaultdict(list);descs=defaultdict(list);problems=[]
+          for i,route in enumerate(routes):
+              p=SEO()
+              p.feed(Path(f"/tmp/ilkoku-gsc-20/{i}.html").read_text(encoding="utf8",errors="replace"))
+              title=p.title.strip();desc=p.desc.strip()
+              titles[title].append(route);descs[desc].append(route)
+              expected="https://ilkoku.com"+route
+              errors=[]
+              if not title: errors.append("MISSING_TITLE")
+              if not desc: errors.append("MISSING_DESCRIPTION")
+              if not p.h1.strip(): errors.append("MISSING_H1")
+              if p.canonical!=expected: errors.append("CANONICAL_MISMATCH")
+              if "noindex" in p.robots.lower(): errors.append("BLOCKING_NOINDEX")
+              if p.main_text<250: errors.append("THIN_MAIN_TEXT")
+              if errors: problems.append((route,errors))
+              print("PAGE",json.dumps(dict(path=route,title=title,metaDescriptionChars=len(desc),h1=p.h1.strip()[:100],canonical=p.canonical,robots=p.robots,mainTextChars=p.main_text,problems=errors),ensure_ascii=False))
+          duplicates={k:v for k,v in titles.items() if len(v)>1}
+          dup_desc={k:v for k,v in descs.items() if len(v)>1}
+          print("SUMMARY",json.dumps(dict(total=len(routes),problems=problems,duplicateTitles=duplicates,duplicateDescriptions=dup_desc),ensure_ascii=False))
+          print("AUDIT_FINISHED")
+          PY

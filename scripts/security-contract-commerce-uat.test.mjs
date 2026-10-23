@@ -46,7 +46,7 @@ test("UAT R: previously activated paid work never becomes free during payment ou
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
 
   has(contract, "temporary checkout/provider outage does **not** unlock", "frozen outage rule");
-  has(access, "previouslyActivatedPaid", "runtime activation history");
+  has(access, "shouldEnforcePaidChapterAccess", "runtime activation history protection");
   has(query, "shouldEnforcePaidChapterAccess", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");
   has(checkout, "eser bu nedenle ücretsiz erişime açılmaz", "checkout outage lock copy");

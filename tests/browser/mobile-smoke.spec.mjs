@@ -1081,11 +1081,39 @@ test("authenticated author coupon mutation smoke: writer creates and pauses own-
   ).toBeVisible();
 
   const couponCode = `CIWRITER${Date.now().toString(36).toUpperCase()}`;
-  await page.locator('select[name="workId"]').selectOption({
-    label: "CI Browser 0 TL Eser",
-  });
-  await page.locator('input[name="code"]').fill(couponCode);
-  await page.locator('input[name="discountValue"]').fill("10");
+  const prepareWriterCoupon = async () => {
+    await page.locator('select[name="workId"]').selectOption({
+      label: "CI Browser 0 TL Eser",
+    });
+    await page.locator('input[name="code"]').fill(couponCode);
+    await page.locator('input[name="discountValue"]').fill("10");
+  };
+
+  await prepareWriterCoupon();
+  const totalLimit = page.locator('input[name="totalUsageLimit"]');
+  await totalLimit.evaluate((element) => element.removeAttribute("min"));
+  await totalLimit.fill("0");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+  await expect(page.getByText("Kupon için gerekli alanları tamamlamalısın.")).toBeVisible();
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
+  const userLimit = page.locator('input[name="perUserUsageLimit"]');
+  await userLimit.evaluate((element) => element.removeAttribute("min"));
+  await userLimit.fill("0");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
+  await page.locator('input[name="startsAt"]').fill("2026-12-31");
+  await page.locator('input[name="endsAt"]').fill("2026-12-30");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=gecersiz-tarih/u);
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
   await page.getByRole("button", { name: "Kupon oluştur" }).click();
 
   let couponCard = page.locator("article").filter({ hasText: couponCode });

@@ -504,6 +504,22 @@ try {
       (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
     [randomUUID(), couponId, couponWorkId, now],
   );
+  // Negative-path coupon: a 50% reduction still leaves a positive balance.
+  // This must NEVER create an order or unlock the chapter without a provider.
+  const partialCouponId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Coupon\`
+      (id, code, owner, creatorId, discountType, discountValue, scope,
+       status, perUserUsageLimit, usageCount, createdAt, updatedAt)
+     VALUES (?, 'CIBROWSER50', 'platform', ?, 'percent', 50,
+       'selected_works', 'active', 1, 0, ?, ?)`,
+    [partialCouponId, userIds.admin, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`CouponWorkScope\`
+      (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
+    [randomUUID(), partialCouponId, couponWorkId, now],
+  );
 
   await client.commit();
 } catch (error) {

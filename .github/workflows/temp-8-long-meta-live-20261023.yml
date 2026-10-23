@@ -1,0 +1,72 @@
+name: TEMP 8 Ahrefs long-meta live inspection
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-8-long-meta-live-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Read-only 8 historical long descriptions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-seo-meta-8
+          paths=(
+            '/editorler-icin/egitim/metin-degerlendirme'
+            '/editorler-icin/egitim/yazarla-calismak'
+            '/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk'
+            '/editorler-icin/egitim/yapisal-editorluk'
+            '/editoryal-standartlar'
+            '/yazarlar-icin/akademik/akademik-inceleme'
+            '/editorler-icin/egitim/editor-notu-ve-geri-bildirim'
+            '/hakkimizda'
+          )
+          n=0
+          for path in "${paths[@]}"; do
+            metrics="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 10 --max-time 35 \
+              --user-agent 'IlkOku-ReadOnly-8LongMeta-QA/20261023' \
+              --output "/tmp/ilkoku-seo-meta-8/$n.html" \
+              --write-out '%{http_code}|%{time_starttransfer}' \
+              "https://ilkoku.com$path" || true)"
+            IFS='|' read -r http ttfb <<< "$metrics"
+            echo "RESPONSE $n $path HTTP=${http:-000} TTFB=${ttfb:--}"
+            if [[ "$http" == 403 || "$http" == 429 ]]; then
+              echo "CIRCUIT BREAKER: edge refused diagnostics" >&2
+              exit 1
+            fi
+            [[ "$http" == 200 ]]
+            n=$((n+1))
+            sleep 3
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import json
+          paths=["/editorler-icin/egitim/metin-degerlendirme","/editorler-icin/egitim/yazarla-calismak","/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk","/editorler-icin/egitim/yapisal-editorluk","/editoryal-standartlar","/yazarlar-icin/akademik/akademik-inceleme","/editorler-icin/egitim/editor-notu-ve-geri-bildirim","/hakkimizda"]
+          previous=[163,161,167,174,166,165,163,172]
+          class Meta(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.desc="";self.robots="";self.canonical=""
+              def handle_starttag(self,t,attrs):
+                  a=dict(attrs)
+                  if t=="meta" and a.get("name","").lower()=="description":self.desc=a.get("content","")
+                  if t=="meta" and a.get("name","").lower()=="robots":self.robots=a.get("content","")
+                  if t=="link" and "canonical" in a.get("rel",""):self.canonical=a.get("href","")
+          summary=dict(total=8,missing=0,noindex=0,canonicalMismatch=0,oldLengthUnchanged=0)
+          for i,route in enumerate(paths):
+              p=Meta()
+              p.feed(Path(f"/tmp/ilkoku-seo-meta-8/{i}.html").read_text(encoding="utf-8",errors="replace"))
+              if not p.desc:summary["missing"]+=1
+              if "noindex" in p.robots:summary["noindex"]+=1
+              if p.canonical!="https://ilkoku.com"+route:summary["canonicalMismatch"]+=1
+              if len(p.desc)==previous[i]:summary["oldLengthUnchanged"]+=1
+              print("PAGE",json.dumps(dict(path=route,description=p.desc,liveLength=len(p.desc),oldAhrefsLength=previous[i],robots=p.robots,canonical=p.canonical),ensure_ascii=False))
+          print("SUMMARY",json.dumps(summary,ensure_ascii=False))
+          print("AUDIT_FINISHED")
+          PY

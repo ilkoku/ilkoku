@@ -1,0 +1,92 @@
+name: TEMP 13 Ahrefs short-meta live SEO inspection
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/temp-13-short-meta-live-20261023.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Read-only meta description and indexability check
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-seo-meta-13
+          paths=(
+            '/yasal/kvkk'
+            '/kitap/belki-bir-gun-okursun-997b2d1f'
+            '/yasal/gizlilik-politikasi'
+            '/yazarlar-icin/kurgu/hiciv'
+            '/yazarlar-icin/kurgu/macera'
+            '/uyelik-sozlesmesi'
+            '/yasal/telif-hakki-politikasi'
+            '/yasal/kullanim-sartlari'
+            '/yasal/cerez-politikasi'
+            '/iletisim'
+            '/yazarlar-icin/senaryo-ve-sahne'
+            '/okurlar-icin/yorum-ve-elestiri-yazma'
+            '/yazarlar-icin/edebiyat'
+          )
+          n=0
+          for path in "${paths[@]}"; do
+            metrics="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 10 --max-time 35 \
+              --user-agent 'IlkOku-ReadOnly-13Meta-QA/20261023' \
+              --output "/tmp/ilkoku-seo-meta-13/$n.html" \
+              --write-out '%{http_code}|%{time_starttransfer}|%{size_download}' \
+              "https://ilkoku.com$path" || true)"
+            IFS='|' read -r http ttfb size <<< "$metrics"
+            echo "RESPONSE $n $path HTTP=${http:-000} TTFB=${ttfb:--} SIZE=${size:--}"
+            if [[ "$http" == 403 || "$http" == 429 ]]; then
+              echo 'CIRCUIT BREAKER: Cloudflare refused diagnostic' >&2
+              exit 1
+            fi
+            [[ "$http" == 200 ]] || { echo "Unexpected HTTP: $path" >&2; exit 1; }
+            n=$((n+1))
+            sleep 3
+          done
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import json
+
+          paths=["/yasal/kvkk","/kitap/belki-bir-gun-okursun-997b2d1f","/yasal/gizlilik-politikasi","/yazarlar-icin/kurgu/hiciv","/yazarlar-icin/kurgu/macera","/uyelik-sozlesmesi","/yasal/telif-hakki-politikasi","/yasal/kullanim-sartlari","/yasal/cerez-politikasi","/iletisim","/yazarlar-icin/senaryo-ve-sahne","/okurlar-icin/yorum-ve-elestiri-yazma","/yazarlar-icin/edebiyat"]
+          historical=[77,77,72,92,90,87,73,55,57,87,99,96,94]
+          class Meta(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.desc=""
+                  self.canonical=""
+                  self.robots=""
+                  self.title=""
+                  self.in_title=False
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=="title": self.in_title=True
+                  if tag=="meta" and a.get("name","").lower()=="description":
+                      self.desc=a.get("content","")
+                  if tag=="meta" and a.get("name","").lower()=="robots":
+                      self.robots=a.get("content","")
+                  if tag=="link" and "canonical" in a.get("rel",""):
+                      self.canonical=a.get("href","")
+              def handle_endtag(self,tag):
+                  if tag=="title": self.in_title=False
+              def handle_data(self,data):
+                  if self.in_title:self.title+=data
+
+          summary=dict(total=13,missing=0,noindex=0,canonical_mismatch=0,changed_lengths=0)
+          for i,path in enumerate(paths):
+              html=Path(f"/tmp/ilkoku-seo-meta-13/{i}.html").read_text(encoding="utf-8",errors="replace")
+              p=Meta()
+              p.feed(html)
+              if not p.desc:summary["missing"]+=1
+              if "noindex" in p.robots:summary["noindex"]+=1
+              if p.canonical!="https://ilkoku.com"+path:summary["canonical_mismatch"]+=1
+              if len(p.desc)!=historical[i]:summary["changed_lengths"]+=1
+              print("PAGE",json.dumps(dict(path=path,description=p.desc,liveLength=len(p.desc),oldAhrefsLength=historical[i],robots=p.robots,canonical=p.canonical,title=p.title),ensure_ascii=False))
+          print("SUMMARY",json.dumps(summary,ensure_ascii=False))
+          print("AUDIT_FINISHED")
+          PY

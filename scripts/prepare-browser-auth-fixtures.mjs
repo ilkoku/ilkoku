@@ -369,6 +369,56 @@ try {
     ],
   );
 
+
+  // Ephemeral CI-only verified party. This is never deployed or seeded in production.
+  // Seller identity must not be inferred from the author record.
+  const ciLegalPartyId = randomUUID();
+  const ciAuthorizationId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`LegalParty\`
+      (id, kind, legalName, taxIdentifier, legalAddress, contactEmail,
+       verificationStatus, verifiedById, verifiedAt, createdAt, updatedAt)
+     VALUES (?, 'platform', 'CI ONLY MOCK SELLER - NOT A REAL ENTITY',
+       'CI-TEST-NOT-REAL', 'CI ephemeral address', 'ci@example.invalid',
+       'verified', ?, ?, ?, ?)`,
+    [ciLegalPartyId, userIds.admin, now, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`WorkSalesAuthorization\`
+      (id, workId, legalPartyId, version, status, rightsScope,
+       documentHash, validFrom, verifiedById, verifiedAt, createdAt, updatedAt)
+     VALUES (?, ?, ?, 1, 'verified', ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      ciAuthorizationId,
+      commerceWorkId,
+      ciLegalPartyId,
+      JSON.stringify({ right: "digital_read_access", territory: "TR", testOnly: true }),
+      "a".repeat(64),
+      now,
+      userIds.admin,
+      now,
+      now,
+      now,
+    ],
+  );
+  await client.execute(
+    `INSERT INTO \`WorkSellerAssignment\`
+      (id, workId, legalPartyId, authorizationId, mode, status,
+       version, currentKey, approvedById, approvedAt, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, 'platform_direct', 'approved', 1, ?, ?, ?, ?, ?)`,
+    [
+      randomUUID(),
+      commerceWorkId,
+      ciLegalPartyId,
+      ciAuthorizationId,
+      commerceWorkId,
+      userIds.admin,
+      now,
+      now,
+      now,
+    ],
+  );
+
   await client.commit();
 } catch (error) {
   await client.rollback();

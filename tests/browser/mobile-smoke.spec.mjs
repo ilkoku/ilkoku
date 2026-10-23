@@ -641,13 +641,35 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     page.getByText("CI Browser Reader Purchase Terms", { exact: true }),
   ).toBeVisible();
 
+  // Two independent browser tabs send the same real server action in
+  // parallel: exactly one creates an order, the other sees the entitlement.
   await page.locator('input[name="acceptDigitalContent"]').check();
-  await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+  const parallelPage = await page.context().newPage();
+  await parallelPage.goto("/satinal/ci-browser-zero-total-work", {
+    waitUntil: "domcontentloaded",
+  });
+  await parallelPage.locator('input[name="acceptDigitalContent"]').check();
 
-  await expect(page).toHaveURL(
-    /\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/,
+  await Promise.all([
+    page.getByRole("button", { name: "0 TL ile satın al" }).click(),
+    parallelPage.getByRole("button", { name: "0 TL ile satın al" }).click(),
+  ]);
+  const completionUrl = /\/kutuphanem\/satin-aldiklarim\?durum=(?:eklendi|zaten-erisim-var)/u;
+  await Promise.all([page.waitForURL(completionUrl), parallelPage.waitForURL(completionUrl)]);
+  const successfulPages = [page, parallelPage].filter((tab) =>
+    tab.url().includes("durum=eklendi"),
   );
-  const completedZeroTotalOrderNo = new URL(page.url()).searchParams.get("siparis");
+  expect(successfulPages, "Only one of two concurrent requests can create a new order").toHaveLength(1);
+  const completedZeroTotalOrderNo = new URL(successfulPages[0].url()).searchParams.get("siparis");
+  expect(completedZeroTotalOrderNo).toMatch(/^ILK-/u);
+  await parallelPage.close();
+  if (page.url().includes("zaten-erisim-var")) {
+    await page.goto(
+      "/kutuphanem/satin-aldiklarim?durum=eklendi&siparis=" +
+        encodeURIComponent(completedZeroTotalOrderNo),
+      { waitUntil: "domcontentloaded" },
+    );
+  }
   await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
 
   const purchasedCard = page
@@ -704,6 +726,15 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
       ].join(" ");
       const [records] = await db.execute(sql, [completedZeroTotalOrderNo]);
       expect(records, "A single 0 TL order must match").toHaveLength(1);
+      const [totalRows] = await db.execute(
+        "SELECT COUNT(*) AS orderCount FROM `Order` o " +
+          "JOIN Work w ON w.id = o.workId WHERE w.slug = ?",
+        ["ci-browser-zero-total-work"],
+      );
+      expect(
+        Number(totalRows[0].orderCount),
+        "Concurrent checkout must not create a second order for this work",
+      ).toBe(1);
       const record = records[0];
       expect(record.status).toBe("paid");
       expect(Number(record.finalAmount)).toBe(0);

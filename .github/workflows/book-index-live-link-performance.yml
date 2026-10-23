@@ -72,7 +72,31 @@ jobs:
             if [[ "${status:-000}" != "200" ]]; then
               failed=1
             fi
-            if [[ -n "${ttfb:-}" ]] && awk -v n="$ttfb" 'BEGIN {exit !(n>2.5)}'; then
+            # Turkey has a larger full ranking (up to 1200 rows). A single
+            # 1.5s spike is not a regression: recheck once before warning.
+            # Normal healthy paths add no requests to this existing audit.
+            if [[ "$path" == "/en-cok-satanlar/turkiye" && "${status:-000}" == "200" ]] \
+              && awk -v n="$ttfb" 'BEGIN {exit !(n>1.5)}'; then
+              sleep 4
+              recheck="$(curl --silent --show-error --compressed --max-time 35 \
+                --user-agent 'IlkOku-BookIndex-Audit/1.0' \
+                --output /dev/null --write-out '%{http_code}|%{time_starttransfer}|%{time_total}' \
+                "https://ilkoku.com${path}" || true)"
+              IFS='|' read -r check_status check_ttfb check_total <<< "$recheck"
+              echo "Turkey TTFB confirmation: first=$ttfb s, second=${check_ttfb:--} s, HTTP=${check_status:-000}"
+              if [[ "${check_status:-000}" == "403" || "${check_status:-000}" == "429" ]]; then
+                echo "CIRCUIT BREAKER: Turkey calibration blocked by edge; stop immediately." >&2
+                exit 1
+              fi
+              if [[ "${check_status:-000}" != "200" ]]; then
+                failed=1
+              elif [[ -n "${check_ttfb:-}" ]] \
+                && awk -v n="$check_ttfb" 'BEGIN {exit !(n>1.5)}'; then
+                echo "::warning title=Türkiye Kitap Endeksi kalıcı TTFB artışı::$path first=$ttfb s second=$check_ttfb s (1.5s iki aşamalı eşik)"
+              else
+                echo "Turkey isolated TTFB spike did not repeat; no false performance alarm."
+              fi
+            elif [[ -n "${ttfb:-}" ]] && awk -v n="$ttfb" 'BEGIN {exit !(n>2.5)}'; then
               echo "::warning title=Kitap Endeksi yüksek TTFB::$path TTFB=$ttfb s (2.5s gözlem eşiği)"
             fi
             sleep 2

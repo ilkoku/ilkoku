@@ -123,7 +123,8 @@ export async function EditorEducationShell({
                   width={cover.recommendedWidth}
                   height={cover.recommendedHeight}
                   className="h-auto w-full rounded-[1rem] object-contain"
-                  unoptimized
+                  sizes="230px"
+                  quality={75}
                 />
                 <figcaption className="px-2 pb-1 pt-2 text-[11px] font-semibold leading-5 text-[#7c6d94]">
                   {activeCategory.title}

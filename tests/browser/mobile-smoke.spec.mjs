@@ -403,6 +403,55 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("reader discovery row actions stay inside their column without overlapping on desktop and mobile", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
+
+  // A paid CI work exposes detail, favorite, reading and access controls.
+  // At narrower widths the controls must wrap inside the action cell.
+  const couponRow = page.locator(".workspace-table--discovery tbody tr")
+    .filter({ hasText: "CI Browser Kupon Eseri" });
+  await expect(couponRow).toBeVisible();
+  await expect(couponRow.getByRole("link", { name: "Erişim koşullarını gör" })).toBeVisible();
+
+  for (const [label, viewport] of [
+    ["desktop", viewports.desktop],
+    ["tablet", viewports.tablet768],
+    ["phone", viewports.phone390],
+  ]) {
+    await page.setViewportSize(viewport);
+    const geometry = await couponRow.locator('td[data-label="İşlem"]').evaluate((cell) => {
+      const cellRect = cell.getBoundingClientRect();
+      const buttons = Array.from(cell.querySelectorAll(".workspace-row-action")).map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { label: button.textContent?.trim(), left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+      const outside = buttons.filter((button) =>
+        button.left < cellRect.left - 1 || button.right > cellRect.right + 1
+      );
+      const overlaps = [];
+      for (let i = 0; i < buttons.length; i++) {
+        for (let j = i + 1; j < buttons.length; j++) {
+          const width = Math.min(buttons[i].right, buttons[j].right) - Math.max(buttons[i].left, buttons[j].left);
+          const height = Math.min(buttons[i].bottom, buttons[j].bottom) - Math.max(buttons[i].top, buttons[j].top);
+          if (width > 1 && height > 1) overlaps.push([buttons[i].label, buttons[j].label]);
+        }
+      }
+      return { controls: buttons, outside, overlaps, cellLeft: cellRect.left, cellRight: cellRect.right };
+    });
+    expect(geometry.controls, label + ": all paid-work actions present").toHaveLength(4);
+    expect(geometry.outside, label + ": controls must stay inside table column").toEqual([]);
+    expect(geometry.overlaps, label + ": controls must not overlap").toEqual([]);
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("authenticated admin keeps seven fixed main groups and opens submenus on the right", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;

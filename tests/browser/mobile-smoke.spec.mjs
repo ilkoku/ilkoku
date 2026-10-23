@@ -590,6 +590,25 @@ test("provider-free 100% platform coupon: preview open, chapter 2 locked, order 
       await db.end();
     }
   }
+  // Coupon-backed access remains an order-derived entitlement; admin Coupon
+  // filtering must include it and keep the real order source unchanged.
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=coupon&q=CI%20Browser%20Kupon%20Eseri",
+    { waitUntil: "domcontentloaded" },
+  );
+  const entitlementRow = page.locator("table tbody tr").filter({ hasText: "CI Browser Kupon Eseri" });
+  await expect(entitlementRow).toBeVisible();
+  await expect(entitlementRow.getByText("Kupon", { exact: true })).toBeVisible();
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=purchase&q=CI%20Browser%20Kupon%20Eseri",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.locator("table tbody tr").filter({ hasText: "CI Browser Kupon Eseri" })).toBeVisible();
 });
 
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {

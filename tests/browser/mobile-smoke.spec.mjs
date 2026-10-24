@@ -403,6 +403,49 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("reader checkout shows zero-total summary first with dark cards and intact disabled payment options", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+
+  for (const [label, viewport] of [
+    ["desktop", viewports.desktop],
+    ["phone", viewports.phone390],
+  ]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+    expect(response?.status(), label + ": checkout responds").toBe(200);
+    const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
+    await expect(summary.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
+    const totalRow = summary.locator('[class*="summaryGrid"] > div').last();
+    await expect(totalRow).toContainText("Toplam");
+    await expect(totalRow).toContainText("0,00");
+
+    const appearance = await summary.evaluate((element) => {
+      const grid = element.querySelector('[class*="summaryGrid"]');
+      const metadata = element.querySelector('[class*="readerCheckoutWorkMeta"]');
+      const price = grid?.lastElementChild;
+      const summaryCard = element.querySelector('[class*="readerCheckoutSummary"]');
+      return {
+        cardBackground: summaryCard ? getComputedStyle(summaryCard).backgroundColor : "",
+        order: !!grid && !!metadata && grid.getBoundingClientRect().top < metadata.getBoundingClientRect().top,
+        totalBottom: price?.getBoundingClientRect().bottom ?? Infinity,
+        viewportHeight: window.innerHeight,
+      };
+    });
+    expect(appearance.cardBackground, label + ": dark panel").toBe("rgb(27, 31, 39)");
+    expect(appearance.order, label + ": price displayed before work metadata").toBe(true);
+    expect(appearance.totalBottom, label + ": total visible without scrolling").toBeLessThan(appearance.viewportHeight);
+
+    await expect(page.locator('input[name="purchasePath"][value="card"]')).toBeDisabled();
+    await expect(page.locator('input[name="purchasePath"][value="carrier"]')).toBeDisabled();
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("reader discovery row actions stay inside their column without overlapping on desktop and mobile", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   await page.context().addCookies([{

@@ -411,20 +411,6 @@ export default async function CheckoutPreparationPage({
         <section className={`${styles.panel} ${styles.readerCheckoutSummary}`}>
           <span className={styles.eyebrow}>Ödeme özeti</span>
           <h2>Sipariş özeti</h2>
-          <div className={styles.readerCheckoutWorkMeta}>
-            <strong>{work.title}</strong>
-            <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
-            <span>Platform: İlkOku</span>
-            {verifiedSeller ? (
-              <>
-                <span>Hukukî satıcı: {verifiedSeller.party.legalName}</span>
-                <span>Satıcı adresi: {verifiedSeller.party.legalAddress}</span>
-                <span>Satıcı iletişim: {verifiedSeller.party.contactEmail}</span>
-                <span>İlkOku rolü: {verifiedSeller.mode === "platform_direct" ? "Doğrudan satıcı" : "Aracı platform"}</span>
-              </>
-            ) : null}
-            <span>Ürün: Eserin dijital okuma erişimi</span>
-          </div>
           <div className={styles.summaryGrid}>
             <div>
               <span>Eser fiyatı</span>
@@ -445,6 +431,21 @@ export default async function CheckoutPreparationPage({
               </strong>
             </div>
           </div>
+          <div className={styles.readerCheckoutWorkMeta}>
+            <strong>{work.title}</strong>
+            <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
+            <span>Platform: İlkOku</span>
+            {verifiedSeller ? (
+              <>
+                <span>Hukukî satıcı: {verifiedSeller.party.legalName}</span>
+                <span>Satıcı adresi: {verifiedSeller.party.legalAddress}</span>
+                <span>Satıcı iletişim: {verifiedSeller.party.contactEmail}</span>
+                <span>İlkOku rolü: {verifiedSeller.mode === "platform_direct" ? "Doğrudan satıcı" : "Aracı platform"}</span>
+              </>
+            ) : null}
+            <span>Ürün: Eserin dijital okuma erişimi</span>
+          </div>
+
 
           {stagedZeroCandidate ? (
             <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>

@@ -1888,3 +1888,115 @@
     font-size: 0.92rem;
   }
 }
+
+
+/* Both coupon sources share the existing backend code, but stay visibly distinct
+   within reader checkout; staging a zero-priced work cannot apply discounts. */
+.readerCheckoutPage .readerCheckoutCoupons {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 0.95rem;
+  border: 1px solid #675334;
+  border-radius: 14px;
+  background: #242730;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading h3 {
+  margin: 0;
+  color: #f8f5fc;
+  font-size: 1.02rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading p {
+  margin: 0;
+  color: #c8c5d0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm .field {
+  min-width: 0;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm .field > span {
+  color: #f1e4c6;
+  font-size: 0.85rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm input[name="kupon"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm input[name="kupon"]:disabled {
+  color: #abb0bf;
+  background: #22242b;
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm button {
+  min-height: 42px;
+  padding: 0.5rem 0.7rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPage .readerCheckoutCouponUnavailable,
+.readerCheckoutPage .readerCheckoutCouponError {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.readerCheckoutPage .readerCheckoutCouponUnavailable {
+  color: #f6dc9f;
+  background: #312918;
+  border: 1px solid #735c30;
+}
+
+.readerCheckoutPage .readerCheckoutCouponError {
+  color: #ffd7d7;
+  background: #432828;
+  border: 1px solid #936060;
+}
+
+.readerCheckoutPage .readerCheckoutCoupons .successNotice {
+  margin: 0;
+}
+
+@media (max-width: 440px) {
+  .readerCheckoutPage .readerCheckoutCoupons {
+    padding: 0.7rem;
+  }
+
+  .readerCheckoutPage .readerCheckoutCouponForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .readerCheckoutPage .readerCheckoutCouponForm button {
+    justify-self: stretch;
+  }
+}

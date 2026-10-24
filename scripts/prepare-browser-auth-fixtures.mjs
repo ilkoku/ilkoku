@@ -556,6 +556,21 @@ try {
     [randomUUID(), couponId, couponWorkId, now],
   );
 
+  // Distinct author-owned coupon for browser QA of the two checkout sources.
+  const authorCouponId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Coupon\`
+      (id, code, owner, creatorId, authorId, discountType, discountValue,
+       scope, status, perUserUsageLimit, usageCount, createdAt, updatedAt)
+     VALUES (?, 'CIBROWSERAUTHOR', 'author', ?, ?, 'percent', 100,
+       'selected_works', 'active', 1, 0, ?, ?)`,
+    [authorCouponId, userIds.writer, userIds.writer, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`CouponWorkScope\`
+      (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
+    [randomUUID(), authorCouponId, couponWorkId, now],
+  );
   await client.commit();
 } catch (error) {
   await client.rollback();

@@ -66,7 +66,7 @@ export default async function CheckoutPreparationPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ durum?: string; from?: string; kupon?: string; siparis?: string }>;
+  searchParams: Promise<{ durum?: string; from?: string; kupon?: string; kuponTuru?: string; siparis?: string }>;
 }) {
   const profile = await getCurrentProfile();
   const { slug } = await params;
@@ -156,14 +156,28 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
+  const couponInputEnabled =
+    effectiveCommerce.saleModel === "paid" &&
+    effectiveCommerce.status === "active" &&
+    originalAmount > BigInt(0);
   const requestedCouponCode = query.kupon?.trim() ?? "";
-  const coupon = !stagedZeroPurchaseReady && requestedCouponCode
+  const requestedCouponKind =
+    query.kuponTuru === "platform" || query.kuponTuru === "author"
+      ? query.kuponTuru
+      : null;
+  const candidateCoupon = couponInputEnabled && requestedCouponCode
     ? await getApplicableCheckoutCoupon({
         authorId: work.authorId,
         code: requestedCouponCode,
         readerId: profile.id,
         workId: work.id,
       })
+    : null;
+  // A platform coupon cannot be entered as an author discount or vice versa.
+  // Preserve links carrying the pre-existing "kupon" query without a type.
+  const coupon = candidateCoupon &&
+    (!requestedCouponKind || candidateCoupon.owner === requestedCouponKind)
+    ? candidateCoupon
     : null;
 
   const flash = query.durum
@@ -431,6 +445,75 @@ export default async function CheckoutPreparationPage({
               </strong>
             </div>
           </div>
+          <section className={styles.readerCheckoutCoupons} aria-label="Kupon ve indirim kodları">
+            <div className={styles.readerCheckoutCouponHeading}>
+              <h3>Kupon ve indirim kodları</h3>
+              <p>İlkOku veya yazar kodundan yalnızca biri kullanılabilir.</p>
+            </div>
+            {(["platform", "author"] as const).map((owner) => (
+              <form className={styles.readerCheckoutCouponForm} method="get" key={owner}>
+                <input name="from" type="hidden" value={returnTo} />
+                <input name="kuponTuru" type="hidden" value={owner} />
+                <label className={styles.field}>
+                  <span>{owner === "platform" ? "İlkOku kuponu" : "Yazar indirim kodu"}</span>
+                  <input
+                    aria-label={owner === "platform" ? "İlkOku kupon kodu" : "Yazar indirim kodu"}
+                    autoComplete="off"
+                    defaultValue={
+                      requestedCouponKind === owner ||
+                      (!requestedCouponKind && coupon?.owner === owner)
+                        ? requestedCouponCode
+                        : ""
+                    }
+                    disabled={!couponInputEnabled}
+                    name="kupon"
+                    placeholder={owner === "platform" ? "İlkOku kupon kodu" : "Yazarın verdiği kod"}
+                    required
+                    type="text"
+                    maxLength={80}
+                  />
+                </label>
+                <button className={styles.secondaryAction} disabled={!couponInputEnabled} type="submit">
+                  Uygula
+                </button>
+              </form>
+            ))}
+            {!couponInputEnabled ? (
+              <p className={styles.readerCheckoutCouponUnavailable} role="status">
+                {originalAmount === BigInt(0)
+                  ? "Bu eserin bedeli 0 TL olduğundan kupon veya yazar indirimi uygulanamaz. Alanlar, pozitif fiyatlı eserlerde kullanılabilir."
+                  : "Kupon ve yazar indirim kodları yalnız aktif, pozitif fiyatlı eserlerde kullanılabilir."}
+              </p>
+            ) : null}
+            {couponInputEnabled && requestedCouponCode && !coupon ? (
+              <p className={styles.readerCheckoutCouponError} role="status">
+                Kod geçersiz, süresi dolmuş, kullanım sınırına ulaşmış, bu eserde kullanılamıyor veya seçilen kupon türüyle eşleşmiyor.
+              </p>
+            ) : null}
+            {coupon ? (
+              <div className={styles.successNotice} role="status">
+                {coupon.owner === "platform" ? "İlkOku kuponu" : "Yazar indirim kodu"} {coupon.code} uygulandı.
+                {pricing.finalAmount === BigInt(0)
+                  ? " Toplam 0 TL; kart veya telefon tahsilatı yapılmayacak."
+                  : " Kalan tutar 0 TL olmadığı için ödeme olmadan edinim yapılamaz."}
+                {coupon.owner === "platform"
+                  ? " İndirim İlkOku tarafından karşılanır."
+                  : " İndirim yazar tarafından karşılanır."}
+              </div>
+            ) : null}
+            {requestedCouponCode ? (
+              <Link className={styles.quietAction} href={`/satinal/${work.slug}?from=${encodeURIComponent(returnTo)}`}>
+                Kuponu kaldır
+              </Link>
+            ) : null}
+          </section>
+          {stagedZeroCandidate ? (
+            <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
+              {stagedZeroPurchaseReady
+                ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
+                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
+            </div>
+          ) : null}
           <div className={styles.readerCheckoutWorkMeta}>
             <strong>{work.title}</strong>
             <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>
@@ -447,55 +530,7 @@ export default async function CheckoutPreparationPage({
           </div>
 
 
-          {stagedZeroCandidate ? (
-            <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
-              {stagedZeroPurchaseReady
-                ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
-                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
-            </div>
-          ) : (
-            <>
-              <form className={styles.couponApplyForm} method="get">
-                <input name="from" type="hidden" value={returnTo} />
-                <label className={styles.field}>
-                  <span>Kupon kodunuz var mı?</span>
-                  <input
-                    defaultValue={requestedCouponCode}
-                    name="kupon"
-                    placeholder="Kupon kodu"
-                    type="text"
-                  />
-                </label>
-                <button className={styles.secondaryAction} type="submit">
-                  Uygula
-                </button>
-              </form>
 
-              {requestedCouponCode && !coupon ? (
-                <div className={styles.notice}>
-                  Kupon geçersiz, süresi dolmuş, kullanım limiti dolmuş veya bu
-                  eser için geçerli değil.
-                </div>
-              ) : null}
-              {requestedCouponCode ? (
-                <Link className={styles.quietAction} href={`/satinal/${work.slug}?from=${encodeURIComponent(returnTo)}`}>
-                  Kuponu kaldır
-                </Link>
-              ) : null}
-
-              {coupon ? (
-                <div className={styles.successNotice}>
-                  {coupon.code} kuponu uygulandı.
-                  {pricing.finalAmount === BigInt(0)
-                    ? " Toplam 0 TL; kart veya telefon tahsilatı yapılmayacak."
-                    : " Kalan toplam 0 TL olmadığı için ödeme olmadan edinim yapılamaz."}
-                  {coupon.owner === "platform"
-                    ? " İndirim İlkOku tarafından karşılanır."
-                    : " İndirim yazar tarafından karşılanır."}
-                </div>
-              ) : null}
-            </>
-          )}
         </section>
 
           </aside>

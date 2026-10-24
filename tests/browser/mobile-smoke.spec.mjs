@@ -668,11 +668,12 @@ test("provider-free 100% platform coupon: preview open, chapter 2 locked, order 
   // Coupon entry belongs to the reader checkout (not admin or author forms).
   await page.goto("/satinal/ci-browser-coupon-work", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "CI Browser Kupon Eseri" })).toBeVisible();
-  await expect(page.locator('input[name="kupon"]')).toBeVisible();
-  await page.locator('input[name="kupon"]').fill("CIBROWSER100");
-  await page.getByRole("button", { name: "Uygula" }).click();
+  const platformCouponForm = page.locator('form:has(input[name="kuponTuru"][value="platform"])');
+  await expect(platformCouponForm.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeVisible();
+  await platformCouponForm.locator('input[name="kupon"]').fill("CIBROWSER100");
+  await platformCouponForm.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/kupon=CIBROWSER100/u);
-  await expect(page.getByText(/CIBROWSER100 kuponu uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/İlkOku kuponu CIBROWSER100 uygulandı/u)).toBeVisible();
   await expect(page.getByText(/İndirim İlkOku tarafından karşılanır/u)).toBeVisible();
   await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
   await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();

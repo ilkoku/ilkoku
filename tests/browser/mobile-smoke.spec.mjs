@@ -420,8 +420,14 @@ test("reader checkout shows zero-total summary first with dark cards and intact 
     expect(response?.status(), label + ": checkout responds").toBe(200);
     const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
     await expect(summary.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
-    const totalRow = summary.locator('[class*="summaryGrid"] > div').last();
-    await expect(totalRow).toContainText("Toplam");
+    const breakdown = summary.locator('[class*="summaryGrid"] > div');
+    await expect(breakdown).toHaveCount(4);
+    await expect(breakdown.nth(1)).toContainText("İlkOku kupon indirimi");
+    await expect(breakdown.nth(1)).toContainText("0,00");
+    await expect(breakdown.nth(2)).toContainText("Yazar indirim kodu");
+    await expect(breakdown.nth(2)).toContainText("0,00");
+    const totalRow = breakdown.last();
+    await expect(totalRow).toContainText("Ödenecek toplam");
     await expect(totalRow).toContainText("0,00");
 
     const appearance = await summary.evaluate((element) => {
@@ -480,15 +486,26 @@ test("reader checkout separates platform and author codes and blocks discounts o
     await expect(page).toHaveURL(new RegExp(`kuponTuru=${type}.*kupon=${code}|kupon=${code}.*kuponTuru=${type}`));
     await expect(area.getByText(`${expectedLabel} ${code} uygulandı.`, { exact: false })).toBeVisible();
     const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
-    await expect(summary.locator('[class*="summaryGrid"] > div').last()).toContainText("0,00");
+    const breakdown = summary.locator('[class*="summaryGrid"] > div');
+    await expect(breakdown).toHaveCount(4);
+    await expect(breakdown.first()).toContainText("100,00");
+    await expect(breakdown.nth(1)).toContainText("İlkOku kupon indirimi");
+    await expect(breakdown.nth(2)).toContainText("Yazar indirim kodu");
+    await expect(breakdown.nth(type === "platform" ? 1 : 2)).toContainText("-₺100,00");
+    await expect(breakdown.nth(type === "platform" ? 2 : 1)).toContainText("₺0,00");
+    await expect(breakdown.last()).toContainText("Ödenecek toplam");
+    await expect(breakdown.last()).toContainText("0,00");
     await expectResponsiveDocument(page);
   }
 
   await page.goto("/satinal/ci-browser-coupon-work?kuponTuru=author&kupon=CIBROWSER100");
   const wrongSource = page.locator('[class*="readerCheckoutCoupons"]');
   await expect(wrongSource.getByText(/seçilen kupon türüyle eşleşmiyor/)).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "Sipariş özeti" })
-    .locator('[class*="summaryGrid"] > div').last()).toContainText("100,00");
+  const rejectedBreakdown = page.getByRole("complementary", { name: "Sipariş özeti" })
+    .locator('[class*="summaryGrid"] > div');
+  await expect(rejectedBreakdown.nth(1)).toContainText("₺0,00");
+  await expect(rejectedBreakdown.nth(2)).toContainText("₺0,00");
+  await expect(rejectedBreakdown.last()).toContainText("100,00");
 });
 
 test("reader discovery row actions stay inside their column without overlapping on desktop and mobile", async ({ page }) => {

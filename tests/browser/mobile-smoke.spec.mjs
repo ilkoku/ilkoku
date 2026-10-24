@@ -446,6 +446,51 @@ test("reader checkout shows zero-total summary first with dark cards and intact 
   }
 });
 
+test("reader checkout separates platform and author codes and blocks discounts on staged 0 TL work", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+    const area = page.locator('[class*="readerCheckoutCoupons"]');
+    await expect(area.getByRole("heading", { name: "Kupon ve indirim kodları" })).toBeVisible();
+    await expect(area.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeDisabled();
+    await expect(area.getByRole("textbox", { name: "Yazar indirim kodu" })).toBeDisabled();
+    await expect(area.getByText("Bu eserin bedeli 0 TL olduğundan")).toBeVisible();
+    await expectResponsiveDocument(page);
+  }
+
+  await page.setViewportSize(viewports.desktop);
+  for (const [type, code, expectedLabel] of [
+    ["platform", "CIBROWSER100", "İlkOku kuponu"],
+    ["author", "CIBROWSERAUTHOR", "Yazar indirim kodu"],
+  ]) {
+    await page.goto("/satinal/ci-browser-coupon-work", { waitUntil: "domcontentloaded" });
+    const area = page.locator('[class*="readerCheckoutCoupons"]');
+    await expect(area.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeEnabled();
+    await expect(area.getByRole("textbox", { name: "Yazar indirim kodu" })).toBeEnabled();
+    const form = area.locator(`form:has(input[name="kuponTuru"][value="${type}"])`);
+    await form.locator('input[name="kupon"]').fill(code);
+    await form.getByRole("button", { name: "Uygula" }).click();
+    await expect(page).toHaveURL(new RegExp(`kuponTuru=${type}.*kupon=${code}|kupon=${code}.*kuponTuru=${type}`));
+    await expect(area.getByText(`${expectedLabel} ${code} uygulandı.`, { exact: false })).toBeVisible();
+    const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
+    await expect(summary.locator('[class*="summaryGrid"] > div').last()).toContainText("0,00");
+    await expectResponsiveDocument(page);
+  }
+
+  await page.goto("/satinal/ci-browser-coupon-work?kuponTuru=author&kupon=CIBROWSER100");
+  const wrongSource = page.locator('[class*="readerCheckoutCoupons"]');
+  await expect(wrongSource.getByText(/seçilen kupon türüyle eşleşmiyor/)).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Sipariş özeti" })
+    .locator('[class*="summaryGrid"] > div').last()).toContainText("100,00");
+});
+
 test("reader discovery row actions stay inside their column without overlapping on desktop and mobile", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   await page.context().addCookies([{

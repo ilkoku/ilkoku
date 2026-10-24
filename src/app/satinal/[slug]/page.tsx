@@ -433,13 +433,27 @@ export default async function CheckoutPreparationPage({
               </strong>
             </div>
             <div>
-              <span>İndirim</span>
+              <span>İlkOku kupon indirimi</span>
               <strong>
-                -{formatMoney(pricing.discountAmount, effectiveCommerce.currency)}
+                {coupon?.owner === "platform" && pricing.discountAmount > BigInt(0) ? "-" : ""}
+                {formatMoney(
+                  coupon?.owner === "platform" ? pricing.discountAmount : BigInt(0),
+                  effectiveCommerce.currency,
+                )}
               </strong>
             </div>
             <div>
-              <span>Toplam</span>
+              <span>Yazar indirim kodu</span>
+              <strong>
+                {coupon?.owner === "author" && pricing.discountAmount > BigInt(0) ? "-" : ""}
+                {formatMoney(
+                  coupon?.owner === "author" ? pricing.discountAmount : BigInt(0),
+                  effectiveCommerce.currency,
+                )}
+              </strong>
+            </div>
+            <div>
+              <span>Ödenecek toplam</span>
               <strong>
                 {formatMoney(pricing.finalAmount, effectiveCommerce.currency)}
               </strong>

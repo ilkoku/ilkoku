@@ -507,6 +507,13 @@ export default async function CheckoutPreparationPage({
               </Link>
             ) : null}
           </section>
+          {stagedZeroCandidate ? (
+            <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
+              {stagedZeroPurchaseReady
+                ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
+                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
+            </div>
+          ) : null}
           <div className={styles.readerCheckoutWorkMeta}>
             <strong>{work.title}</strong>
             <span>Yazar: {work.author.displayName ?? work.author.fullName}</span>

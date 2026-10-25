@@ -18,6 +18,7 @@ const SOFT_LAUNCH_INDEXABLE_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/yazarlar-icin/kurgu/fantastik",
   "/yazarlar-icin/kurgu/bilim-kurgu",
   "/yazarlar-icin/kurgu/distopya",
+  "/yazarlar-icin/kurgu/dedektif",
   "/yazarlar-icin/edebiyat/siir",
   "/okurlar-icin/okumaya-baslama",
   "/editorler-icin/egitim/editorluge-baslama",

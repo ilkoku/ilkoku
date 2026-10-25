@@ -104,5 +104,8 @@ test("writer income reads historical commission snapshots instead of recomputing
   assert.ok(income.includes("Sipariş anındaki komisyon"));
   const works = readFileSync(join(root, "src/app/satis-erisim/page.tsx"), "utf8");
   assert.ok(works.includes("/satis-erisim/kazanc-hesaplama?eser="));
+  assert.ok(works.includes("quoteCommercePrice({"));
+  assert.ok(works.includes("previewQuote?.pricing.originalAmount"));
+  assert.ok(income.includes('work.priceTaxTreatment === "net_plus_vat"'));
   assert.ok(!income.includes("commissionRateBps: 1500"));
 });

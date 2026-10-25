@@ -65,6 +65,11 @@ export default async function DayCloseAccountingTransferPage() {
             hareket tipi ve kuruş bazlı tutar.</p>
           <p><code>iadeler.csv</code> — Tamamlanmış iadeler, sipariş tahsilatı,
             kapanış tarihine kadarki kümülatif iade ve kontrol sonucu.</p>
+          <p><code>iade_ledger_mutabakat.csv</code> — Aynı iş günündeki
+            işlenmiş iade kayıtları ile refund türündeki finans hareketlerini
+            sipariş ve para birimi bazında karşılaştırır. Eksik hareket,
+            yanlış toplam veya farklı muhasebeleştirme günü incelemeye ayrılır;
+            bir hareketin eksikliği paranın iade edilmediğini kanıtlamaz.</p>
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
             mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,

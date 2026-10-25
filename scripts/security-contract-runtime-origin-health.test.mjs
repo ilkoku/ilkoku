@@ -91,4 +91,14 @@ test("Public production load workflow stays manual and explicitly confirmed", ()
   assert.doesNotMatch(flow, /^  (?:push|schedule|pull_request):/mu);
   assert.match(flow, /RUN-PUBLIC-LOAD-TEST/u);
   assert.match(flow, /https:\/\/ilkoku\.com\|https:\/\/www\.ilkoku\.com/u);
+  assert.match(flow, /ILKOKU_HIGH_LOAD_APPROVAL/u);
+  assert.match(flow, /CONFIRMATION: \$\{\{ inputs\.confirmation \}\}/u);
+
+  const script = readFileSync("tests/load/public-baseline.js", "utf8");
+  for (const profile of ["capacity100", "capacity200", "diagnostic150", "distributedprobe100"]) {
+    assert.ok(script.includes('"' + profile + '"'), "High-impact profile must be gated: " + profile);
+  }
+  assert.match(script, /HIGH_IMPACT_PROFILES\.has\(PROFILE\)/u);
+  assert.match(script, /ILKOKU_HIGH_LOAD_APPROVAL/u);
+  assert.match(script, /HIGH_IMPACT_LOAD_TEST_BLOCKED/u);
 });

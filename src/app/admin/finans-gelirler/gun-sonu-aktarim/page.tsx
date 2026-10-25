@@ -63,7 +63,8 @@ export default async function DayCloseAccountingTransferPage() {
             indirim, kayıtlı komisyon oranı ve inceleme sonucu.</p>
           <p><code>finans_hareketleri.csv</code> — Mevcut ledger kayıtları,
             hareket tipi ve kuruş bazlı tutar.</p>
-          <p><code>iadeler.csv</code> — İşleme alınmış iadeler.</p>
+          <p><code>iadeler.csv</code> — Tamamlanmış iadeler, sipariş tahsilatı,
+            kapanış tarihine kadarki kümülatif iade ve kontrol sonucu.</p>
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
             mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,

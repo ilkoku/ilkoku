@@ -32,6 +32,7 @@ export default async function OrderAccountingReviewPage({
     priceQuote: order.priceQuoteSnapshot,
     payments: order.payments,
     bookedEntryTypes: order.financialLedgerEntries.map((entry) => entry.entryType),
+    commissionRateSnapshot: order.commissionRateSnapshot,
     taxReview: order.author.taxReviewsAsWriter[0] ?? null,
   }) : null;
 

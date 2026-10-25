@@ -553,6 +553,7 @@ export async function getWriterFinanceOverview(authorId: string) {
           saleConfiguration: {
             select: {
               priceAmount: true,
+              priceTaxTreatment: true,
               currency: true,
               status: true,
             },
@@ -590,6 +591,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       taxWithholding: bigint;
       adjustments: bigint;
       priceAmount: bigint | null;
+      priceTaxTreatment: string;
       currency: string;
       saleStatus: "draft" | "ready" | "active" | "paused";
       unitsSold: number;
@@ -613,6 +615,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       taxWithholding: BigInt(0),
       adjustments: BigInt(0),
       priceAmount: configuration.priceAmount,
+      priceTaxTreatment: configuration.priceTaxTreatment,
       currency: configuration.currency,
       saleStatus: configuration.status,
       unitsSold: work._count.commerceOrders,

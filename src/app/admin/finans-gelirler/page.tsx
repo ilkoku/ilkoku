@@ -113,6 +113,16 @@ export default async function FinanceIncomePage() {
 
       <section className="admin-detail-grid">
         <article className="admin-panel">
+          <h2>Yazar Vergi / Belge İncelemesi</h2>
+          <p>Yazarın fatura, e-SMM veya gider pusulası statüsünü
+            inceleyin; geçerlilik süresi ve yönetici kararı geçmişini
+            kaydedin. Bu inceleme ödeme yetkisi vermez.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme">
+            Yazar vergi incelemesini aç
+          </Link>
+        </article>
+        <article className="admin-panel">
           <h2>Sipariş Mali İnceleme</h2>
           <p>Sipariş No ile KDV fiyat kaydını, tahsilatı, mevcut ledger
             hareketlerini ve faturalı / faturasız örnek yazar gelirlerini

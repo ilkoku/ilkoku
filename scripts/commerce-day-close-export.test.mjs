@@ -79,13 +79,14 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.equal(result.manifest.checkedVatMinor,"2000");
   assert.equal(result.manifest.preparationRows,1);
   assert.equal(result.manifest.reviewedAuthorSummaryGroups,1);
+  assert.equal(result.manifest.liraWorksheetRows,1);
   assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
   assert.equal(result.manifest.ledgerSummaryGroups,1);
-  assert.equal(result.files.length,10);
+  assert.equal(result.files.length,11);
   assert.deepEqual([...result.files.map(f=>f.name)],[
     "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv",
     "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv",
-    "yazar_hesap_ozeti.csv","alan_esleme.json","manifest.json",
+    "yazar_hesap_ozeti.csv","muhasebe_tl_inceleme.csv","alan_esleme.json","manifest.json",
   ]);
   for (const f of result.files.filter(x=>x.name.endsWith(".csv"))) {
     assert.equal(result.manifest.fileHashes[f.name],createHash("sha256").update(f.data).digest("hex"));
@@ -429,4 +430,39 @@ test("writer-level summary separates faturalı %0 and verified GVK18 %5 service 
   assert.ok(authorRows.includes(",2000,500,"));
   assert.ok(authorRows.includes(",2000,0,"));
   assert.equal(authorRows.split("\r\n").filter(Boolean).length,3);
+});
+
+
+test("Turkish-lira worksheet preserves exact minor units without floating-point rounding", () => {
+  assert.equal(exportModule.minorToTurkishLira(0n),"0,00");
+  assert.equal(exportModule.minorToTurkishLira(1n),"0,01");
+  assert.equal(exportModule.minorToTurkishLira(12345n),"123,45");
+  assert.equal(exportModule.minorToTurkishLira(-12345n),"-123,45");
+  assert.equal(exportModule.minorToTurkishLira(900719925474099314n),"9007199254740993,14");
+  const result=make([validOrder()]);
+  const sheet=result.files.find(f=>f.name==="muhasebe_tl_inceleme.csv");
+  assert.ok(sheet);
+  assert.ok(sheet.data.startsWith("\uFEFF"));
+  assert.ok(sheet.data.includes('"100,00";"20,00";"120,00";"20,00";"5,00"'));
+  assert.equal(sheet.data.split("\r\n").filter(Boolean).length,2);
+  assert.equal(result.manifest.liraWorksheetRows,1);
+  const map=JSON.parse(result.files.find(f=>f.name==="alan_esleme.json").data);
+  assert.equal(map.localeWorksheet.delimiter,";");
+  assert.equal(map.localeWorksheet.decimalSeparator,",");
+  assert.equal(map.localeWorksheet.status,"ACCOUNTANT_REVIEW_ONLY_NOT_VENDOR_CERTIFIED");
+});
+
+test("only reconciled sales enter Turkish-lira accountant worksheet", () => {
+  const bad=validOrder();bad.orderNo="ILK-NO-LEDGER";
+  const result=make([bad]);
+  assert.equal(result.manifest.liraWorksheetRows,0);
+  assert.equal(result.files.find(f=>f.name==="muhasebe_tl_inceleme.csv").data.split("\r\n").filter(Boolean).length,1);
+});
+
+test("semicolon-delimited accountant CSV escapes untrusted formulas and delimiters", () => {
+  const rows=[["alan","deger"],["=SUM(1;2)","safety;check"],["\u0009+HYPERLINK",null]];
+  const csv=exportModule.safeCsvDelimited(rows,";");
+  assert.ok(csv.includes("'=SUM"));
+  assert.ok(csv.includes('"safety;check"'));
+  assert.ok(csv.includes("'\u0009+HYPERLINK"));
 });

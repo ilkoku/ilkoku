@@ -73,7 +73,7 @@ export default async function PlatformCouponsPage({
 
       {flash ? <div className={styles.flash}>{flash}</div> : null}
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.adminCouponPanel}`} data-testid="platform-coupon-create">
         <div className={styles.panelHeader}>
           <div>
             <span className={styles.eyebrow}>Yeni kampanya</span>
@@ -84,6 +84,12 @@ export default async function PlatformCouponsPage({
             </p>
           </div>
           <span className={styles.badge}>Platform finansmanlı</span>
+          <p className={styles.helper}>
+            0 TL bedelli eserde kupon ek indirim oluşturmaz. Pozitif tutarlı
+            aktif ücretli eserde %100 kupon son toplamı 0 TL&apos;ye indirebilir.
+            Bu işlemde gerçek ödeme sağlayıcısı kullanılmaz; indirim kaydı
+            finans hareketlerine yansır.
+          </p>
         </div>
 
         <form action={createPlatformCouponAction} className={styles.formGrid}>
@@ -178,7 +184,7 @@ export default async function PlatformCouponsPage({
         </form>
       </section>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.adminCouponPanel}`} data-testid="platform-coupon-list">
         <div className={styles.panelHeader}>
           <div>
             <span className={styles.eyebrow}>Platform kampanyaları</span>

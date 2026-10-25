@@ -3,11 +3,12 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Yayıncılık ve Profesyonel Editörlük | İlkOku Editörlük Okulu",
-  description: "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, profesyonel teslim standardı, sürüm ve onay disiplini ile yayın kararı sınırlarını öğren.",
+  description: "Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, teslim standardı, sürüm, onay disiplini ve yayın kararı sınırlarını öğren.",
   canonical: "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
 });
 
@@ -171,7 +172,13 @@ export default function YayincilikVeProfesyonelEditorlukPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Yayıncılık ve Profesyonel Editörlük"
+        description="Dosya değerlendirmeden yayıma hazırlığa uzanan editöryal zinciri; rol ayrımı, teslim standardı, sürüm, onay disiplini ve yayın kararı sınırlarını öğren."
+        canonical="/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -337,6 +344,7 @@ export default function YayincilikVeProfesyonelEditorlukPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

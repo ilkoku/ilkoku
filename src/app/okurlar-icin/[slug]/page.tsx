@@ -69,17 +69,9 @@ export default async function ReaderEducationRoute({ params }: PageProps) {
       description: guide.summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonical,
+      image: "https://ilkoku.com/og/ilkoku-social-selected-2026.webp",
       author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
-        { "@type": "ListItem", position: 2, name: "Okurlar İçin", item: "https://ilkoku.com/okurlar-icin" },
-        { "@type": "ListItem", position: 3, name: guide.title, item: canonical },
-      ],
     },
   ];
 

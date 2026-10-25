@@ -117,8 +117,8 @@ export function PublicSiteAccount() {
               <span>Aktif rol: {account.roleLabel}</span>
               {account.pendingLabel ? <small>{account.pendingLabel}</small> : null}
             </div>
-            <Link href="/hesabim">Hesabım</Link>
-            <Link href={account.workspaceHref}>Çalışma Alanım</Link>
+            <Link prefetch={false} href="/hesabim">Hesabım</Link>
+            <Link prefetch={false} href={account.workspaceHref}>Çalışma Alanım</Link>
             <form action="/cikis" method="post">
               <button className="public-site-header__logout" type="submit">
                 Çıkış Yap
@@ -127,8 +127,8 @@ export function PublicSiteAccount() {
           </>
         ) : (
           <>
-            <Link href="/giris">Giriş Yap</Link>
-            <Link href="/kayit">Üye Ol</Link>
+            <Link prefetch={false} href="/giris">Giriş Yap</Link>
+            <Link prefetch={false} href="/kayit">Üye Ol</Link>
           </>
         )}
       </div>

@@ -34,6 +34,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           activatedAt: true,
@@ -45,6 +46,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           publicationModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           accessPlanSnapshot: true,
         },
@@ -57,11 +59,39 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           id: true,
           grantedAt: true,
+          order: {
+            select: {
+              orderNo: true,
+            },
+          },
         },
         take: 1,
       },
     },
   });
+}
+
+/**
+ * Resolve a pending checkout number only if the order is owned by the
+ * current reader and belongs to this exact work.
+ *
+ * Query-string order numbers are untrusted until confirmed here.
+ */
+export async function getReaderPendingCheckoutOrderNo(input: {
+  orderNo: string;
+  readerId: string;
+  workId: string;
+}) {
+  const pending = await prisma.order.findFirst({
+    where: {
+      orderNo: input.orderNo,
+      readerId: input.readerId,
+      workId: input.workId,
+      status: "pending_payment",
+    },
+    select: { orderNo: true },
+  });
+  return pending?.orderNo ?? null;
 }
 
 export async function getApplicableCheckoutCoupon(input: {

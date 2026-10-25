@@ -44,6 +44,16 @@ function tableCells(line: string) {
     .map((cell) => cell.trim());
 }
 
+// Inline **emphasis** is present in published education copy. Keep this deliberately
+// narrower than full Markdown: plain text remains React-escaped and no HTML is parsed.
+function renderInlineEmphasis(value: string) {
+  return value.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : part,
+  );
+}
+
 function isTableSeparator(line: string) {
   const cells = tableCells(line);
   return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
@@ -91,7 +101,7 @@ export function EditorialBody({ body }: { body: string }) {
                     <tr key={`${index}-${rowIndex}`}>
                       {headers.map((header, cellIndex) => (
                         <td className="min-w-36 px-4 py-3 align-top text-[#4b465a]" key={`${header}-${cellIndex}`}>
-                          {row[cellIndex] ?? ""}
+                          {renderInlineEmphasis(row[cellIndex] ?? "")}
                         </td>
                       ))}
                     </tr>
@@ -108,7 +118,7 @@ export function EditorialBody({ body }: { body: string }) {
               {lines.map((line) => (
                 <li className="flex gap-3" key={line}>
                   <span aria-hidden="true" className="mt-[0.7rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[#6847e8]" />
-                  <span>{line.slice(2)}</span>
+                  <span>{renderInlineEmphasis(line.slice(2))}</span>
                 </li>
               ))}
             </ul>
@@ -118,12 +128,12 @@ export function EditorialBody({ body }: { body: string }) {
         if (lines.length > 0 && lines.every((line) => /^\d+\.\s/.test(line))) {
           return (
             <ol className="list-decimal space-y-3 pl-6" key={`${index}-${block.slice(0, 24)}`}>
-              {lines.map((line) => <li key={line}>{line.replace(/^\d+\.\s/, "")}</li>)}
+              {lines.map((line) => <li key={line}>{renderInlineEmphasis(line.replace(/^\d+\.\s/, ""))}</li>)}
             </ol>
           );
         }
 
-        return <p className="whitespace-pre-line" key={`${index}-${block.slice(0, 30)}`}>{block}</p>;
+        return <p className="whitespace-pre-line" key={`${index}-${block.slice(0, 30)}`}>{renderInlineEmphasis(block)}</p>;
       })}
     </div>
   );

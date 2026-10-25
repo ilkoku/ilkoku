@@ -187,3 +187,305 @@
   background: linear-gradient(135deg,rgba(79,70,229,.2),rgba(124,58,237,.11));
   box-shadow: inset 2px 0 #8b5cf6;
 }
+
+
+/* ADMIN NAVIGATION INTERACTION FIX — 2026-10-08 */
+.admin-nav-group__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.7rem;
+  align-items: stretch;
+}
+
+.admin-sidebar nav a.admin-nav-group__landing {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: .75rem;
+  min-height: 3.45rem;
+  padding: .7rem .55rem .7rem .8rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #c6ccda;
+}
+
+.admin-sidebar nav a.admin-nav-group__landing:hover {
+  background: rgba(255,255,255,.035);
+  color: #fff;
+  transform: none;
+}
+
+.admin-nav-group.is-active {
+  border-color: rgba(129,140,248,.22);
+  background: rgba(99,102,241,.045);
+}
+
+.admin-nav-group.is-active .admin-nav-group__landing {
+  color: #fff;
+}
+
+.admin-nav-group__toggle {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border: 0;
+  border-left: 1px solid rgba(148,163,184,.07);
+  background: transparent;
+  color: #7f889c;
+  cursor: pointer;
+}
+
+.admin-nav-group__toggle:hover {
+  background: rgba(255,255,255,.045);
+  color: #fff;
+}
+
+.admin-nav-group__toggle:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: -2px;
+}
+
+.admin-nav-group__chevron {
+  transition: transform 160ms ease;
+}
+
+.admin-nav-group__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.admin-return-row {
+  display: flex;
+  align-items: center;
+  margin: 0 0 1rem;
+}
+
+/* Third-level navigation only: existing colors, fonts, buttons and public styles stay intact. */
+.admin-nav-child { min-width: 0; }
+.admin-nav-child__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+.admin-nav-child__header > a { min-width: 0; }
+.admin-nav-child__toggle { width: 2.7rem; }
+.admin-nav-child__items {
+  display: grid;
+  gap: .18rem;
+  margin: 0 .42rem .35rem 1.05rem;
+  padding-left: .45rem;
+  border-left: 1px solid rgba(148,163,184,.12);
+}
+.admin-sidebar nav .admin-nav-group__items .admin-nav-child__items a {
+  grid-template-columns: minmax(0,1fr);
+  padding-left: .68rem;
+  overflow-wrap: anywhere;
+}
+.admin-nav-child__items[hidden] { display: none; }
+
+/* ADMIN THREE-LEVEL SCROLL TRACK FIX — preserve colors and control styling.
+   A vertical grid can compress tall expanded sections inside the sidebar,
+   while .admin-nav-group overflow:hidden clips its real menu rows. */
+.admin-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.admin-sidebar nav > .admin-nav-group {
+  flex: 0 0 auto;
+}
+
+
+/* System management: seven fixed left headings, second/third level to the RIGHT.
+   Existing typography, colors, buttons and page components remain unchanged. */
+.admin-sidebar nav button.admin-nav-group__landing {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: .75rem;
+  align-items: center;
+  min-height: 3.45rem;
+  padding: .7rem .55rem .7rem .8rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #c6ccda;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-sidebar nav button.admin-nav-group__landing:hover,
+.admin-sidebar nav button.admin-nav-group__landing:focus-visible {
+  background: rgba(255,255,255,.035);
+  color: #fff;
+}
+.admin-sidebar nav button.admin-nav-group__landing:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: -2px;
+}
+.admin-nav-group.is-active button.admin-nav-group__landing { color: #fff; }
+.admin-sidebar nav .admin-nav-group__header { display: block; }
+/* Unified navigation: seven fixed main groups on the left; selected group's
+   second-level options in a horizontal strip ABOVE the workspace content.
+   Third-level options render in a second horizontal, independently scrollable strip. */
+.admin-workspace.has-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.admin-workspace .admin-content { min-width: 0; }
+.admin-secondary-panel {
+  position: sticky;
+  top: 5rem;
+  z-index: 24;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: .55rem 1rem .75rem;
+  border-top: 1px solid rgba(148,163,184,.24);
+  border-bottom: 1px solid rgba(148,163,184,.32);
+  background: rgba(11,14,26,.95);
+  backdrop-filter: blur(20px);
+}
+.admin-secondary-panel__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: .7rem;
+  margin-bottom: .45rem;
+  padding: .2rem .25rem .65rem;
+  border-bottom: 1px solid rgba(148,163,184,.25);
+}
+.admin-secondary-panel__heading > div { min-width: 0; }
+.admin-secondary-panel__heading strong { display: inline; font-size: .85rem; color: #fff; }
+.admin-secondary-panel__heading small {
+  display: inline;
+  margin-left: .7rem;
+  font-size: .68rem;
+  color: #8b93a7;
+}
+.admin-secondary-panel__heading > button {
+  width: 2.2rem;
+  min-height: 2rem;
+  flex: 0 0 2.2rem;
+  border-left: 1px solid rgba(148,163,184,.3);
+}
+.admin-secondary-panel__items,
+.admin-secondary-panel .admin-tertiary-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .35rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(139 92 246 / 55%) transparent;
+  overscroll-behavior-inline: contain;
+}
+.admin-secondary-panel__items { padding: .12rem 0 .35rem; }
+.admin-secondary-panel .admin-nav-child { flex: 0 0 auto; min-width: 0; }
+.admin-secondary-panel .admin-nav-child__header {
+  display: flex;
+  align-items: stretch;
+  gap: .15rem;
+}
+.admin-secondary-panel .admin-nav-child__header a,
+.admin-secondary-panel .admin-tertiary-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  flex: 0 0 auto;
+  min-height: 2.4rem;
+  box-sizing: border-box;
+  padding: .5rem .75rem;
+  border: 1px solid rgba(148,163,184,.25);
+  border-radius: .65rem;
+  background: rgba(255,255,255,.025);
+  color: #aeb6c8;
+  font-size: .76rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.admin-secondary-panel a:hover {
+  color: #fff;
+  border-color: rgba(167,139,250,.48);
+  background: rgba(124,58,237,.12);
+}
+.admin-secondary-panel a:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+.admin-secondary-panel a.is-active {
+  color: #fff;
+  border-color: rgba(167,139,250,.75);
+  background: linear-gradient(135deg,rgba(79,70,229,.3),rgba(124,58,237,.2));
+  box-shadow: inset 0 -3px #a78bfa;
+}
+.admin-secondary-panel a svg { width: 1rem; height: 1rem; flex: 0 0 1rem; }
+.admin-secondary-panel .admin-nav-child__toggle { width: 2rem; }
+.admin-secondary-panel .admin-tertiary-row {
+  box-sizing: border-box;
+  margin: .35rem 0 0;
+  padding: .45rem 0 0;
+  border-top: 1px solid rgba(148,163,184,.27);
+  border-left: 0;
+}
+.admin-secondary-panel .admin-tertiary-row[hidden] { display: none; }
+@media (max-width: 900px) {
+  .admin-secondary-panel { position: relative; top: auto; }
+  .admin-secondary-panel__heading small { display: none; }
+}
+
+/* Shared admin workspace: preserve each specialist center's page styles, suppress only outer gutter. */
+.admin-content--embedded {
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto; /* Keep wide contract/map tables accessible within the workspace, never overflow the whole viewport. */
+}
+.admin-content--embedded > * { min-width: 0; }
+
+/* UNIFIED ADMIN MOBILE TOPBAR REFLOW
+   All original buttons/links remain available; the profile moves to a second
+   flex row rather than widening the entire 390px document. */
+@media (max-width: 680px) {
+  .admin-shell .admin-topbar {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 5rem;
+    padding: .6rem 1rem;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  .admin-shell .admin-topbar > div:first-of-type {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .admin-shell .admin-profile {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+  .admin-shell .admin-profile__logout { white-space: nowrap; }
+}
+
+
+/* COMPACT ADMIN TOPBAR — preserve existing account/logout elements and routes. */
+.admin-shell .admin-topbar {min-height:4.5rem;height:auto;gap:.75rem;padding:.6rem 1.25rem}
+.admin-shell .admin-search {flex:1 1 18rem;max-width:30rem;width:auto;margin-left:auto}
+.admin-shell .admin-profile {gap:.5rem;min-width:0;flex-shrink:0}
+.admin-shell .admin-profile>span {width:2.25rem;height:2.25rem}
+.admin-shell .admin-profile__logout {font-size:.7rem;white-space:nowrap}
+@media(max-width:680px) {
+  .admin-shell .admin-topbar {min-height:4rem;padding:.5rem .75rem}
+  .admin-shell .admin-profile {gap:.3rem}
+  .admin-shell .admin-profile__logout {padding:0 .5rem}
+}

@@ -8,7 +8,7 @@ export const revalidate = 300;
 const definition = getEducationGuideDefinition("akademik-inceleme");
 export const metadata: Metadata = createPublicPageMetadata({
   title: `${definition.title} | İlkOku`,
-  description: definition.description,
+  description: "Akademik incelemede araştırma sorusu, arama stratejisi, kaynak değerlendirme, sentez, yanlılık ve şeffaf raporlama adımlarını öğrenin.",
   canonical: "/yazarlar-icin/akademik/akademik-inceleme",
 });
 export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

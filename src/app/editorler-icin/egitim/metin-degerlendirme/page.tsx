@@ -9,7 +9,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Metin Değerlendirme | İlkOku Editörlük Okulu",
-  description: "Bir metni ilk okumadan değerlendirme raporuna kadar sistemli biçimde çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren.",
+  description: "Bir metni ilk okumadan değerlendirme raporuna kadar çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren.",
   canonical: "/editorler-icin/egitim/metin-degerlendirme",
 });
 
@@ -92,7 +92,7 @@ export default function MetinDegerlendirmePage() {
     <>
       <EditorEducationStructuredData
         title="Metin Değerlendirme"
-        description="Bir metni ilk okumadan değerlendirme raporuna kadar sistemli biçimde çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren."
+        description="Bir metni ilk okumadan değerlendirme raporuna kadar çözümlemeyi; güçlü yönleri, geliştirme alanlarını, kanıtları ve öncelikleri belirlemeyi öğren."
         canonical="/editorler-icin/egitim/metin-degerlendirme"
       />
       <EditorEducationShell activeCategory={category}>

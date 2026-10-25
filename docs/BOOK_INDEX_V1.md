@@ -207,14 +207,16 @@ Yalnız şu koşullarda Kitap Endeksi URL'leri sitemap'e eklenebilir:
 - readiness kanıtları eşikleri geçmiş,
 - Türkiye Endeksi gerçekten `available`.
 
-Bu durumda ana sayfa ve Türkiye görünümüne ek olarak karşılaştırma sayfası ve
-yayın koşullarını geçen içgörü sayfaları aynı gated helper üzerinden sitemap'e
-girebilir:
+Bu durumda ana sayfa, Türkiye görünümü ve yayın koşullarını geçen
+içgörü sayfaları aynı gated helper üzerinden sitemap'e girebilir:
 
 - `/en-cok-satanlar`
 - `/en-cok-satanlar/turkiye`
-- `/en-cok-satanlar/turkiye/karsilastirma`
 - yayınlanabilir içgörü route'ları
+
+Eski `/en-cok-satanlar/turkiye/karsilastirma` sayfası emekliye ayrılmıştır.
+Gelen bağlantıları bozmamak için `/en-cok-satanlar/turkiye` adresine 308
+kalıcı yönlendirme uygulanır; menülerde ve XML sitemap'te eski adres yer almaz.
 
 Gate kapalıysa, policy eksikse, veri yetersizse veya helper hata verirse boş
 liste döner. Genel sitemap DB/CMS fallback'i de Kitap Endeksi URL'lerini

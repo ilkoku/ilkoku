@@ -331,13 +331,20 @@ export async function UserManagement({
                   </td>
 
                   <td>
-                    <span>
-                      {user._count.works} eser ·{" "}
-                      {user._count.readingProgress} okuma
-                    </span>
-                    <small>
-                      {user._count.comments} yorum
-                    </small>
+                    <dl className="admin-users-records" aria-label="Kullanıcı kayıt sayıları">
+                      <div>
+                        <dt>Eser</dt>
+                        <dd>{user._count.works}</dd>
+                      </div>
+                      <div>
+                        <dt>Okuma</dt>
+                        <dd>{user._count.readingProgress}</dd>
+                      </div>
+                      <div>
+                        <dt>Yorum</dt>
+                        <dd>{user._count.comments}</dd>
+                      </div>
+                    </dl>
                   </td>
 
                   <td>

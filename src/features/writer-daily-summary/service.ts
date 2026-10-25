@@ -31,14 +31,20 @@ type MetricRow = {
 };
 
 type HighlightRow = {
-  reads: bigint | number | string | null;
+  readCount: bigint | number | string | null;
   title: string;
 };
 
 type DeliveryRow = {
+  failureMessage: string | null;
   id: string;
   status: string;
 };
+
+type DeliveryClaim =
+  | { kind: "claimed"; id: string }
+  | { kind: "duplicate" }
+  | { kind: "review" };
 
 function toNumber(value: bigint | number | string | null) {
   if (typeof value === "bigint") return Number(value);
@@ -247,7 +253,7 @@ async function loadTopWork(
   end: Date,
 ): Promise<WriterDailySummaryHighlight> {
   const rows = await prisma.$queryRaw<HighlightRow[]>`
-    SELECT w.title, COALESCE(SUM(ra.viewCount), 0) AS reads
+    SELECT w.title, COALESCE(SUM(ra.viewCount), 0) AS readCount
     FROM ReadingAccess ra
     INNER JOIN Work w ON w.id = ra.workId
     WHERE w.authorId = ${authorId}
@@ -255,13 +261,13 @@ async function loadTopWork(
       AND ra.openedAt < ${end}
       AND ra.riskLevel IN ('normal', 'watch')
     GROUP BY w.id, w.title
-    ORDER BY reads DESC, w.title ASC
+    ORDER BY readCount DESC, w.title ASC
     LIMIT 1
   `;
   const row = rows[0];
 
   return row
-    ? { reads: toNumber(row.reads), title: row.title }
+    ? { reads: toNumber(row.readCount), title: row.title }
     : null;
 }
 
@@ -272,7 +278,7 @@ async function loadTopChapter(
 ): Promise<WriterDailySummaryHighlight> {
   const rows = await prisma.$queryRaw<HighlightRow[]>`
     SELECT CONCAT(w.title, ' — ', c.title) AS title,
-      COALESCE(SUM(ra.viewCount), 0) AS reads
+      COALESCE(SUM(ra.viewCount), 0) AS readCount
     FROM ReadingAccess ra
     INNER JOIN Work w ON w.id = ra.workId
     INNER JOIN Chapter c ON c.id = ra.chapterId
@@ -281,13 +287,13 @@ async function loadTopChapter(
       AND ra.openedAt < ${end}
       AND ra.riskLevel IN ('normal', 'watch')
     GROUP BY c.id, w.title, c.title
-    ORDER BY reads DESC, c.position ASC
+    ORDER BY readCount DESC, c.position ASC
     LIMIT 1
   `;
   const row = rows[0];
 
   return row
-    ? { reads: toNumber(row.reads), title: row.title }
+    ? { reads: toNumber(row.readCount), title: row.title }
     : null;
 }
 
@@ -296,7 +302,7 @@ async function claimDelivery(
   summaryDate: string,
   start: Date,
   end: Date,
-) {
+): Promise<DeliveryClaim> {
   const candidateId = randomUUID();
 
   await prisma.$executeRaw`
@@ -324,7 +330,7 @@ async function claimDelivery(
   `;
 
   const rows = await prisma.$queryRaw<DeliveryRow[]>`
-    SELECT id, status
+    SELECT id, status, failureMessage
     FROM WriterDailySummaryDelivery
     WHERE authorId = ${authorId}
       AND summaryDate = ${summaryDate}
@@ -333,9 +339,11 @@ async function claimDelivery(
   const row = rows[0];
 
   if (!row) throw new Error("SUMMARY_DELIVERY_CLAIM_FAILED");
-  if (row.id === candidateId) return row.id;
+  if (row.id === candidateId) return { kind: "claimed", id: row.id };
 
-  if (row.status === "failed") {
+  // Legacy failed rows may reflect a completed but unacknowledged SMTP send.
+  // Retry only preparation errors that happened before any mail attempt.
+  if (row.status === "failed" && row.failureMessage?.startsWith("PREPARE:")) {
     const updated = await prisma.$executeRaw`
       UPDATE WriterDailySummaryDelivery
       SET status = 'pending',
@@ -344,12 +352,16 @@ async function claimDelivery(
         updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${row.id}
         AND status = 'failed'
+        AND failureMessage LIKE 'PREPARE:%'
     `;
 
-    return updated === 1 ? row.id : null;
+    return updated === 1
+      ? { kind: "claimed", id: row.id }
+      : { kind: "duplicate" };
   }
 
-  return null;
+  if (row.status === "review") return { kind: "review" };
+  return { kind: "duplicate" };
 }
 
 async function updateDelivery(input: {
@@ -357,7 +369,7 @@ async function updateDelivery(input: {
   emailDeliveryId?: string;
   failureMessage?: string;
   metrics: WriterDailySummaryMetrics;
-  status: "failed" | "sent" | "skipped";
+  status: "failed" | "review" | "sent" | "skipped";
 }) {
   const metricsJson = JSON.stringify(input.metrics);
   const failureMessage = input.failureMessage?.slice(0, 1000) ?? null;
@@ -379,32 +391,51 @@ async function processWriter(
   writer: WriterRow,
   window: ReturnType<typeof parseSummaryDate>,
 ) {
-  const deliveryId = await claimDelivery(
+  const claim = await claimDelivery(
     writer.id,
     window.summaryDate,
     window.start,
     window.end,
   );
 
-  if (!deliveryId) return "duplicate" as const;
+  if (claim.kind === "review") return "review" as const;
+  if (claim.kind === "duplicate") return "duplicate" as const;
+  const deliveryId = claim.id;
 
-  const metrics = await loadMetrics(writer.id, window.start, window.end);
-
-  if (!hasMeaningfulActivity(metrics)) {
-    await updateDelivery({
-      deliveryId,
-      metrics,
-      status: "skipped",
-    });
-    return "skipped" as const;
-  }
-
-  const [topWork, topChapter] = await Promise.all([
-    loadTopWork(writer.id, window.start, window.end),
-    loadTopChapter(writer.id, window.start, window.end),
-  ]);
+  // A pre-send SQL failure can be retried after repair. Once email delivery
+  // starts, a timeout may be ambiguous; require manual reconciliation.
+  let metrics: WriterDailySummaryMetrics = {
+    comments: 0,
+    completions: 0,
+    editorFavorites: 0,
+    favorites: 0,
+    publisherFavorites: 0,
+    publisherFollows: 0,
+    publisherLikes: 0,
+    publisherShares: 0,
+    totalReads: 0,
+    uniqueReaders: 0,
+  };
+  let phase: "prepare" | "send" = "prepare";
 
   try {
+    metrics = await loadMetrics(writer.id, window.start, window.end);
+
+    if (!hasMeaningfulActivity(metrics)) {
+      await updateDelivery({
+        deliveryId,
+        metrics,
+        status: "skipped",
+      });
+      return "skipped" as const;
+    }
+
+    const [topWork, topChapter] = await Promise.all([
+      loadTopWork(writer.id, window.start, window.end),
+      loadTopChapter(writer.id, window.start, window.end),
+    ]);
+
+    phase = "send";
     const result = await sendWriterDailySummaryEmail({
       email: writer.email,
       fullName: writer.fullName,
@@ -423,6 +454,18 @@ async function processWriter(
       return "skipped" as const;
     }
 
+    if (result.delivery === "deduplicated") {
+      // The earlier delivery could be in flight or already sent.
+      await updateDelivery({
+        deliveryId,
+        emailDeliveryId: result.deliveryId,
+        failureMessage: "SEND_REQUIRES_REVIEW:DEDUPLICATED",
+        metrics,
+        status: "review",
+      });
+      return "failed" as const;
+    }
+
     await updateDelivery({
       deliveryId,
       emailDeliveryId: result.deliveryId,
@@ -435,19 +478,67 @@ async function processWriter(
       ? error.message
       : "UNKNOWN_WRITER_DAILY_SUMMARY_ERROR";
 
-    await updateDelivery({
-      deliveryId,
-      failureMessage: message,
-      metrics,
-      status: "failed",
-    });
-    console.error("WRITER_DAILY_SUMMARY_SEND_FAILED", {
-      authorId: writer.id,
-      error: message,
-      summaryDate: window.summaryDate,
-    });
+    const status = phase === "prepare" ? "failed" : "review";
+    const failureMessage = phase === "prepare"
+      ? "PREPARE:" + message
+      : "SEND_REQUIRES_REVIEW:" + message;
+
+    try {
+      await updateDelivery({
+        deliveryId,
+        failureMessage,
+        metrics,
+        status,
+      });
+    } catch (stateError) {
+      // A pending record remains blocked if persistence also fails.
+      console.error("WRITER_DAILY_SUMMARY_STATE_PERSIST_FAILED", {
+        authorId: writer.id,
+        error: stateError instanceof Error ? stateError.message : "UNKNOWN_ERROR",
+        summaryDate: window.summaryDate,
+      });
+    }
+    console.error(
+      phase === "prepare"
+        ? "WRITER_DAILY_SUMMARY_PREPARE_FAILED"
+        : "WRITER_DAILY_SUMMARY_SEND_REQUIRES_REVIEW",
+      {
+        authorId: writer.id,
+        error: message,
+        summaryDate: window.summaryDate,
+      },
+    );
     return "failed" as const;
   }
+}
+
+type DeliveryBacklogRow = {
+  manualReview: bigint | number | string | null;
+  stalePending: bigint | number | string | null;
+  legacyFailed: bigint | number | string | null;
+};
+
+// Read-only, aggregate-only view: this never retries, sends or mutates records.
+async function inspectUnresolvedDeliveryBacklog() {
+  const rows = await prisma.$queryRaw<DeliveryBacklogRow[]>`
+    SELECT
+      COALESCE(SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END), 0) AS manualReview,
+      COALESCE(SUM(CASE WHEN status = 'pending'
+        AND updatedAt < CURRENT_TIMESTAMP(3) - INTERVAL 1 HOUR
+        THEN 1 ELSE 0 END), 0) AS stalePending,
+      COALESCE(SUM(CASE WHEN status = 'failed'
+        AND (failureMessage IS NULL OR failureMessage NOT LIKE 'PREPARE:%')
+        THEN 1 ELSE 0 END), 0) AS legacyFailed
+    FROM WriterDailySummaryDelivery
+    WHERE status IN ('review', 'pending', 'failed')
+  `;
+
+  const row = rows[0];
+  return {
+    manualReview: toNumber(row?.manualReview ?? null),
+    stalePending: toNumber(row?.stalePending ?? null),
+    legacyFailed: toNumber(row?.legacyFailed ?? null),
+  };
 }
 
 export async function runWriterDailySummaries(
@@ -458,6 +549,7 @@ export async function runWriterDailySummaries(
   const counts = {
     duplicate: 0,
     failed: 0,
+    review: 0,
     sent: 0,
     skipped: 0,
   };
@@ -467,8 +559,11 @@ export async function runWriterDailySummaries(
     counts[result] += 1;
   }
 
+  const unresolved = await inspectUnresolvedDeliveryBacklog();
+
   return {
     ...counts,
+    unresolved,
     eligibleWriters: writers.length,
     periodEnd: window.end.toISOString(),
     periodStart: window.start.toISOString(),

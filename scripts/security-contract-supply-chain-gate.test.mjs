@@ -183,3 +183,11 @@ test("system map exposes generic package inventory, advisory rules and manifest 
   contains(page, "SÜRÜM ÇOĞALMASI", "duplicate version visibility");
   contains(page, "TARAYICI UYUŞMAZLIKLARI", "external scanner discrepancy visibility");
 });
+
+test("Hostinger page-data collection uses a bounded worker pool without changing site behavior", () => {
+  const config = source("next.config.ts");
+  const pkg = JSON.parse(source("package.json"));
+  assert.ok(config.includes("    cpus: 2,"), "limit build page-data and static workers to two");
+  contains(config, 'bodySizeLimit: "4mb"', "keep existing server action limit");
+  assert.equal(pkg.scripts.build, "npm run system-map:generate && npm run social-images:prepare && prisma migrate deploy && prisma generate && next build --webpack", "preserve hoster build command");
+});

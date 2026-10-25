@@ -1,6 +1,14 @@
 import http from "k6/http";
 import { Counter } from "k6/metrics";
 
+// Dangerous production capacity probe: never start without an explicit,
+// operator-supplied approval. No CI workflow runs this automatically.
+if ((__ENV.ILKOKU_STRESS_APPROVAL || "").trim() !== "APPROVE-ILKOKU-1000-VU") {
+  throw new Error(
+    "PRODUCTION_STRESS_TEST_BLOCKED: explicit ILKOKU_STRESS_APPROVAL is required.",
+  );
+}
+
 const status200 = new Counter("status_200");
 const status403 = new Counter("status_403");
 const status429 = new Counter("status_429");

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SystemMapSectionDirectory } from "@/features/system-map/SystemMapSectionDirectory";
 import { getSystemMapWorkspaceData } from "@/features/system-map/workspace-data";
 
 const completedStages = [
@@ -99,6 +100,8 @@ export default async function ContractSystemMapPage() {
         </div>
         <Link href="/sozlesme">Sözleşme Merkezi →</Link>
       </header>
+
+      <SystemMapSectionDirectory activeKey="contracts" />
 
       <section className="system-map-integrity" aria-label="Sözleşme haritası route kanıtı">
         <div>

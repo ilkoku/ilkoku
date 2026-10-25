@@ -6,7 +6,7 @@ import {
   getBookIndexInsightItems,
   getBookIndexInsightPage,
 } from "@/lib/book-index/insight-pages";
-import { getBookIndexInsights } from "@/lib/book-index/insights";
+import { getBookIndexPageInsights } from "@/lib/book-index/insights";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import {
   createBookIndexGenericItemListSchema,
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const [context, insights] = await Promise.all([
     getBookIndexSoftLaunchPageContext(100),
-    getBookIndexInsights(50),
+    getBookIndexPageInsights(definition.key, 50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);
 
@@ -71,7 +71,7 @@ export default async function BookIndexInsightPage({
 
   const [context, insights] = await Promise.all([
     getBookIndexSoftLaunchPageContext(100),
-    getBookIndexInsights(50),
+    getBookIndexPageInsights(definition.key, 50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);
   const searchIndexable = context.gate.canPublish

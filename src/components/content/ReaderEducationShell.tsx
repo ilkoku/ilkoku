@@ -66,7 +66,7 @@ export function ReaderEducationShell({ children, activeCategory }: ReaderEducati
             </div>
           </aside>
 
-          <div className="min-w-0">{children}</div>
+          <main className="min-w-0">{children}</main>
         </div>
       </div>
 

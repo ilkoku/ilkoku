@@ -14,6 +14,7 @@ import "./editorial-standards.css";
 import "./role-illustrations.css";
 
 const baseUrl = "https://ilkoku.com";
+const previousSeoDescription = "İlkOku editör incelemelerinde kullanılan değerlendirme ölçütlerini, iki bağımsız görüşü, gerekçeli rapor standardını, gizlilik ve yaratıcı karar ilkelerini inceleyin.";
 const visual = getPublicTrustPageVisual("/editoryal-standartlar");
 const socialImage = `${baseUrl}${visual.src}`;
 
@@ -27,7 +28,10 @@ const resolvePage = cache(async () => {
       body: state.page.body,
       canonical: state.page.canonicalUrl || editorialStandardsPageContent.canonical,
       noIndex: state.page.noIndex,
-      seoDescription: state.page.seoDescription || state.page.summary || editorialStandardsPageContent.seoDescription,
+      seoDescription:
+        state.page.seoDescription === previousSeoDescription
+          ? editorialStandardsPageContent.seoDescription
+          : state.page.seoDescription || state.page.summary || editorialStandardsPageContent.seoDescription,
       seoTitle: state.page.seoTitle || state.page.title,
       summary: state.page.summary || editorialStandardsPageContent.summary,
       title: state.page.title,

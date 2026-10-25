@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SystemMapSectionDirectory } from "@/features/system-map/SystemMapSectionDirectory";
 import { supplyChainSecurityReport } from "@/features/system-map/supply-chain.generated";
 
 type ManifestWarning = {
@@ -56,6 +57,8 @@ export default function SupplyChainSecurityPage() {
         </div>
         <Link href="/harita/bagimliliklar">Bağımlılık Zinciri →</Link>
       </header>
+
+      <SystemMapSectionDirectory activeKey="supplyChain" />
 
       <section className="system-map-integrity" aria-label="Tedarik zinciri güvenlik durumu">
         <div>

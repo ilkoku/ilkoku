@@ -8,7 +8,7 @@ export default async function PaymentSystemPage() {
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const paymentMethods = getPaymentMethodAvailability();
   const operationalProviderCount = paymentMethods.filter(
-    (item) => item.available,
+    (method) => method.available,
   ).length;
 
   const [orders, payments, refunds, entitlements, platformCoupons] =
@@ -20,124 +20,151 @@ export default async function PaymentSystemPage() {
       prisma.coupon.count({ where: { owner: "platform" } }),
     ]);
 
+  const metrics = [
+    {
+      label: "Siparişler",
+      count: orders,
+      detail: "Satın alma siparişleri",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/siparisler">
+          Siparişleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+    {
+      label: "Ödemeler",
+      count: payments,
+      detail: "Ödeme denemeleri",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/odemeler">
+          Ödemeleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+    {
+      label: "İadeler",
+      count: refunds,
+      detail: "İade kayıtları",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/iadeler">
+          İadeleri görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+    {
+      label: "Erişim hakları",
+      count: entitlements,
+      detail: "Okur–eser erişimleri",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari">
+          Erişim haklarını görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+    {
+      label: "İlkOku kuponları",
+      count: platformCoupons,
+      detail: "Platform kuponları",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/kuponlar">
+          Kuponları görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+  ];
+
   return (
-    <>
-      <header className="admin-page-heading">
+    <div className="admin-commerce-overview">
+      <header className="admin-page-heading admin-commerce-overview__heading">
         <div>
-          <span className="admin-eyebrow">Commerce operasyonu</span>
+          <span className="admin-eyebrow">Ticaret ve finans / Operasyon özeti</span>
           <h1>Ödeme Sistemi</h1>
           <p>
-            Sipariş, ödeme denemesi, kupon, iade ve erişim altyapısının
-            operasyon görünümü.
+            Siparişleri, ödeme denemelerini, iadeleri ve okur erişimlerini
+            tek ekranda takip edin.
           </p>
         </div>
         <span
           className="admin-table-badge"
           data-status={checkoutEnabled ? "active" : "pending"}
         >
-          {checkoutEnabled ? "Tahsilat aktif" : "Hazırlık modu"}
+          {checkoutEnabled ? "Checkout açık" : "Checkout kapalı"}
         </span>
       </header>
 
-      <section className="admin-settings-grid">
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Siparişler</span>
-          <h2>{orders.toLocaleString("tr-TR")}</h2>
-          <p>Okur satın alma siparişleri.</p>
-          <Link href="/sistem-yonetimi/odeme-sistemi/siparisler">
-            Siparişleri aç →
-          </Link>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Ödeme denemeleri</span>
-          <h2>{payments.toLocaleString("tr-TR")}</h2>
-          <p>Provider bağımsız ödeme kayıtları.</p>
-          <Link href="/sistem-yonetimi/odeme-sistemi/odemeler">
-            Ödemeleri aç →
-          </Link>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">İadeler</span>
-          <h2>{refunds.toLocaleString("tr-TR")}</h2>
-          <p>İade operasyon kayıtları.</p>
-          <Link href="/sistem-yonetimi/odeme-sistemi/iadeler">
-            İadeleri aç →
-          </Link>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Erişim hakları</span>
-          <h2>{entitlements.toLocaleString("tr-TR")}</h2>
-          <p>Okur-eser entitlement kayıtları.</p>
-          <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari">
-            Erişim haklarını aç →
-          </Link>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">İlkOku kuponları</span>
-          <h2>{platformCoupons.toLocaleString("tr-TR")}</h2>
-          <p>Platform tarafından finanse edilen kampanyalar.</p>
-          <Link href="/sistem-yonetimi/odeme-sistemi/kuponlar">
-            Kuponları aç →
-          </Link>
-        </article>
-      </section>
-
-      <section className="admin-detail-grid">
-        <article className="admin-panel">
-          <h2>Commerce Ayarları</h2>
-          <p>
-            Rollout, sözleşme yaşam döngüsü, para birimi ve provider readiness
-            durumunu salt okunur kontrol edin.
-          </p>
-          <Link
-            className="admin-button"
-            href="/sistem-yonetimi/odeme-sistemi/ayarlar"
-          >
-            Ayar durumunu aç
-          </Link>
-        </article>
-
-        <article className="admin-panel">
-          <h2>Kuponlar & Kampanyalar</h2>
-          <p>
-            İlkOku kuponları yazarın hakedişini azaltmaz. Kampanya indirimi
-            platform maliyeti olarak finans kayıtlarına yazılır.
-          </p>
-          <Link
-            className="admin-button admin-button--primary"
-            href="/sistem-yonetimi/odeme-sistemi/kuponlar"
-          >
-            Kupon yönetimini aç
-          </Link>
-        </article>
-
-        <article className="admin-panel">
-          <h2>Ödeme sağlayıcıları</h2>
-          <p>
-            {operationalProviderCount > 0
-              ? `${operationalProviderCount} ödeme sağlayıcısı operasyonel.`
-              : "Gerçek kart ve mobil ödeme sağlayıcıları henüz aktif değildir."}
-          </p>
-          <Link
-            className="admin-button"
-            href="/sistem-yonetimi/odeme-sistemi/saglayicilar"
-          >
-            Sağlayıcı durumunu aç
-          </Link>
-          <div className="admin-stack">
-            {paymentMethods.map((method) => (
-              <div key={method.method}>
-                <strong>{method.label}</strong>
-                <span>
-                  {method.available
-                    ? ` · aktif · ${method.providerCode}`
-                    : " · yapılandırılmadı"}
-                </span>
-              </div>
-            ))}
+      <section className="admin-commerce-overview__section" aria-labelledby="commerce-metrics-heading">
+        <div className="admin-commerce-overview__section-heading">
+          <div>
+            <h2 id="commerce-metrics-heading">Operasyon özeti</h2>
+            <p>Toplam kayıt sayıları · tüm zamanlar</p>
           </div>
+        </div>
+        <div className="admin-commerce-overview__metrics">
+          {metrics.map((metric) => (
+            <article className="admin-panel admin-commerce-overview__metric" key={metric.label}>
+              <span>{metric.label}</span>
+              <strong>{metric.count.toLocaleString("tr-TR")}</strong>
+              <p>{metric.detail}</p>
+              {metric.link}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="admin-commerce-overview__details" aria-label="Ödeme sistemi hazırlık ve yapılandırma durumu">
+        <article className="admin-panel admin-commerce-overview__providers">
+          <div className="admin-commerce-overview__panel-heading">
+            <div>
+              <span className="admin-eyebrow">Altyapı</span>
+              <h2>Ödeme kanalları</h2>
+            </div>
+            <Link href="/sistem-yonetimi/odeme-sistemi/saglayicilar">
+              Sağlayıcıları aç <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+          <p className="admin-commerce-overview__subtext">
+            {operationalProviderCount} / {paymentMethods.length} kanal operasyonel
+          </p>
+          <ul className="admin-commerce-overview__provider-list">
+            {paymentMethods.map((method) => (
+              <li key={method.method}>
+                <div>
+                  <strong>{method.label}</strong>
+                  {method.available && method.providerCode ? (
+                    <small>{method.providerCode}</small>
+                  ) : null}
+                </div>
+                <span data-ready={method.available ? "yes" : "no"}>
+                  {method.available ? "Operasyonel" : "Yapılandırılmadı"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="admin-panel admin-commerce-overview__settings">
+          <span className="admin-eyebrow">Kontrol merkezi</span>
+          <h2>Yapılandırma ve hazırlık</h2>
+          <p>
+            Checkout, sözleşmeler ve ödeme altyapısının hazır olma koşullarını
+            ayarlar ekranından birlikte kontrol edin.
+          </p>
+          <p className="admin-commerce-overview__notice">
+            {checkoutEnabled && operationalProviderCount === 0
+              ? "Checkout açık olsa da operasyonel ödeme sağlayıcısı yok; gerçek tahsilat hazır değil."
+              : !checkoutEnabled
+                ? "Checkout kapalı. Buradaki sayılar geçmiş veya hazırlık kayıtlarını gösterir."
+                : "Sağlayıcı durumu tek başına ücretli erişimin hazır olduğunu göstermez; sözleşme koşullarını da kontrol edin."}
+          </p>
+          <Link className="admin-commerce-overview__settings-link" href="/sistem-yonetimi/odeme-sistemi/ayarlar">
+            Ayar durumunu görüntüle <span aria-hidden="true">→</span>
+          </Link>
+          <p className="admin-commerce-overview__policy">
+            İlkOku kupon indirimleri yazarın hakedişini azaltmaz; kampanya
+            maliyeti platform tarafından karşılanır.
+          </p>
         </article>
       </section>
-    </>
+    </div>
   );
 }

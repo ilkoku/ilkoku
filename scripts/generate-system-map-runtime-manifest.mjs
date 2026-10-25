@@ -217,7 +217,31 @@ function extractMethods(text) {
 }
 
 function extractGuardEvidence(text) {
-  return guardMarkers.filter(([needle]) => text.includes(needle)).map(([, label]) => label);
+  const markers = guardMarkers.filter(([needle]) => text.includes(needle)).map(([, label]) => label);
+
+  // GitHub workflow endpoints use validated, scope-bound OIDC JWTs instead of
+  // an interactive user session. Count only the combination of verification,
+  // the route-level denial gate and an explicit unauthenticated HTTP response.
+  if (
+    /\bjwtVerify\s*\(/u.test(text)
+    && /\bawait\s+authorized\s*\(\s*request\s*\)/u.test(text)
+    && /\bstatus:\s*401\b/u.test(text)
+  ) {
+    markers.push("GitHub OIDC JWT authorization");
+  }
+
+  // The public-account endpoint is intentionally callable without a session;
+  // it returns signedIn:false instead of protected account data for guests.
+  // A profile lookup alone is not evidence without that anonymous boundary.
+  if (
+    /\bgetCurrentProfile\s*\(/u.test(text)
+    && /\bif\s*\(\s*!profile\s*\)/u.test(text)
+    && /\bsignedIn:\s*false\b/u.test(text)
+  ) {
+    markers.push("session profile anonymous boundary");
+  }
+
+  return unique(markers);
 }
 
 function collectModules(files) {

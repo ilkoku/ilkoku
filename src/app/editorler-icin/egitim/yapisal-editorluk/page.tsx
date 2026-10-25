@@ -3,11 +3,12 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Yapısal Editörlük | İlkOku Editörlük Okulu",
-  description: "Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren.",
+  description: "Bir eseri olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirip yeniden yapılandırmayı öğren.",
   canonical: "/editorler-icin/egitim/yapisal-editorluk",
 });
 
@@ -128,7 +129,13 @@ export default function YapisalEditorlukPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Yapısal Editörlük"
+        description="Bir eseri olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirip yeniden yapılandırmayı öğren."
+        canonical="/editorler-icin/egitim/yapisal-editorluk"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -250,6 +257,7 @@ export default function YapisalEditorlukPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

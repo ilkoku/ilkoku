@@ -50,6 +50,7 @@ function MenuGroups({
           <div className="public-site-header__mega-links">
             {group.links.map((link) => (
               <Link
+                prefetch={false}
                 href={link.href}
                 data-primary={link.primary ? "true" : undefined}
                 key={`${menu.id}-${group.id}-${link.pageId}`}
@@ -154,6 +155,7 @@ export function PublicHeaderNavigation({
             if (menu.directHref) {
               return (
                 <Link
+                  prefetch={false}
                   className="public-site-header__menu-trigger"
                   data-direct="true"
                   href={menu.directHref}
@@ -235,6 +237,7 @@ export function PublicHeaderNavigation({
                     {menus.map((menu) =>
                       menu.directHref ? (
                         <Link
+                          prefetch={false}
                           className="public-site-header__mobile-category"
                           data-direct="true"
                           href={menu.directHref}

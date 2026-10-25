@@ -13,6 +13,7 @@ import {
 import {
   getApplicableCheckoutCoupon,
   getCheckoutWorkBySlug,
+  getReaderPendingCheckoutOrderNo,
 } from "@/features/commerce/checkout-repository";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
@@ -193,9 +194,17 @@ export default async function CheckoutPreparationPage({
     ? candidateCoupon
     : null;
 
+  const verifiedPendingOrderNo =
+    query.durum === "siparis-bekliyor" && query.siparis
+      ? await getReaderPendingCheckoutOrderNo({
+          orderNo: query.siparis,
+          readerId: profile.id,
+          workId: work.id,
+        })
+      : null;
   const flash = query.durum
-    ? `${checkoutMessages[query.durum] ?? query.durum}${
-        query.siparis ? ` · Sipariş ${query.siparis}` : ""
+    ? `${checkoutMessages[query.durum] ?? "Satın alma işleminde bir durum oluştu."}${
+        verifiedPendingOrderNo ? ` · Sipariş No: ${verifiedPendingOrderNo}` : ""
       }`
     : null;
 

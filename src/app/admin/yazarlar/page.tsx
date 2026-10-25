@@ -160,6 +160,9 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
           <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme">
             Vergi / belge incelemesi
           </Link>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/komisyon-yonetimi">
+            Komisyon yönetimi
+          </Link>
         </div>
       </header>
 

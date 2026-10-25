@@ -456,7 +456,7 @@ export function buildDayCloseFiles(input: {
     orderNo: string; currency: string; refundCount: number; ledgerCount: number;
     processedAmount: bigint; ledgerSignedAmount: bigint;
     ledgerAbsoluteAmount: bigint; ledgerPositive: boolean; ledgerNegative: boolean;
-    refundIds: string[]; ledgerIds: string[]; badRefundDates: boolean;
+    refundIds: string[]; ledgerIds: string[]; badRefundDates: boolean; badLedgerDates: boolean;
   };
   const refundGroups = new Map<string, RefundGroup>();
   const getRefundGroup = (orderNo: string, currency: string) => {
@@ -467,7 +467,7 @@ export function buildDayCloseFiles(input: {
       orderNo, currency, refundCount: 0, ledgerCount: 0,
       processedAmount: BigInt(0), ledgerSignedAmount: BigInt(0),
       ledgerAbsoluteAmount: BigInt(0), ledgerPositive: false, ledgerNegative: false,
-      refundIds: [], ledgerIds: [], badRefundDates: false,
+      refundIds: [], ledgerIds: [], badRefundDates: false, badLedgerDates: false,
     };
     refundGroups.set(key, created);
     return created;
@@ -489,6 +489,7 @@ export function buildDayCloseFiles(input: {
     if (entry.amount > BigInt(0)) group.ledgerPositive = true;
     if (entry.amount < BigInt(0)) group.ledgerNegative = true;
     group.ledgerIds.push(entry.id);
+    if (!isOnBusinessDay(entry.createdAt)) group.badLedgerDates = true;
   }
   const refundReconciliation: CsvField[][] = [[
     "siparis_no","para_birimi","islenen_iade_adedi","iade_tutari_toplam_kurus",
@@ -498,7 +499,7 @@ export function buildDayCloseFiles(input: {
   let refundLedgerMatchedGroups = 0, refundLedgerReviewGroups = 0;
   for (const group of [...refundGroups.values()].sort((a,b) =>
     a.orderNo.localeCompare(b.orderNo) || a.currency.localeCompare(b.currency))) {
-    const matched = group.orderNo.length > 0 && !group.badRefundDates &&
+    const matched = group.orderNo.length > 0 && !group.badRefundDates && !group.badLedgerDates &&
       group.refundCount > 0 && group.ledgerCount > 0 &&
       group.processedAmount > BigInt(0) &&
       group.ledgerAbsoluteAmount === group.processedAmount &&
@@ -513,6 +514,7 @@ export function buildDayCloseFiles(input: {
       else if (group.refundCount === 0) warning = "DONEMDE_REFUND_LEDGER_KARSILIGI_YOK";
       else if (group.ledgerCount === 0) warning = "DONEMDE_IADE_LEDGER_KARSILIGI_YOK";
       else if (group.badRefundDates) warning = "IADE_TARIHI_IS_GUNU_DISINDA";
+      else if (group.badLedgerDates) warning = "HAREKET_TARIHI_IS_GUNU_DISINDA";
       else warning = "IADE_LEDGER_TOPLAM_TUTARSIZ";
       issues.push(["iade_ledger",group.orderNo || group.ledgerIds.join("+"),warning,
         "Muhasebe kayit tarihi, iade isleme zamani ve finans hareketini karsilastirin"]);

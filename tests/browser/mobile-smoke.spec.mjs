@@ -969,6 +969,11 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.getByRole("link", {
     name: "Sipariş ayrıntısını görüntüle",
   })).toHaveCount(0);
+  await page.goto(
+    "/satinal/ci-browser-zero-total-work?durum=siparis-bekliyor&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş No: ILK-FAKE-ORDER-NUMBER/u)).toHaveCount(0);
 
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
@@ -1005,6 +1010,22 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   )).toBeVisible();
   await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
   await expectResponsiveDocument(page);
+
+  // Another authenticated reader must not be able to open this buyer's receipt.
+  const otherReaderToken = authFixture.sessions?.readerRaceB;
+  if (otherReaderToken) {
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: otherReaderToken, url: authCookieUrl },
+    ]);
+    const denied = await page.goto(
+      "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(denied?.status(), "Unowned order receipt is private").toBe(404);
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: token, url: authCookieUrl },
+    ]);
+  }
 
   if (process.env.DATABASE_URL) {
     const databaseUrl = new URL(process.env.DATABASE_URL);

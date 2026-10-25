@@ -48,11 +48,13 @@ export default async function PurchasedLibraryPage({
     ? entitlements.find((item) => item.order?.orderNo === query.siparis)?.order?.orderNo ?? null
     : null;
   const flash =
-    query.durum === "eklendi"
+    query.durum === "eklendi" && completedOrderNo
       ? "Satın alma başarılı. Eser kütüphanene eklendi."
-      : query.durum === "zaten-erisim-var"
-        ? "Bu eser zaten kütüphanende."
-        : null;
+      : query.durum === "eklendi"
+        ? "Sipariş doğrulanamadı. Satın alınan eserleri aşağıdan kontrol edebilirsin."
+        : query.durum === "zaten-erisim-var"
+          ? "Bu eser zaten kütüphanende."
+          : null;
 
   return (
     <AppShell profile={profile}>
@@ -71,7 +73,7 @@ export default async function PurchasedLibraryPage({
         </header>
 
         {flash ? (
-          <div className={styles.successNotice} role="status">
+          <div className={completedOrderNo || query.durum === "zaten-erisim-var" ? styles.successNotice : styles.notice} role="status">
             <strong>{flash}</strong>
             {completedOrderNo ? (
               <div>

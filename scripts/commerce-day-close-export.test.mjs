@@ -132,6 +132,55 @@ test("official vendor handoff gates distinguish verified internal columns from u
   }
 });
 
+test("writer reference and work description must exist before sales pass accounting preflight", () => {
+  const badWriter=validOrder();
+  badWriter.authorPublicId="   ";
+  const a=make([badWriter]);
+  assert.equal(a.manifest.readySalesCount,0);
+  assert.equal(a.manifest.preparationRows,0);
+  assert.equal(a.manifest.liraWorksheetRows,0);
+  assert.equal(a.manifest.reviewedAuthorSummaryGroups,0);
+  assert.ok(a.files.find(f=>f.name==="uyarilar.csv").data.includes("YAZAR_KODU_EKSIK"));
+
+  const badTitle=validOrder();
+  badTitle.workTitle="\t ";
+  const b=make([badTitle]);
+  assert.equal(b.manifest.readySalesCount,0);
+  assert.equal(b.manifest.preparationRows,0);
+  assert.ok(b.files.find(f=>f.name==="uyarilar.csv").data.includes("ESER_ADI_EKSIK"));
+});
+
+test("a processed refund with no order reference cannot pass financial preflight", () => {
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],refunds:[{
+      id:"R-UNBOUND",orderNo:" ",amount:1500n,currency:"TRY",
+      status:"processed",processedAt:new Date("2026-10-25T12:00:00+03:00"),
+      orderCurrency:"TRY",orderFinalAmount:12000n,
+      orderPaidAt:new Date("2026-10-20T12:00:00+03:00"),
+      cumulativeProcessedAmount:1500n,historicalCurrencyMismatch:false,
+    }],
+  });
+  assert.equal(result.manifest.flaggedRefundCount,1);
+  assert.equal(result.manifest.reviewedRefundMinor,"0");
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data
+    .includes("IADE_SIPARIS_BAGI_EKSIK"));
+  assert.equal(result.manifest.refundLedgerMatchedGroups,0);
+});
+
+test("verified sale totals reconcile between writer rollup, preparation and manifest", () => {
+  const result=make([validOrder()]);
+  const mapping=JSON.parse(result.files.find(f=>f.name==="alan_esleme.json").data);
+  assert.equal(mapping.sourceColumnAudit.authorTotalsReconciled,true);
+  assert.equal(mapping.sourceColumnAudit.validatedAuthorSummaryRows,1);
+  assert.equal(mapping.sourceColumnAudit.writerAndWorkReferencesRequired,true);
+  assert.equal(mapping.sourceColumnAudit.refundOrderReferenceRequired,true);
+  assert.equal(result.manifest.authorTotalsReconciled,true);
+  assert.equal(result.manifest.reviewedAuthorSummaryGroups,1);
+  assert.equal(result.manifest.preparationRows,1);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"2000");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"500");
+});
+
 test("Paraşüt Excel, Mikro mutating APIs and Logo product modules remain distinct unverified tracks", () => {
   const mapping=JSON.parse(make([validOrder()])
     .files.find(f=>f.name==="alan_esleme.json").data);

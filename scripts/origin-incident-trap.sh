@@ -52,6 +52,10 @@ try {
 NODE
 )"
     served_commit="${served_commit:-unknown}"
+    if [[ "$served_commit" == 'unknown' ]]; then
+      INCIDENT=true
+      echo "::error::Build-info returned HTTP 200 without a valid 40-character commit SHA at $utc (Ray ${ray:-none})."
+    fi
     if [[ -n "$EXPECTED_COMMIT_SHA" && "$served_commit" == "$EXPECTED_COMMIT_SHA" ]]; then
       CUTOVER_OBSERVED=true
     fi

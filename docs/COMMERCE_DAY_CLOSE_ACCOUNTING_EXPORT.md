@@ -22,6 +22,9 @@
 - Her veri türünde üst sınır 5.000 kayıt; aşılırsa eksik paket oluşturulmaz.
 - **Mükerrer referans koruması:** Aynı gün sonu veri akışında aynı sipariş numarası, iade kimliği veya ledger kimliği birden fazla kez görünürse ZIP üretilmez ve yöneticiye kaynağın türünü bildiren hata gösterilir. Günlük ledger ile siparişe bağlı mutabakat ledger akışları **ayrı ayrı** denetlenir: Aynı finans hareketinin bu iki farklı akışta birer kez bulunması normaldir. Kimlik boşsa da işlem durdurulur. Bu koruma hem hatalı toplamları hem de iki kez muhasebe ön hazırlığı oluşturulmasını önler; veritabanındaki kayıtlara dokunmaz.
 
+- **Kaynak değer kontrolü:** Sütun isimleri doğru olsa da yazar kodu veya eser adı boş olan satışlar `YAZAR_KODU_EKSIK` / `ESER_ADI_EKSIK` uyarılarıyla muhasebe ön hazırlığından çıkarılır. Sipariş referansı boş iade `IADE_SIPARIS_BAGI_EKSIK` olarak işaretlenir; böyle bir iadeye yanlışlıkla `TEMEL_KONTROL_GECTI` yazılmaz. Ham kaynak satırları inceleme CSV dosyalarında korunur; mali veri değiştirilmez.
+- **Yazar toplamları çapraz kontrolü:** `muhasebe_on_hazirlik.csv` satır adedi ile `yazar_hesap_ozeti.csv` içindeki işlem adedi, brüt tutar, KDV örneği, komisyon ve aracılık örnek toplamları aynı olmalıdır. Uyuşmazsa `DAY_CLOSE_INTERNAL_AUTHOR_TOTALS_MISMATCH` nedeniyle ZIP hiç üretilmez. `alan_esleme.json > sourceColumnAudit` ve `manifest.json` içindeki `authorTotalsReconciled` göstergesi yalnız bu teknik tutarlılığı ifade eder; resmî vergi/muhasebe uygunluk onayı değildir.
+
 ## Kontroller
 - Eksik komisyon oranı veya KDV snapshot, kupon, 0 TL, iade, doğrulanmamış satıcı, yanlış para birimi, tahsilat uyuşmazlığı, siparişe ait eksik/çift sale_gross ledger veya mükerrer başarılı ödeme ayrı uyarı satırı doğurur.
 - Mutabakat, siparişe ait kaydedilmiş brüt liste fiyatını (originalAmount) ilgili sale_gross ledger tutarıyla karşılaştırır; bu tutar indirim sonrası finalAmount ile karıştırılmaz.

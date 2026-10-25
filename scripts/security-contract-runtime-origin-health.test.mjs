@@ -146,6 +146,19 @@ test("Origin incident trap captures deploy cutover while preserving safe bounded
   assert.ok(trap.includes('rm -f "$body"'));
 });
 
+test("Origin trap never treats an invalid 200 build identity as a healthy deploy", () => {
+  const trap = readFileSync("scripts/origin-incident-trap.sh", "utf8");
+  const parsing = trap.indexOf("served_commit=\"\$(node - \"$body\"");
+  const guard = trap.indexOf('if [[ "$served_commit" == \'unknown\' ]]; then');
+  const success = trap.indexOf('if [[ -n "$EXPECTED_COMMIT_SHA" && "$served_commit" == "$EXPECTED_COMMIT_SHA" ]]');
+  assert.ok(parsing >= 0 && guard > parsing && success > guard, "Check invalid body immediately after parsing before declaring cutover");
+  assert.match(trap.slice(guard,success), /INCIDENT=true/u);
+  assert.match(trap.slice(guard,success), /Build-info returned HTTP 200 without a valid 40-character commit SHA/u);
+  assert.match(trap, /\^\[0-9a-f\]\{40\}\$/u);
+  assert.match(trap, /TRAP_RESULT INCIDENT/u);
+  execFileSync("bash", ["-n", "scripts/origin-incident-trap.sh"]);
+});
+
 test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin TLS", () => {
   const trap = readFileSync("scripts/origin-incident-trap.sh", "utf8");
   const header = trap.split("\n").find((line) => line.startsWith("printf 'observed_utc"));

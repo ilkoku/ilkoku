@@ -23,7 +23,7 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       orderBy: [{ paidAt: "asc" }, { id: "asc" }],
       take: DAY_CLOSE_MAX_ROWS + 1,
       select: {
-        orderNo: true, paidAt: true, refundedAt: true, status: true, currency: true,
+        orderNo: true, authorId: true, paidAt: true, refundedAt: true, status: true, currency: true,
         originalAmount: true, discountAmount: true, finalAmount: true,
         couponCodeSnapshot: true,
         legalSnapshot: { select: { sellerMode: true } },
@@ -88,6 +88,32 @@ export async function getDayClosePackage(day: string, now = new Date()) {
     return { ok: false as const, reason: "Gün sonu kayıt limiti aşıldı. Eksik paket oluşturulmaz; dönem bölünerek ayrı bir dışa aktarma geliştirilmelidir." };
   }
 
+  // Tax-document review must be resolved AS OF each paid order's timestamp.
+  // A review posted after payment cannot retroactively justify a 5% fee.
+  const authorIds = [...new Set(orders.map((order) => order.authorId))];
+  const reviewEvents = authorIds.length ? await prisma.authorTaxReviewEvent.findMany({
+    where: {
+      authorId: { in: authorIds },
+      reviewedAt: { lt: period.end },
+    },
+    orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+    take: DAY_CLOSE_MAX_ROWS + 1,
+    select: {
+      authorId: true, documentKind: true, decision: true,
+      validUntil: true, reviewedAt: true,
+    },
+  }) : [];
+  if (reviewEvents.length > DAY_CLOSE_MAX_ROWS) {
+    return { ok: false as const,
+      reason: "Yazar mali belge inceleme kaydı sınırı aşıldı; eksik veya yanıltıcı muhasebe paketi oluşturulmaz." };
+  }
+  const taxHistory = new Map<string, typeof reviewEvents>();
+  for (const event of reviewEvents) {
+    const events = taxHistory.get(event.authorId) ?? [];
+    events.push(event);
+    taxHistory.set(event.authorId, events);
+  }
+
   // Historical totals stop at this day's end. A refund processed the next
   // day must NOT retroactively change the original day's daily package.
   const refundsByOrder = refunds.length ? await prisma.refund.groupBy({
@@ -127,6 +153,8 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       discountAmount: order.discountAmount,
       finalAmount: order.finalAmount,
       couponCode: order.couponCodeSnapshot,
+      taxReview: (taxHistory.get(order.authorId) ?? []).find((event) =>
+        order.paidAt !== null && event.reviewedAt <= order.paidAt) ?? null,
       commission: order.commissionRateSnapshot,
       quote: order.priceQuoteSnapshot,
       payments: order.payments,

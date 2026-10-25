@@ -1,6 +1,6 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { constants } from "node:fs";
-import { lstat, open, readFile, realpath } from "node:fs/promises";
+import { link, lstat, open, readFile, realpath, unlink } from "node:fs/promises";
 import { isAbsolute, join, relative } from "node:path";
 
 import { getDayClosePackage } from "@/features/commerce/day-close-repository";
@@ -66,31 +66,39 @@ export async function POST(request: Request) {
       return Response.json({ ok: false, reason: "source_review_required" }, { status: 422, headers: HEADERS });
     }
     const path = join(dir,"ilkoku-gun-sonu-" + day + ".zip");
+    const temp = join(dir,"." + day + "-" + randomUUID() + ".tmp");
     const digest = sha256(result.zip);
+    // Finish a durable temporary write before publishing with an atomic link.
+    // A failed/disconnected write must never leave a partial final ZIP.
+    const handle = await open(temp,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+      0o600);
     try {
-      const handle = await open(path,
-        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
-        0o600);
+      await handle.writeFile(result.zip);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    try {
       try {
-        await handle.writeFile(result.zip);
-        await handle.sync();
-      } finally {
-        await handle.close();
-      }
-      return Response.json({
-        ok: true, day, archive: "written",
-        sha256: digest, warnings: result.manifest.flaggedSalesCount,
-      }, { headers: HEADERS });
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      const archived = await readFile(path);
-      if (sha256(archived) !== digest) {
+        await link(temp,path);
         return Response.json({
-          ok: false, day, reason: "archived_day_changed_manual_review_required",
-        }, { status: 409, headers: HEADERS });
+          ok: true, day, archive: "written",
+          sha256: digest, warnings: result.manifest.flaggedSalesCount,
+        }, { headers: HEADERS });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+        const archived = await readFile(path);
+        if (sha256(archived) !== digest) {
+          return Response.json({
+            ok: false, day, reason: "archived_day_changed_manual_review_required",
+          }, { status: 409, headers: HEADERS });
+        }
+        return Response.json({ ok: true, day, archive: "already_exists", sha256: digest },
+          { headers: HEADERS });
       }
-      return Response.json({ ok: true, day, archive: "already_exists", sha256: digest },
-        { headers: HEADERS });
+    } finally {
+      await unlink(temp).catch(() => {});
     }
   } catch {
     // Do not leak path, source records, token or internal errors.

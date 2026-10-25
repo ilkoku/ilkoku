@@ -11,6 +11,8 @@ on:
       - src/app/globals.css
       - src/features/auth/components/AuthShell.tsx
       - src/features/showcase/components/BookShowcase.tsx
+      - src/features/homepage/HomepageExperience.tsx
+      - src/features/homepage/history-670.tsx
 
 permissions:
   contents: read

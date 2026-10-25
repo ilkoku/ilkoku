@@ -20,6 +20,7 @@ export type OrderReviewInput = {
   finalAmount: bigint;
   couponCodeSnapshot: string | null;
   refundedAt: Date | null;
+  hasOpenOrProcessedRefund: boolean;
   sellerMode: string | null;
   priceQuote: {
     calculationVersion: string;
@@ -71,7 +72,10 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   if (input.status !== "paid") blockers.push("Sipariş kesinleşmiş paid durumda değil.");
   if (input.currency !== "TRY") blockers.push("Örnek hesap yalnız TRY siparişlerine uygundur.");
   if (input.finalAmount <= BigInt(0)) blockers.push("0 TL edinimde tahsilat ve ödenebilir telif oluşturulmaz.");
-  if (input.refundedAt !== null) blockers.push("İade işlemine konu sipariş.");
+  if (input.refundedAt !== null || input.hasOpenOrProcessedRefund ||
+      input.bookedEntryTypes.includes("refund")) {
+    blockers.push("İade talebi veya işlenmiş kısmi/tam iade bulunan siparişin tam tutarı üzerinden hakediş hesaplanmaz.");
+  }
   if (input.sellerMode !== "platform_direct") {
     blockers.push("Satıcının İlkOku olduğu hukukî kayıt doğrulanmalı.");
   }

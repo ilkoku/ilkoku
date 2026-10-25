@@ -43,6 +43,7 @@ const valid = () => ({
   finalAmount: 12000n,
   couponCodeSnapshot: null,
   refundedAt: null,
+  hasOpenOrProcessedRefund: false,
   sellerMode: "platform_direct",
   priceQuote: {
     calculationVersion: "quote-v1",
@@ -95,6 +96,24 @@ test("finance view reads tax review as of payment rather than latest current rev
   assert.ok(repository.includes("reviewedAt: { lte: order.paidAt }"));
   assert.ok(repository.includes("taxReviewAtPayment"));
   assert.ok(page.includes("taxReview: order.taxReviewAtPayment"));
+});
+
+test("partial processed refund blocks gross author payout even while order status remains paid", () => {
+  const v={...valid(),hasOpenOrProcessedRefund:true};
+  const result=review.reviewCommerceOrderSettlement(v);
+  assert.equal(result.scenarios,null);
+  assert.ok(result.blockers.some(x=>x.includes("kısmi/tam iade")));
+});
+
+test("requested refund and refund ledger also independently block full payout preview", () => {
+  const pending=review.reviewCommerceOrderSettlement({...valid(),hasOpenOrProcessedRefund:true});
+  assert.equal(pending.scenarios,null);
+  const ledger=review.reviewCommerceOrderSettlement({...valid(),bookedEntryTypes:["sale_gross","refund"]});
+  assert.equal(ledger.scenarios,null);
+  const repo=readFileSync(join(ROOT,"src/features/commerce/finance-repository.ts"),"utf8");
+  const page=readFileSync(join(ROOT,"src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx"),"utf8");
+  assert.ok(repo.includes('status: { in: ["requested", "processed"] }'));
+  assert.ok(page.includes("hasOpenOrProcessedRefund: order.refunds.length > 0"));
 });
 
 test("verified commercial invoice shows only the matching example, never an automatic payout", () => {

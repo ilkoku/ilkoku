@@ -29,6 +29,7 @@ export default async function OrderAccountingReviewPage({
     finalAmount: order.finalAmount,
     couponCodeSnapshot: order.couponCodeSnapshot,
     refundedAt: order.refundedAt,
+    hasOpenOrProcessedRefund: order.refunds.length > 0,
     sellerMode: order.legalSnapshot?.sellerMode ?? null,
     priceQuote: order.priceQuoteSnapshot,
     payments: order.payments,

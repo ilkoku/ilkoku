@@ -58,7 +58,7 @@ test("cron detects partial failure without repeated SMTP delivery attempts", () 
     "utf8",
   );
 
-  assert.match(route, /const ok = result\.failed === 0;/u);
+  assert.match(route, /const ok = result\.failed === 0 && result\.review === 0;/u);
   assert.match(route, /WRITER_DAILY_SUMMARY_PARTIAL_FAILURE/u);
   assert.ok(workflow.includes(`.ok == true and (.failed | type == "number") and .failed == 0`));
   assert.match(workflow, /if ! printf/u);
@@ -80,6 +80,9 @@ test("ambiguous email sends are held for manual review, never automatically retr
   assert.match(process, /SEND_REQUIRES_REVIEW:DEDUPLICATED/u);
   assert.match(process, /WRITER_DAILY_SUMMARY_SEND_REQUIRES_REVIEW/u);
   assert.match(process, /WRITER_DAILY_SUMMARY_STATE_PERSIST_FAILED/u);
+  assert.match(service, /if \(claim\.kind === "review"\) return "review" as const;/u);
+  assert.match(service, /review: 0,/u);
+  assert.match(workflow, /\.review == 0/u);
   assert.doesNotMatch(workflow, /--retry(?:-all-errors)?\b/u);
   assert.match(workflow, /--request POST/u);
 });

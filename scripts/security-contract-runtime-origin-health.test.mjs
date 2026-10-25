@@ -154,7 +154,7 @@ test("Origin trap never treats an invalid 200 build identity as a healthy deploy
   assert.ok(parsing >= 0 && guard > parsing && success > guard, "Check invalid body immediately after parsing before declaring cutover");
   assert.match(trap.slice(guard,success), /INCIDENT=true/u);
   assert.match(trap.slice(guard,success), /Build-info returned HTTP 200 without a valid 40-character commit SHA/u);
-  assert.match(trap, /\^\[0-9a-f\]\{40\}\$/u);
+  assert.ok(trap.includes("^[0-9a-f]{40}$"), "Commit SHA validation must require exactly 40 hex characters");
   assert.match(trap, /TRAP_RESULT INCIDENT/u);
   execFileSync("bash", ["-n", "scripts/origin-incident-trap.sh"]);
 });

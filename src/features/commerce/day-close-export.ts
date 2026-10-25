@@ -511,7 +511,7 @@ export function buildDayCloseFiles(input: {
     else {
       refundLedgerReviewGroups++;
       if (!group.orderNo) warning = "IADE_LEDGER_SIPARIS_BAGI_YOK";
-      else if (group.refundCount === 0) warning = "DONEMDE_REFUND_LEDGER_KARSILIGI_YOK";
+      else if (group.refundCount === 0) warning = "DONEMDE_ISLENMIS_IADE_KAYDI_YOK";
       else if (group.ledgerCount === 0) warning = "DONEMDE_IADE_LEDGER_KARSILIGI_YOK";
       else if (group.badRefundDates) warning = "IADE_TARIHI_IS_GUNU_DISINDA";
       else if (group.badLedgerDates) warning = "HAREKET_TARIHI_IS_GUNU_DISINDA";

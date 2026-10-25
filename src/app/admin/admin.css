@@ -334,7 +334,8 @@
 .admin-workspace .admin-content { min-width: 0; }
 .admin-secondary-panel {
   position: sticky;
-  top: 5rem;
+  /* Align sticky offset with the compact admin topbar (4.5rem, not the old 5rem). */
+  top: 4.5rem;
   z-index: 24;
   box-sizing: border-box;
   width: 100%;

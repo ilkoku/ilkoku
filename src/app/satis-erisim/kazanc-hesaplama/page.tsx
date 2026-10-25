@@ -57,7 +57,7 @@ export default async function WriterEarningIllustrationPage({
               telif ödemesi arasında nasıl bir fark oluşabileceğini karşılaştır.</p>
           </div>
           <Link className={styles.secondaryAction} href="/satis-erisim">
-            Satış & Erişim'e dön
+            Satış &amp; Erişim&apos;e dön
           </Link>
         </header>
 
@@ -88,7 +88,7 @@ export default async function WriterEarningIllustrationPage({
           </form>
           <div className={styles.summaryGrid}>
             <div><span>KDV hariç fiyat</span><strong>{money(price)}</strong></div>
-            <div><span>Satış KDV'si (örnek %20)</span><strong>{money(invoiced.saleVat)}</strong></div>
+            <div><span>Satış KDV&apos;si (örnek %20)</span><strong>{money(invoiced.saleVat)}</strong></div>
             <div><span>Okurun toplam ödemesi</span><strong>{money(invoiced.readerTotal)}</strong></div>
           </div>
           <p className={styles.helper}>
@@ -109,9 +109,9 @@ export default async function WriterEarningIllustrationPage({
               <p className={styles.helper}>{detail}</p>
               <div className={styles.summaryGrid}>
                 <div><span>Komisyon %15</span><strong>{money(p.commissionNet)}</strong></div>
-                <div><span>Komisyon KDV'si</span><strong>{money(p.commissionVat)}</strong></div>
+                <div><span>Komisyon KDV&apos;si</span><strong>{money(p.commissionVat)}</strong></div>
                 <div><span>Ek aracılık %5</span><strong>{money(p.platformServiceNet)}</strong></div>
-                <div><span>Aracılık KDV'si</span><strong>{money(p.platformServiceVat)}</strong></div>
+                <div><span>Aracılık KDV&apos;si</span><strong>{money(p.platformServiceVat)}</strong></div>
                 <div><span>Yazarın brüt telif/fatura matrahı</span><strong>{money(p.authorGross)}</strong></div>
                 <div><span>Stopaj (uygun telifte %17)</span><strong>{money(p.withholding)}</strong></div>
                 <div><span>Yazara tahmini banka ödemesi</span><strong>{money(p.authorBankPayment)}</strong></div>
@@ -139,7 +139,7 @@ export default async function WriterEarningIllustrationPage({
         </div>
         <div className={styles.heroActions}>
           <Link className={styles.secondaryAction} href="/satis-erisim/odeme-vergi-bilgileri">Belge ve vergi açıklamaları</Link>
-          <Link className={styles.secondaryAction} href="/gelirler">Gerçek kayıtları Gelirler'de görüntüle</Link>
+          <Link className={styles.secondaryAction} href="/gelirler">Gerçek kayıtları Gelirler&apos;de görüntüle</Link>
         </div>
       </div>
     </AppShell>

@@ -113,6 +113,16 @@ export default async function FinanceIncomePage() {
 
       <section className="admin-detail-grid">
         <article className="admin-panel">
+          <h2>Komisyon Yönetimi</h2>
+          <p>Genel %15, yazara özel ve esere özel komisyon oranlarını
+            geçmiş siparişleri değiştirmeden yönetin. Ayrı %5 aracılık
+            hizmeti bu oranlardan bağımsız kalır.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/komisyon-yonetimi">
+            Komisyon yönetimini aç
+          </Link>
+        </article>
+        <article className="admin-panel">
           <h2>Yazar Vergi / Belge İncelemesi</h2>
           <p>Yazarın fatura, e-SMM veya gider pusulası statüsünü
             inceleyin; geçerlilik süresi ve yönetici kararı geçmişini

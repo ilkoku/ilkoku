@@ -677,8 +677,8 @@ test("50% coupon cannot simulate 0 TL or unlock paid chapter without a provider"
   await page.goto("/satinal/ci-browser-coupon-work?kupon=CIBROWSER50", {
     waitUntil: "domcontentloaded",
   });
-  await expect(page.getByText(/CIBROWSER50 kuponu uygulandı/u)).toBeVisible();
-  await expect(page.getByText(/Kalan toplam 0 TL olmadığı için/u)).toBeVisible();
+  await expect(page.getByText(/İlkOku kuponu CIBROWSER50 uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/Kalan tutar 0 TL olmadığı için/u)).toBeVisible();
   await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
   await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
   await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeDisabled();

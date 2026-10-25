@@ -141,6 +141,7 @@ test("day close route is admin-only, ZIP-only, non-mutating and excludes custome
   assert.ok(cron.includes("constants.O_EXCL"));
   assert.ok(cron.includes('reason: "archived_day_changed_manual_review_required"'));
   assert.ok(cron.includes("previousIstanbulDay(now)"));
+  assert.ok(cron.includes("result.manifest.flaggedSalesCount + result.manifest.flaggedRefundCount"));
   assert.ok(page.includes("İlkOku fatura düzenlemez."));
   assert.ok(overview.includes("gun-sonu-aktarim"));
   for (const code of [route,repo,cron]) {

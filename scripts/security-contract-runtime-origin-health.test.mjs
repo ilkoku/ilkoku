@@ -127,3 +127,48 @@ test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin
   assert.ok(trap.includes("--retry 0"), "No implicit retries or extra requests");
   assert.ok(trap.includes("Circuit breaker: HTTP"), "Preserve 403/429 circuit breaker");
 });
+
+
+test("Cloudflare secret-file probe WAF candidate is narrow and inert", () => {
+  const expression = readFileSync("docs/security/cloudflare-secret-probe-waf.expr", "utf8").trim();
+  const known = [
+    ...["/.env", "/.docker/", "/.git/", "/.aws/"].map((value) => 'lower(http.request.uri.path) contains "' + value + '"'),
+    ...["/.boto", "/server.key", "/privatekey.key", "/key.pem", "/id_ed25519", "/secrets.json", "/appsettings.development.json"].map((value) => 'lower(http.request.uri.path) eq "' + value + '"'),
+    'ends_with(lower(http.request.uri.path), ".auto.tfvars")',
+  ];
+  assert.equal(expression.replace(/\s+/gu, " "), "( " + known.join(" or ") + " )");
+
+  const matched = [
+    "/.env", "/.ENV", "/.env.local", "/app/.env", "/data/.env",
+    "/@fs/.env", "/@fs/../.env", "/@fs/app/.env", "/assets../.env",
+    "/.env.swp", "/packages/.env", "/pkg/.env", "/lib/.env",
+    "/.docker/config.json", "/.git/config", "/.aws/credentials",
+    "/.boto", "/server.key", "/privatekey.key", "/key.pem",
+    "/id_ed25519", "/secrets.json", "/appsettings.Development.json",
+    "/production.auto.tfvars", "/@fs/secrets.auto.tfvars",
+  ];
+  const spared = [
+    "/", "/kesfet", "/kitap/yeni-test209-30820c6a", "/satinal/yeni-test209-30820c6a",
+    "/hakkimizda", "/sitemap.xml", "/robots.txt", "/api/build-info",
+    "/api/internal/runtime-origin-health", "/api-keys", "/admin",
+    "/admin/users", "/builds", "/org/settings", "/settings/tokens",
+    "/api/auth/session", "/@fs/proc/self/environ", "/__vite_rsc_findSourceMapURL",
+    "/iletisim", "/yazarlar-icin", "/.well-known/security.txt",
+    "/docs/environment", "/assets/key.pem.txt", "/index.json",
+  ];
+  const matches = (path) => {
+    const value = path.toLowerCase();
+    return known.some((predicate) => {
+      const contains = predicate.match(/^lower\(http\.request\.uri\.path\) contains "([^"]+)"$/u);
+      if (contains) return value.includes(contains[1]);
+      const equal = predicate.match(/^lower\(http\.request\.uri\.path\) eq "([^"]+)"$/u);
+      if (equal) return value === equal[1];
+      const suffix = predicate.match(/^ends_with\(lower\(http\.request\.uri\.path\), "([^"]+)"\)$/u);
+      if (suffix) return value.endsWith(suffix[1]);
+      throw new Error("Unsupported WAF clause: " + predicate);
+    });
+  };
+  for (const path of matched) assert.equal(matches(path), true, "Expected scanner match: " + path);
+  for (const path of spared) assert.equal(matches(path), false, "Potential false positive: " + path);
+  assert.doesNotMatch(expression, /ip\.src|ip\.geoip|asn|http\.host|\/api\/|\/admin|\/builds|\/org\/settings/iu);
+});

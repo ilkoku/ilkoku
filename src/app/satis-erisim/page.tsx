@@ -67,6 +67,9 @@ export default async function WriterCommercePage() {
             <Link className={styles.quietAction} href="/satis-erisim/kuponlar">
               Kuponları yönet
             </Link>
+            <Link className={styles.quietAction} href="/satis-erisim/kazanc-hesaplama">
+              Kazanç hesaplaması
+            </Link>
           </div>
         </header>
 

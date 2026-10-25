@@ -2381,3 +2381,32 @@ test("author tax-document review is admin-only and mobile safe without collectin
   await page.goto(route, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
+
+
+test("admin commission rules page remains mobile safe and excludes reader access", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/komisyon-yonetimi";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Komisyon Yönetimi" })).toBeVisible();
+  await expect(page.getByText("Temel oranlar ve öncelik")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazar oranlarını görüntüle" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=UNKNOWN_WRITER_ID", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/bulunamadı/u)).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});

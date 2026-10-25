@@ -2322,3 +2322,33 @@ test("deletion center category cards open the selected row-column screen on desk
     await expectResponsiveDocument(page);
   }
 });
+
+
+test("finance order review is admin-only, read-only, and rejects unknown order numbers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const route = "/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme";
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Sipariş Mali İnceleme" })).toBeVisible();
+  await expect(page.getByText("Muhasebe doğrulaması bekleniyor")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mali inceleme yap" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?siparis=ILK-UNOWNED-TEST-0000", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/eşleşen kayıt bulunamadı/u)).toBeVisible();
+  await expect(page.getByText(/Yazara örnek banka ödemesi/u)).toHaveCount(0);
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});

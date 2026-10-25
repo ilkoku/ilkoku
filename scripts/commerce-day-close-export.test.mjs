@@ -26,7 +26,7 @@ const exportModule = mod.exports;
 
 const validOrder = () => ({
   orderNo: "ILK-ABCDE1234", status: "paid", paidAt: new Date("2026-10-25T18:00:00+03:00"),
-  authorPublicId: "writer001",workTitle: "Kitap 1",currency: "TRY",
+  sellerMode: "platform_direct",authorPublicId: "writer001",workTitle: "Kitap 1",currency: "TRY",
   originalAmount: 12000n,discountAmount: 0n, finalAmount: 12000n,couponCode: null,
   commission: {
     commissionRateBps: 2000, serviceFeeRateBps: 500,source: "work",
@@ -86,6 +86,9 @@ test("day close ZIP has four UTF-8 CSV files, JSON manifest and content hashes",
 });
 
 test("missing snapshot, coupon, duplicate payments and 0TL produce review lines, not invoices",() => {
+  const unknownSeller = validOrder();
+  unknownSeller.orderNo = "ILK-SELLER-UNKNOWN";
+  unknownSeller.sellerMode = null;
   const missing = validOrder();
   missing.commission = null;
   missing.orderNo = "ILK-MISSING";
@@ -101,16 +104,17 @@ test("missing snapshot, coupon, duplicate payments and 0TL produce review lines,
   zero.finalAmount = 0n;
   zero.quote = null;
   zero.payments = [];
-  const result = make([missing, duplicate, coupon, zero]);
-  assert.equal(result.manifest.salesCount,4);
+  const result = make([missing, duplicate, coupon, zero, unknownSeller]);
+  assert.equal(result.manifest.salesCount,5);
   assert.equal(result.manifest.readySalesCount,0);
-  assert.equal(result.manifest.flaggedSalesCount,4);
+  assert.equal(result.manifest.flaggedSalesCount,5);
   assert.equal(result.manifest.zeroAmountCount,1);
   const issues = result.files.find(x=>x.name==="uyarilar.csv").data;
   assert.ok(issues.includes("KOMISYON_SNAPSHOT_EKSIK_GECERSIZ"));
   assert.ok(issues.includes("TAHSILAT_KAYDI_MUTABAKATSIZ"));
   assert.ok(issues.includes("KUPON_VERGI_MATRAHI_INCELEME"));
   assert.ok(issues.includes("SIFIR_TL_MALI_BELGE_DEGIL"));
+  assert.ok(issues.includes("SATICI_ILKOKU_DOGRULANMADI"));
   assert.equal(result.manifest.checkedGrossMinor,"0");
 });
 

@@ -421,6 +421,10 @@ test("UAT: writer fee example is read-only and preserves invoice vs GVK18 assump
   has(page, 'method="get"', "read-only GET form");
   has(page, "gerçek hakediş", "illustrative label");
   has(writer, "/satis-erisim/kazanc-hesaplama", "writer preview navigation");
+  const tax = source("src/app/satis-erisim/odeme-vergi-bilgileri/page.tsx");
+  has(tax, 'profile.role !== "writer"', "tax info role gate");
+  has(tax, "bu sürümde alınmıyor", "no unsafe tax PII input");
+  has(writer, "/satis-erisim/odeme-vergi-bilgileri", "tax overview navigation");
   lacks(preview, "prisma.", "illustrative calculator never writes records");
 });
 

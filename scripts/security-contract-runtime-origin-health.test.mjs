@@ -58,3 +58,37 @@ test("Origin incident trap captures deploy cutover while preserving safe bounded
   assert.match(trap, /TRAP_RESULT MONITOR_BLOCKED/u);
   assert.ok(trap.includes('rm -f "$body"'));
 });
+
+test("High-risk manual k6 scripts fail closed before issuing any request", () => {
+  const scripts = [
+    {
+      path: "tests/load/hostinger-support-1000.js",
+      env: "ILKOKU_STRESS_APPROVAL",
+      token: "APPROVE-ILKOKU-1000-VU",
+      blocked: "PRODUCTION_STRESS_TEST_BLOCKED",
+    },
+    {
+      path: "tests/load/hostinger-origin-direct.js",
+      env: "ILKOKU_ORIGIN_DIRECT_APPROVAL",
+      token: "APPROVE-ORIGIN-DIRECT-PROBE",
+      blocked: "ORIGIN_DIRECT_BLOCKED",
+    },
+  ];
+  for (const script of scripts) {
+    const source = readFileSync(script.path, "utf8");
+    const guard = source.indexOf("if ((__ENV." + script.env);
+    const request = source.indexOf("http.get(");
+    assert.ok(guard >= 0 && guard < request, script.path + " must reject unapproved execution before network requests");
+    assert.ok(source.includes(script.token), "Explicit approval marker absent in " + script.path);
+    assert.ok(source.includes(script.blocked), "Fail-closed error absent in " + script.path);
+    assert.match(source, /throw new Error\(/u);
+  }
+});
+
+test("Public production load workflow stays manual and explicitly confirmed", () => {
+  const flow = readFileSync(".github/workflows/public-load-test.yml", "utf8");
+  assert.match(flow, /workflow_dispatch:/u);
+  assert.doesNotMatch(flow, /^  (?:push|schedule|pull_request):/mu);
+  assert.match(flow, /RUN-PUBLIC-LOAD-TEST/u);
+  assert.match(flow, /https:\/\/ilkoku\.com\|https:\/\/www\.ilkoku\.com/u);
+});

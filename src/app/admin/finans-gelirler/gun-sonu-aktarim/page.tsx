@@ -79,6 +79,10 @@ export default async function DayCloseAccountingTransferPage() {
           <p><code>yazar_hesap_ozeti.csv</code> — Temel kontrolleri
             geçen işlemlerin yazar ve mali belge türüne göre toplamları:
             komisyon ve koşullu aracılık ayrı hesaplama örnekleridir.</p>
+          <p><code>muhasebe_tl_inceleme.csv</code> — Kontrolü geçen
+            satışların TL tutarlarıyla, noktalı virgül ayracı ve
+            virgüllü iki ondalık içeren muhasebeci inceleme tablosu.
+            Resmî fiş veya doğrulanmış program içe aktarma formatı değildir.</p>
           <p><code>alan_esleme.json</code> — Alan tanımları ve Logo, Mikro,
             Paraşüt şemalarının henüz doğrulanmadığı bilgisi.</p>
           <p><code>manifest.json</code> — İş günü, içerik sayıları,

@@ -449,6 +449,81 @@ export function buildDayCloseFiles(input: {
       refund.orderFinalAmount,refund.cumulativeProcessedAmount,state,
     ]);
   }
+  // Reconcile processed refund records to same-business-day financial refund
+  // movements by order and currency. Ledger posting may occur in another
+  // business day; an absent entry means ACCOUNTANT REVIEW, NOT refund failure.
+  type RefundGroup = {
+    orderNo: string; currency: string; refundCount: number; ledgerCount: number;
+    processedAmount: bigint; ledgerSignedAmount: bigint;
+    ledgerAbsoluteAmount: bigint; ledgerPositive: boolean; ledgerNegative: boolean;
+    refundIds: string[]; ledgerIds: string[]; badRefundDates: boolean;
+  };
+  const refundGroups = new Map<string, RefundGroup>();
+  const getRefundGroup = (orderNo: string, currency: string) => {
+    const key = orderNo + "\u001f" + currency;
+    const existing = refundGroups.get(key);
+    if (existing) return existing;
+    const created: RefundGroup = {
+      orderNo, currency, refundCount: 0, ledgerCount: 0,
+      processedAmount: BigInt(0), ledgerSignedAmount: BigInt(0),
+      ledgerAbsoluteAmount: BigInt(0), ledgerPositive: false, ledgerNegative: false,
+      refundIds: [], ledgerIds: [], badRefundDates: false,
+    };
+    refundGroups.set(key, created);
+    return created;
+  };
+  for (const refund of input.refunds) {
+    if (refund.status !== "processed") continue;
+    const group = getRefundGroup(refund.orderNo, refund.currency);
+    group.refundCount++;
+    group.processedAmount += refund.amount;
+    group.refundIds.push(refund.id);
+    if (!isOnBusinessDay(refund.processedAt)) group.badRefundDates = true;
+  }
+  for (const entry of input.ledger) {
+    if (entry.entryType !== "refund") continue;
+    const group = getRefundGroup(entry.orderNo ?? "", entry.currency);
+    group.ledgerCount++;
+    group.ledgerSignedAmount += entry.amount;
+    group.ledgerAbsoluteAmount += entry.amount < BigInt(0) ? -entry.amount : entry.amount;
+    if (entry.amount > BigInt(0)) group.ledgerPositive = true;
+    if (entry.amount < BigInt(0)) group.ledgerNegative = true;
+    group.ledgerIds.push(entry.id);
+  }
+  const refundReconciliation: CsvField[][] = [[
+    "siparis_no","para_birimi","islenen_iade_adedi","iade_tutari_toplam_kurus",
+    "refund_ledger_hareket_adedi","ledger_imzali_toplam_kurus",
+    "ledger_mutlak_toplam_kurus","sonuc","inceleme_notu",
+  ]];
+  let refundLedgerMatchedGroups = 0, refundLedgerReviewGroups = 0;
+  for (const group of [...refundGroups.values()].sort((a,b) =>
+    a.orderNo.localeCompare(b.orderNo) || a.currency.localeCompare(b.currency))) {
+    const matched = group.orderNo.length > 0 && !group.badRefundDates &&
+      group.refundCount > 0 && group.ledgerCount > 0 &&
+      group.processedAmount > BigInt(0) &&
+      group.ledgerAbsoluteAmount === group.processedAmount &&
+      (group.ledgerSignedAmount === group.processedAmount ||
+       group.ledgerSignedAmount === -group.processedAmount) &&
+      !(group.ledgerPositive && group.ledgerNegative);
+    let warning = "";
+    if (matched) refundLedgerMatchedGroups++;
+    else {
+      refundLedgerReviewGroups++;
+      if (!group.orderNo) warning = "IADE_LEDGER_SIPARIS_BAGI_YOK";
+      else if (group.refundCount === 0) warning = "DONEMDE_REFUND_LEDGER_KARSILIGI_YOK";
+      else if (group.ledgerCount === 0) warning = "DONEMDE_IADE_LEDGER_KARSILIGI_YOK";
+      else if (group.badRefundDates) warning = "IADE_TARIHI_IS_GUNU_DISINDA";
+      else warning = "IADE_LEDGER_TOPLAM_TUTARSIZ";
+      issues.push(["iade_ledger",group.orderNo || group.ledgerIds.join("+"),warning,
+        "Muhasebe kayit tarihi, iade isleme zamani ve finans hareketini karsilastirin"]);
+    }
+    refundReconciliation.push([
+      group.orderNo || null,group.currency,group.refundCount,group.processedAmount,
+      group.ledgerCount,group.ledgerSignedAmount,group.ledgerAbsoluteAmount,
+      matched ? "GUNLUK_TUTAR_ESLESTI" : "INCELEME_GEREKLI",
+      matched ? "Eslesme muhasebe fisini dogrulamaz" : warning,
+    ]);
+  }
   const fieldMap = {
     version: "generic-accounting-map-v1",
     status: "UNVERIFIED_VENDOR_MAPPING",
@@ -517,6 +592,7 @@ export function buildDayCloseFiles(input: {
     { name: "siparisler.csv", data: safeCsv(sales) },
     { name: "finans_hareketleri.csv", data: safeCsv(movements) },
     { name: "iadeler.csv", data: safeCsv(refundRows) },
+    { name: "iade_ledger_mutabakat.csv", data: safeCsv(refundReconciliation) },
     { name: "uyarilar.csv", data: safeCsv(issues) },
     { name: "mutabakat.csv", data: safeCsv(reconciliation) },
     { name: "gun_sonu_ozet.csv", data: safeCsv(summary) },
@@ -540,6 +616,8 @@ export function buildDayCloseFiles(input: {
     zeroAmountCount: details.zero,
     refundsCount: input.refunds.length,
     flaggedRefundCount,
+    refundLedgerMatchedGroups,
+    refundLedgerReviewGroups,
     reviewedRefundMinor: reviewedRefundMinor.toString(),
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,

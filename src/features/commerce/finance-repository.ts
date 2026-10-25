@@ -712,6 +712,7 @@ export async function getOrderAccountingReviewSource(orderNo: string) {
       },
       priceQuoteSnapshot: {
         select: {
+          calculationVersion: true,
           taxTreatment: true,
           vatRateBasisPoints: true,
           listNetAmount: true,

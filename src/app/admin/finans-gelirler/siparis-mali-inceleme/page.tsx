@@ -32,11 +32,16 @@ export default async function OrderAccountingReviewPage({
     priceQuote: order.priceQuoteSnapshot,
     payments: order.payments,
     bookedEntryTypes: order.financialLedgerEntries.map((entry) => entry.entryType),
+    taxReview: order.author.taxReviewsAsWriter[0] ?? null,
   }) : null;
 
   const cases = review?.scenarios ? [
-    { title: "Faturalı yazar", subtitle: "%15 komisyon + komisyon KDV; aracılık yok", data: review.scenarios.invoiced },
-    { title: "Gider pusulasına uygun telif – örnek", subtitle: "%15 telif paylaşımı + ayrıca %5 aracılık + KDV", data: review.scenarios.expenseReceipt },
+    ...(review.scenarios.invoiced
+      ? [{ title: "Faturalı yazar", subtitle: "%15 komisyon + komisyon KDV; aracılık yok", data: review.scenarios.invoiced }]
+      : []),
+    ...(review.scenarios.expenseReceipt
+      ? [{ title: "Gider pusulasına uygun telif – örnek", subtitle: "%15 telif paylaşımı + ayrıca %5 aracılık + KDV", data: review.scenarios.expenseReceipt }]
+      : []),
   ] : [];
 
   const fmt = (value: bigint) => formatFinanceMoney(value, order?.currency ?? "TRY");
@@ -107,6 +112,15 @@ export default async function OrderAccountingReviewPage({
               <span>Yazar</span>
               <h2>{order.author.displayName ?? order.author.fullName}</h2>
               <p>{order.author.publicId}</p>
+              <p>
+                <Link href={"/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme?yazar=" + encodeURIComponent(order.author.publicId)}>
+                  Yazarın belge inceleme kaydını aç
+                </Link>
+              </p>
+              <p>
+                Son belge kaydı: {order.author.taxReviewsAsWriter[0]?.decision ?? "Yok"}
+                {" · "}{order.author.taxReviewsAsWriter[0]?.documentKind ?? "Tür belirlenmedi"}
+              </p>
             </article>
             <article className="admin-panel admin-settings-card">
               <span>Satıcı</span>

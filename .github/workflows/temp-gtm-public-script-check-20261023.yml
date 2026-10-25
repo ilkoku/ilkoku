@@ -1,0 +1,16 @@
+name: Manual read-only GTM script delivery diagnostic
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Compare public GTM JavaScript without firing analytics events
+        run: node scripts/temp-gtm-compare-live-20261023.mjs

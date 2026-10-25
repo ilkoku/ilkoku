@@ -78,12 +78,14 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   if (input.couponCodeSnapshot || input.discountAmount !== BigInt(0)) {
     blockers.push("Kuponun ekonomik yükü ve indirim sonrası vergi matrahı ayrıca incelenmeli.");
   }
-  if (!input.payments.some((payment) =>
-    payment.status === "succeeded" &&
-    payment.currency === input.currency &&
-    payment.amount === input.finalAmount
-  )) {
-    blockers.push("Sipariş toplamıyla eşleşen başarılı tahsilat kaydı yok.");
+  // Exactly one captured payment must reconcile with the frozen order.
+  // A second successful capture is an overpayment/duplicate-capture risk,
+  // even when one of the payments has the expected amount.
+  const successfulPayments = input.payments.filter((payment) => payment.status === "succeeded");
+  if (successfulPayments.length !== 1 ||
+      successfulPayments[0].currency !== input.currency ||
+      successfulPayments[0].amount !== input.finalAmount) {
+    blockers.push("Sipariş için tam bir başarılı ve tutarı eşleşen tahsilat kaydı gerekli; mükerrer tahsilat incelenmeli.");
   }
   if (input.bookedEntryTypes.some((type) =>
     ["author_earning", "platform_commission", "tax_withholding", "payout"].includes(type)
@@ -96,10 +98,15 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
     if (quote.vatRateBasisPoints !== 2000 ||
         quote.listNetAmount < BigInt(0) ||
         quote.listVatAmount < BigInt(0) ||
+        quote.listVatAmount !== (quote.listNetAmount * BigInt(2000) + BigInt(5000)) / BigInt(10000) ||
         quote.listNetAmount + quote.listVatAmount !== quote.listGrossAmount ||
+        quote.discountGrossAmount < BigInt(0) ||
+        quote.discountGrossAmount > quote.listGrossAmount ||
+        quote.listGrossAmount - quote.discountGrossAmount !== quote.payableGrossAmount ||
         quote.listGrossAmount !== input.originalAmount ||
         quote.payableGrossAmount !== input.finalAmount ||
-        quote.discountGrossAmount !== input.discountAmount) {
+        quote.discountGrossAmount !== input.discountAmount ||
+        input.originalAmount - input.discountAmount !== input.finalAmount) {
       blockers.push("Siparişin fiyat, KDV ve iskonto snapshot tutarları tutarsız.");
     }
   }

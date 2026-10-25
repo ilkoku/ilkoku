@@ -1,14 +1,59 @@
+import Link from "next/link";
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
 
 export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub }) {
   const genres = getGenresByCategory(hub.category);
+  const priorityGenres = genres.filter(
+    (genre) => !isSoftLaunchSearchExcludedPath(`${hub.href}/${genre.slug}`),
+  );
+  const canonicalUrl = `https://ilkoku.com${hub.href}`;
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${hub.title} Yazarlığı ve Eğitimleri`,
+      description: hub.promise,
+      inLanguage: "tr-TR",
+      url: canonicalUrl,
+      isPartOf: { "@type": "WebSite", name: "İlkOku", url: "https://ilkoku.com/" },
+      about: { "@type": "Thing", name: hub.title },
+      mainEntity: {
+        "@type": "ItemList",
+        name: `${hub.title} için öncelikli yazarlık rehberleri`,
+        itemListElement: priorityGenres.map((genre, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: `${genre.label} yazarlık rehberi`,
+          url: `https://ilkoku.com${hub.href}/${genre.slug}`,
+        })),
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        { "@type": "ListItem", position: 3, name: hub.title, item: canonicalUrl },
+      ],
+    },
+  ];
 
   return (
     <>
-    <WritingGuideShell activeCategory={hub.category} activeGenreSlug="">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+    />
+    <WritingGuideShell
+      activeCategory={hub.category}
+      activeGenreSlug=""
+      expertVerificationRequired={hub.slug === "bilgilendirici"}
+    >
       <article className="mx-auto max-w-5xl pb-6 sm:pb-10">
         <header className="overflow-hidden rounded-[2.5rem] border border-black/[0.06] bg-white px-7 py-10 shadow-[0_20px_70px_rgba(34,23,70,0.09)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <div className="flex flex-wrap items-center gap-3">
@@ -77,6 +122,56 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
           </div>
         </section>
 
+        <section
+          className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-white px-7 py-9 shadow-[0_14px_44px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11"
+          aria-labelledby={`${hub.slug}-uygulamali-ornek`}
+        >
+          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Uygulamalı tür karşılaştırması</span>
+          <h2 id={`${hub.slug}-uygulamali-ornek`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl">
+            {hub.workedExample.heading}
+          </h2>
+          <p className="mt-5 max-w-3xl text-base leading-8 text-[#625b6d]">{hub.workedExample.scenario}</p>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-[#625b6d]">{hub.workedExample.comparison}</p>
+          <div className="mt-6 rounded-[1.5rem] bg-[#efebff] p-6">
+            <h3 className="text-lg font-extrabold text-[#211746]">Kendi taslağında dene</h3>
+            <p className="mt-3 text-sm leading-7 text-[#51496b]">{hub.workedExample.assignment}</p>
+          </div>
+        </section>
+
+        {priorityGenres.length > 0 ? (
+          <section
+            className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-9 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-11"
+            aria-labelledby={`${hub.slug}-baslangic-rehberleri`}
+          >
+            <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#5b35dd]">
+              Öne çıkan başlangıç rehberleri
+            </span>
+            <h2
+              id={`${hub.slug}-baslangic-rehberleri`}
+              className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.03em] text-[#211746] sm:text-4xl"
+            >
+              Önce bu rehberlerle güçlü bir temel kur.
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-[#5f5869]">
+              Bu rehberler, kategori içindeki temel yazarlık problemlerini farklı çalışma biçimleriyle ele alır. İhtiyacına en yakın rehberden başlayıp diğer türlere daha sonra geçebilirsin.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {priorityGenres.map((genre) => (
+                <Link
+                  className="group rounded-[1.35rem] border border-[#6b52c7]/15 bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.05)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
+                  href={`${hub.href}/${genre.slug}`}
+                  key={genre.slug}
+                >
+                  <strong className="block text-sm font-extrabold text-[#211746]">{genre.label} yazarlık rehberi</strong>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-[#6b6472]">
+                    Türe özgü yöntem, örnek ve uygulama planını incele <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-6 rounded-[2.35rem] bg-[#17122f] px-7 py-9 text-white shadow-[0_20px_60px_rgba(23,18,47,0.2)] sm:px-10 sm:py-11" aria-labelledby={`${hub.slug}-yolculuk`}>
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#b7a8ff]">Eğitim yolculuğu</span>
           <h2 id={`${hub.slug}-yolculuk`} className="mt-3 max-w-3xl font-serif text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
@@ -124,11 +219,19 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             Yazmak istediğin türü seç.
           </h2>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.invitation}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <p className="inline-flex rounded-full bg-[#211746] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm">
-              {genres.length} tür eğitimi soldaki menüde →
-            </p>
-            <p className="text-sm font-semibold text-[#77707f]">Bir tür seçtiğinde doğrudan o türe özel eğitime geçersin.</p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {genres.map((genre) => (
+              <Link
+                className="group rounded-[1.35rem] border border-[#6b52c7]/10 bg-[#fffdf8] px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.04)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
+                href={`${hub.href}/${genre.slug}`}
+                key={genre.slug}
+              >
+                <strong className="block text-sm font-extrabold text-[#211746]">{genre.label} eğitimi</strong>
+                <span className="mt-1 block text-xs font-semibold leading-5 text-[#77707f]">
+                  {genre.label} yazarlığına özel rehbere geç <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
       </article>

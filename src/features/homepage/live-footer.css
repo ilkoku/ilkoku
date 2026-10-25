@@ -1,3 +1,27 @@
+/* Shared footer foundation: these values used to come from homepage-only
+   landing.css. Scope them to the footer so every public route renders the
+   same design without globally importing homepage navigation styles. */
+.nx-live-footer-scope {
+  --landing-primary: #6847e8;
+  --landing-primary-strong: #4b2dbf;
+  --landing-night: #11102f;
+  --landing-muted: #69667e;
+  --landing-border: rgba(64, 49, 126, 0.13);
+  --landing-font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.nx-live-footer-scope .landing-container {
+  width: min(76rem, calc(100% - 3rem));
+  margin-inline: auto;
+}
+
+.nx-live-footer-scope a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .nx-live-footer-scope {
   min-width: 0 !important;
   min-height: 0 !important;

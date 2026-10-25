@@ -1,0 +1,45 @@
+name: Manual Google Tag Gateway deploy package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/manual-gtm-migration-package.yml
+      - workers/ilkoku-gtm-gateway/**
+      - src/components/privacy/SiteAnalyticsLoader.tsx
+      - scripts/security-contract-manual-gtm-worker.test.mjs
+      - scripts/security-contract-manual-gtm-loader.test.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Offline Worker tests and deploy ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Validate local Worker/consent fallback contracts
+        run: |
+          node --test scripts/security-contract-manual-gtm-worker.test.mjs scripts/security-contract-manual-gtm-loader.test.mjs
+      - name: Assemble DNS-free Cloudflare Worker deployment archive
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-manual-gtm-gateway
+          cp workers/ilkoku-gtm-gateway/index.mjs /tmp/ilkoku-manual-gtm-gateway/index.mjs
+          cp workers/ilkoku-gtm-gateway/wrangler.toml /tmp/ilkoku-manual-gtm-gateway/wrangler.toml
+          cp workers/ilkoku-gtm-gateway/README.md /tmp/ilkoku-manual-gtm-gateway/README.md
+          cd /tmp
+          zip -q -r ilkoku-manual-gtm-gateway.zip ilkoku-manual-gtm-gateway
+      - name: Preserve verified deployment package
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-manual-gtm-gateway
+          path: /tmp/ilkoku-manual-gtm-gateway.zip
+          if-no-files-found: error
+          retention-days: 30

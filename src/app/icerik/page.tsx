@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDashboardIntegritySignals } from "@/lib/cms-dashboard-integrity";
 import { getCmsOperationalIntegrity } from "@/lib/cms-health-integrity";
@@ -157,6 +158,7 @@ export default async function ContentDashboardPage() {
   if (!data) {
     return (
       <section className="content-dashboard">
+        <div style={{ marginBottom: "1rem" }}><AdminReturnLink /></div>
         <div className="content-page-heading content-dashboard-heading">
           <div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com içerik operasyonu için canlı veriler okunamadığında panel yanlış sıfır değer üretmez.</p></div>
           <div className="content-health-badge is-blocked"><small>Panel verisi</small><strong>OKUNAMADI</strong><span>Görev ve metrik üretimi güvenli biçimde durduruldu.</span></div>
@@ -285,6 +287,7 @@ export default async function ContentDashboardPage() {
 
   return (
     <section className="content-dashboard">
+        <div style={{ marginBottom: "1rem" }}><AdminReturnLink /></div>
       <div className="content-page-heading content-dashboard-heading"><div><span>Operasyon Merkezi</span><h1>İçerik Genel Bakış</h1><p>İlkOku.com için bugün ne yapılması gerektiğini, canlı yayın kabulünü ve son değişiklikleri tek ekrandan yönetin.</p></div><div className={`content-health-badge ${healthClass}`}><small>Canlı içerik durumu</small><strong>{healthLabel}</strong><span>{integritySignals.blockers} bütünlük blokajı · {integritySignals.warnings} bütünlük uyarısı · {summary.corePassed}/{summary.coreTotal} temel alan hazır · {starter.pendingTotal} bekleyen temel değişiklik · {access.canPublish ? "yayın yetkisi aktif" : "taslak yetkisi aktif"}</span></div></div>
 
       {focusTask ? (

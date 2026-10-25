@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Editörlüğe Başlama | İlkOku Editörlük Okulu",
   description: "Editörün rolünü, müdahale sınırını, ilk okuma yaklaşımını, editöryal geri bildirimi ve profesyonel çalışma ilkelerini adım adım öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/editorluge-baslama" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/editorler-icin/egitim/editorluge-baslama",
+});
 
 const gains = [
   {
@@ -108,7 +110,13 @@ export default function EditorlugeBaslamaPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Editörlüğe Başlama"
+        description="Editörün rolünü, müdahale sınırını, ilk okuma yaklaşımını, editöryal geri bildirimi ve profesyonel çalışma ilkelerini adım adım öğren."
+        canonical="/editorler-icin/egitim/editorluge-baslama"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -127,6 +135,8 @@ export default function EditorlugeBaslamaPage() {
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-2">Yazarın sesini koru</span>
           </div>
         </header>
+
+        <PriorityEducationIntentPanel area="editing" slug="editorluge-baslama" />
 
         <section className="mt-6 rounded-[2.25rem] border border-black/[0.06] bg-white px-7 py-9 shadow-[0_14px_48px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11" aria-labelledby="editor-baslama-kazanim">
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Bu eğitim sana ne kazandıracak?</span>
@@ -238,6 +248,7 @@ export default function EditorlugeBaslamaPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

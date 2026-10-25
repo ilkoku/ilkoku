@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
@@ -8,6 +7,14 @@ import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 type Section = { body: string; title: string };
+
+const priorityWritingGuideLinks = [
+  { href: "/yazarlar-icin/kurgu/oyku", label: "Öykü yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/distopya", label: "Distopya yazarlığı" },
+  { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir yazarlığı" },
+] as const;
 
 type WriterHistoryMilestone = {
   body: string;
@@ -138,7 +145,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
       <header className="how-header">
         <div className="how-container how-header__inner">
           <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Giriş yap</Link>
+          <Link className="how-header__account" href="/giris">Giriş yap</Link>
         </div>
       </header>
 
@@ -146,10 +153,10 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">Fikrini görünür bir eser yolculuğuna dönüştür</span>
-            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
+            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{index > 0 ? " " : null}{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
-              <Link className="how-button how-button--primary" href="/kayit?rol=writer" rel={shouldNofollowSearchExcludedHref("/kayit?rol=writer") ? "nofollow" : undefined}>Yazar olarak başla <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla <span aria-hidden="true">→</span></Link>
               <Link className="how-button how-button--secondary" href="#yazar-ilkleri">Yazarların ilklerini gör</Link>
             </div>
             <div className="how-hero__proof"><span><strong>Keşif</strong> okurla başlar</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>Haklar</strong> yazarda</span></div>
@@ -204,7 +211,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
               <p>Belki ilk tamamladığın roman, ilk kez kurduğun bir dünya, ilk kez senin sesinle anlatılan bir karakter ya da yıllardır aklında taşıdığın o hikâye. Edebiyat tarihi geriye dönüp baktığımızda “ilk”leri gösterir; yazarken ise her biri yalnızca cesaret edilmiş bir başlangıçtır.</p>
             </div>
             <div className="writers-history__now-actions">
-              <Link className="how-button how-button--primary" href="/kayit?rol=writer" rel={shouldNofollowSearchExcludedHref("/kayit?rol=writer") ? "nofollow" : undefined}>Kendi ilk cümlene başla <span aria-hidden="true">→</span></Link>
+              <Link className="how-button how-button--primary" href="/kayit?rol=writer">Kendi ilk cümlene başla <span aria-hidden="true">→</span></Link>
               <a className="how-button how-button--secondary" href="#yazar-yolculugu">İlkOku&apos;daki yazar yolculuğunu gör</a>
             </div>
           </div>
@@ -249,7 +256,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         </div>
       </section>
 
-      {sectionMap.get("Yazar olarak başla") ? <section className="writers-start how-container"><WriterIcon name="book" /><div><span>İlk eserine başla</span><h2>İlk eser kaydını oluştur ve yolculuğunu başlat.</h2><EditorialBody body={sectionMap.get("Yazar olarak başla")!.body} /><div className="writers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer" rel={shouldNofollowSearchExcludedHref("/kayit?rol=writer") ? "nofollow" : undefined}>Yazar hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Zaten hesabım var</Link></div></div></section> : null}
+      {sectionMap.get("Yazar olarak başla") ? <section className="writers-start how-container"><WriterIcon name="book" /><div><span>İlk eserine başla</span><h2>İlk eser kaydını oluştur ve yolculuğunu başlat.</h2><EditorialBody body={sectionMap.get("Yazar olarak başla")!.body} /><div className="writers-start__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar hesabı oluştur <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/giris">Zaten hesabım var</Link></div></div></section> : null}
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
@@ -263,6 +270,16 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
             </Link>
           ))}
         </div>
+        <nav className="writers-education__shortcuts" aria-label="Doğrudan yazarlık rehberleri">
+          <p>İlk rehberini seç</p>
+          <div className="writers-education__shortcuts-links">
+            {priorityWritingGuideLinks.map((guide) => (
+              <Link href={guide.href} key={guide.href}>
+                {guide.label} <span aria-hidden="true">→</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
       </aside>
 
       <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/topluluk-kurallari">Topluluk</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link></nav></div></footer>

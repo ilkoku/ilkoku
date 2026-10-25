@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { BatchedEducationGuidePage } from "@/components/content/BatchedEducationGuidePage";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { getEducationGuideDefinition } from "@/lib/education-guide-batch";
 import "../../batched-education-guide.css";
 
 export const revalidate = 300;
 const definition = getEducationGuideDefinition("siir");
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: `${definition.title} | İlkOku`,
   description: definition.description,
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/edebiyat/siir" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/edebiyat/siir",
+});
 export default async function EducationGenrePage() { return <BatchedEducationGuidePage definition={definition} />; }

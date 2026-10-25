@@ -35,7 +35,26 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
   );
   contains(
     workflow,
-    "Book Index is not published in sitemap; gated SEO checks remain skipped.",
-    "Book Index remains fail-closed before publication",
+    "check_noindex_page",
+    "soft-launch crawlable noindex verification helper",
   );
+  contains(
+    workflow,
+    "PASS: soft-launch index targets and crawlable noindex routes verified.",
+    "scheduled smoke verifies the temporary search policy",
+  );
+  contains(
+    workflow,
+    "! grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar' \"$sitemap\"",
+    "Book Index stays excluded from sitemap during soft launch",
+  );
+});
+
+
+test("Cloudflare infrastructure is excluded from crawler inventory while public pages stay allowed", () => {
+  const robots = source("src/app/robots.ts");
+  contains(robots, '"/cdn-cgi/"', "Cloudflare managed paths excluded");
+  contains(robots, '"/api/media/"', "published media remain discoverable");
+  contains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap untouched");
+  contains(robots, '"/",', "public pages remain crawlable");
 });

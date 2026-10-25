@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Editör Notu ve Geri Bildirim | İlkOku Editörlük Okulu",
-  description:
-    "Editöryal tespiti metinden kanıta, okur etkisine ve uygulanabilir revizyon seçeneğine dönüştürmeyi; editör mektubu ile satır içi notu doğru yerde kullanmayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim" },
-  robots: { index: true, follow: true },
-};
+  description: "Editöryal tespiti kanıta, okur etkisine ve uygulanabilir revizyona dönüştürmeyi; editör mektubu ile satır içi notu doğru kullanmayı öğren.",
+  canonical: "/editorler-icin/egitim/editor-notu-ve-geri-bildirim",
+});
 
 const outcomes = [
   {
@@ -149,7 +149,13 @@ export default function EditorNotuVeGeriBildirimPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Editör Notu ve Geri Bildirim"
+        description="Editöryal tespiti kanıta, okur etkisine ve uygulanabilir revizyona dönüştürmeyi; editör mektubu ile satır içi notu doğru kullanmayı öğren."
+        canonical="/editorler-icin/egitim/editor-notu-ve-geri-bildirim"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -316,6 +322,7 @@ export default function EditorNotuVeGeriBildirimPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

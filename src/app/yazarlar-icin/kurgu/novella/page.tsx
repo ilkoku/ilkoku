@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
+import { WritingGuideStructuredData } from "@/components/content/WritingGuideStructuredData";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 
@@ -295,12 +297,11 @@ function buildNovellaBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Novella Nasıl Yazılır? | İlkOku",
   description: "Novella fikrinden karakter dönüşümüne, orta kırılmadan sahne ve bölüm planına kadar adım adım novella yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/novella" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/novella",
+});
 
 export default async function NovellaYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;
@@ -338,16 +339,24 @@ export default async function NovellaYazarlikRehberiPage() {
   const blocks = buildNovellaBlocks(visuals, alts, title, summary);
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="novella">
+    <>
+      <WritingGuideStructuredData
+        canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/novella"
+        title={title}
+        description={summary}
+        categoryName="Kurgu"
+        categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+      />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="novella">
       <div className="novella-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

@@ -1,4 +1,6 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -266,12 +268,15 @@ function buildOykuBlocks(visuals: OykuVisuals, alts: OykuAlts, title: string, su
   ];
 }
 
-export const metadata: Metadata = {
+const canonicalUrl = "https://ilkoku.com/yazarlar-icin/kurgu/oyku";
+const metadataDescription =
+  "Öykü fikrinden karaktere, kısa form yapısından sahne ekonomisine, finalden revizyona kadar örneklerle adım adım öykü yazarlık rehberi.";
+
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Öykü Nasıl Yazılır? | İlkOku",
-  description: "Öykü fikrinden karaktere, kısa form yapısından sahne ekonomisine, finalden revizyona kadar örneklerle adım adım öykü yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/oyku" },
-  robots: { index: true, follow: true },
-};
+  description: metadataDescription,
+  canonical: "/yazarlar-icin/kurgu/oyku",
+});
 
 export default async function OykuYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;
@@ -307,18 +312,47 @@ export default async function OykuYazarlikRehberiPage() {
     ? guide.summary
     : "Tek bir anı, çatışmayı veya değişimi yoğunlaştır. Fikirden karaktere, sahne ekonomisinden finale ve revizyona kadar kısa öykünü adım adım kur.";
   const blocks = buildOykuBlocks(visuals, alts, title, summary);
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "@id": `${canonicalUrl}#article`,
+      headline: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      mainEntityOfPage: canonicalUrl,
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
+        { "@type": "ListItem", position: 2, name: "Yazarlar İçin", item: "https://ilkoku.com/yazarlar-icin" },
+        { "@type": "ListItem", position: 3, name: "Kurgu", item: "https://ilkoku.com/yazarlar-icin/kurgu" },
+        { "@type": "ListItem", position: 4, name: title, item: canonicalUrl },
+      ],
+    },
+  ];
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="oyku">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
+      />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="oyku">
       <div className="oyku-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

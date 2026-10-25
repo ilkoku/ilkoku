@@ -61,7 +61,6 @@ const basePages: SiteMapPage[] = [
   { id: "book-index", label: "En Çok Satanlar", href: "/en-cok-satanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-new-releases", label: "Yeni Çıkanlar", href: "/yeni-cikanlar", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-turkey", label: "Türkiye", href: "/en-cok-satanlar/turkiye", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
-  { id: "book-index-comparison", label: "Karşılaştırma", href: "/en-cok-satanlar/turkiye/karsilastirma", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-global", label: "Dünya", href: "/en-cok-satanlar/dunya", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-new-entries", label: "Çok Satanlara Yeni Girenler", href: "/en-cok-satanlar/cok-satanlara-yeni-girenler", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
   { id: "book-index-risers", label: "Çok Satanlarda Yükselenler", href: "/en-cok-satanlar/cok-satanlarda-yukselenler", area: "İlkOku", group: "Kitap Endeksi", kind: "page" },
@@ -161,7 +160,7 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
       groups: [
         { id: "writer-discover", title: "Yazarlığı keşfet", links: [link("writers-home", true), link("writer-register"), link("how-it-works")] },
         { id: "writer-school", title: "Yazarlık Okulu", links: WRITING_CATEGORY_HUBS.map((hub) => link(`writer-hub:${hub.slug}`)) },
-        { id: "writer-featured", title: "Öne Çıkan Türler", links: ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya"].map((slug) => link(`writer-genre:${slug}`)) },
+        { id: "writer-featured", title: "Öne Çıkan Türler", links: ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "siir"].map((slug) => link(`writer-genre:${slug}`)) },
       ],
     },
     {
@@ -211,11 +210,6 @@ export const defaultHeaderNavigation: HeaderNavigationPayload = {
             link("book-index-new-releases"),
             link("book-index-global"),
           ],
-        },
-        {
-          id: "book-index-compare",
-          title: "Karşılaştır",
-          links: [link("book-index-comparison")],
         },
         {
           id: "book-index-trends",

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
+
 const publicSiteUrl = "https://ilkoku.com";
-const defaultSocialImage = `${publicSiteUrl}/opengraph-image`;
+const defaultSocialImage = `${publicSiteUrl}/og/ilkoku-social-selected-2026.webp`;
 
 type PublicPageMetadataInput = {
   title: string;
@@ -29,6 +31,7 @@ export function createPublicPageMetadata({
   const canonicalUrl = absolutePublicUrl(canonical);
   const socialImage = image ? absolutePublicUrl(image) : defaultSocialImage;
   const safeDescription = description || undefined;
+  const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);
   const languageAlternates = languages
     ? Object.fromEntries(
         Object.entries(languages).map(([locale, href]) => [locale, absolutePublicUrl(href)]),
@@ -42,7 +45,7 @@ export function createPublicPageMetadata({
       canonical: canonicalUrl,
       ...(languageAlternates ? { languages: languageAlternates } : {}),
     },
-    robots: noIndex
+    robots: effectiveNoIndex
       ? {
           index: false,
           follow: true,

@@ -199,7 +199,7 @@
 
 .public-site-header__account summary::after {
   order: 1 !important;
-  content: "> GİRİŞ YAP" !important;
+  content: "> " attr(data-account-label) !important;
   color: #f0e8ff !important;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
   font-size: .74rem !important;
@@ -227,10 +227,6 @@
   line-height: 1 !important;
   text-shadow: 0 0 10px rgba(172, 134, 255, .34) !important;
   animation: publicTerminalCursor 1.15s steps(1, end) infinite !important;
-}
-
-.public-site-header__account:has(.public-site-header__identity) summary::after {
-  content: "> HESABIM" !important;
 }
 
 .public-site-header__account summary:hover,

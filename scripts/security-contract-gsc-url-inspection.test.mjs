@@ -2,31 +2,40 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { selectDefaultInspectionUrls } from "./gsc-url-inspection.mjs";
+import { summarizeWritingGuideFamilies } from "./gsc-writing-guide-family-summary.mjs";
+import { extractSitemapLastmodByUrl, latestVerifiedContentUpdate } from "./gsc-recrawl-freshness.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/gsc-url-inspection.yml", "utf8");
 const script = fs.readFileSync("scripts/gsc-url-inspection.mjs", "utf8");
 const performanceWorkflow = fs.readFileSync(".github/workflows/gsc-book-index-performance.yml", "utf8");
 const performanceScript = fs.readFileSync("scripts/gsc-book-index-performance.mjs", "utf8");
+const sitemapSubmitWorkflow = fs.readFileSync(".github/workflows/gsc-sitemap-submit.yml", "utf8");
+const sitemapSubmitScript = fs.readFileSync("scripts/gsc-sitemap-submit.mjs", "utf8");
+const censusWorkflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
+const censusScript = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
 const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
 const docs = fs.readFileSync("docs/seo-sprint11-status.md", "utf8");
 
-test("GSC URL Inspection diagnostic is manual-or-weekly and read-only", () => {
+test("GSC URL Inspection diagnostic is self-change, manual-or-weekly and read-only", () => {
   assert.match(workflow, /workflow_dispatch:/u);
   assert.match(workflow, /schedule:/u);
   assert.match(workflow, /cron: "23 5 \* \* 2"/u);
   assert.match(workflow, /if: github\.event_name == 'workflow_dispatch'/u);
   assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
-  assert.doesNotMatch(workflow, /\n\s+push:/u);
+  assert.match(workflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:\s*\n\s+- "\.github\/workflows\/gsc-url-inspection\.yml"\s*\n\s+- "scripts\/gsc-url-inspection\.mjs"/u);
   assert.match(workflow, /RUN-GSC-URL-INSPECTION/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_ID/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_CLIENT_SECRET/u);
-  assert.match(workflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_ID/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_SECRET/u);
+  assert.match(workflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
 });
 
 test("inspection script only calls read-only Search Console diagnostics", () => {
   assert.match(script, /https:\/\/searchconsole\.googleapis\.com\/v1\/urlInspection\/index:inspect/u);
   assert.match(script, /https:\/\/www\.googleapis\.com\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps/u);
   assert.match(script, /https:\/\/oauth2\.googleapis\.com\/token/u);
+  assert.match(script, /https:\/\/oauth2\.googleapis\.com\/tokeninfo\?access_token=/u);
+  assert.match(script, /GSC OAuth granted scopes:/u);
+  assert.doesNotMatch(script, /console\.log\([^\n]*accessToken/u);
   assert.doesNotMatch(script, /indexing\.googleapis\.com/u);
   assert.match(script, /sc-domain:ilkoku\.com/u);
   assert.match(script, /MAX_URLS = 10/u);
@@ -44,69 +53,68 @@ test("inspection script only calls read-only Search Console diagnostics", () => 
   assert.match(script, /sitemap URL\(s\)/u);
   assert.match(script, /editorler-icin\/egitim\/editorluge-baslama/u);
   assert.match(script, /okurlar-icin\/okumaya-baslama/u);
-  assert.match(script, /site-haritasi/u);
-  assert.match(script, /en-cok-satanlar/u);
+  assert.match(script, /hakkimizda/u);
+  assert.match(script, /yayinevleri-icin/u);
+  assert.doesNotMatch(script, /site-haritasi/u);
+  assert.doesNotMatch(script, /en-cok-satanlar/u);
   assert.match(script, /discoveredSitemapUrls/u);
   assert.match(script, /lastDownloaded/u);
   assert.match(script, /Diagnostic only/u);
   assert.doesNotMatch(script, /requestIndexing|indexing\.googleapis\.com/u);
 });
 
-test("default inspection samples every public cohort without confusing the cohort with sitemap coverage", () => {
+test("default inspection samples the current focused index cohort", () => {
   const sitemapUrls = [
-    "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/kitap/ornek-eser",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
+    "https://ilkoku.com/yazarlar-icin/kurgu",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
     "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+    "https://ilkoku.com/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
   ];
 
   assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/kitap/ornek-eser",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
   ]);
 });
 
-test("default inspection fills an unused cohort slot from the sitemap", () => {
+test("default inspection never reintroduces retired noindex discovery families", () => {
   const sitemapUrls = [
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
     "https://ilkoku.com/",
     "https://ilkoku.com/nasil-calisir",
+    "https://ilkoku.com/hakkimizda",
     "https://ilkoku.com/yazarlar-icin",
+    "https://ilkoku.com/okurlar-icin",
+    "https://ilkoku.com/editorler-icin",
+    "https://ilkoku.com/yayinevleri-icin",
+    "https://ilkoku.com/editoryal-standartlar",
     "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
     "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
     "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
+    "https://ilkoku.com/en-cok-satanlar/dunya",
+    "https://ilkoku.com/yasal/kullanim-sartlari",
   ];
 
-  assert.deepEqual(selectDefaultInspectionUrls(sitemapUrls), [
-    "https://ilkoku.com/",
-    "https://ilkoku.com/nasil-calisir",
-    "https://ilkoku.com/yazarlar-icin",
-    "https://ilkoku.com/yazarlar-icin/kurgu/roman",
-    "https://ilkoku.com/okurlar-icin/okumaya-baslama",
-    "https://ilkoku.com/editorler-icin/egitim/editorluge-baslama",
-    "https://ilkoku.com/site-haritasi",
-    "https://ilkoku.com/en-cok-satanlar/dunya",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/yazarlar-icin/kurgu/oyku",
-  ]);
+  const selected = selectDefaultInspectionUrls(sitemapUrls);
+  assert.equal(selected.includes("https://ilkoku.com/site-haritasi"), false);
+  assert.equal(selected.includes("https://ilkoku.com/en-cok-satanlar/dunya"), false);
+  assert.equal(selected.includes("https://ilkoku.com/yasal/kullanim-sartlari"), false);
 });
 
 test("package and docs expose the official diagnostic path", () => {
@@ -117,15 +125,108 @@ test("package and docs expose the official diagnostic path", () => {
 });
 
 
+
+test("GSC full index census is read-only and bounded to the live İlkOku sitemap", () => {
+  assert.match(censusWorkflow, /workflow_dispatch:/u);
+  assert.match(censusWorkflow, /push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+paths:/u);
+  assert.match(censusWorkflow, /permissions:\s*\n\s+contents: read/u);
+  assert.match(censusWorkflow, /gsc-full-index-census\.mjs/u);
+  assert.doesNotMatch(censusWorkflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
+  assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
+  assert.match(censusWorkflow, /GSC_CENSUS_MIN_URLS: "128"/u);
+  assert.match(censusScript, /Incomplete live census:/u);
+  assert.match(censusWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
+  assert.doesNotMatch(censusWorkflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+
+  assert.match(censusScript, /const MAX_URLS = 500/u);
+  assert.match(censusScript, /const CONCURRENCY = 6/u);
+  assert.match(censusScript, /https:\/\/ilkoku\.com/u);
+  assert.match(censusScript, /https:\/\/searchconsole\.googleapis\.com\/v1\/urlInspection\/index:inspect/u);
+  assert.match(censusScript, /languageCode: "tr-TR"/u);
+  assert.match(censusScript, /Read-only census/u);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/u);
+  assert.doesNotMatch(censusScript, /method: "PUT"|method: "DELETE"/u);
+});
+
+test("GSC recrawl watch uses the verified Oct 22 informational content update without resetting the Google baseline", () => {
+  assert.match(
+    censusScript,
+    /"\/yazarlar-icin\/bilgilendirici",\s*"2026-09-30T09:21:54Z",\s*"2026-10-22T20:16:41Z"/u,
+    "last Google crawl remains the observed Sep 30 baseline; the latest approved expert note is dated Oct 22",
+  );
+  assert.doesNotMatch(
+    censusScript,
+    /"\/yazarlar-icin\/bilgilendirici",\s*"2026-09-30T09:21:54Z",\s*"2026-10-12T14:57:07Z"/u,
+    "a Google crawl before the Oct 22 expert note must not count as having seen that latest content",
+  );
+  assert.match(censusScript, /lastCrawlMs >= contentUpdatedMs/u, "post-update status must compare actual Google crawl time with latest content change");
+});
+
+test("GSC recrawl watch trusts latest real sitemap changes instead of stale hard-coded dates", () => {
+  const xml = '<urlset><url><loc>https://ilkoku.com/yazarlar-icin/kurgu/roman</loc><lastmod>2026-10-18T22:43:29Z</lastmod></url><url><loc>https://ilkoku.com/yazarlar-icin/bilgilendirici</loc><lastmod>2026-10-22T20:16:41Z</lastmod></url></urlset>';
+  const dates = extractSitemapLastmodByUrl(xml);
+  const romanUpdatedAt = latestVerifiedContentUpdate("2026-10-06T07:55:57Z", dates.get("https://ilkoku.com/yazarlar-icin/kurgu/roman"));
+  assert.equal(romanUpdatedAt, "2026-10-18T22:43:29.000Z");
+  assert.ok(Date.parse("2026-10-18T09:06:28Z") < Date.parse(romanUpdatedAt), "Google's morning crawl did not see the evening Roman update");
+  assert.equal(latestVerifiedContentUpdate("2026-10-22T20:16:41Z", dates.get("https://ilkoku.com/yazarlar-icin/bilgilendirici")), "2026-10-22T20:16:41.000Z");
+  assert.equal(latestVerifiedContentUpdate("2026-10-22T20:16:41Z", "2026-10-12T14:57:07Z"), "2026-10-22T20:16:41.000Z", "older cached sitemap cannot roll back a verified new update");
+  assert.equal(latestVerifiedContentUpdate(null, null), null);
+  assert.throws(() => extractSitemapLastmodByUrl("<urlset><url><loc>https://ilkoku.com/example</loc><lastmod>invalid</lastmod></url></urlset>"), /Invalid sitemap lastmod/u);
+  assert.match(censusScript, /extractSitemapLastmodByUrl\(xml\)/u);
+  assert.match(censusScript, /latestVerifiedContentUpdate\(contentUpdatedAt, sitemapLastmod\)/u);
+  assert.match(censusScript, /summarizeRecrawlWatch\(results, sitemapLastmodByUrl\)/u);
+  assert.match(censusScript, /newContentCrawled = reCrawledSinceBaseline && latestContentUpdatedAt !== null/u, "a crawl already in the historical baseline is not a newly observed recrawl");
+});
+
+test("full census retries only transient inspection statuses and fails closed for genuine errors", () => {
+  assert.match(censusScript, /INSPECTION_TRANSPORT_ATTEMPTS = 3/);
+  assert.match(censusScript, /RETRYABLE_INSPECTION_HTTP = new Set\(\[429, 500, 502, 503, 504\]\)/);
+  assert.match(censusScript, /httpStatus: response\.status/);
+  assert.match(censusScript, /attempt === INSPECTION_TRANSPORT_ATTEMPTS/);
+  assert.match(censusScript, /result\.error/);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/);
+});
+
+test("GSC sitemap submit is manual-only, separately authorized, and narrowly scoped", () => {
+  assert.match(sitemapSubmitWorkflow, /workflow_dispatch:/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /\n  push:\n/u);
+  assert.match(sitemapSubmitWorkflow, /- name: Require Search Console write OAuth/u);
+  assert.match(sitemapSubmitWorkflow, /::error::Missing GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /if: steps\.gsc_oauth\.outputs\.available/u);
+  assert.match(sitemapSubmitWorkflow, /if: github\.event_name == 'workflow_dispatch'/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /\n\s+schedule:/u);
+  assert.match(sitemapSubmitWorkflow, /SUBMIT-GSC-SITEMAP/u);
+  assert.match(sitemapSubmitWorkflow, /permissions:\s*\n\s+contents: read/u);
+  assert.match(sitemapSubmitWorkflow, /secrets\.GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.doesNotMatch(sitemapSubmitWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+
+  assert.match(sitemapSubmitScript, /const SITEMAP_URL = "https:\/\/ilkoku\.com\/sitemap\.xml"/u);
+  assert.match(sitemapSubmitScript, /const WRITE_SCOPE = "https:\/\/www\.googleapis\.com\/auth\/webmasters"/u);
+  assert.match(sitemapSubmitScript, /GSC_OAUTH_WRITE_REFRESH_TOKEN/u);
+  assert.match(sitemapSubmitScript, /method: "PUT"/u);
+  assert.match(sitemapSubmitScript, /\/webmasters\/v3\/sites\/\$\{encodeURIComponent\(SITE_URL\)\}\/sitemaps\/\$\{encodeURIComponent\(SITEMAP_URL\)\}/u);
+  assert.match(sitemapSubmitScript, /DISCOVERY_TARGETS/u);
+  assert.match(sitemapSubmitScript, /nasil-calisir/u);
+  assert.match(sitemapSubmitScript, /hakkimizda/u);
+  assert.match(sitemapSubmitScript, /yazarlar-icin\/kurgu\/roman/u);
+  assert.match(sitemapSubmitScript, /okurlar-icin\/okumaya-baslama/u);
+  assert.match(sitemapSubmitScript, /editorler-icin\/egitim\/editorluge-baslama/u);
+  assert.doesNotMatch(sitemapSubmitScript, /en-cok-satanlar\/dunya/u);
+  assert.doesNotMatch(sitemapSubmitScript, /yasal\/kullanim-sartlari/u);
+  assert.match(sitemapSubmitScript, /grantedScopes\.includes\(WRITE_SCOPE\)/u);
+  assert.doesNotMatch(sitemapSubmitScript, /indexing\.googleapis\.com|requestIndexing/u);
+  assert.doesNotMatch(sitemapSubmitScript, /console\.log\([^\n]*accessToken/u);
+});
+
 test("Book Index Search performance report is weekly and read-only", () => {
   assert.match(performanceWorkflow, /schedule:/u);
   assert.match(performanceWorkflow, /cron: "45 5 \* \* 2"/u);
   assert.match(performanceWorkflow, /workflow_dispatch:/u);
   assert.match(performanceWorkflow, /permissions:\s*\n\s+contents: read/u);
   assert.match(performanceWorkflow, /gsc-book-index-performance\.mjs/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_CLIENT_ID/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_CLIENT_SECRET/u);
-  assert.match(performanceWorkflow, /secrets\.GSC_OAUTH_REFRESH_TOKEN/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_ID/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_CLIENT_SECRET/u);
+  assert.match(performanceWorkflow, /secrets\.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN/u);
 
   assert.match(
     performanceScript,
@@ -144,4 +245,120 @@ test("Book Index Search performance report is weekly and read-only", () => {
   assert.match(performanceScript, /ctr/u);
   assert.match(performanceScript, /position/u);
   assert.doesNotMatch(performanceScript, /indexing\.googleapis\.com|requestIndexing/u);
+});
+
+test("Madde 14 read-only diagnostic inspects exactly the 11 priority URLs in two safe batches", () => {
+  const cohort = fs.readFileSync(".github/workflows/gsc-m14-discovery-cohort.yml", "utf8");
+  const expected = [
+      "yayinevleri-icin",
+      "okurlar-icin",
+      "hakkimizda",
+      "editoryal-standartlar",
+      "yazarlar-icin/cizgi-anlati",
+      "yazarlar-icin/kurgu/oyku",
+      "yazarlar-icin/kurgu/fantastik",
+      "yazarlar-icin/kurgu/bilim-kurgu",
+      "yazarlar-icin/kurgu/distopya",
+      "yazarlar-icin/edebiyat/siir",
+      "editorler-icin/egitim/editorluge-baslama"
+  ];
+  const urlLines = [...cohort.matchAll(/^\s+https:\/\/ilkoku\.com\/([a-z0-9/-]+)\s*$/gmu)].map((match) => match[1]);
+
+  assert.deepEqual(urlLines, expected, "all 11 discovery paths must be inspected once, in agreed order");
+  assert.equal((cohort.match(/GSC_INSPECTION_URLS: \|/gu) || []).length, 2, "two URL groups preserve the ten-URL limit");
+  assert.equal((cohort.match(/run: node scripts\/gsc-url-inspection\.mjs/gu) || []).length, 2, "reuse existing read-only API client twice");
+  assert.match(cohort, /workflow_dispatch:/u);
+  assert.match(cohort, /RUN-GSC-M14/u);
+  assert.match(cohort, /permissions:\s*\n\s+contents: read/u);
+  assert.doesNotMatch(cohort, /indexing\.googleapis\.com|SUBMIT-GSC-SITEMAP/u, "never submit pages or request indexing from this diagnostic");
+});
+
+test("Madde 14 discovery workflow is daily, read-only, and retains manual confirmation", () => {
+  const cohort = fs.readFileSync(".github/workflows/gsc-m14-discovery-cohort.yml", "utf8");
+  assert.match(cohort, /schedule:\s*\n\s+- cron: "47 5 \* \* \*"/u, "once daily at approximately 08:47 Türkiye time");
+  assert.match(cohort, /workflow_dispatch:/u, "manual fallback remains available");
+  assert.match(cohort, /if: github\.event_name == 'workflow_dispatch'/u, "manual run requires confirmation");
+  assert.match(cohort, /RUN-GSC-M14/u);
+  assert.match(cohort, /permissions:\s*\n\s+contents: read/u, "token cannot write to repository");
+  assert.equal((cohort.match(/run: node scripts\/gsc-url-inspection\.mjs/gu) || []).length, 2, "11 URLs divided into ten and one");
+  assert.doesNotMatch(cohort, /indexing\.googleapis\.com|GSC_OAUTH_WRITE_REFRESH_TOKEN|method: "PUT"/u, "no indexing request or write OAuth");
+});
+
+test("Madde 14 full census never uses an obsolete partial-cohort fallback", () => {
+  const full = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
+  const workflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
+  assert.doesNotMatch(full, /loadSourcePolicyFallbackUrls|ALLOW_SOURCE_FALLBACK|source-policy-fallback-25/u);
+  assert.doesNotMatch(workflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
+  assert.match(full, /Sitemap fetch failed: HTTP/u);
+  assert.match(workflow, /GSC_CENSUS_MIN_URLS: "128"/u);
+  assert.match(full, /cohortSource: censusCohortSource/u);
+  assert.doesNotMatch(full, /GSC_OAUTH_WRITE_REFRESH_TOKEN|indexing\.googleapis\.com|method: "PUT"/u);
+});
+
+test("Madde 14 full census repeats daily without write access or changing indexed inventory", () => {
+  const workflow = fs.readFileSync(".github/workflows/gsc-full-index-census.yml", "utf8");
+  const script = fs.readFileSync("scripts/gsc-full-index-census.mjs", "utf8");
+  assert.match(workflow, /schedule:\s*\n\s+- cron: "17 7 \* \* \*"/u);
+  assert.match(workflow, /workflow_dispatch:/u, "manual fallback remains available");
+  assert.match(workflow, /permissions:\s*\n\s+contents: read/u);
+  assert.doesNotMatch(workflow, /^\s+GSC_CENSUS_ALLOW_SOURCE_FALLBACK:/mu);
+  assert.match(script, /cohortSource: censusCohortSource/u);
+  assert.doesNotMatch(workflow, /GSC_OAUTH_WRITE_REFRESH_TOKEN|SUBMIT-GSC-SITEMAP/u);
+  assert.doesNotMatch(script, /indexing\.googleapis\.com|method: "PUT"/u);
+});
+
+test("Transient Cloudflare failures receive only a bounded origin retry and remain visible", () => {
+  const smokeWorkflow = fs.readFileSync(".github/workflows/seo-indexability-smoke.yml", "utf8");
+  assert.match(censusScript, /RETRYABLE_SITEMAP_STATUSES = new Set\(\[520, 522, 524\]\)/u);
+  assert.match(censusScript, /SITEMAP_FETCH_ATTEMPTS = 2/u);
+  assert.match(censusScript, /cf-ray/u);
+  assert.match(censusScript, /Sitemap fetch failed: HTTP/u);
+  assert.doesNotMatch(censusScript, /loadSourcePolicyFallbackUrls|source-policy-fallback-25/u);
+  assert.match(smokeWorkflow, /fetch_with_origin_retry\(\)/u);
+  assert.match(smokeWorkflow, /520\|522\|524\|000/u);
+  assert.match(smokeWorkflow, /TRANSIENT ORIGIN FAILURE:/u);
+  assert.match(smokeWorkflow, /circuit_break "\$code" "\$url"/u);
+});
+
+test("Full GSC census retries isolated transport timeouts and keeps an honest partial artifact", () => {
+  assert.match(censusScript, /const INSPECTION_TRANSPORT_ATTEMPTS = 3/u);
+  assert.match(censusScript, /async function inspectUrlOnce\(accessToken, inspectionUrl\)/u);
+  assert.match(censusScript, /const result = await inspectUrlOnce\(accessToken, inspectionUrl\)/u);
+  assert.match(censusScript, /Inspection transport failed after/u);
+  assert.match(censusScript, /results\[index\] = result/u);
+  assert.match(censusScript, /fs\.writeFileSync\(OUTPUT_PATH, JSON\.stringify\(payload, null, 2\)\)/u);
+  assert.match(censusScript, /if \(payload\.summary\.errors > 0\)/u);
+  assert.match(censusScript, /process\.exitCode = 1/u);
+  assert.match(censusWorkflow, /- name: Upload census artifact\s+if: always\(\)/u);
+  assert.match(censusWorkflow, /if-no-files-found: warn/u);
+  assert.doesNotMatch(censusScript, /indexing\.googleapis\.com|requestIndexing/u);
+});
+
+
+test("GSC family report classifies the actual public guide URL cohort without changing indexing", () => {
+  const records = [
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/roman", verdict: "NEUTRAL", coverageState: "Tarandı - şu anda dizine eklenmiş değil" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/polisiye", verdict: "NEUTRAL", coverageState: "URL Google tarafından bilinmiyor" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu/utopya", verdict: "NEUTRAL", coverageState: "URL is unknown to Google" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/akademik/arastirma", verdict: "NEUTRAL", coverageState: "Keşfedildi - şu anda dizine eklenmiş değil" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/edebiyat/siir", verdict: "PASS", coverageState: "Gönderildi ve dizine eklendi" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik/fabl", error: "transport timeout" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/cizgi-anlati/manga", verdict: "NEUTRAL", coverageState: "Unexpected future GSC state" },
+    { inspectionUrl: "https://ilkoku.com/yazarlar-icin/kurgu", verdict: "PASS" },
+    { inspectionUrl: "https://ilkoku.com/en-cok-satanlar/kurgu/roman", verdict: "PASS" },
+    { inspectionUrl: "https://other.example/yazarlar-icin/kurgu/roman", verdict: "PASS" },
+  ];
+  const result = summarizeWritingGuideFamilies(records);
+  assert.equal(result.length, 7);
+  assert.deepEqual(result.find((f) => f.slug === "kurgu"), {
+    slug: "kurgu", label: "Kurgu", total: 3, indexed: 0,
+    crawledNotIndexed: 1, discovered: 0, unknown: 2, errors: 0, other: 0,
+  });
+  assert.equal(result.find((f) => f.slug === "akademik").discovered, 1);
+  assert.equal(result.find((f) => f.slug === "edebiyat").indexed, 1);
+  assert.equal(result.find((f) => f.slug === "cocuk-ve-genclik").errors, 1);
+  assert.equal(result.find((f) => f.slug === "cizgi-anlati").other, 1);
+  assert.equal(result.reduce((n, f) => n + f.total, 0), 7);
+  assert.match(censusScript, /writingGuideFamilies: summarizeWritingGuideFamilies\(results\)/u);
+  assert.match(censusScript, /### Yazarlık rehberi ailelerinin Google durumu/u);
 });

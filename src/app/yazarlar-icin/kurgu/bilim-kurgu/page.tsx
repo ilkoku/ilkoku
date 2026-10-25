@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
+import { WritingGuideStructuredData } from "@/components/content/WritingGuideStructuredData";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
 import { getEducationGuideRecord } from "@/lib/cms-education";
 
@@ -303,12 +305,11 @@ function buildBilimKurguBlocks(
   ];
 }
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Bilim Kurgu Nasıl Yazılır? | İlkOku",
   description: "Spekülatif fikirden bilimsel kurala, araştırmadan nedensellik zincirine ve karakter bedeline kadar adım adım bilim kurgu yazarlık rehberi.",
-  alternates: { canonical: "https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu" },
-  robots: { index: true, follow: true },
-};
+  canonical: "/yazarlar-icin/kurgu/bilim-kurgu",
+});
 
 export default async function BilimKurguYazarlikRehberiPage() {
   let guide: Awaited<ReturnType<typeof getEducationGuideRecord>> = null;
@@ -346,16 +347,24 @@ export default async function BilimKurguYazarlikRehberiPage() {
   const blocks = buildBilimKurguBlocks(visuals, alts, title, summary);
 
   return (
-    <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="bilim-kurgu">
+    <>
+      <WritingGuideStructuredData
+        canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/bilim-kurgu"
+        title={title}
+        description={summary}
+        categoryName="Kurgu"
+        categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+      />
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="bilim-kurgu">
       <div className="bilim-kurgu-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
-    </WritingGuideShell>
+      </WritingGuideShell>
+    </>
   );
 }

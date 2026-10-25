@@ -1,0 +1,463 @@
+import fs from "node:fs";
+import { extractSitemapLastmodByUrl, latestVerifiedContentUpdate } from "./gsc-recrawl-freshness.mjs";
+import { summarizeWritingGuideFamilies } from "./gsc-writing-guide-family-summary.mjs";
+
+const SITE_URL = process.env.GSC_SITE_URL || "sc-domain:ilkoku.com";
+const CLIENT_ID = process.env.GSC_OAUTH_CLIENT_ID;
+const CLIENT_SECRET = process.env.GSC_OAUTH_CLIENT_SECRET;
+const REFRESH_TOKEN = process.env.GSC_OAUTH_REFRESH_TOKEN;
+
+const BASE_URL = "https://ilkoku.com";
+const SITEMAP_URL = `${BASE_URL}/sitemap.xml`;
+const OUTPUT_PATH = "/tmp/ilkoku-gsc-full-index-census.json";
+const MAX_URLS = 500;
+const MIN_EXPECTED_SITEMAP_URLS = Number.parseInt(process.env.GSC_CENSUS_MIN_URLS || "0", 10);
+const CONCURRENCY = 6;
+const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
+const censusCohortSource = "live-sitemap";
+
+// Baseline crawl observations from Google URL Inspection on 18 Oct 2026.
+// [path, last Google crawl observed, latest independently verified content update].
+// The Oct 22 informational-hub update is the approved expert-disclaimer change in PR #1867.
+// A null update means no independently verified update timestamp.
+// Read-only reporting. Does not change indexing rules or request recrawling.
+const TRACKED_NOT_INDEXED_BASELINE = [
+  [
+    "/yazarlar-icin/edebiyat",
+    "2026-09-30T09:19:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/bilgilendirici",
+    "2026-09-30T09:21:54Z",
+    "2026-10-22T20:16:41Z"
+  ],
+  [
+    "/yazarlar-icin/senaryo-ve-sahne",
+    "2026-09-30T09:19:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/akademik",
+    "2026-09-30T09:21:54Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/kurgu",
+    "2026-09-30T09:17:54Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/cocuk-ve-genclik",
+    "2026-09-30T09:23:55Z",
+    "2026-10-12T14:57:07Z"
+  ],
+  [
+    "/yazarlar-icin/kurgu/roman",
+    "2026-09-25T08:41:37Z",
+    "2026-10-06T07:55:57Z"
+  ],
+  [
+    "/okurlar-icin/okumaya-baslama",
+    "2026-09-30T09:11:53Z",
+    "2026-10-06T08:04:59Z"
+  ],
+  [
+    "/editorler-icin/egitim/metin-degerlendirme",
+    "2026-09-27T22:42:08Z",
+    "2026-10-12T15:16:36Z"
+  ],
+  [
+    "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+    "2026-10-04T14:15:08Z",
+    "2026-10-12T15:16:36Z"
+  ],
+  [
+    "/site-haritasi",
+    "2026-09-30T09:07:54Z",
+    "2026-10-14T12:56:16Z"
+  ],
+  [
+    "/editorler-icin/egitim/yayincilik-ve-profesyonel-editorluk",
+    "2026-09-25T01:19:43Z",
+    null
+  ],
+  [
+    "/nasil-calisir",
+    "2026-10-08T10:18:59Z",
+    "2026-10-12T13:20:00Z"
+  ],
+  [
+    "/yazarlar-icin",
+    "2026-09-30T09:09:53Z",
+    "2026-10-12T18:15:50Z"
+  ],
+  [
+    "/editorler-icin",
+    "2026-09-30T09:13:53Z",
+    null
+  ]
+];
+
+function requireSecret(name, value) {
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+}
+
+function validateUrl(value) {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.hostname !== "ilkoku.com") {
+    throw new Error(`Unexpected sitemap URL: ${value}`);
+  }
+  return url.toString();
+}
+
+const RETRYABLE_SITEMAP_STATUSES = new Set([520, 522, 524]);
+const SITEMAP_FETCH_ATTEMPTS = 2;
+
+async function fetchSitemapWithRetry() {
+  for (let attempt = 1; attempt <= SITEMAP_FETCH_ATTEMPTS; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(SITEMAP_URL, {
+        headers: {
+          accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
+          "user-agent": "IlkOku-GSC-Census/1.0",
+        },
+        signal: AbortSignal.timeout(20_000),
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(`Sitemap transport error attempt ${attempt}/${SITEMAP_FETCH_ATTEMPTS}: ${reason}`);
+      if (attempt === SITEMAP_FETCH_ATTEMPTS) {
+        throw new Error(`Sitemap fetch failed after ${attempt} attempt(s): ${reason}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 6_000));
+      continue;
+    }
+
+    if (response.ok) return response;
+    const rayId = response.headers.get("cf-ray") || "unavailable";
+    console.warn(`Sitemap HTTP ${response.status}, attempt ${attempt}/${SITEMAP_FETCH_ATTEMPTS}, cf-ray=${rayId}`);
+    if (!RETRYABLE_SITEMAP_STATUSES.has(response.status) || attempt === SITEMAP_FETCH_ATTEMPTS) {
+      throw new Error(`Sitemap fetch failed: HTTP ${response.status}, cf-ray=${rayId}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 6_000));
+  }
+  throw new Error("Sitemap fetch attempts exhausted");
+}
+
+async function loadSitemapUrls() {
+  const response = await fetchSitemapWithRetry();
+
+  const xml = await response.text();
+  const bytes = Buffer.byteLength(xml, "utf8");
+  if (bytes > SITEMAP_MAX_BYTES) {
+    throw new Error(`Sitemap exceeds 50 MB: ${bytes} bytes`);
+  }
+
+  const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/giu)]
+    .map((match) => validateUrl(match[1].trim()));
+
+  if (locations.length === 0) throw new Error("Sitemap contains no URLs");
+  if (locations.length > MAX_URLS) {
+    throw new Error(`Refusing census larger than ${MAX_URLS} URLs: ${locations.length}`);
+  }
+
+  const unique = [...new Set(locations)];
+  if (unique.length !== locations.length) {
+    throw new Error(`Sitemap contains ${locations.length - unique.length} duplicate URL(s)`);
+  }
+
+  if (!Number.isInteger(MIN_EXPECTED_SITEMAP_URLS) || MIN_EXPECTED_SITEMAP_URLS < 0) {
+    throw new Error("Invalid GSC_CENSUS_MIN_URLS value");
+  }
+  if (unique.length < MIN_EXPECTED_SITEMAP_URLS) {
+    throw new Error(`Incomplete live census: expected at least ${MIN_EXPECTED_SITEMAP_URLS} URLs, found ${unique.length}`);
+  }
+
+  console.log(`Census sitemap: ${unique.length} URL(s), ${bytes} byte(s)`);
+  return { urls: unique, sitemapLastmodByUrl: extractSitemapLastmodByUrl(xml) };
+}
+
+async function getAccessToken() {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      refresh_token: REFRESH_TOKEN,
+      grant_type: "refresh_token",
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  const body = await response.json();
+  if (!response.ok || typeof body.access_token !== "string") {
+    const message = body.error_description || body.error || `HTTP ${response.status}`;
+    throw new Error(`Google OAuth token exchange failed: ${message}`);
+  }
+
+  return body.access_token;
+}
+
+async function inspectUrlOnce(accessToken, inspectionUrl) {
+  const response = await fetch(
+    "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        inspectionUrl,
+        siteUrl: SITE_URL,
+        languageCode: "tr-TR",
+      }),
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+
+  const body = await response.json();
+  if (!response.ok) {
+    const message = body?.error?.message || `HTTP ${response.status}`;
+    return {
+      inspectionUrl,
+      error: message,
+      httpStatus: response.status,
+    };
+  }
+
+  const result = body?.inspectionResult?.indexStatusResult;
+  if (!result || typeof result !== "object") {
+    return {
+      inspectionUrl,
+      error: "Missing indexStatusResult",
+    };
+  }
+
+  return {
+    inspectionUrl,
+    verdict: result.verdict ?? null,
+    coverageState: result.coverageState ?? null,
+    robotsTxtState: result.robotsTxtState ?? null,
+    indexingState: result.indexingState ?? null,
+    pageFetchState: result.pageFetchState ?? null,
+    lastCrawlTime: result.lastCrawlTime ?? null,
+    userCanonical: result.userCanonical ?? null,
+    googleCanonical: result.googleCanonical ?? null,
+    crawledAs: result.crawledAs ?? null,
+    sitemap: Array.isArray(result.sitemap) ? result.sitemap : [],
+    referringUrls: Array.isArray(result.referringUrls) ? result.referringUrls : [],
+  };
+}
+
+// Google URL Inspection may occasionally time out for one page. The complete
+// census must still preserve all other URL results, rather than throwing away
+// 128 successful inspections because the 129th request failed.
+const INSPECTION_TRANSPORT_ATTEMPTS = 3;
+const RETRYABLE_INSPECTION_HTTP = new Set([429, 500, 502, 503, 504]);
+
+async function inspectUrl(accessToken, inspectionUrl) {
+  for (let attempt = 1; attempt <= INSPECTION_TRANSPORT_ATTEMPTS; attempt += 1) {
+    try {
+      const result = await inspectUrlOnce(accessToken, inspectionUrl);
+      if (!result.error || !RETRYABLE_INSPECTION_HTTP.has(result.httpStatus) ||
+          attempt === INSPECTION_TRANSPORT_ATTEMPTS) return result;
+      console.warn(`GSC inspection transient HTTP ${result.httpStatus} for ${inspectionUrl}; attempt ${attempt}/${INSPECTION_TRANSPORT_ATTEMPTS}`);
+      await new Promise((resolve) => setTimeout(resolve, attempt * 3_000));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(`GSC inspection transport error for ${inspectionUrl}, attempt ${attempt}/${INSPECTION_TRANSPORT_ATTEMPTS}: ${reason}`);
+      if (attempt === INSPECTION_TRANSPORT_ATTEMPTS) {
+        return { inspectionUrl, error: `Inspection transport failed after ${attempt} attempt(s): ${reason}` };
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+    }
+  }
+  return { inspectionUrl, error: "Inspection transport attempts exhausted" };
+}
+
+async function inspectAll(accessToken, urls) {
+  const results = new Array(urls.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= urls.length) return;
+
+      const result = await inspectUrl(accessToken, urls[index]);
+      results[index] = result;
+
+      console.log(JSON.stringify({
+        censusIndex: index + 1,
+        censusTotal: urls.length,
+        ...result,
+      }));
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, urls.length) }, () => worker()),
+  );
+
+  return results;
+}
+
+function countBy(results, key) {
+  const counts = new Map();
+  for (const result of results) {
+    const value = result.error ? "ERROR" : (result[key] ?? "UNSPECIFIED");
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return Object.fromEntries([...counts.entries()].sort((a, b) => b[1] - a[1]));
+}
+
+function newestCrawl(results) {
+  const dated = results
+    .filter((item) => item.lastCrawlTime)
+    .map((item) => new Date(item.lastCrawlTime))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime());
+  return dated[0]?.toISOString() ?? null;
+}
+
+function summarizeRecrawlWatch(results, sitemapLastmodByUrl) {
+  const byUrl = new Map(results.map((result) => [result.inspectionUrl, result]));
+  const pages = TRACKED_NOT_INDEXED_BASELINE.map(([path, baselineCrawl, contentUpdatedAt]) => {
+    const result = byUrl.get(`${BASE_URL}${path}`);
+    const lastCrawlTime = result?.lastCrawlTime ?? null;
+    const lastCrawlMs = lastCrawlTime ? Date.parse(lastCrawlTime) : NaN;
+    const baselineCrawlMs = Date.parse(baselineCrawl);
+    const sitemapLastmod = sitemapLastmodByUrl.get(`${BASE_URL}${path}`) ?? null;
+    const latestContentUpdatedAt = latestVerifiedContentUpdate(contentUpdatedAt, sitemapLastmod);
+    const contentUpdatedMs = latestContentUpdatedAt ? Date.parse(latestContentUpdatedAt) : NaN;
+    const reCrawledSinceBaseline = Number.isFinite(lastCrawlMs) && lastCrawlMs > baselineCrawlMs;
+    const newContentCrawled = reCrawledSinceBaseline && latestContentUpdatedAt !== null &&
+      Number.isFinite(lastCrawlMs) && lastCrawlMs >= contentUpdatedMs;
+    let state;
+    if (!result) state = "MISSING_FROM_LIVE_SITEMAP";
+    else if (result.error) state = "INSPECTION_ERROR";
+    else if (result.verdict === "PASS") state = "INDEXED";
+    else if (newContentCrawled) state = "POST_UPDATE_CRAWLED_NOT_INDEXED";
+    else if (reCrawledSinceBaseline) state = "RECRAWLED_NOT_INDEXED";
+    else state = "AWAITING_NEW_CRAWL";
+    return {
+      path, baselineCrawl, contentUpdatedAt: latestContentUpdatedAt, sitemapLastmod, lastCrawlTime,
+      coverageState: result?.coverageState ?? null,
+      verdict: result?.verdict ?? null,
+      reCrawledSinceBaseline, newContentCrawled, state,
+    };
+  });
+  return {
+    baselineDate: "2026-10-18",
+    trackedCount: pages.length,
+    indexed: pages.filter((page) => page.state === "INDEXED").length,
+    reCrawledSinceBaseline: pages.filter((page) => page.reCrawledSinceBaseline).length,
+    confirmedPostUpdateCrawl: pages.filter((page) => page.newContentCrawled).length,
+    awaitingNewCrawl: pages.filter((page) => page.state === "AWAITING_NEW_CRAWL").length,
+    missingFromSitemap: pages.filter((page) => page.state === "MISSING_FROM_LIVE_SITEMAP").length,
+    inspectionErrors: pages.filter((page) => page.state === "INSPECTION_ERROR").length,
+    pages,
+  };
+}
+function writeStepSummary(payload) {
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!summaryPath) return;
+
+  const coverageRows = Object.entries(payload.summary.coverageState)
+    .map(([state, count]) => `| ${state.replaceAll("|", "%7C")} | ${count} |`);
+
+  const watch = payload.summary.recrawlWatch;
+  const watchRows = watch.pages.map((page) =>
+    `| \`${page.path}\` | ${page.baselineCrawl.slice(0, 10)} | ${page.contentUpdatedAt?.slice(0, 10) ?? "—"} | ${page.lastCrawlTime?.slice(0, 10) ?? "—"} | ${page.state} |`,
+  );
+  const familyRows = payload.summary.writingGuideFamilies.map((family) =>
+    `| ${family.label} | ${family.total} | ${family.indexed} | ${family.crawledNotIndexed} | ${family.discovered} | ${family.unknown} | ${family.errors + family.other} |`,
+  );
+
+  const lines = [
+    "## GSC full index census",
+    "",
+    `Cohort source: **${payload.summary.cohortSource}**`,
+    `URLs inspected: **${payload.summary.totalUrls}**`,
+    `Errors: **${payload.summary.errors}**`,
+    `Newest Google crawl in census: **${payload.summary.newestCrawl ?? "—"}**`,
+    "",
+    "### Coverage states",
+    "",
+    "| Coverage state | Count |",
+    "| --- | ---: |",
+    ...coverageRows,
+    "",
+    "### Yazarlık rehberi ailelerinin Google durumu",
+    "",
+    "| Aile | URL | İndeksli | Tarandı/eklenmedi | Keşfedildi | Google bilmiyor | Diğer/hata |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ...familyRows,
+    "",
+    "### 18 Ekim bazına göre 15 kritik URL · yeniden tarama takibi",
+    "",
+    `İndeksli: **${watch.indexed}** · Baz tarihten sonra taranan: **${watch.reCrawledSinceBaseline}** · Güncellemeden sonra taranan: **${watch.confirmedPostUpdateCrawl}** · Yeni tarama bekleyen: **${watch.awaitingNewCrawl}**`,
+    "",
+    "| Sayfa | Eski Google taraması | İçerik güncellemesi | Güncel Google taraması | Sonuç |",
+    "| --- | --- | --- | --- | --- |",
+    ...watchRows,
+    "",
+    "> Son kayıtlı Google taramasına göre karşılaştırmadır. Google indeksleme garantisi veya tarama isteği değildir.",
+    "",    "> Read-only census using Google's URL Inspection API. No indexing request or Search Console mutation is performed.",
+    "",
+  ];
+
+  fs.appendFileSync(summaryPath, lines.join("\n"));
+}
+
+async function main() {
+  requireSecret("GSC_OAUTH_CLIENT_ID", CLIENT_ID);
+  requireSecret("GSC_OAUTH_CLIENT_SECRET", CLIENT_SECRET);
+  requireSecret("GSC_OAUTH_REFRESH_TOKEN", REFRESH_TOKEN);
+
+  const { urls, sitemapLastmodByUrl } = await loadSitemapUrls();
+  const accessToken = await getAccessToken();
+  const results = await inspectAll(accessToken, urls);
+
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    siteUrl: SITE_URL,
+    sitemapUrl: SITEMAP_URL,
+    summary: {
+      totalUrls: results.length,
+      cohortSource: censusCohortSource,
+      errors: results.filter((item) => item.error).length,
+      coverageState: countBy(results, "coverageState"),
+      verdict: countBy(results, "verdict"),
+      robotsTxtState: countBy(results, "robotsTxtState"),
+      pageFetchState: countBy(results, "pageFetchState"),
+      indexingState: countBy(results, "indexingState"),
+      newestCrawl: newestCrawl(results),
+      writingGuideFamilies: summarizeWritingGuideFamilies(results),
+      recrawlWatch: summarizeRecrawlWatch(results, sitemapLastmodByUrl),
+    },
+    results,
+  };
+
+  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(payload, null, 2));
+  writeStepSummary(payload);
+
+  console.log("GSC census summary:");
+  console.log(JSON.stringify(payload.summary));
+  if (payload.summary.errors > 0) {
+    // Artifact is written before failing the workflow: never call this a
+    // complete census when one or more URL inspections could not be verified.
+    console.error(`GSC census incomplete: ${payload.summary.errors} URL inspection error(s). Partial report preserved.`);
+    process.exitCode = 1;
+  }
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+});

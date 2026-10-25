@@ -4,6 +4,7 @@ import { PublicAnnouncementBanner } from "@/components/content/PublicAnnouncemen
 import { PublicCmsHydrator } from "@/components/content/PublicCmsHydrator";
 import { PublicNavigationHistory } from "@/components/layout/PublicNavigationHistory";
 import { SiteAnalyticsLoader } from "@/components/privacy/SiteAnalyticsLoader";
+import { SiteInteractionAnalytics } from "@/components/privacy/SiteInteractionAnalytics";
 import { SiteConsentBanner } from "@/components/privacy/SiteConsentBanner";
 import {
   publicBrandDescription,
@@ -14,12 +15,6 @@ import {
 } from "@/lib/public-brand";
 import { siteContact, siteSocialUrls } from "@/lib/site-contact";
 import "./globals.css";
-import "./landing-theme.css";
-import "./landing-role-icons.css";
-import "./landing-footer-pro.css";
-import "./landing-footer-tight.css";
-import "./landing-header-pro.css";
-import "./landing-account-bubble.css";
 import "./site-contact-links.css";
 import "./public-discovery-paused.css";
 
@@ -85,6 +80,7 @@ const organizationSchema = {
   "@id": `${baseUrl}/#organization`,
   name: publicBrandName,
   alternateName: "ilkoku.com",
+  description: "İlkOku.com, dijital yazar platformudur.",
   url: baseUrl,
   email: siteContact.generalEmail,
   sameAs: officialEntityUrls,
@@ -158,6 +154,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <PublicCmsHydrator />
         <SiteAnalyticsLoader />
+        <SiteInteractionAnalytics />
         <SiteConsentBanner />
       </body>
     </html>

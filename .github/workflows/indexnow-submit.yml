@@ -64,8 +64,8 @@ jobs:
           fi
 
           if [[ "$EVENT_NAME" == "schedule" ]]; then
-            echo "__BOOK_INDEX__" > /tmp/indexnow-changed-files.txt
-            echo "Scheduled run: refresh currently published Book Index URLs only."
+            echo "__RECENT_PUBLIC__" > /tmp/indexnow-changed-files.txt
+            echo "Scheduled run: refresh recently changed sitemap URLs and published Book Index URLs."
             exit 0
           fi
 
@@ -95,12 +95,12 @@ jobs:
             sitemap_ready=1
 
             for required in \
-              'https://ilkoku.com/site-haritasi' \
               'https://ilkoku.com/yazarlar-icin/kurgu/roman' \
               'https://ilkoku.com/okurlar-icin/okumaya-baslama' \
               'https://ilkoku.com/editorler-icin/egitim/editorluge-baslama'; do
               if [[ "$sitemap_body" != *"<loc>${required}</loc>"* ]]; then
                 sitemap_ready=0
+                echo "Sitemap cohort not ready yet: missing ${required}"
               fi
             done
 
@@ -127,7 +127,7 @@ jobs:
           URL_COUNT="$(node -e 'const fs=require("node:fs"); const payload=JSON.parse(fs.readFileSync("/tmp/indexnow.json","utf8")); process.stdout.write(String(payload.urlList.length));')"
 
           if [[ "$URL_COUNT" == "0" ]]; then
-            echo "PASS: This push did not affect a public URL currently present in the production sitemap."
+            echo "SKIP: No eligible public URLs for this run; no IndexNow POST was sent."
             exit 0
           fi
 

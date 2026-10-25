@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
 type Row = { valueJson: string };
 type Faq = {
@@ -203,7 +202,7 @@ export default async function HelpPage() {
         </div>
         <div className="help-role-grid">
           {rolePaths.map((item) => (
-            <Link className="help-role-card" href={item.href} key={item.href} rel={shouldNofollowSearchExcludedHref(item.href) ? "nofollow" : undefined}>
+            <Link className="help-role-card" href={item.href} key={item.href}>
               <span>{item.eyebrow}</span>
               <h3>{item.title}</h3>
               <p>{item.description}</p>

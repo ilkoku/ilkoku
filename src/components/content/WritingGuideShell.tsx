@@ -1,9 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+import { PriorityGuideIntentPanel } from "@/components/content/PriorityGuideIntentPanel";
+
 import LiveHomepageFooter from "@/features/homepage/live-footer";
-import { getGenresByCategory, type GenreCategory } from "@/lib/genres";
+import { getGenreBySlug, getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
+import { getRelatedWritingGuideSlugs } from "@/lib/writing-guide-related-links";
 
 const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   roman: "/yazarlar-icin/kurgu/roman",
@@ -93,17 +97,66 @@ const LIVE_WRITING_GUIDE_HREFS: Record<string, string> = {
   karikatur: "/yazarlar-icin/cizgi-anlati/karikatur",
 };
 
+// Editorially reviewed cross-category paths from Power-SEO's completed
+// 129-page link graph. Unlike generic similarity scores, these pairs teach
+// closely related writing skills. All target URLs were checked live (HTTP
+// content, self-canonical and index, follow) before enabling the links.
+const CONTEXTUAL_GUIDE_BRIDGES: Readonly<Record<string, { href: string; label: string }>> = {
+  "akademik-inceleme": {
+    href: "/yazarlar-icin/edebiyat/inceleme",
+    label: "Edebî inceleme yazarlığı",
+  },
+  "cocuk-romani": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman yazarlığı temelleri",
+  },
+  "genc-yetiskin": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman yazarlığı temelleri",
+  },
+  "grafik-roman": {
+    href: "/yazarlar-icin/kurgu/roman",
+    label: "Roman kurgusu ve olay örgüsü",
+  },
+  "roman": {
+    href: "/yazarlar-icin/cizgi-anlati/grafik-roman",
+    label: "Grafik roman yazarlığı",
+  },
+  "tarihi-roman": {
+    href: "/yazarlar-icin/bilgilendirici/tarih",
+    label: "Tarih araştırması ve yazımı",
+  },
+  "alternatif-tarih": {
+    href: "/yazarlar-icin/bilgilendirici/tarih",
+    label: "Tarih araştırması ve yazımı",
+  },
+};
+
 const ORIGINAL_FOOTER_GENRE_CATEGORIES: ReadonlySet<GenreCategory> = new Set(["Kurgu", "Edebiyat", "Senaryo ve Sahne", "Akademik", "Bilgilendirici", "Çocuk ve Gençlik", "Çizgi Anlatı"]);
 
 type WritingGuideShellProps = {
   children: ReactNode;
   activeCategory: GenreCategory;
   activeGenreSlug: string;
+  expertVerificationRequired?: boolean;
 };
 
-export function WritingGuideShell({ children, activeCategory, activeGenreSlug }: WritingGuideShellProps) {
+export function WritingGuideShell({
+  children,
+  activeCategory,
+  activeGenreSlug,
+  expertVerificationRequired = false,
+}: WritingGuideShellProps) {
+  // Category landing pages need this main landmark. Individual genre guides
+  // render their own <main> inside PublicCmsPageBlocks; avoid nested mains.
+  const ContentLandmark = activeGenreSlug ? "div" : "main";
   const genres = getGenresByCategory(activeCategory);
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
+  const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
+  const contextualBridge = activeGenreSlug ? CONTEXTUAL_GUIDE_BRIDGES[activeGenreSlug] : undefined;
+  const relatedGenres = getRelatedWritingGuideSlugs(activeGenreSlug)
+    .map((slug) => getGenreBySlug(slug))
+    .filter((genre): genre is NonNullable<typeof genre> => Boolean(genre));
 
   return (
     <>
@@ -165,7 +218,48 @@ export function WritingGuideShell({ children, activeCategory, activeGenreSlug }:
           </div>
         </aside>
 
-        <div className="min-w-0">{children}</div>
+        <ContentLandmark className="min-w-0">
+          <PriorityGuideIntentPanel slug={activeGenreSlug} />
+          {children}
+          <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
+          {activeGenreSlug && categoryHub ? (
+            <aside
+              aria-label="İlgili yazarlık eğitimleri"
+              className="mt-6 rounded-[1.8rem] border border-[#6b52c7]/10 bg-[#fffdf8] p-6 shadow-[0_12px_36px_rgba(34,23,70,0.05)] sm:p-7"
+            >
+              <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">İlgili eğitimler</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#211746]">
+                {activeCategory} yolculuğunda devam et.
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#696270]">
+                Bu rehber, <Link className="font-extrabold text-[#5b35dd] underline decoration-[#5b35dd]/25 underline-offset-4" href={categoryHub.href}>{categoryHub.title} ana eğitiminin</Link> bir parçasıdır. Konuyu komşu türlerle karşılaştırmak için ilgili rehberlere geçebilirsin.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {contextualBridge ? (
+                  <Link
+                    className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
+                    href={contextualBridge.href}
+                  >
+                    {contextualBridge.label} →
+                  </Link>
+                ) : null}
+                {relatedGenres.map((genre) => {
+                  const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
+                  if (!href) return null;
+                  return (
+                    <Link
+                      className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
+                      href={href}
+                      key={genre.slug}
+                    >
+                      {genre.label} eğitimi →
+                    </Link>
+                  );
+                })}
+              </div>
+            </aside>
+          ) : null}
+        </ContentLandmark>
       </div>
     </div>
     {showOriginalFooter ? (

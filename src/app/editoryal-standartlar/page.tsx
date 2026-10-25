@@ -6,6 +6,7 @@ import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { editorialStandardsPageContent } from "@/content/editorial-standards";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/nasil-calisir/public-trust-footer.css";
@@ -13,6 +14,7 @@ import "./editorial-standards.css";
 import "./role-illustrations.css";
 
 const baseUrl = "https://ilkoku.com";
+const previousSeoDescription = "İlkOku editör incelemelerinde kullanılan değerlendirme ölçütlerini, iki bağımsız görüşü, gerekçeli rapor standardını, gizlilik ve yaratıcı karar ilkelerini inceleyin.";
 const visual = getPublicTrustPageVisual("/editoryal-standartlar");
 const socialImage = `${baseUrl}${visual.src}`;
 
@@ -26,7 +28,10 @@ const resolvePage = cache(async () => {
       body: state.page.body,
       canonical: state.page.canonicalUrl || editorialStandardsPageContent.canonical,
       noIndex: state.page.noIndex,
-      seoDescription: state.page.seoDescription || state.page.summary || editorialStandardsPageContent.seoDescription,
+      seoDescription:
+        state.page.seoDescription === previousSeoDescription
+          ? editorialStandardsPageContent.seoDescription
+          : state.page.seoDescription || state.page.summary || editorialStandardsPageContent.seoDescription,
       seoTitle: state.page.seoTitle || state.page.title,
       summary: state.page.summary || editorialStandardsPageContent.summary,
       title: state.page.title,
@@ -48,12 +53,13 @@ const resolvePage = cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await resolvePage();
+  const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);
 
   return {
     title: page.seoTitle,
     description: page.seoDescription,
     alternates: { canonical: page.canonical },
-    robots: page.noIndex
+    robots: noIndex
       ? { index: false, follow: true }
       : { index: true, follow: true },
     openGraph: {

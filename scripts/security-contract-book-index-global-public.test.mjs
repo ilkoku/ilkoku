@@ -396,17 +396,17 @@ test("Germany SPIEGEL bestseller source is fail-closed and source-native", () =>
 });
 
 
-test("global bestseller page is indexable, discoverable and source-native", () => {
+test("global bestseller page stays public but noindex during soft launch and source-native", () => {
   const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   notContains(page, "notFound()", "global route is no longer gated");
-  contains(page, "noIndex: false", "global page is indexable");
+  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "global page follows soft-launch noindex policy");
   contains(
     sitemap,
-    "/en-cok-satanlar/dunya",
-    "global page is included in the XML sitemap",
+    "filterSoftLaunchSitemapEntries",
+    "global page sitemap publication is filtered by soft-launch policy",
   );
   contains(
     view,
@@ -527,20 +527,20 @@ test("global bestseller table groups matching source-native ranks without repeti
 });
 
 
-test("new releases page stays aligned across public discovery surfaces", () => {
+test("new releases page stays public but search-excluded during soft launch", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/cms-header-navigation.ts");
 
-  contains(page, "noIndex: false", "new releases route remains indexable");
-  contains(sitemap, "/yeni-cikanlar", "new releases route remains in XML sitemap");
+  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "new releases route follows soft-launch noindex policy");
+  contains(sitemap, "filterSoftLaunchSitemapEntries", "new releases XML sitemap output is soft-launch filtered");
   const line = navigation.split("\n").find((candidate) => candidate.includes('href: "/yeni-cikanlar"'));
   assert.ok(line, "new releases route exists in HTML sitemap inventory");
   assert.equal(line.includes("indexable: false"), false, "indexable new releases route is linked from HTML sitemap");
 });
 
 
-test("indexable Book Index discovery pages use crawl-friendly ISR", () => {
+test("soft-launch Book Index discovery pages keep crawl-friendly ISR while noindex", () => {
   const globalPage = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const newReleasesPage = source("src/app/yeni-cikanlar/page.tsx");
 
@@ -550,7 +550,7 @@ test("indexable Book Index discovery pages use crawl-friendly ISR", () => {
   ]) {
     contains(page, "export const revalidate = 300;", `${label} 5-minute ISR`);
     notContains(page, 'export const dynamic = "force-dynamic";', `${label} force-dynamic regression`);
-    contains(page, "noIndex: false", `${label} remains indexable`);
+    contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", `${label} follows soft-launch noindex policy`);
   }
 });
 

@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
@@ -23,6 +24,13 @@ type ExtraEducationSection = {
 type ExtendedEducationGuideDefinition = EducationGuideDefinition & {
   extraSections?: ExtraEducationSection[];
 };
+
+const EXPERT_VERIFICATION_GUIDE_SLUGS = new Set([
+  "psikoloji",
+  "finans",
+  "hukuk",
+  "saglik",
+]);
 
 function visualBlock(id: string, imageUrl: string, alt: string, caption: string): CmsPageBlock[] {
   if (!imageUrl) return [];
@@ -242,10 +250,45 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     },
   ];
 
+  const renderedBlocks: CmsPageBlock[] = definition.category === "Bilgilendirici"
+    ? blocks.flatMap((block) => {
+        const sharedFrameworkIds = new Set([
+          `${definition.slug}-tam-yazim-rotasi`,
+          `${definition.slug}-structure`,
+          `${definition.slug}-structure-visual`,
+          `${definition.slug}-anatomy`,
+          `${definition.slug}-practice`,
+          `${definition.slug}-page-setup`,
+          `${definition.slug}-yazim-duzeni`,
+          `${definition.slug}-ilk-taslak`,
+          `${definition.slug}-revision`,
+          `${definition.slug}-yayina-hazirlik`,
+          `${definition.slug}-uygulama-ciktisi`,
+        ]);
+
+        if (sharedFrameworkIds.has(block.id)) return [];
+
+        if (block.id === `${definition.slug}-tur-farki`) {
+          return [
+            block,
+            {
+              id: `${definition.slug}-ortak-yazim-sistemi`,
+              type: "text",
+              heading: "Ortak araştırma ve doğrulama sistemi",
+              body: `Kaynak planı, iddia–kanıt eşleştirme, taslak düzeni ve yayın öncesi doğrulamanın bütün Bilgilendirici eserlerde ortak olan adımları **[Bilgilendirici Yazarlık Eğitimleri](/yazarlar-icin/bilgilendirici)** sayfasında tek çatı altında anlatılır. Bu sayfa ise **${definition.label}** alanına özgü kaynak sorunlarına, yöntemlere, risklere, örnek projeye ve uygulama kararlarına odaklanır.`,
+            },
+          ];
+        }
+
+        return [block];
+      })
+    : blocks;
+
   const categoryHub = WRITING_CATEGORY_HUBS.find((hub) => hub.category === definition.category);
   const canonicalUrl = categoryHub
     ? `https://ilkoku.com${categoryHub.href}/${definition.slug}`
     : `https://ilkoku.com/yazarlar-icin`;
+  const expertVerificationRequired = EXPERT_VERIFICATION_GUIDE_SLUGS.has(definition.slug);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -256,6 +299,23 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       description: summary,
       inLanguage: "tr-TR",
       isPartOf: { "@id": "https://ilkoku.com/#website" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
+      mainEntity: { "@id": `${canonicalUrl}#article` },
+      about: [
+        { "@type": "Thing", name: definition.label },
+        { "@type": "Thing", name: `${definition.category} yazarlığı` },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "@id": `${canonicalUrl}#article`,
+      headline: title,
+      description: summary,
+      inLanguage: "tr-TR",
+      mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
+      author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
       about: [
         { "@type": "Thing", name: definition.label },
@@ -279,10 +339,14 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-      <WritingGuideShell activeCategory={definition.category} activeGenreSlug={definition.slug}>
+      <WritingGuideShell
+        activeCategory={definition.category}
+        activeGenreSlug={definition.slug}
+        expertVerificationRequired={expertVerificationRequired}
+      >
       <div className="batched-education-writing-guide">
         <PublicCmsPageBlocks
-          blocks={blocks}
+          blocks={renderedBlocks}
           eyebrow={`Yazarlar İçin · ${definition.category}`}
           pageTitle={title}
           summary={summary}

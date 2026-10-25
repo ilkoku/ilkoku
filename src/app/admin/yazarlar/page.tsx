@@ -14,20 +14,24 @@ const statusLabels: Record<UserStatus, string> = {
 type SearchParams = Promise<{
   q?: string;
   status?: string;
+  works?: string;
+  verification?: string;
+  premium?: string;
+  sort?: string;
   page?: string;
 }>;
 
+type WriterFilterState = {
+  q: string;
+  status: string;
+  works: string;
+  verification: string;
+  premium: string;
+  sort: string;
+};
+
 function isStatus(value: string | undefined): value is UserStatus {
   return value === "active" || value === "suspended" || value === "disabled";
-}
-
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toLocaleUpperCase("tr-TR"))
-    .join("") || "YZ";
 }
 
 function dateLabel(date: Date | null) {
@@ -39,18 +43,30 @@ function dateLabel(date: Date | null) {
   }).format(date);
 }
 
-function pageHref(q: string, status: string, page: number) {
+function pageHref(filters: WriterFilterState, page: number) {
   const params = new URLSearchParams();
-  if (q) params.set("q", q);
-  if (status) params.set("status", status);
+  for (const field of ["q", "status", "works", "verification", "premium", "sort"] as const) {
+    const value = filters[field];
+    if (value && !(field === "sort" && value === "last_login")) {
+      params.set(field, value);
+    }
+  }
   params.set("page", String(page));
-  return `/admin/yazarlar?${params.toString()}`;
+  return `/sistem-yonetimi/yazarlar?${params.toString()}`;
 }
 
 export default async function WritersPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const q = params.q?.trim() ?? "";
+  const q = params.q?.trim().slice(0, 120) ?? "";
   const status = isStatus(params.status) ? params.status : "";
+  const works = params.works === "yes" || params.works === "no" ? params.works : "";
+  const verification = params.verification === "yes" || params.verification === "no" ? params.verification : "";
+  const premium = params.premium === "yes" || params.premium === "no" ? params.premium : "";
+  const sort = ["last_login", "joined_newest", "joined_oldest", "most_works"].includes(params.sort ?? "")
+    ? params.sort!
+    : "last_login";
+  const filters: WriterFilterState = { q, status, works, verification, premium, sort };
+  const hasActiveFilters = Boolean(q || status || works || verification || premium);
   const requestedPage = Number.parseInt(params.page ?? "1", 10);
   const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
@@ -58,6 +74,9 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
     role: "writer",
     deletedAt: null,
     ...(status ? { status } : {}),
+    ...(works ? { works: works === "yes" ? { some: {} } : { none: {} } } : {}),
+    ...(verification ? { emailVerified: verification === "yes" ? { not: null } : null } : {}),
+    ...(premium ? { isPremium: premium === "yes" } : {}),
     ...(q
       ? {
           OR: [
@@ -81,18 +100,27 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
 
+  const orderBy: Prisma.UserOrderByWithRelationInput[] =
+    sort === "joined_newest"
+      ? [{ createdAt: "desc" }, { id: "desc" }]
+      : sort === "joined_oldest"
+        ? [{ createdAt: "asc" }, { id: "asc" }]
+        : sort === "most_works"
+          ? [{ works: { _count: "desc" } }, { createdAt: "desc" }, { id: "desc" }]
+          : [{ lastLoginAt: "desc" }, { createdAt: "desc" }, { id: "desc" }];
+
   const writers = await prisma.user.findMany({
     where,
-    orderBy: [{ lastLoginAt: "desc" }, { createdAt: "desc" }],
+    orderBy,
     skip: (safePage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
     select: {
       id: true,
+      publicId: true,
       fullName: true,
       displayName: true,
       email: true,
       username: true,
-      avatarUrl: true,
       status: true,
       isPremium: true,
       emailVerified: true,
@@ -101,7 +129,6 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
       profile: {
         select: {
           city: true,
-          writingGenres: true,
           completionPercentage: true,
         },
       },
@@ -130,6 +157,12 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
         <div className="admin-heading-actions">
           <Link className="admin-button admin-button--ghost" href="/admin/roller">Rol talepleri</Link>
           <Link className="admin-button admin-button--primary" href="/admin/eserler">Eserleri incele</Link>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme">
+            Vergi / belge incelemesi
+          </Link>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/komisyon-yonetimi">
+            Komisyon yönetimi
+          </Link>
         </div>
       </header>
 
@@ -146,79 +179,181 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
             <span>Yazar dizini</span>
             <h2>Tüm yazarlar</h2>
           </div>
-          <form method="get" className="writers-filters">
-            <input name="q" type="search" defaultValue={q} placeholder="Ad, e-posta veya kullanıcı adı ara" aria-label="Yazar ara" />
-            <select name="status" defaultValue={status} aria-label="Duruma göre filtrele">
-              <option value="">Tüm durumlar</option>
-              {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-            <button type="submit">Filtrele</button>
-            {(q || status) && <Link href="/admin/yazarlar">Temizle</Link>}
+          <form action="/sistem-yonetimi/yazarlar" method="get" className="writers-filters" role="search">
+            <label className="writers-filter writers-filter--search">
+              <span>Yazar ara</span>
+              <input name="q" type="search" defaultValue={q} maxLength={120} placeholder="Ad, e-posta veya kullanıcı adı" />
+            </label>
+            <label className="writers-filter">
+              <span>Hesap durumu</span>
+              <select name="status" defaultValue={status}>
+                <option value="">Tüm durumlar</option>
+                {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <label className="writers-filter">
+              <span>Eser durumu</span>
+              <select name="works" defaultValue={works}>
+                <option value="">Tüm yazarlar</option>
+                <option value="yes">Eseri olanlar</option>
+                <option value="no">Eseri olmayanlar</option>
+              </select>
+            </label>
+            <label className="writers-filter">
+              <span>E-posta doğrulama</span>
+              <select name="verification" defaultValue={verification}>
+                <option value="">Tümü</option>
+                <option value="yes">Doğrulananlar</option>
+                <option value="no">Bekleyenler</option>
+              </select>
+            </label>
+            <label className="writers-filter">
+              <span>Üyelik</span>
+              <select name="premium" defaultValue={premium}>
+                <option value="">Tümü</option>
+                <option value="yes">Premium</option>
+                <option value="no">Standart</option>
+              </select>
+            </label>
+            <label className="writers-filter">
+              <span>Sıralama</span>
+              <select name="sort" defaultValue={sort}>
+                <option value="last_login">Son giriş (en yeni)</option>
+                <option value="joined_newest">En yeni kayıt</option>
+                <option value="joined_oldest">En eski kayıt</option>
+                <option value="most_works">En çok eser</option>
+              </select>
+            </label>
+            <div className="writers-filter-actions">
+              <button type="submit">Filtrele</button>
+              <Link href="/sistem-yonetimi/yazarlar">Temizle</Link>
+            </div>
           </form>
         </div>
 
-        {writers.length > 0 ? (
-          <div className="writers-grid">
-            {writers.map((writer) => (
-              <article className="writer-card" key={writer.id}>
-                <div className="writer-card__head">
-                  <div className="writer-avatar" aria-hidden="true">{initials(writer.displayName || writer.fullName)}</div>
-                  <div className="writer-identity">
-                    <div>
-                      <strong>{writer.displayName || writer.fullName}</strong>
-                      {writer.isPremium && <b>Premium</b>}
-                    </div>
-                    <span>{writer.email}</span>
-                    <small>@{writer.username || "kullanici-adi-yok"}</small>
-                  </div>
-                  <span className={`writer-status writer-status--${writer.status}`}>{statusLabels[writer.status]}</span>
-                </div>
+        <div className="writers-results" role="status">
+          <strong>{filteredCount.toLocaleString("tr-TR")} yazar</strong>
+          <span>{hasActiveFilters ? "Filtre sonucunda bulundu" : "Toplam listelenebilir yazar"}</span>
+          {hasActiveFilters && <Link href="/sistem-yonetimi/yazarlar">Tüm yazarları göster</Link>}
+        </div>
 
-                <div className="writer-metrics">
-                  <div><strong>{writer._count.works}</strong><span>Eser</span></div>
-                  <div><strong>{writer._count.feedbackReceived}</strong><span>Geri bildirim</span></div>
-                  <div><strong>{writer._count.ownershipStamps}</strong><span>Özgünlük kaydı</span></div>
-                  <div><strong>{writer._count.publisherSubmissions}</strong><span>Başvuru</span></div>
-                </div>
-
-                <div className="writer-profile-progress">
-                  <div><span>Profil doluluğu</span><strong>%{writer.profile?.completionPercentage ?? 0}</strong></div>
-                  <i><em style={{ width: `${writer.profile?.completionPercentage ?? 0}%` }} /></i>
-                </div>
-
-                <dl className="writer-details">
-                  <div><dt>Son giriş</dt><dd>{dateLabel(writer.lastLoginAt)}</dd></div>
-                  <div><dt>Kayıt</dt><dd>{dateLabel(writer.createdAt)}</dd></div>
-                  <div><dt>Konum</dt><dd>{writer.profile?.city || "Belirtilmedi"}</dd></div>
-                  <div><dt>E-posta</dt><dd>{writer.emailVerified ? "Doğrulandı" : "Bekliyor"}</dd></div>
-                </dl>
-
-                <div className="writer-card__actions">
-                  <Link href={`/admin/eserler?yazar=${encodeURIComponent(writer.id)}`}>Eserleri gör</Link>
-                  <form action={updateUserStatusAction}>
-                    <input type="hidden" name="userId" value={writer.id} />
-                    <select name="status" defaultValue={writer.status} aria-label={`${writer.fullName} hesap durumu`}>
-                      {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                    <button type="submit">Kaydet</button>
-                  </form>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="writers-empty">
-            <strong>Yazar bulunamadı</strong>
-            <p>Arama veya filtre ölçütlerini değiştirerek yeniden deneyin.</p>
-          </div>
-        )}
+        <div className="writers-table-wrap" role="region" aria-label="Yazar listesi" tabIndex={0}>
+          <table className="writers-table">
+            <thead>
+              <tr>
+                <th scope="col">İlkOku kimliği</th>
+                <th scope="col">Yazar</th>
+                <th scope="col">Durum</th>
+                <th scope="col">Üyelik</th>
+                <th scope="col">Kayıtları</th>
+                <th scope="col">Profil</th>
+                <th scope="col">Son giriş</th>
+                <th scope="col">Kayıt tarihi</th>
+                <th scope="col">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {writers.length > 0 ? (
+                writers.map((writer) => (
+                  <tr key={writer.id}>
+                    <td>
+                      <Link
+                        className="writers-public-id"
+                        href={`/sistem-yonetimi/kullanicilar/${writer.publicId}`}
+                      >
+                        {writer.publicId}
+                      </Link>
+                    </td>
+                    <td>
+                      <div className="writers-identity">
+                        <strong>{writer.displayName || writer.fullName}</strong>
+                        <span>{writer.email}</span>
+                        <small>@{writer.username || "kullanici-adi-yok"}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="writers-status-cell">
+                        <span className={`writer-status writer-status--${writer.status}`}>
+                          {statusLabels[writer.status]}
+                        </span>
+                        <form action={updateUserStatusAction} className="writers-status-form">
+                          <input type="hidden" name="userId" value={writer.id} />
+                          <select
+                            name="status"
+                            defaultValue={writer.status}
+                            aria-label={`${writer.displayName || writer.fullName} hesap durumu`}
+                          >
+                            {Object.entries(statusLabels).map(([value, label]) => (
+                              <option key={value} value={value}>{label}</option>
+                            ))}
+                          </select>
+                          <button type="submit">Kaydet</button>
+                        </form>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`writers-membership ${writer.isPremium ? "writers-membership--premium" : ""}`}>
+                        {writer.isPremium ? "Premium" : "Standart"}
+                      </span>
+                    </td>
+                    <td>
+                      <dl className="writers-records" aria-label="Yazar kayıt sayıları">
+                        <div><dt>Eser</dt><dd>{writer._count.works}</dd></div>
+                        <div><dt>Geri bildirim</dt><dd>{writer._count.feedbackReceived}</dd></div>
+                        <div><dt>Özgünlük</dt><dd>{writer._count.ownershipStamps}</dd></div>
+                        <div><dt>Başvuru</dt><dd>{writer._count.publisherSubmissions}</dd></div>
+                      </dl>
+                    </td>
+                    <td>
+                      <div className="writers-profile">
+                        <div><span>Doluluk</span><strong>%{writer.profile?.completionPercentage ?? 0}</strong></div>
+                        <div className="writers-profile__track" aria-hidden="true">
+                          <span style={{ width: `${Math.max(0, Math.min(100, writer.profile?.completionPercentage ?? 0))}%` }} />
+                        </div>
+                        <small>{writer.profile?.city || "Konum belirtilmedi"}</small>
+                        <small>{writer.emailVerified ? "E-posta doğrulandı" : "E-posta bekliyor"}</small>
+                      </div>
+                    </td>
+                    <td>
+                      {writer.lastLoginAt ? (
+                        <time dateTime={writer.lastLoginAt.toISOString()}>
+                          {dateLabel(writer.lastLoginAt)}
+                        </time>
+                      ) : (
+                        <span className="writers-muted">Henüz giriş yok</span>
+                      )}
+                    </td>
+                    <td>
+                      <time dateTime={writer.createdAt.toISOString()}>{dateLabel(writer.createdAt)}</time>
+                    </td>
+                    <td>
+                      <Link
+                        className="writers-works-link"
+                        href={`/sistem-yonetimi/eserler?yazar=${encodeURIComponent(writer.id)}`}
+                      >
+                        Eserleri gör →
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="writers-empty" colSpan={9}>
+                    <strong>Yazar bulunamadı</strong>
+                    <p>Arama veya filtre ölçütlerini değiştirerek yeniden deneyin.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <footer className="writers-pagination">
           <span>{first}–{last} / {filteredCount} yazar</span>
           <div>
-            {safePage > 1 ? <Link href={pageHref(q, status, safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}
+            {safePage > 1 ? <Link href={pageHref(filters, safePage - 1)}>← Önceki</Link> : <span>← Önceki</span>}
             <b>{safePage} / {totalPages}</b>
-            {safePage < totalPages ? <Link href={pageHref(q, status, safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}
+            {safePage < totalPages ? <Link href={pageHref(filters, safePage + 1)}>Sonraki →</Link> : <span>Sonraki →</span>}
           </div>
         </footer>
       </section>

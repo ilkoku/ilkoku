@@ -313,7 +313,27 @@ export async function listCommerceEntitlements(input: {
   return prisma.workEntitlement.findMany({
     where: {
       ...(input.status === "all" ? {} : { status: input.status }),
-      ...(input.source === "all" ? {} : { source: input.source }),
+      ...(input.source === "coupon"
+        ? {
+            // Coupon-funded orders retain source=purchase because access came
+            // from an order. Include them in the Coupon operational view
+            // without changing immutable orders or entitlement provenance.
+            // AND keeps the coupon condition when the search query adds OR.
+            AND: [
+              {
+                OR: [
+                  { source: "coupon" as const },
+                  {
+                    source: "purchase" as const,
+                    order: { is: { couponCodeSnapshot: { not: null } } },
+                  },
+                ],
+              },
+            ],
+          }
+        : input.source === "all"
+          ? {}
+          : { source: input.source }),
       ...(q
         ? {
             OR: [
@@ -358,6 +378,7 @@ export async function listCommerceEntitlements(input: {
       order: {
         select: {
           orderNo: true,
+          couponCodeSnapshot: true,
           status: true,
           finalAmount: true,
           currency: true,

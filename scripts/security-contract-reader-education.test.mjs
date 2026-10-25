@@ -11,7 +11,7 @@ function assertContains(text, fragment, label) {
   assert.ok(text.includes(fragment), `${label} must contain ${JSON.stringify(fragment)}`);
 }
 
-test("reader education keeps eight categories, six optional visual slots and sitemap coverage", () => {
+test("reader education keeps eight live categories while search indexability follows the focused cohort", () => {
   const inventory = source("src/lib/reader-education.ts");
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
   const renderer = source("src/components/content/ReaderEducationPage.tsx");
@@ -38,7 +38,8 @@ test("reader education keeps eight categories, six optional visual slots and sit
     assertContains(renderer, `slotKey="${slot}"`, `reader renderer slot ${slot}`);
   }
 
-  assertContains(publicRoute, "robots: { index: true, follow: true }", "reader education index/follow");
+  assertContains(publicRoute, "const noIndex = isSoftLaunchSearchExcludedPath(canonical);", "reader education focused index gate");
+  assertContains(publicRoute, "robots: noIndex ? { index: false, follow: true } : { index: true, follow: true }", "reader education conditional index/follow");
   assertContains(publicRoute, "readerEducationPublicPath(category)", "reader education self canonical source");
   assertContains(publicRoute, "notFound()", "invalid reader education slug 404");
 
@@ -100,4 +101,24 @@ test("reader education keeps eight categories, six optional visual slots and sit
   assertContains(upload, "access.canManage", "reader upload CMS authorization guard");
   assertContains(upload, "MAX_CMS_MEDIA_BYTES", "reader upload media size guard");
   assertContains(upload, '`/icerik/okur-egitim/${categorySlug}?${query}`', "reader upload returns to reader editor route");
+});
+
+
+test("reader education exposes Article and one shared breadcrumb structured data", () => {
+  const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
+  const readerShell = source("src/components/content/ReaderEducationShell.tsx");
+  assertContains(publicRoute, '"@type": "Article"', "reader Article schema");
+  assert.equal(publicRoute.includes('"@type": "BreadcrumbList"'), false, "reader route must not duplicate shell breadcrumbs");
+  assertContains(readerShell, '"@type": "BreadcrumbList"', "reader breadcrumb schema is preserved in shell");
+  assertContains(publicRoute, 'mainEntityOfPage: canonical', "reader canonical schema binding");
+  assertContains(publicRoute, 'publisher: { "@type": "Organization", name: "İlkOku"', "reader publisher schema");
+});
+
+
+test("reader genre comparison CTA never links to the intentionally gated /turler 404", () => {
+  const inventory = source("src/lib/reader-education.ts");
+  const routing = source("src/lib/public-site-navigation.ts");
+  assertContains(routing, "export const publicDiscoveryEnabled = false", "retired /turler remains gated");
+  assertContains(inventory, 'href: "/yazarlar-icin/kurgu", label: "Kurgu türlerini incele"', "reader genre CTA points to the live category hub");
+  assert.ok(!inventory.includes('href: "/turler"'), "no reader education CTA links to the retired 404");
 });

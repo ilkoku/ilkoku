@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { IntegrityControlPanel } from "./IntegrityControlPanel";
 import { RuntimeInfrastructurePanel } from "./RuntimeInfrastructurePanel";
 import { SystemMapArchitecturePanel } from "./SystemMapArchitecturePanel";
 import { SystemMapOverviewNavigator } from "./SystemMapOverviewNavigator";
+import { SystemMapSectionDirectory } from "./SystemMapSectionDirectory";
 import { SystemMapWorkbench } from "./SystemMapWorkbench";
 import { SystemOperationsPanel } from "./SystemOperationsPanel";
 import {
@@ -113,6 +115,7 @@ export async function SystemMapWorkspacePage({ workspace }: { workspace: SystemM
 
   return (
     <main className="system-map-page">
+      <div style={{ marginBottom: "1rem" }}><AdminReturnLink /></div>
       {workspace === "overview" ? (
         <header className="system-map-hero">
           <div>
@@ -163,6 +166,10 @@ export async function SystemMapWorkspacePage({ workspace }: { workspace: SystemM
           <h2 id="system-map-warnings-title">Tarama uyarıları</h2>
           <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
         </section>
+      ) : null}
+
+      {workspace !== "overview" ? (
+        <SystemMapSectionDirectory activeKey={workspace} />
       ) : null}
 
       <div className="system-map-workspace-body">{content}</div>

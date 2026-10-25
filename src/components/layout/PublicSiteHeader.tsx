@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
+import { PublicSiteAccount } from "@/components/layout/PublicSiteAccount";
 import { resolveHeaderNavigation } from "@/lib/cms-header-navigation";
 import { getPublishedHeaderNavigation } from "@/lib/cms-header-navigation-server";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
@@ -15,10 +16,14 @@ import "./public-site-mega-menu.css";
 import "./public-site-mega-menu-layer.css";
 import "./public-site-account-popover.css";
 
-function withoutBookIndexMenu(
+type ResolvedHeaderMenu = ReturnType<typeof resolveHeaderNavigation>[number] & {
+  directHref?: string;
+};
+
+function withBookIndexMenu(
   menus: ReturnType<typeof resolveHeaderNavigation>,
-) {
-  return menus.flatMap((menu) => {
+): ResolvedHeaderMenu[] {
+  const withoutBookIndex = menus.flatMap((menu) => {
     if (menu.id === "book-index") return [];
 
     const groups = menu.groups
@@ -31,23 +36,85 @@ function withoutBookIndexMenu(
     if (groups.length === 0) return [];
     return [{ ...menu, groups }];
   });
-}
-function AccountIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
-    </svg>
+
+  const bookIndexMenu: ResolvedHeaderMenu = {
+    id: "book-index",
+    label: "Kitap Endeksi",
+    groups: [
+      {
+        id: "book-index-main",
+        title: "Ana Listeler",
+        links: [
+          {
+            href: "/en-cok-satanlar",
+            label: "En Çok Satanlar",
+            primary: true,
+            pageId: "book-index",
+          },
+          {
+            href: "/en-cok-satanlar/turkiye",
+            label: "Türkiye",
+            primary: false,
+            pageId: "book-index-turkey",
+          },
+          {
+            href: "/yeni-cikanlar",
+            label: "Yeni Çıkanlar",
+            primary: false,
+            pageId: "book-index-new-releases",
+          },
+          {
+            href: "/en-cok-satanlar/dunya",
+            label: "Dünya",
+            primary: false,
+            pageId: "book-index-global",
+          },
+        ],
+      },
+      {
+        id: "book-index-trends",
+        title: "Çok Satan Analizleri",
+        links: [
+          {
+            href: "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+            label: "Çok Satanlara Yeni Girenler",
+            primary: false,
+            pageId: "book-index-new-entries",
+          },
+          {
+            href: "/en-cok-satanlar/cok-satanlarda-yukselenler",
+            label: "Çok Satanlarda Yükselenler",
+            primary: false,
+            pageId: "book-index-risers",
+          },
+          {
+            href: "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+            label: "Birden Fazla Listede Çok Satanlar",
+            primary: false,
+            pageId: "book-index-everywhere",
+          },
+          {
+            href: "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+            label: "Uzun Süredir Çok Satanlar",
+            primary: false,
+            pageId: "book-index-long-sellers",
+          },
+        ],
+      },
+    ],
+  };
+
+  const supportIndex = withoutBookIndex.findIndex(
+    (menu) => menu.id === "support",
   );
+
+  if (supportIndex < 0) return [...withoutBookIndex, bookIndexMenu];
+
+  return [
+    ...withoutBookIndex.slice(0, supportIndex),
+    bookIndexMenu,
+    ...withoutBookIndex.slice(supportIndex),
+  ];
 }
 
 export async function PublicSiteHeader() {
@@ -55,7 +122,7 @@ export async function PublicSiteHeader() {
     getPublicSiteIdentity(),
     getPublishedHeaderNavigation(),
   ]);
-  const publicMenus = withoutBookIndexMenu(
+  const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),
   );
 
@@ -63,6 +130,7 @@ export async function PublicSiteHeader() {
     <header className="public-site-header">
       <div className="public-site-header__inner">
         <Link
+          prefetch={false}
           className="public-site-header__brand"
           href="/"
           aria-label="İlkOku ana sayfa"
@@ -71,7 +139,7 @@ export async function PublicSiteHeader() {
             <Image
               src={identity.logoUrl}
               alt={identity.logoAlt}
-              priority
+              loading="eager"
               width={308}
               height={76}
               sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
@@ -80,7 +148,7 @@ export async function PublicSiteHeader() {
             <Image
               src={logo}
               alt={identity.logoAlt}
-              priority
+              loading="eager"
               sizes="(max-width: 480px) 86px, (max-width: 768px) 94px, 154px"
             />
           )}
@@ -91,17 +159,7 @@ export async function PublicSiteHeader() {
         </span>
 
         <div className="public-site-header__tools">
-          <details className="public-site-header__account">
-            <summary aria-label="Hesap menüsünü aç">
-              <AccountIcon />
-            </summary>
-
-            <div className="public-site-header__account-menu">
-              <Link href="/hesabim" rel="nofollow">Hesabım</Link>
-              <Link href="/giris" rel="nofollow">Giriş Yap</Link>
-              <Link href="/kayit" rel="nofollow">Üye Ol</Link>
-            </div>
-          </details>
+          <PublicSiteAccount />
         </div>
       </div>
 

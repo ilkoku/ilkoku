@@ -9,6 +9,7 @@ import {
   pageDraftKey,
 } from "@/lib/cms-drafts";
 import { prisma } from "@/lib/prisma";
+import { resolveLegalSeoDescription } from "@/lib/cms-legal-seo-description.mjs";
 
 export type CmsScheduleTargetType = "site_content" | "content_page";
 export type CmsScheduleState = "scheduled" | "completed" | "cancelled" | "failed";
@@ -220,10 +221,15 @@ async function applyStagedPageContent(target: PageTargetRow, staged: DraftPayloa
     const updatedLabel = value(staged, "updatedLabel");
     const body = value(staged, "body");
     const bodyJson = JSON.stringify({ description, updatedLabel, body });
+    const seoDescription = resolveLegalSeoDescription({
+      submittedDescription: description,
+      existingBodyJson: target.bodyJson,
+      existingSeoDescription: target.seoDescription,
+    });
     await prisma.$executeRaw`
       UPDATE ContentPage
       SET title = ${title}, status = ${desired}, bodyJson = ${bodyJson},
-          seoDescription = ${description || null}, publishedAt = ${publishedAt},
+          seoDescription = ${seoDescription}, publishedAt = ${publishedAt},
           updatedById = ${actorId}, updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${target.id}
     `;

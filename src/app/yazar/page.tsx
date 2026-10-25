@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { dashboardContent } from "@/content";
 import { AppShell } from "@/components/layout/AppShell";
 import { WriterDashboard } from "@/features/dashboard/components/WriterDashboard";
+import "@/features/dashboard/dashboard.css";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorWorks } from "@/features/works/queries";
 import { getDashboardFeedback } from "@/features/feedback/queries/feedback.queries";

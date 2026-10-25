@@ -205,3 +205,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.admin-email-operations-last-smtp{
+  font-size:clamp(.72rem,1.1vw,1rem)!important;
+  line-height:1.4!important;
+  overflow-wrap:anywhere;
+}
+.admin-email-operations-history>p{
+  margin:.8rem 0 0;
+  font-size:.74rem;
+  line-height:1.7;
+  color:#afb9ce;
+}
+.admin-email-operations-history>p strong{color:#f1f5f9;font-variant-numeric:tabular-nums}
+.admin-email-retry-confirm{
+  display:flex;
+  align-items:flex-start;
+  gap:.45rem;
+  max-width:17rem;
+  color:#b9c6dd;
+  font-size:.67rem;
+  line-height:1.45;
+}
+.admin-email-retry-confirm input{
+  flex:0 0 auto;
+  width:1rem;
+  height:1rem;
+  margin:.1rem 0 0;
+  accent-color:#a78bfa;
+}
+.admin-email-retry-confirm span{min-width:0;overflow-wrap:anywhere}

@@ -136,7 +136,7 @@ export function buildDayCloseFiles(input: {
   const reconciliation: CsvField[][] = [[
     "siparis_no","beklenen_satis_brut_kurus","ledger_satis_brut_kurus",
     "ledger_satis_brut_kayit_sayisi","basarili_tahsilat_kurus",
-    "basarili_tahsilat_sayisi","mutabakat",
+    "basarili_tahsilat_sayisi","ledger_mutabakati","tahsilat_mutabakati","genel_mutabakat",
   ]];
   // Accountants can map this neutral pre-transfer view into the actual
   // external software template. This is NOT a fiscal document payload.
@@ -190,13 +190,21 @@ export function buildDayCloseFiles(input: {
       ledgerEntries[0].amount === order.originalAmount;
     if (!ledgerMatches) warnings.push("LEDGER_BRUT_SATIS_MUTABAKATSIZ");
     const capturedTotal = captures.reduce((sum,payment) => sum + payment.amount, BigInt(0));
+    const captureMatches = order.finalAmount > BigInt(0) &&
+      captures.length === 1 &&
+      captures[0].amount === order.finalAmount &&
+      captures[0].currency === order.currency;
+    if (order.finalAmount > BigInt(0) && !captureMatches)
+      warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
+    if (order.finalAmount === BigInt(0) && captures.length > 0)
+      warnings.push("SIFIR_TL_GEREKSIZ_TAHSILAT");
     reconciliation.push([
       order.orderNo,order.originalAmount,ledgerGross,ledgerEntries.length,
-      capturedTotal,captures.length,ledgerMatches ? "LEDGER_KONTROLU_GECTI" : "INCELEME_GEREKLI",
+      capturedTotal,captures.length,
+      ledgerMatches ? "LEDGER_KONTROLU_GECTI" : "INCELEME_GEREKLI",
+      captureMatches ? "TAHSILAT_KONTROLU_GECTI" : "INCELEME_GEREKLI",
+      ledgerMatches && captureMatches ? "TEMEL_MUTABAKAT_GECTI" : "INCELEME_GEREKLI",
     ]);
-    if (order.finalAmount > BigInt(0) &&
-        (captures.length !== 1 || captures[0].amount !== order.finalAmount ||
-         captures[0].currency !== order.currency)) warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
     if (order.finalAmount === BigInt(0)) {
       details.zero++;
       warnings.push("SIFIR_TL_MALI_BELGE_DEGIL");

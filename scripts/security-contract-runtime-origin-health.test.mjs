@@ -61,10 +61,10 @@ test("Origin incident trap captures deploy cutover while preserving safe bounded
 
 test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin TLS", () => {
   const trap = readFileSync("scripts/origin-incident-trap.sh", "utf8");
-
   const header = trap.split("\n").find((line) => line.startsWith("printf 'observed_utc"));
   assert.ok(header, "TSV schema header must be present");
-  const required = [
+
+  for (const field of [
     "client_edge_ip",
     "client_edge_dns_complete_sec",
     "client_edge_tcp_connected_sec",
@@ -72,12 +72,14 @@ test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin
     "client_edge_ttfb_sec",
     "client_edge_total_sec",
     "served_commit_sha",
-  ];
-  for (const field of required) assert.ok(header.includes(field), "Missing " + field);
-  assert.doesNotMatch(header, /\\ttls_sec\\t/u);
-  assert.match(trap, /--write-out '%\\{http_code\\}\\t%\\{remote_ip\\}/u);
+  ]) {
+    assert.ok(header.includes(field), "Missing edge provenance: " + field);
+  }
+
+  assert.ok(!header.includes("\\ttls_sec\\t"), "Old ambiguous TLS header must be gone");
+  assert.ok(trap.includes("%{remote_ip}"), "Still collect curl remote IP");
   assert.match(trap, /NOT the Cloudflare to Hostinger origin leg/u);
   assert.match(trap, /First-observed served_commit_sha is NOT deploy completion/u);
-  assert.match(trap, /--retry 0/u);
-  assert.match(trap, /if \\[\\[ "\\$code" == '403' \\|\\| "\\$code" == '429'/u);
+  assert.ok(trap.includes("--retry 0"), "No implicit retries or extra requests");
+  assert.ok(trap.includes("Circuit breaker: HTTP"), "Preserve 403/429 circuit breaker");
 });

@@ -58,3 +58,26 @@ test("Origin incident trap captures deploy cutover while preserving safe bounded
   assert.match(trap, /TRAP_RESULT MONITOR_BLOCKED/u);
   assert.ok(trap.includes('rm -f "$body"'));
 });
+
+test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin TLS", () => {
+  const trap = readFileSync("scripts/origin-incident-trap.sh", "utf8");
+
+  const header = trap.split("\n").find((line) => line.startsWith("printf 'observed_utc"));
+  assert.ok(header, "TSV schema header must be present");
+  const required = [
+    "client_edge_ip",
+    "client_edge_dns_complete_sec",
+    "client_edge_tcp_connected_sec",
+    "client_edge_tls_complete_sec",
+    "client_edge_ttfb_sec",
+    "client_edge_total_sec",
+    "served_commit_sha",
+  ];
+  for (const field of required) assert.ok(header.includes(field), "Missing " + field);
+  assert.doesNotMatch(header, /\\ttls_sec\\t/u);
+  assert.match(trap, /--write-out '%\\{http_code\\}\\t%\\{remote_ip\\}/u);
+  assert.match(trap, /NOT the Cloudflare to Hostinger origin leg/u);
+  assert.match(trap, /First-observed served_commit_sha is NOT deploy completion/u);
+  assert.match(trap, /--retry 0/u);
+  assert.match(trap, /if \\[\\[ "\\$code" == '403' \\|\\| "\\$code" == '429'/u);
+});

@@ -895,6 +895,7 @@ model WorkPublicationConsent {
   authorId           String           @db.Char(36)
   publicationModel   PublicationModel
   priceAmount        BigInt?          @db.UnsignedBigInt
+  priceTaxTreatment  String           @default("legacy_inclusive") @db.VarChar(24)
   currency           String           @default("TRY") @db.Char(3)
   accessPlanSnapshot Json
   agreementVersion   String           @db.VarChar(40)
@@ -913,6 +914,7 @@ model WorkSaleConfiguration {
   authorId         String           @db.Char(36)
   saleModel        PublicationModel @default(free)
   priceAmount      BigInt?          @db.UnsignedBigInt
+  priceTaxTreatment String          @default("legacy_inclusive") @db.VarChar(24)
   currency         String           @default("TRY") @db.Char(3)
   status           WorkSaleStatus   @default(draft)
   agreementVersion String?          @db.VarChar(40)
@@ -1061,6 +1063,7 @@ model Order {
   financialLedgerEntries   FinancialLedger[]
   consent                  OrderConsent?
   legalSnapshot            OrderLegalSnapshot?
+  priceQuoteSnapshot      OrderPriceQuoteSnapshot?
 
   @@index([readerId, createdAt])
   @@index([authorId, createdAt])
@@ -1071,6 +1074,23 @@ model Order {
 
 // Immutable legal seller identity at 0 TL or paid order creation.
 // Never rewrite this snapshot if the active work seller changes.
+// Informational checkout price snapshot, NOT an invoice or tax declaration.
+// Populated only for explicitly tagged net_plus_vat prices.
+model OrderPriceQuoteSnapshot {
+  id                  String   @id @default(uuid()) @db.Char(36)
+  orderId             String   @unique @db.Char(36)
+  taxTreatment        String   @db.VarChar(24)
+  calculationVersion  String   @default("quote-v1") @db.VarChar(32)
+  vatRateBasisPoints  Int      @db.UnsignedSmallInt
+  listNetAmount       BigInt   @db.UnsignedBigInt
+  listVatAmount       BigInt   @db.UnsignedBigInt
+  listGrossAmount     BigInt   @db.UnsignedBigInt
+  discountGrossAmount BigInt   @db.UnsignedBigInt
+  payableGrossAmount  BigInt   @db.UnsignedBigInt
+  createdAt           DateTime @default(now())
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
 model OrderLegalSnapshot {
   id                  String         @id @default(uuid()) @db.Char(36)
   orderId             String         @unique @db.Char(36)

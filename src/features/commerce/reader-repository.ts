@@ -60,6 +60,17 @@ export async function getReaderOrderDetail(readerId: string, orderNo: string) {
       paidAt: true,
       work: { select: { title: true, slug: true } },
       entitlement: { select: { status: true } },
+      priceQuoteSnapshot: {
+        select: {
+          taxTreatment: true,
+          vatRateBasisPoints: true,
+          listNetAmount: true,
+          listVatAmount: true,
+          listGrossAmount: true,
+          discountGrossAmount: true,
+          payableGrossAmount: true,
+        },
+      },
       legalSnapshot: {
         select: {
           sellerMode: true,

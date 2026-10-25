@@ -26,13 +26,12 @@ jobs:
           response="$(curl \
             --fail-with-body \
             --max-time 300 \
-            --retry 2 \
-            --retry-all-errors \
             --request POST \
             --header "Authorization: Bearer $SUMMARY_SECRET" \
             https://ilkoku.com/api/internal/writer-daily-summary)"
-          # A 200 may still contain failed writers. Fail CI without making
-          # extra POST retries that could duplicate an ambiguous SMTP send.
+          # POST is deliberately single-attempt. An HTTP timeout cannot prove
+          # that the email send did not complete on the origin.
+          # A 200 may still contain failed writers: check JSON separately.
           if ! printf '%s\n' "$response" | jq -e \
             '.ok == true and (.failed | type == "number") and .failed == 0' >/dev/null; then
             echo "::error::Writer daily summary contained failed writers or invalid JSON."

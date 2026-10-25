@@ -2352,3 +2352,32 @@ test("finance order review is admin-only, read-only, and rejects unknown order n
   await page.goto(route, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
+
+
+test("author tax-document review is admin-only and mobile safe without collecting identifiers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Yazar Vergi / Belge İncelemesi" })).toBeVisible();
+  await expect(page.getByText("Haricî doğrulama gerekir")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazarı incele" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=NO_SUCH_WRITER", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Bu ID ile yazar bulunamadı.")).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});

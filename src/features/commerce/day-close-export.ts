@@ -92,6 +92,7 @@ export type DayCloseOrder = {
   orderNo: string;
   paidAt: Date | null;
   status: string;
+  sellerMode: string | null;
   authorPublicId: string;
   workTitle: string;
   currency: string;
@@ -138,6 +139,7 @@ export function buildDayCloseFiles(input: {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
+    if (order.sellerMode !== "platform_direct") warnings.push("SATICI_ILKOKU_DOGRULANMADI");
     if (order.finalAmount < 0n || order.originalAmount - order.discountAmount !== order.finalAmount) {
       warnings.push("TUTAR_MUTABAKATSIZ");
     }

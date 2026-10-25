@@ -76,6 +76,8 @@ model User {
   financialLedgerEntries       FinancialLedger[]            @relation("FinancialLedgerAuthor")
   authorBalances               AuthorBalance[]              @relation("AuthorBalanceAuthor")
   taxReviewsAsWriter            AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewWriter")
+  commissionRulesAsWriter       AuthorCommissionRateEvent[]   @relation("CommissionRuleWriter")
+  commissionRulesAsAdmin        AuthorCommissionRateEvent[]   @relation("CommissionRuleAdmin")
   taxReviewsAsReviewer          AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewReviewer")
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
@@ -288,6 +290,7 @@ model Work {
   commerceChapterAccesses ChapterAccess[]
   couponScopes            CouponWorkScope[]
   commerceOrders          Order[]
+  commissionRateEvents    AuthorCommissionRateEvent[]
   entitlements            WorkEntitlement[]
   financialLedgerEntries  FinancialLedger[]
   priceHistory            WorkPriceHistory[]
@@ -1066,6 +1069,7 @@ model Order {
   consent                  OrderConsent?
   legalSnapshot            OrderLegalSnapshot?
   priceQuoteSnapshot      OrderPriceQuoteSnapshot?
+  commissionRateSnapshot  OrderCommissionRateSnapshot?
 
   @@index([readerId, createdAt])
   @@index([authorId, createdAt])
@@ -1078,6 +1082,37 @@ model Order {
 // Never rewrite this snapshot if the active work seller changes.
 // Informational checkout price snapshot, NOT an invoice or tax declaration.
 // Populated only for explicitly tagged net_plus_vat prices.
+// Append-only, admin-authored exception to the global 15% commission.
+// workId == NULL means author-wide; workId set means work-specific.
+// Active=false reverts to the next less-specific level.
+model AuthorCommissionRateEvent {
+  id           String   @id @default(uuid()) @db.Char(36)
+  authorId     String   @db.Char(36)
+  workId       String?  @db.Char(36)
+  actorId      String   @db.Char(36)
+  rateBps      Int      @db.UnsignedSmallInt
+  active       Boolean
+  createdAt    DateTime @default(now())
+  author       User     @relation("CommissionRuleWriter", fields: [authorId], references: [id], onDelete: Restrict)
+  work         Work?    @relation(fields: [workId], references: [id], onDelete: Restrict)
+  actor        User     @relation("CommissionRuleAdmin", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([authorId, createdAt])
+  @@index([workId, createdAt])
+}
+
+model OrderCommissionRateSnapshot {
+  id                       String   @id @default(uuid()) @db.Char(36)
+  orderId                  String   @unique @db.Char(36)
+  commissionRateBps        Int      @db.UnsignedSmallInt
+  serviceFeeRateBps        Int      @default(500) @db.UnsignedSmallInt
+  source                   String   @db.VarChar(16)
+  sourceEventId            String?  @db.Char(36)
+  calculationVersion       String   @default("rate-v1") @db.VarChar(32)
+  createdAt                DateTime @default(now())
+  order                    Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
 model OrderPriceQuoteSnapshot {
   id                  String   @id @default(uuid()) @db.Char(36)
   orderId             String   @unique @db.Char(36)

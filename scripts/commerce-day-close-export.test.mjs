@@ -542,3 +542,47 @@ test("a second unproven captured payment cannot silently pass as one verified pa
   const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
   assert.ok(issues.includes("TAHSILAT_TARIH_KANITI_EKSIK_GECERSIZ"));
 });
+
+
+test("sale paid outside Istanbul closing day cannot reach accounting preparation", () => {
+  const order=validOrder();
+  order.paidAt=new Date("2026-10-26T00:01:00+03:00");
+  const result=make([order]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.equal(result.manifest.liraWorksheetRows,0);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("ODEME_TARIHI_IS_GUNU_DISINDA"));
+});
+
+test("refund dated outside period or preceding original payment is flagged", () => {
+  const base={
+    id:"refund-cross-date",orderNo:"ILK-ABCDE1234",amount:1000n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-26T00:01:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-25T18:00:00+03:00"),
+    cumulativeProcessedAmount:1000n,historicalCurrencyMismatch:false,
+  };
+  const late=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],refunds:[base],
+  });
+  assert.equal(late.manifest.flaggedRefundCount,1);
+  assert.ok(late.files.find(f=>f.name==="uyarilar.csv").data.includes("IADE_TARIHI_IS_GUNU_DISINDA"));
+  const beforePayment=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],
+    refunds:[{...base,processedAt:new Date("2026-10-25T17:00:00+03:00")}],
+  });
+  assert.equal(beforePayment.manifest.flaggedRefundCount,1);
+  assert.ok(beforePayment.files.find(f=>f.name==="uyarilar.csv").data.includes("IADE_ODEMEDEN_ONCE"));
+});
+
+test("wrong-day ledger entry is reported and bad day identifiers are refused", () => {
+  const ledger={
+    id:"late-day",entryType:"sale_gross",amount:12000n,currency:"TRY",
+    createdAt:new Date("2026-10-26T00:01:00+03:00"),
+    orderNo:"ILK-ABCDE1234",authorPublicId:"writer001",
+  };
+  const result=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],ledger:[ledger],refunds:[]});
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("HAREKET_TARIHI_IS_GUNU_DISINDA"));
+  assert.throws(() => exportModule.buildDayCloseFiles({
+    day:"2026-02-30",orders:[],ledger:[],refunds:[],
+  }),/Invalid Istanbul business date/);
+});

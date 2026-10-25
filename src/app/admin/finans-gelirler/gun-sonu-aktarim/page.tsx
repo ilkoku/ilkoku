@@ -67,7 +67,11 @@ export default async function DayCloseAccountingTransferPage() {
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
             mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,
-            aynı günün sale_gross ledger kaydı ve tahsilatıyla karşılaştırır.</p>
+            tarihinden bağımsız ilgili siparişin sale_gross ledger kayıtlarıyla
+            ve tahsilat bilgisiyle karşılaştırır.</p>
+          <p><code>gun_sonu_ozet.csv</code> — Gün içinde kaydedilen finans
+            hareketlerinin tür ve para birimi bazında toplamı.
+            Ledger toplamı muhasebe kârı değildir.</p>
           <p><code>muhasebe_on_hazirlik.csv</code> — Yalnız temel veri
             kontrollerini geçen satışlar için programdan bağımsız, kesin
             mali belge sayılmayan aktarım alanları.</p>
@@ -89,7 +93,9 @@ export default async function DayCloseAccountingTransferPage() {
             dosyasındaki satırlar bile fatura düzenleme onayı değildir.
             Doğrulanmamış kayıtlar <code>uyarilar.csv</code> üzerinden incelenmelidir.</p>
           <p>Logo, Mikro ve Paraşüt için resmî içe aktarma şeması
-            doğrulanmadan dosyalar doğrudan uyumlu olarak işaretlenmez.</p>
+            doğrulanmadan dosyalar doğrudan uyumlu olarak işaretlenmez.
+            Her ürünün sürümü, resmî Excel şablonu veya desteklediği muhasebe
+            aktarım türü ayrıca onaylanmalıdır.</p>
         </article>
       </section>
     </>

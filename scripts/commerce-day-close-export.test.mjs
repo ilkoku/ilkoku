@@ -466,3 +466,54 @@ test("semicolon-delimited accountant CSV escapes untrusted formulas and delimite
   assert.ok(csv.includes('"safety;check"'));
   assert.ok(csv.includes("'\u0009+HYPERLINK"));
 });
+
+
+test("refund status never erases verified original capture in earlier sales close", () => {
+  const refundedPayment=validOrder();
+  refundedPayment.payments=[{
+    status:"refunded",amount:12000n,currency:"TRY",
+    completedAt:new Date("2026-10-25T18:00:00+03:00"),
+  }];
+  const result=make([refundedPayment]);
+  assert.equal(result.manifest.readySalesCount,1);
+  assert.equal(result.manifest.preparationRows,1);
+  const reconcile=result.files.find(f=>f.name==="mutabakat.csv").data;
+  assert.ok(reconcile.includes("TEMEL_MUTABAKAT_GECTI"));
+  assert.ok(!result.files.find(f=>f.name==="uyarilar.csv").data.includes("TAHSILAT_KAYDI_MUTABAKATSIZ"));
+});
+
+test("refunded payment without historical completion proof is never treated as captured", () => {
+  const invalid=validOrder();
+  invalid.payments=[{status:"refunded",amount:12000n,currency:"TRY",completedAt:null}];
+  const result=make([invalid]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.equal(result.manifest.preparationRows,0);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("TAHSILAT_KAYDI_MUTABAKATSIZ"));
+});
+
+test("refunded payment completed AFTER the order paid date cannot certify old sale", () => {
+  const invalid=validOrder();
+  invalid.payments=[{
+    status:"refunded",amount:12000n,currency:"TRY",
+    completedAt:new Date("2026-10-26T11:00:00+03:00"),
+  }];
+  const result=make([invalid]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("TAHSILAT_KAYDI_MUTABAKATSIZ"));
+});
+
+test("already-succeeded payment completed in future cannot pass past-day close", () => {
+  const invalid=validOrder();
+  invalid.payments=[{
+    status:"succeeded",amount:12000n,currency:"TRY",
+    completedAt:new Date("2026-10-26T11:00:00+03:00"),
+  }];
+  const result=make([invalid]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.equal(result.manifest.preparationRows,0);
+});
+
+test("repository includes payment completedAt for historical refund reconciliation", () => {
+  const repo=source("src/features/commerce/day-close-repository.ts");
+  assert.ok(repo.includes("status: true, amount: true, currency: true, completedAt: true"));
+});

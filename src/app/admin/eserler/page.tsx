@@ -6,6 +6,7 @@ import type {
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import {
   isStoredWorkContentRating,
   storedWorkContentRatings,
@@ -124,12 +125,12 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
     include: {
       author: { select: { displayName: true, email: true, fullName: true } },
       saleConfiguration: {
-        select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true },
+        select: { saleModel: true, priceAmount: true, priceTaxTreatment: true, currency: true, status: true, activatedAt: true },
       },
       publicationConsents: {
         orderBy: { confirmedAt: "desc" },
         take: 1,
-        select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true },
+        select: { publicationModel: true, priceAmount: true, priceTaxTreatment: true, currency: true, accessPlanSnapshot: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -183,7 +184,10 @@ export default async function AdminWorksPage({ searchParams }: { searchParams: S
                           ? "Fiyat belirtilmedi"
                           : configuration.priceAmount === BigInt(0)
                             ? "0 TL (hazırlık)"
-                            : formatSalePrice(configuration.priceAmount, configuration.currency)
+                            : formatSalePrice(quoteCommercePrice({
+                              configuredPriceAmount: configuration.priceAmount,
+                              taxTreatment: configuration.priceTaxTreatment,
+                            }).listGrossAmount, configuration.currency)
                         : "Ödeme gerekmiyor"}
                       {" · "}{saleStatusLabels[configuration.status]}
                     </small>

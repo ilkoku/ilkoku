@@ -110,7 +110,36 @@ export type DayCloseOrder = {
     discountGrossAmount: bigint; payableGrossAmount: bigint;
   } | null;
   payments: { status: string; amount: bigint; currency: string }[];
+  taxReview: {
+    documentKind: string; decision: string; validUntil: Date | null; reviewedAt: Date;
+  } | null;
 };
+
+/**
+ * Internal admin tax-document review, only as known at payment time.
+ * It is not government validation and never issues or approves an invoice.
+ * Missing, later, revoked or expired reviews fail closed.
+ */
+export function taxDocumentFeePreview(order: DayCloseOrder) {
+  const event = order.taxReview;
+  if (!event || !order.paidAt || event.reviewedAt > order.paidAt ||
+      event.decision !== "verified" ||
+      (event.validUntil !== null && event.validUntil < order.paidAt)) {
+    return { documentKind: "BELIRSIZ", appliedServiceFeeBps: null as number | null,
+      status: "YAZAR_MALI_BELGE_DOGRULANAMADI" };
+  }
+  if (event.documentKind === "commercial_invoice" ||
+      event.documentKind === "self_employed_receipt") {
+    return { documentKind: event.documentKind, appliedServiceFeeBps: 0,
+      status: "IC_KAYIT_INCELEMESI_GECTI" };
+  }
+  if (event.documentKind === "gvk18_expense_receipt") {
+    return { documentKind: event.documentKind, appliedServiceFeeBps: order.commission?.serviceFeeRateBps ?? null,
+      status: "IC_KAYIT_INCELEMESI_GECTI" };
+  }
+  return { documentKind: "BELIRSIZ", appliedServiceFeeBps: null as number | null,
+    status: "YAZAR_MALI_BELGE_DOGRULANAMADI" };
+}
 
 export type DayCloseLedger = {
   id: string; entryType: string; amount: bigint; currency: string;
@@ -137,7 +166,8 @@ export function buildDayCloseFiles(input: {
     "siparis_no","odeme_tarihi_utc","durum","yazar_kodu","eser",
     "para_birimi","liste_brut_kurus","indirim_kurus","tahsilat_kurus",
     "net_fiyat_kurus","satis_kdv_kurus","komisyon_bps",
-    "komisyon_kaynagi","aracilik_bps_kosullu","kupon","kontrol",
+    "komisyon_kaynagi","aracilik_snapshot_bps","aracilik_uygulanan_bps",
+    "yazar_mali_belge_turu","kupon","kontrol",
   ]];
   const issues: CsvField[][] = [["kaynak","referans","uyari","islem"]];
   const reconciliation: CsvField[][] = [[
@@ -150,7 +180,8 @@ export function buildDayCloseFiles(input: {
   const preparation: CsvField[][] = [[
     "referans_siparis_no","satis_tarihi_utc","yazar_kodu","eser",
     "para_birimi","satis_net_kurus","satis_kdv_kurus","satis_brut_kurus",
-    "komisyon_bps","komisyon_net_ornek_kurus","aracilik_bps_kosullu",
+    "komisyon_bps","komisyon_net_ornek_kurus","aracilik_bps_uygulanan",
+    "aracilik_net_ornek_kurus","yazar_mali_belge_turu",
     "kayit_durumu","mali_belge_durumu",
   ]];
   const grossLedger = new Map<string, DayCloseLedger[]>();
@@ -162,10 +193,15 @@ export function buildDayCloseFiles(input: {
   }
   const details = { ready: 0, review: 0, zero: 0 };
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
+  let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
+  let invoiceDocumentSales = 0, gvk18DocumentSales = 0;
 
   for (const order of input.orders) {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
+    const tax = taxDocumentFeePreview(order);
+    if (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
+        tax.appliedServiceFeeBps === null) warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
     if (order.sellerMode !== "platform_direct") warnings.push("SATICI_ILKOKU_DOGRULANMADI");
     if (order.finalAmount < BigInt(0) || order.originalAmount - order.discountAmount !== order.finalAmount) {
@@ -230,18 +266,26 @@ export function buildDayCloseFiles(input: {
       order.authorPublicId,order.workTitle,order.currency,order.originalAmount,
       order.discountAmount,order.finalAmount,quote?.listNetAmount,
       quote?.listVatAmount,rate?.commissionRateBps,rate?.source,
-      rate?.serviceFeeRateBps,order.couponCode,review,
+      rate?.serviceFeeRateBps,tax.appliedServiceFeeBps,
+      tax.documentKind,order.couponCode,review,
     ]);
     if (review === "VERI_KONTROLU_GECTI" && quote && rate) {
       // This is only the net commission illustration at the frozen order
       // rate, not a platform invoice, ledger posting or tax determination.
       const commissionPreview = (quote.listNetAmount * BigInt(rate.commissionRateBps) +
         BigInt(5000)) / BigInt(10000);
+      const serviceFeePreview = (quote.listNetAmount * BigInt(tax.appliedServiceFeeBps!) +
+        BigInt(5000)) / BigInt(10000);
+      commissionPreviewMinor += commissionPreview;
+      serviceFeePreviewMinor += serviceFeePreview;
+      if (tax.documentKind === "gvk18_expense_receipt") gvk18DocumentSales++;
+      else invoiceDocumentSales++;
       preparation.push([
         order.orderNo,order.paidAt?.toISOString() ?? null,
         order.authorPublicId,order.workTitle,order.currency,
         quote.listNetAmount,quote.listVatAmount,order.finalAmount,
-        rate.commissionRateBps,commissionPreview,rate.serviceFeeRateBps,
+        rate.commissionRateBps,commissionPreview,tax.appliedServiceFeeBps,
+        serviceFeePreview,tax.documentKind,
         review,"DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
       ]);
     }
@@ -333,7 +377,9 @@ export function buildDayCloseFiles(input: {
       satis_brut_kurus: { source: "Order.finalAmount", meaning: "customer collected gross", required: true },
       komisyon_bps: { source: "OrderCommissionRateSnapshot.commissionRateBps", meaning: "frozen commission rate", required: true },
       komisyon_net_ornek_kurus: { source: "calculated from frozen net price and commission rate", meaning: "estimate, not posted income", required: false },
-      aracilik_bps_kosullu: { source: "OrderCommissionRateSnapshot.serviceFeeRateBps", meaning: "only eligible un-invoiced writer status; never auto-bill", required: false },
+      aracilik_bps_uygulanan: { source: "Frozen OrderCommissionRateSnapshot plus AuthorTaxReviewEvent as-of paidAt", meaning: "0 for verified invoice/receipt, 500 for verified eligible GVK18; never auto-bill", required: false },
+      aracilik_net_ornek_kurus: { source: "sale net multiplied by verified applicable rate", meaning: "illustrative separate service amount, not a ledger or invoice", required: false },
+      yazar_mali_belge_turu: { source: "latest valid verified AuthorTaxReviewEvent at paidAt", meaning: "internal review, not government validation", required: true },
       kayit_durumu: { source: "review flags", meaning: "technical record check, not fiscal approval", required: true },
       mali_belge_durumu: { source: "fixed fail-closed disclaimer", meaning: "accountant review required", required: true },
     },
@@ -342,7 +388,7 @@ export function buildDayCloseFiles(input: {
     fiscalApproval: "REQUIRED_EXTERNALLY",
     commissionField: "komisyon_net_ornek_kurus",
     commissionNotice: "Illustration from frozen rate and sale net; never an issued service invoice",
-    optionalServiceFee: "5% rate only; applicability, VAT and document require accountant review",
+    optionalServiceFee: "Verified internal GVK18 review: 5% illustration; verified commercial invoice/self-employed receipt: 0%; unknown fails closed. All amounts require accountant approval.",
     vendors: {
       logo: {
         schemaVerified: false, automaticImportReady: false,
@@ -396,6 +442,10 @@ export function buildDayCloseFiles(input: {
     unmatchedGrossLedgerOrderCount: reconciliation.slice(1).filter(row => row[6] !== "LEDGER_KONTROLU_GECTI").length,
     checkedGrossMinor: grossMinor.toString(),
     checkedVatMinor: vatMinor.toString(),
+    reviewedCommissionIllustrationMinor: commissionPreviewMinor.toString(),
+    reviewedServiceFeeIllustrationMinor: serviceFeePreviewMinor.toString(),
+    reviewedInvoiceDocumentSales: invoiceDocumentSales,
+    reviewedGvk18DocumentSales: gvk18DocumentSales,
     fileHashes: Object.fromEntries(documents.map((file) => [file.name,sha256(file.data)])),
   };
   const files = [...documents,{ name: "manifest.json", data: JSON.stringify(manifest,null,2)+"\n" }];

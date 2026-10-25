@@ -461,3 +461,32 @@ test("UAT: purchase order number is shown only from reader-owned persisted order
   has(orderDetail, "Sipariş numarası:", "receipt displays order number");
   has(readerRepo, "where: { readerId, orderNo }", "order detail access remains buyer-scoped");
 });
+
+
+test("UAT: VAT-exclusive new prices are frozen per order without retroactive legacy migration", () => {
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20261025143000_commerce_price_tax_quote/migration.sql");
+  const quote = source("src/features/commerce/price-quote.ts");
+  const state = source("src/features/commerce/effective-state.ts");
+  const actions = source("src/features/commerce/actions.ts");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const reader = source("src/features/commerce/reader-repository.ts");
+  const details = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+
+  has(schema, "model OrderPriceQuoteSnapshot", "per-order immutable quote relation");
+  has(migration, "DEFAULT 'legacy_inclusive'", "non-retroactive schema migration");
+  has(quote, 'input.taxTreatment === "net_plus_vat"', "explicit opt-in for price plus VAT");
+  has(quote, "calculateCommercePricing(listGrossAmount", "coupons apply to VAT-inclusive total");
+  has(state, "priceTaxTreatment: input.latestConsent.priceTaxTreatment", "confirmed writer price-tax basis");
+  has(actions, '"net_plus_vat"', "new work explicitly records net VAT-plus basis");
+  has(actions, "priceTaxTreatment: work.saleConfiguration!.priceTaxTreatment", "writer final approval freezes price treatment");
+  has(zero, "priceQuote,", "0 TL and coupon orders preserve quote source");
+  has(paid, "priceQuote,", "paid orders preserve quote source");
+  has(checkout, "priceQuote.listVatAmount", "reader sees VAT separately when supported");
+  has(publicQuery, ".listGrossAmount", "work reader metadata shows VAT-inclusive price");
+  has(reader, "priceQuoteSnapshot:", "order reader retrieves frozen quote");
+  has(details, "order.priceQuoteSnapshot", "order receipt shows frozen net price and VAT");
+});

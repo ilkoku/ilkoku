@@ -43,3 +43,18 @@ export function summarizeHits(items) {
     status2xx: hits.filter((item) => item.status >= 200 && item.status < 300).length,
   };
 }
+
+/**
+ * A real CTA must produce exactly one successful GA4 network request.
+ * dataLayer custom events and gtag commands are diagnostics, not delivery
+ * evidence: either form can be consumed by GTM before the snapshot.
+ */
+export function assessCtaHitDelivery(clickPerformed, ctaHits) {
+  const violations = [];
+  if (!clickPerformed) violations.push("CTA_NOT_CLICKED");
+  if (ctaHits.length !== 1) violations.push("CTA_GA4_HIT_NOT_EXACTLY_ONE");
+  if (ctaHits.length === 1 && !(ctaHits[0].status >= 200 && ctaHits[0].status < 300)) {
+    violations.push("CTA_GA4_HIT_NOT_SUCCESSFUL");
+  }
+  return { violations, successfulHitCount: ctaHits.filter(hit => hit.status >= 200 && hit.status < 300).length };
+}

@@ -62,7 +62,7 @@ export default async function ReaderPaymentHistoryPage() {
             <h1>Ödeme Geçmişi</h1>
             <p>
               Eser siparişlerinin tutar ve işlem durumlarını burada
-              görüntüleyebilirsin.
+              görüntüleyebilirsin. 0 TL edinimlerde banka veya kart tahsilatı yapılmaz.
             </p>
           </div>
           <Link className={styles.secondaryAction} href="/hesabim">
@@ -79,7 +79,7 @@ export default async function ReaderPaymentHistoryPage() {
             {orders.map((order) => (
               <article className={styles.paymentHistoryCard} key={order.id}>
                 <div>
-                  <span className={styles.eyebrow}>{order.orderNo}</span>
+                  <span className={styles.eyebrow}>Sipariş No: {order.orderNo}</span>
                   <h2>{order.work.title}</h2>
                   <p>{formatDate(order.paidAt ?? order.createdAt)}</p>
                 </div>
@@ -103,7 +103,11 @@ export default async function ReaderPaymentHistoryPage() {
                   </span>
                   <span>
                     Durum
-                    <strong>{statusLabels[order.status]}</strong>
+                    <strong>
+                      {order.status === "paid" && order.finalAmount === BigInt(0)
+                        ? "0 TL edinildi · Tahsilat yok"
+                        : statusLabels[order.status]}
+                    </strong>
                   </span>
                 </div>
 
@@ -111,12 +115,20 @@ export default async function ReaderPaymentHistoryPage() {
                   <small>Kupon: {order.couponCodeSnapshot}</small>
                 ) : null}
 
-                <Link
-                  className={styles.secondaryAction}
-                  href={"/kitap/" + order.work.slug}
-                >
-                  Eseri görüntüle
-                </Link>
+                <div className={styles.heroActions}>
+                  <Link
+                    className={styles.secondaryAction}
+                    href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(order.orderNo)}
+                  >
+                    Sipariş ayrıntısı
+                  </Link>
+                  <Link
+                    className={styles.quietAction}
+                    href={"/kitap/" + order.work.slug}
+                  >
+                    Eseri görüntüle
+                  </Link>
+                </div>
               </article>
             ))}
           </section>

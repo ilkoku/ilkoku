@@ -114,6 +114,7 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
     work_unavailable: "eser-hazir-degil",
     coupon_invalid: "kupon-gecersiz",
     not_zero_total: "sifir-toplam-gerekli",
+    seller_unverified: "satici-yetkisi-dogrulanmadi",
   } as const;
 
   redirect(destination(slug, statusByReason[result.reason], returnTo));
@@ -223,6 +224,7 @@ export async function beginPaidCheckoutAction(formData: FormData) {
     checkout_disabled: "tahsilat-kapali",
     provider_unavailable: "odeme-saglayicisi-hazir-degil",
     work_unavailable: "eser-hazir-degil",
+    seller_unverified: "satici-yetkisi-dogrulanmadi",
     coupon_invalid: "kupon-gecersiz",
     zero_total_required: "sifir-toplam-akisi",
     provider_error: "odeme-baslatilamadi",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
+import { compareCorePageToCode, corePublicCodeCopies } from "@/lib/core-public-code-copy";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 import { publicCmsPageCatalog } from "@/lib/public-cms-page-catalog";
@@ -133,6 +134,7 @@ export default async function Page() {
             <strong>CMS kayıt kalitesi denetimi</strong>
             <p>Bu tarama mevcut canlı sayfaları otomatik olarak yayından kaldırmaz. Bir sonraki CMS yayını aynı kalite kapısından geçer; bu ekran ise bugün veritabanında duran kalıcı kaydın hangi maddelerde iyileştirilmesi gerektiğini gösterir.</p>
             <p>Sekiz güven/rol sayfasında eski CMS metnini geçici bundled köprü örtebilir. Bu nedenle buradaki “kalite borcu” ifadesi doğrudan canlı ziyaretçi çıktısının bozuk olduğu anlamına gelmez; köprünün ileride güvenle kaldırılabilmesi için kalıcı CMS kaydındaki borcu görünür kılar.</p>
+            <p>CMS kaydı olmayan veya henüz taslak olan çekirdek sayfalar ziyaretçilere kodun güncel onaylı metniyle sunulur. Aşağıdaki karşılaştırma salt okunurdur; hiçbir taslağı değiştirmez veya kendiliğinden yayımlamaz. Farklılıklar editörün bilinçli değişikliği de olabilir.</p>
           </div>
 
           <div className="content-panel">
@@ -151,17 +153,33 @@ export default async function Page() {
                 const page = pageByContentKey.get(item.contentKey);
                 const seoReady = page ? hasCompleteSeo(page) : false;
                 const quality = page ? publicationQuality(page) : null;
+                const codeCopy = corePublicCodeCopies[item.contentKey];
+                const codeQuality = evaluateCmsPagePublishQuality({
+                  slug: codeCopy.canonical, title: codeCopy.title,
+                  summary: codeCopy.summary, body: codeCopy.body,
+                  seoTitle: codeCopy.seoTitle, seoDescription: codeCopy.seoDescription,
+                  noIndex: false,
+                });
+                const codeDifferences = page ? compareCorePageToCode(page, codeCopy) : [];
                 return (
                   <div className="content-list-row" key={item.contentKey} style={{ alignItems: "flex-start", gap: "1rem" }}>
                     <div style={{ minWidth: 150 }}>
-                      <strong>{page ? (page.status === "published" ? "YAYINDA" : page.status === "archived" ? "ARŞİV" : "TASLAK") : "EKSİK"}</strong>
+                      <strong>{page ? (page.status === "published" ? "YAYINDA" : page.status === "archived" ? "ARŞİV" : "TASLAK") : "CMS KAYDI YOK"}</strong>
                       <br />
-                      <small>{page?.status === "published" ? (seoReady ? "SEO HAZIR" : "SEO KONTROL") : "CMS KAYDI"}</small>
+                      <small>{page?.status === "published" ? (seoReady ? "SEO HAZIR" : "SEO KONTROL") : "CANLI: KOD SÜRÜMÜ"}</small>
                       {quality ? <><br /><small>{quality.ok ? "KALİTE HAZIR" : `${quality.issues.length} KALİTE EKSİĞİ`}</small></> : null}
                     </div>
                     <div style={{ flex: 1 }}>
                       <strong>{item.label}</strong>
                       <p style={{ margin: ".35rem 0 0" }}>{item.slug}</p>
+                      <p style={{ margin: ".35rem 0 0" }}>Canlı kod referansı: {codeQuality.ok ? "SEO ve yayın kalitesi hazır" : `${codeQuality.issues.length} kalite uyarısı`}</p>
+                      {page ? (
+                        <p style={{ margin: ".35rem 0 0" }}>
+                          CMS–canlı kod metni ve SEO karşılaştırması: {codeDifferences.length === 0
+                            ? "7 alanda birebir eşleşiyor"
+                            : `${codeDifferences.length} farklı alan (${codeDifferences.join(", ")}). Yayın kararı öncesi inceleyin.`}
+                        </p>
+                      ) : <p style={{ margin: ".35rem 0 0" }}>Kod içeriği erişilebilir; CMS kaydı henüz oluşturulmamış.</p>}
                       {quality && !quality.ok ? (
                         <ul style={{ margin: ".55rem 0 0", paddingLeft: "1.15rem" }}>
                           {quality.issues.map((message, index) => <li key={`${item.contentKey}-${index}`}>{message}</li>)}
@@ -171,7 +189,7 @@ export default async function Page() {
                     <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       {page ? <Link href={`/icerik/sayfalar/${page.id}`}>Düzenle →</Link> : <Link href="/icerik/hazirlik">Eksik kaydı tamamla →</Link>}
                       {page ? <Link href={`/icerik/onizleme/sayfa/${page.id}`}>Önizle ↗</Link> : null}
-                      {page?.status === "published" ? <Link href={item.slug} target="_blank">Canlı ↗</Link> : null}
+                      <Link href={item.slug} target="_blank">Canlı ↗</Link>
                     </div>
                   </div>
                 );

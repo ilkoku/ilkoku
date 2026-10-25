@@ -336,10 +336,10 @@ test("communications navigation uses original horizontal strip and collapsible c
 
   assert.match(shell, /className="admin-secondary-panel"/);
   assert.match(shell, /className="admin-secondary-panel__items"/);
-  assert.match(shell, /const subExpanded = isSubmenuExpanded\(item\.href, pathname, expandedSubmenus\)/);
+  assert.match(shell, /const subExpanded = isSubmenuExpanded\(item\)/);
   assert.match(shell, /\{hasChildren \? \(/);
   assert.match(shell, /aria-expanded=\{subExpanded\}/);
-  assert.match(shell, /item\.children\?\.length && isSubmenuExpanded\(item\.href, pathname, expandedSubmenus\)/);
+  assert.match(shell, /item\.children\?\.length && isSubmenuExpanded\(item\)/);
   assert.doesNotMatch(shell, /admin-communications-nav__caption|data-group=\{selectedGroup\.id\}/);
   assert.doesNotMatch(css, /\.admin-secondary-panel\[data-group="communications"\]/);
   assert.match(shell, /href="\/hesabim">Hesabım/);
@@ -506,4 +506,24 @@ test("unified admin preserves hidden CMS helpers and query-based Power-SEO activ
   assert.match(shell, /new URLSearchParams\(query\)/);
   assert.match(shell, /currentSearch\.get\("mod"\) \? "tarama"/, "nested scan modes remain under tarama");
   assert.match(shell, /currentSearch\.get\("yol"\) \? "sayfa"/, "legacy page deep links remain under sayfa");
+});
+
+
+test("existing horizontal third-level navigation remains open on every nested admin page", () => {
+  const shell = read("src/components/admin/AdminShell.tsx");
+  const groups = read("src/lib/admin-navigation.ts");
+  const powerSeo = read("src/app/admin/power-seo/page.tsx");
+  assert.doesNotMatch(powerSeo, /aria-label="Power-SEO çalışma alanları"/, "do not duplicate the common Power-SEO horizontal tabs inside the page");
+  assert.match(shell, /item\.href === \`\$\{SYSTEM_MANAGEMENT_PATH\}\/power-seo\`/, "Power-SEO query-only tabs must use full navigation");
+  assert.match(shell, /<a key=\{child\.href\} href=\{child\.href\}/, "full-page navigation remains available for Power-SEO");
+  assert.match(shell, /const nestedRouteActive = item\.children\?\.some/);
+  assert.match(shell, /const expansionKey =/);
+  assert.match(shell, /expandedSubmenus\[expansionKey\] \?\? \(activeParent \|\| nestedRouteActive\)/);
+  assert.match(shell, /\[expansionKey\]: !subExpanded/);
+  assert.match(shell, /className="admin-tertiary-row admin-nav-child__items"/);
+  assert.match(shell, /isActiveSubItem\(child\.href/);
+  assert.match(groups, /systemMapNavigationItems\.map/);
+  assert.match(groups, /children: contractSubNavigation/);
+  assert.match(groups, /children: contentSubNavigation/);
+  assert.match(groups, /children: powerSeoSubNavigation/);
 });

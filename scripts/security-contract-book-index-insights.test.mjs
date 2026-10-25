@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import ts from "typescript";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -251,10 +252,157 @@ test("Book Index auto-matches refresh corrected metadata only through exact ISBN
 test("Book Index insight SQL reads are parallel and de-duplicated within one server request", () => {
   const insights = source("src/lib/book-index/insights.ts");
   contains(insights, 'import { cache } from "react";', "request-local React cache");
-  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number)", "per-limit cached computation");
+  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true)", "per-limit and history-mode cached computation");
   contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads are parallel");
   contains(insights, "loadSourceSnapshots(),", "current/previous source evidence still collected");
-  contains(insights, "loadLongSellers(safeLimit),", "historical seller evidence still collected");
+  contains(insights, "includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),", "historical evidence collected only where needed");
   contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "public insight function uses request-local cache");
   contains(insights, "longSellers,", "historical evidence returned unmodified");
+});
+
+test("Book Index query timing diagnostic is admin-only, read-only and request-scoped", () => {
+  const route = source("src/app/api/admin/book-index-query-timing/route.ts");
+  const trace = source("src/lib/book-index/performance-trace.ts");
+  const insights = source("src/lib/book-index/insights.ts");
+  const publicAccess = source("src/lib/book-index/public-access.ts");
+  const publicModel = source("src/lib/book-index/public-read-model.ts");
+  const rankings = source("src/lib/book-index/source-rank-table.ts");
+  const insightPage = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+
+  contains(route, "const user = await getCurrentUser();", "real authenticated admin session");
+  contains(route, 'if (!user || user.role !== "admin")', "no profiling or results for non-admin requests");
+  assert.ok(
+    route.indexOf('user.role !== "admin"') < route.indexOf("collectBookIndexTimings(async ()"),
+    "access authorization must precede any query profiling",
+  );
+  contains(route, '"Cache-Control": "private, no-store, max-age=0"', "timing response is not cached");
+  contains(route, '"X-Robots-Tag": "noindex, nofollow, noarchive"', "timing route is not indexed");
+  contains(route, 'error: "diagnostic_failed"', "SQL errors are not returned to users");
+  contains(route, "getBookIndexSoftLaunchPageContext(100)", "same 100-row context as insight page");
+  contains(route, "getBookIndexInsights(50)", "same 50-row insight evidence as page");
+  contains(route, "await Promise.all([", "production-like concurrent calculation");
+  contains(route, "spans include connection queue, Prisma and database time", "measurements do not claim pure SQL execution");
+
+  contains(trace, "new AsyncLocalStorage<BookIndexTiming[]>()", "no global cross-request metrics");
+  contains(trace, "if (!entries) return fn();", "regular page view carries no timing collector");
+  contains(trace, 'outcome: "error"', "failed query timings are not silently marked successful");
+  notContains(trace, "console.log(", "performance records do not pollute production logs");
+
+  contains(insights, 'timeBookIndexOperation("insights.sourceSnapshotSql"', "source evidence database span");
+  contains(insights, 'timeBookIndexOperation("insights.longSellerHistorySql"', "historical GROUP BY span");
+  contains(insights, 'timeBookIndexOperation("insights.longSellerBookMetadataSql"', "metadata fetch span");
+  contains(rankings, 'timeBookIndexOperation("rankRows.activeListsSql"', "Turkey active list SQL span");
+  contains(rankings, 'timeBookIndexOperation("rankRows.latestRunsSql"', "Turkey observation SQL span");
+  contains(publicAccess, 'timeBookIndexOperation("publicContext.readinessEvidence"', "readiness and evidence span");
+  contains(publicAccess, 'timeBookIndexOperation("publicContext.readModel"', "model assembly span");
+  contains(publicModel, 'timeBookIndexOperation("publicModel.turkeyRankRows"', "Turkey row assembly span");
+  contains(publicModel, 'timeBookIndexOperation("publicModel.sourceListSnapshots"', "source snapshot assembly span");
+  contains(insightPage, 'export const dynamic = "force-dynamic";', "freshness model is unchanged");
+  contains(insightPage, "getBookIndexPageInsights(definition.key, 50)", "selected insight routing and 50-row limit preserved");
+  contains(insights, "GROUP BY externalBook.masterBookId", "historical SQL grouping preserved");
+  contains(insights, 'import { unstable_cache } from "next/cache";', "bounded Next data-cache for heavy history");
+  contains(insights, '"ilkoku-book-index-long-seller-history-20261023-v1"', "isolated historical cache key");
+  contains(insights, "{ revalidate: 30 }", "history freshness bounded to 30 seconds");
+  contains(insights, "observationCount: Number(row.observationCount)", "bigint normalization for cache transport");
+  contains(insights, "firstObservedAt: new Date(row.firstObservedAt)", "Date rehydration preserves downstream presentation");
+  contains(insights, ".slice(0, limit);", "existing long-seller ranking and limit preserved");
+  notContains(route, "executeRaw", "diagnostic does not write to database");
+  notContains(route, "POST(", "no state-mutating diagnostic action");
+});
+
+test("three insight pages skip unrelated long-seller history while preserving source-evidence results", async () => {
+  const insightsCode = source("src/lib/book-index/insights.ts");
+  const page = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+  const diagnostic = source("src/app/api/admin/book-index-query-timing/route.ts");
+
+  assert.equal(
+    page.match(/getBookIndexPageInsights\(definition\.key, 50\)/g)?.length,
+    2,
+    "metadata and page must use identical selected-insight cache arguments",
+  );
+  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\")", "all other insight routes skip historical query");
+  contains(diagnostic, "getBookIndexPageInsights(insightKey, 50)", "admin-only profiler measures page-specific workload");
+  contains(diagnostic, 'requested !== null && !validKeys.some((key) => key === requested)', "profile key must be allowlisted");
+  contains(diagnostic, "getBookIndexInsights(50)", "legacy full evidence diagnostics remain available");
+
+  // Run the actual production TypeScript through a transpiler with fixture
+  // Prisma reads. This compares item evidence without changing production data.
+  const compiled = ts.transpileModule(insightsCode, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const now = new Date("2026-10-22T09:00:00Z");
+  const before = new Date("2026-10-20T09:00:00Z");
+  const observation = (id, rank, at) => ({
+    rank, observedAt: at,
+    externalBook: {
+      masterBookId: id,
+      masterBook: { id, title: id === "m1" ? "Örnek Roman" : "Örnek Öykü", authorName: "Yazar" },
+    },
+  });
+  const fixtureLists = [{
+    source: { code: "fixture-bookseller" },
+    fetchRuns: [
+      { observations: [observation("m1", 3, now), observation("m2", 2, now)] },
+      { observations: [observation("m1", 10, before)] },
+    ],
+  }];
+  let historySqlCalls = 0;
+  const prisma = {
+    bookIndexList: { findMany: async () => fixtureLists },
+    $queryRaw: async () => {
+      historySqlCalls++;
+      return [{
+        masterBookId: "m1",
+        firstObservedAt: before,
+        lastObservedAt: now,
+        sourceCodes: "fixture-bookseller",
+        observationCount: 2n,
+      }];
+    },
+    bookIndexBook: {
+      findMany: async () => [{ id: "m1", title: "Örnek Roman", authorName: "Yazar" }],
+    },
+  };
+  const mocks = {
+    "server-only": {},
+    "react": { cache: fn => fn },
+    "next/cache": { unstable_cache: fn => async (...args) => JSON.parse(JSON.stringify(await fn(...args))) },
+    "@/lib/prisma": { prisma },
+    "./performance-trace": { timeBookIndexOperation: async (_, fn) => fn() },
+    "./sources": {
+      TURKEY_INDEX_MIN_SOURCES: 1,
+      getBookIndexSource: () => ({ name: "Örnek Kitapçı" }),
+      getBookIndexSourceIndependenceGroup: code => code,
+    },
+  };
+  const mockModule = { exports: {} };
+  new Function("require", "module", "exports", compiled)(
+    name => {
+      assert.ok(Object.hasOwn(mocks, name), "unexpected dependency " + name);
+      return mocks[name];
+    },
+    mockModule,
+    mockModule.exports,
+  );
+  const { getBookIndexInsights, getBookIndexPageInsights } = mockModule.exports;
+  const full = await getBookIndexInsights(50);
+  assert.equal(historySqlCalls, 1, "normal full insight consumer retains historical evidence");
+  assert.equal(full.longSellers.length, 1, "long-seller evidence is available to full consumer");
+  assert.ok(full.longSellers[0].firstObservedAt instanceof Date, "cached first observation is revived as Date");
+  assert.ok(full.longSellers[0].lastObservedAt instanceof Date, "cached last observation is revived as Date");
+  assert.equal(full.longSellers[0].observationCount, 2, "cached bigint count remains numeric evidence");
+  assert.equal(full.newEntries.length, 1, "new-entry fixture is present");
+  assert.equal(full.risers.length, 1, "riser fixture is present");
+  assert.equal(full.everywhereSellers.length, 2, "independent-store visibility fixture is present");
+
+  for (const key of ["newEntries", "risers", "everywhereSellers"]) {
+    const beforeCalls = historySqlCalls;
+    const selected = await getBookIndexPageInsights(key, 50);
+    assert.equal(historySqlCalls, beforeCalls, key + " must not run historical SQL");
+    assert.equal(selected.longSellers.length, 0, key + " need not load unrelated long sellers");
+    assert.deepEqual(JSON.parse(JSON.stringify(selected[key])), JSON.parse(JSON.stringify(full[key])), key + " visible evidence must match full computation");
+  }
+  const long = await getBookIndexPageInsights("longSellers", 50);
+  assert.equal(historySqlCalls, 2, "long-seller page retains full historical query");
+  assert.deepEqual(JSON.parse(JSON.stringify(long.longSellers)), JSON.parse(JSON.stringify(full.longSellers)), "long-seller page retains exact historical evidence");
 });

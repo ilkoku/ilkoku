@@ -359,13 +359,14 @@ test("SEO content-depth phase 9 adds seven useful category examples and a reader
     "/yazarlar-icin/kurgu",
     "/yazarlar-icin/edebiyat",
     "/yazarlar-icin/akademik",
-    "/yazarlar-icin/bilgilendirici",
     "/yazarlar-icin/senaryo-ve-sahne",
     "/yazarlar-icin/cocuk-ve-genclik",
     "/yazarlar-icin/cizgi-anlati",
   ]) {
     assertContains(freshness, `["${route}", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT]`, `material update is tracked for ${route}`);
   }
+  assertContains(freshness, 'const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z")', "verified Oct 22 informational content update timestamp");
+  assertContains(freshness, '["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT]', "only the informational hub tracks the later expert disclaimer update");
   assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "unrelated flagship freshness remains unchanged");
 });
 
@@ -604,6 +605,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   for (const changedFile of [
     "src/app/sitemap.xml/route.ts",
     "src/lib/seo/sitemap-data.ts",
+    "src/lib/soft-launch-search-policy.ts",
     "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
     "src/components/content/PublicCmsHydrator.tsx",
@@ -634,6 +636,7 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");
   assertContains(workflow, '"src/features/homepage/**"', "homepage feature IndexNow trigger");
   assertContains(workflow, '"src/lib/public-site-navigation.ts"', "global navigation IndexNow trigger");
+  assertContains(workflow, '"src/lib/soft-launch-search-policy.ts"', "soft launch cohort IndexNow trigger");
   assertContains(workflow, '"src/components/content/PublicCmsHydrator.tsx"', "shared public layout IndexNow trigger");
   assertContains(workflow, 'if [[ "$URL_COUNT" == "0" ]]', "IndexNow empty public diff no-op");
 });
@@ -981,6 +984,7 @@ test("Madde 14 writer hub links directly to five approved indexable priority gui
     "/yazarlar-icin/kurgu/fantastik",
     "/yazarlar-icin/kurgu/bilim-kurgu",
     "/yazarlar-icin/kurgu/distopya",
+    "/yazarlar-icin/kurgu/dedektif",
     "/yazarlar-icin/edebiyat/siir",
   ];
 
@@ -1634,4 +1638,24 @@ test("Power-SEO AI and Meta previews are read-only and operate without model sec
   const m = createMetadata({ title: "Öykü rehberi", canonical: "https://ilkoku.com/yazarlar-icin" });
   assert.equal(m.title, "Öykü rehberi");
   assert.equal(m.alternates?.canonical, "https://ilkoku.com/yazarlar-icin");
+});
+
+
+test("public reader and editor CMS visuals deliver responsive optimized images without modifying source media", () => {
+  const reader = source("src/components/content/ReaderEducationPage.tsx");
+  const editor = source("src/components/content/EditorEducationShell.tsx");
+  const media = source("src/app/api/media/[id]/route.ts");
+  const next = source("next.config.ts");
+  const canary = source(".github/workflows/seo-cms-image-optimization-canary.yml");
+
+  assertNotContains(reader, "unoptimized", "reader public images must not bypass Next image optimizer");
+  assertNotContains(editor, "unoptimized", "editor public sidebar image must not bypass Next image optimizer");
+  assertContains(reader, 'sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 960px"', "reader images choose responsive widths");
+  assertContains(editor, 'sizes="230px"', "editor sidebar image uses its actual narrow viewport width");
+  assertContains(reader, "quality={75}", "reader images use a configured optimizer quality");
+  assertContains(editor, "quality={75}", "editor images use a configured optimizer quality");
+  assertContains(next, "qualities: [45, 60, 75]", "75 is allowed by Next image optimizer");
+  assertContains(media, 'Cache-Control', "original CMS media endpoint and caching stay available");
+  assertContains(canary, "src/components/content/ReaderEducationPage.tsx", "live optimizer canary covers reader delivery");
+  assertContains(canary, "src/components/content/EditorEducationShell.tsx", "live optimizer canary covers editor delivery");
 });

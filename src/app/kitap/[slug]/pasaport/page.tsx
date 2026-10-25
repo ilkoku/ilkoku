@@ -7,6 +7,7 @@ import { getPublicOwnershipPassportBySlug } from "@/features/ownership/public-pa
 import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
+import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 
 export const metadata: Metadata = {
   title: "Eser Pasaportu | İlkOku",
@@ -19,19 +20,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const MAX_RETURN_PATH_LENGTH = 1500;
-
 function safeReturnPath(value: string | undefined, slug: string) {
-  if (
-    !value ||
-    value.length > MAX_RETURN_PATH_LENGTH ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
-    return `/kitap/${slug}`;
-  }
-
-  return value;
+  return safeOneHopReturnPath(value, `/kitap/${slug}`);
 }
 
 export default async function PublicOwnershipPassportPage({

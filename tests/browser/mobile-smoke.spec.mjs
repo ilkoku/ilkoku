@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import mysql from "mysql2/promise";
 
 import { expect, test } from "@playwright/test";
 
@@ -198,6 +199,20 @@ for (const scenario of [
       (element) => getComputedStyle(element).display,
     );
     expect(heroDisplay, "BookShowcase CSS must load on its public detail route").toBe("grid");
+    await expect(page.locator(".showcase-primary-actions")).toBeVisible();
+    await expect(page.locator(".showcase-chapter-list")).toBeVisible();
+    const cards = page.locator(".showcase-chapter-card");
+    expect(await cards.count(), "Published chapters must render as cards").toBeGreaterThan(0);
+    const chapterDisplay = await cards.first().evaluate(
+      (element) => getComputedStyle(element).display,
+    );
+    expect(chapterDisplay, "Chapter cards must keep their scoped layout styles").toBe("flex");
+    const title = page.locator(".showcase-hero h1");
+    const titleOverflow = await title.evaluate((element) => ({
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }));
+    expect(titleOverflow.scrollWidth, "Work titles must wrap inside the hero").toBeLessThanOrEqual(titleOverflow.clientWidth + 2);
     await expectResponsiveDocument(page);
   });
 }
@@ -388,6 +403,160 @@ for (const scenario of authenticatedCases) {
 }
 
 
+test("reader checkout shows zero-total summary first with dark cards and intact disabled payment options", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+
+  for (const [label, viewport] of [
+    ["desktop", viewports.desktop],
+    ["phone", viewports.phone390],
+  ]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+    expect(response?.status(), label + ": checkout responds").toBe(200);
+    const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
+    await expect(summary.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
+    const breakdown = summary.locator('[class*="summaryGrid"] > div');
+    await expect(breakdown).toHaveCount(4);
+    await expect(breakdown.nth(1)).toContainText("İlkOku kupon indirimi");
+    await expect(breakdown.nth(1)).toContainText("0,00");
+    await expect(breakdown.nth(2)).toContainText("Yazar indirim kodu");
+    await expect(breakdown.nth(2)).toContainText("0,00");
+    const totalRow = breakdown.last();
+    await expect(totalRow).toContainText("Ödenecek toplam");
+    await expect(totalRow).toContainText("0,00");
+
+    const appearance = await summary.evaluate((element) => {
+      const grid = element.querySelector('[class*="summaryGrid"]');
+      const metadata = element.querySelector('[class*="readerCheckoutWorkMeta"]');
+      const price = grid?.lastElementChild;
+      const summaryCard = element.querySelector('[class*="readerCheckoutSummary"]');
+      return {
+        cardBackground: summaryCard ? getComputedStyle(summaryCard).backgroundColor : "",
+        order: !!grid && !!metadata && grid.getBoundingClientRect().top < metadata.getBoundingClientRect().top,
+        totalBottom: price?.getBoundingClientRect().bottom ?? Infinity,
+        viewportHeight: window.innerHeight,
+      };
+    });
+    expect(appearance.cardBackground, label + ": dark panel").toBe("rgb(27, 31, 39)");
+    expect(appearance.order, label + ": price displayed before work metadata").toBe(true);
+    expect(appearance.totalBottom, label + ": total visible without scrolling").toBeLessThan(appearance.viewportHeight);
+
+    await expect(page.locator('input[name="purchasePath"][value="card"]')).toBeDisabled();
+    await expect(page.locator('input[name="purchasePath"][value="carrier"]')).toBeDisabled();
+    await expectResponsiveDocument(page);
+  }
+});
+
+test("reader checkout separates platform and author codes and blocks discounts on staged 0 TL work", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+    const area = page.locator('[class*="readerCheckoutCoupons"]');
+    await expect(area.getByRole("heading", { name: "Kupon ve indirim kodları" })).toBeVisible();
+    await expect(area.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeDisabled();
+    await expect(area.getByRole("textbox", { name: "Yazar indirim kodu" })).toBeDisabled();
+    await expect(area.getByText("Bu eserin bedeli 0 TL olduğundan")).toBeVisible();
+    await expectResponsiveDocument(page);
+  }
+
+  await page.setViewportSize(viewports.desktop);
+  for (const [type, code, expectedLabel] of [
+    ["platform", "CIBROWSER100", "İlkOku kuponu"],
+    ["author", "CIBROWSERAUTHOR", "Yazar indirim kodu"],
+  ]) {
+    await page.goto("/satinal/ci-browser-coupon-work", { waitUntil: "domcontentloaded" });
+    const area = page.locator('[class*="readerCheckoutCoupons"]');
+    await expect(area.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeEnabled();
+    await expect(area.getByRole("textbox", { name: "Yazar indirim kodu" })).toBeEnabled();
+    const form = area.locator(`form:has(input[name="kuponTuru"][value="${type}"])`);
+    await form.locator('input[name="kupon"]').fill(code);
+    await form.getByRole("button", { name: "Uygula" }).click();
+    await expect(page).toHaveURL(new RegExp(`kuponTuru=${type}.*kupon=${code}|kupon=${code}.*kuponTuru=${type}`));
+    await expect(area.getByText(`${expectedLabel} ${code} uygulandı.`, { exact: false })).toBeVisible();
+    const summary = page.getByRole("complementary", { name: "Sipariş özeti" });
+    const breakdown = summary.locator('[class*="summaryGrid"] > div');
+    await expect(breakdown).toHaveCount(4);
+    await expect(breakdown.first()).toContainText("100,00");
+    await expect(breakdown.nth(1)).toContainText("İlkOku kupon indirimi");
+    await expect(breakdown.nth(2)).toContainText("Yazar indirim kodu");
+    await expect(breakdown.nth(type === "platform" ? 1 : 2)).toContainText("-₺100,00");
+    await expect(breakdown.nth(type === "platform" ? 2 : 1)).toContainText("₺0,00");
+    await expect(breakdown.last()).toContainText("Ödenecek toplam");
+    await expect(breakdown.last()).toContainText("0,00");
+    await expectResponsiveDocument(page);
+  }
+
+  await page.goto("/satinal/ci-browser-coupon-work?kuponTuru=author&kupon=CIBROWSER100");
+  const wrongSource = page.locator('[class*="readerCheckoutCoupons"]');
+  await expect(wrongSource.getByText(/seçilen kupon türüyle eşleşmiyor/)).toBeVisible();
+  const rejectedBreakdown = page.getByRole("complementary", { name: "Sipariş özeti" })
+    .locator('[class*="summaryGrid"] > div');
+  await expect(rejectedBreakdown.nth(1)).toContainText("₺0,00");
+  await expect(rejectedBreakdown.nth(2)).toContainText("₺0,00");
+  await expect(rejectedBreakdown.last()).toContainText("100,00");
+});
+
+test("reader discovery row actions stay inside their column without overlapping on desktop and mobile", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.reader,
+    url: authCookieUrl,
+  }]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
+
+  // A paid CI work exposes detail, favorite, reading and access controls.
+  // At narrower widths the controls must wrap inside the action cell.
+  const couponRow = page.locator(".workspace-table--discovery tbody tr")
+    .filter({ hasText: "CI Browser Kupon Eseri" });
+  await expect(couponRow).toBeVisible();
+  await expect(couponRow.getByRole("link", { name: "Erişim koşullarını gör" })).toBeVisible();
+
+  for (const [label, viewport] of [
+    ["desktop", viewports.desktop],
+    ["tablet", viewports.tablet768],
+    ["phone", viewports.phone390],
+  ]) {
+    await page.setViewportSize(viewport);
+    const geometry = await couponRow.locator('td[data-label="İşlem"]').evaluate((cell) => {
+      const cellRect = cell.getBoundingClientRect();
+      const buttons = Array.from(cell.querySelectorAll(".workspace-row-action")).map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { label: button.textContent?.trim(), left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+      const outside = buttons.filter((button) =>
+        button.left < cellRect.left - 1 || button.right > cellRect.right + 1
+      );
+      const overlaps = [];
+      for (let i = 0; i < buttons.length; i++) {
+        for (let j = i + 1; j < buttons.length; j++) {
+          const width = Math.min(buttons[i].right, buttons[j].right) - Math.max(buttons[i].left, buttons[j].left);
+          const height = Math.min(buttons[i].bottom, buttons[j].bottom) - Math.max(buttons[i].top, buttons[j].top);
+          if (width > 1 && height > 1) overlaps.push([buttons[i].label, buttons[j].label]);
+        }
+      }
+      return { controls: buttons, outside, overlaps, cellLeft: cellRect.left, cellRight: cellRect.right };
+    });
+    expect(geometry.controls, label + ": all paid-work actions present").toHaveLength(4);
+    expect(geometry.outside, label + ": controls must stay inside table column").toEqual([]);
+    expect(geometry.overlaps, label + ": controls must not overlap").toEqual([]);
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("authenticated admin keeps seven fixed main groups and opens submenus on the right", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.admin;
@@ -471,6 +640,296 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
+test("admin seller rights workbench is connected to 0 TL readiness without activating payment providers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Satıcı ve Satış Yetkisi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1\. Resmi satıcı kimliği oluştur/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2\. Resmî kanıtı incele/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /3\. Eser için satış yetkisi/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /4\. Eser satış yetkisini/u })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toBeVisible();
+  await expect(page.getByRole("option", { name: "CI ONLY MOCK SELLER - NOT A REAL ENTITY" })).toHaveCount(1);
+  await expectResponsiveDocument(page);
+
+  await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("link", { name: /Satıcı ve satış yetkisi çalışma alanını aç/u })).toBeVisible();
+});
+
+test("50% coupon cannot simulate 0 TL or unlock paid chapter without a provider", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.reader;
+  expect(token, "Missing reader fixture session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/satinal/ci-browser-coupon-work?kupon=CIBROWSER50", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByText(/İlkOku kuponu CIBROWSER50 uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/Kalan tutar 0 TL olmadığı için/u)).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Satın alma kapalı" })).toBeDisabled();
+
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/satinal\/ci-browser-coupon-work\?from=/u);
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toHaveCount(0);
+});
+
+
+test("provider-free 100% platform coupon: preview open, chapter 2 locked, order and finance reconcile at 0 TL", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.reader;
+  expect(token, "Missing reader fixture session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+
+  // Even while real providers are absent, the locked content never leaks.
+  await page.goto("/oku/ci-browser-coupon-work/bolum-1", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/satinal\/ci-browser-coupon-work\?from=/u);
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toHaveCount(0);
+
+  // Coupon entry belongs to the reader checkout (not admin or author forms).
+  await page.goto("/satinal/ci-browser-coupon-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "CI Browser Kupon Eseri" })).toBeVisible();
+  const platformCouponForm = page.locator('form:has(input[name="kuponTuru"][value="platform"])');
+  await expect(platformCouponForm.getByRole("textbox", { name: "İlkOku kupon kodu" })).toBeVisible();
+  await platformCouponForm.locator('input[name="kupon"]').fill("CIBROWSER100");
+  await platformCouponForm.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/kupon=CIBROWSER100/u);
+  await expect(page.getByText(/İlkOku kuponu CIBROWSER100 uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/İndirim İlkOku tarafından karşılanır/u)).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+
+  await page.locator('input[name="acceptDigitalContent"]').check();
+  await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+  await expect(page).toHaveURL(/\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/u);
+  const orderNo = new URL(page.url()).searchParams.get("siparis");
+  expect(orderNo).toMatch(/^ILK-/u);
+
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toBeVisible();
+
+  if (process.env.DATABASE_URL) {
+    const dbUrl = new URL(process.env.DATABASE_URL);
+    const db = await mysql.createConnection({
+      host: dbUrl.hostname,
+      port: Number(dbUrl.port || 3306),
+      user: decodeURIComponent(dbUrl.username),
+      password: decodeURIComponent(dbUrl.password),
+      database: decodeURIComponent(dbUrl.pathname.slice(1)),
+    });
+    try {
+      const sql = [
+        "SELECT o.status, o.originalAmount, o.discountAmount, o.finalAmount,",
+        "(SELECT COUNT(*) FROM Payment p WHERE p.orderId=o.id) paymentCount,",
+        "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId=o.id) consentCount,",
+        "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId=o.id) legalSnapshotCount,",
+        "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId=o.id AND e.status='active') entitlementCount,",
+        "(SELECT COUNT(*) FROM CouponRedemption cr WHERE cr.orderId=o.id AND cr.status='used' AND cr.discountAmount=10000) couponUseCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='sale_gross' AND l.amount=10000) grossCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='platform_coupon_discount' AND l.amount=10000) discountCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId=o.id AND l.entryType='author_coupon_discount') wrongFundingCount,",
+        "(SELECT usageCount FROM Coupon WHERE code='CIBROWSER100') usageCount",
+        "FROM \x60Order\x60 o WHERE o.orderNo=?",
+      ].join(" ");
+      const [records] = await db.execute(sql, [orderNo]);
+      expect(records).toHaveLength(1);
+      const x = records[0];
+      expect(x.status).toBe("paid");
+      expect(Number(x.originalAmount)).toBe(10000);
+      expect(Number(x.discountAmount)).toBe(10000);
+      expect(Number(x.finalAmount)).toBe(0);
+      for (const key of ["consentCount", "legalSnapshotCount", "entitlementCount", "couponUseCount", "grossCount", "discountCount", "usageCount"]) {
+        expect(Number(x[key]), key).toBe(1);
+      }
+      expect(Number(x.paymentCount)).toBe(0);
+      expect(Number(x.wrongFundingCount)).toBe(0);
+    } finally {
+      await db.end();
+    }
+  }
+  // Coupon-backed access remains an order-derived entitlement; admin Coupon
+  // filtering must include it and keep the real order source unchanged.
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=coupon&q=CI%20Browser%20Kupon%20Eseri",
+    { waitUntil: "domcontentloaded" },
+  );
+  const entitlementRow = page.locator("table tbody tr").filter({ hasText: "CI Browser Kupon Eseri" });
+  await expect(entitlementRow).toBeVisible();
+  await expect(entitlementRow.getByText("Kupon", { exact: true })).toBeVisible();
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=purchase&q=CI%20Browser%20Kupon%20Eseri",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.locator("table tbody tr").filter({ hasText: "CI Browser Kupon Eseri" })).toBeVisible();
+});
+
+test("coupon last-use concurrency: two different readers cannot both consume the last 100% voucher", async ({ browser }) => {
+  test.skip(!authFixture || !process.env.DATABASE_URL, "Disposable multi-reader CI fixture required.");
+  const tokenA = authFixture.sessions?.readerRaceA;
+  const tokenB = authFixture.sessions?.readerRaceB;
+  expect(tokenA && tokenB, "Two independent reader identities must be configured").toBeTruthy();
+
+  const dbUrl = new URL(process.env.DATABASE_URL);
+  const db = await mysql.createConnection({
+    host: dbUrl.hostname,
+    port: Number(dbUrl.port || 3306),
+    user: decodeURIComponent(dbUrl.username),
+    password: decodeURIComponent(dbUrl.password),
+    database: decodeURIComponent(dbUrl.pathname.slice(1)),
+  });
+  const couponCode = "CIRACE" + Date.now().toString(36).toUpperCase();
+  const couponId = crypto.randomUUID();
+  try {
+    const [workRows] = await db.execute(
+      "SELECT id FROM Work WHERE slug = 'ci-browser-coupon-work'",
+    );
+    const [adminRows] = await db.execute(
+      "SELECT id FROM User WHERE email = 'ci-browser-admin@example.invalid'",
+    );
+    expect(workRows).toHaveLength(1);
+    expect(adminRows).toHaveLength(1);
+    await db.execute(
+      "INSERT INTO Coupon (id, code, owner, creatorId, discountType, discountValue, " +
+      "scope, status, totalUsageLimit, perUserUsageLimit, usageCount, createdAt, updatedAt) " +
+      "VALUES (?, ?, 'platform', ?, 'percent', 100, 'selected_works', 'active', 1, 1, 0, NOW(), NOW())",
+      [couponId, couponCode, adminRows[0].id],
+    );
+    await db.execute(
+      "INSERT INTO CouponWorkScope (id, couponId, workId, createdAt) VALUES (UUID(), ?, ?, NOW())",
+      [couponId, workRows[0].id],
+    );
+
+    const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+    try {
+      const pages = await Promise.all(contexts.map((c) => c.newPage()));
+      for (let i = 0; i < 2; i++) {
+        await contexts[i].addCookies([{
+          name: authFixture.cookieName,
+          value: [tokenA, tokenB][i],
+          url: authCookieUrl,
+        }]);
+      }
+      await Promise.all(pages.map((p) =>
+        p.goto("/satinal/ci-browser-coupon-work?kupon=" + couponCode, { waitUntil: "domcontentloaded" }),
+      ));
+      for (const p of pages) {
+        await expect(p.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+        await p.locator('input[name="acceptDigitalContent"]').check();
+      }
+      await Promise.all(pages.map((p) =>
+        p.getByRole("button", { name: "0 TL ile satın al" }).click(),
+      ));
+      await Promise.all(pages.map((p) =>
+        p.waitForURL(/durum=(?:eklendi|kupon-gecersiz)/u),
+      ));
+      const successful = pages.filter((p) => p.url().includes("durum=eklendi"));
+      expect(successful, "Exactly one reader may consume the global last coupon use").toHaveLength(1);
+      const rejected = pages.filter((p) => p.url().includes("durum=kupon-gecersiz"));
+      expect(rejected, "The other reader must be rejected without an order").toHaveLength(1);
+    } finally {
+      await Promise.all(contexts.map((c) => c.close()));
+    }
+
+    const [rows] = await db.execute(
+      "SELECT c.usageCount, " +
+      "(SELECT COUNT(*) FROM CouponRedemption r WHERE r.couponId=c.id AND r.status='used') usedCount, " +
+      "(SELECT COUNT(*) FROM \`Order\` o WHERE o.couponId=c.id) orderCount, " +
+      "(SELECT COUNT(*) FROM Payment p JOIN \`Order\` o ON o.id=p.orderId WHERE o.couponId=c.id) paymentCount, " +
+      "(SELECT COUNT(*) FROM WorkEntitlement e JOIN \`Order\` o ON o.id=e.orderId WHERE o.couponId=c.id AND e.status='active') entitlementCount, " +
+      "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.couponId=c.id AND l.entryType='platform_coupon_discount') discountCount " +
+      "FROM Coupon c WHERE c.id=?",
+      [couponId],
+    );
+    expect(rows).toHaveLength(1);
+    for (const key of ["usageCount", "usedCount", "orderCount", "entitlementCount", "discountCount"]) {
+      expect(Number(rows[0][key]), key).toBe(1);
+    }
+    expect(Number(rows[0].paymentCount)).toBe(0);
+  } finally {
+    await db.end();
+  }
+});
+
+test("commerce sale model is shared by eligible reader roles and blocked for non-reader purchase roles", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+
+  // All accounts are ephemeral CI-only identities, never production sessions.
+  for (const role of ["reader", "editor_pending", "editor"]) {
+    const token = authFixture.sessions?.[role];
+    expect(token, `Missing isolated ${role} session fixture`).toBeTruthy();
+    await page.context().clearCookies();
+    await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+    await page.setViewportSize(viewports.phone430);
+
+    const response = await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+      waitUntil: "domcontentloaded",
+    });
+    expect(response?.status()).toBeLessThan(400);
+
+    const workRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+    await expect(workRow).toBeVisible();
+    await expect(workRow.getByText("Ücretli · Hazırlıkta", { exact: true })).toBeVisible();
+    await expect(workRow.getByRole("link", { name: "0 TL ile edin" }))
+      .toHaveAttribute("href", /\/satinal\/ci-browser-zero-total-work/);
+    await expectResponsiveDocument(page);
+  }
+
+  for (const role of ["writer", "publisher", "admin"]) {
+    const token = authFixture.sessions?.[role];
+    expect(token, `Missing isolated ${role} session fixture`).toBeTruthy();
+    await page.context().clearCookies();
+    await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+    await page.goto("/kesfet", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/erisim-reddedildi(?:\?|$)/);
+  }
+
+  // Distinct publisher/editor discovery views remain read-only; no purchase-role escalation.
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.editor, url: authCookieUrl }]);
+  await page.goto("/editor/kesfet", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: false }).first()).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.publisher, url: authCookieUrl }]);
+  await page.goto("/yayinevi/kesfet/eserler", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: false }).first()).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: authFixture.sessions.admin, url: authCookieUrl }]);
+  await page.goto(`/admin/eserler/${authFixture.workIds.zeroTotalCommerceWork}`, {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByText("Ücretli · Hazırlıkta", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Kilitli/).first()).toBeVisible();
+});
+
 test("authenticated zero-total commerce mutation smoke: reader completes provider-free purchase and receives entitlement", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 
@@ -501,6 +960,18 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     page.getByRole("heading", { name: "CI Browser 0 TL Eser" }),
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sipariş özeti" })).toBeVisible();
+  await expect(page.getByText("Platform: İlkOku", { exact: true })).toBeVisible();
+  const choiceGroup = page.getByRole("region", { name: "İşlem seçeneği" });
+  await expect(choiceGroup).toBeVisible();
+  await expect(choiceGroup.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(choiceGroup.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(choiceGroup.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeChecked();
+  await expect(choiceGroup.getByRole("radio")).toHaveCount(3);
+  await expect(choiceGroup.getByText("Seçili · Gerçek ödeme yok")).toBeVisible();
+  await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+  await expect(page.locator('[aria-label="Sipariş özeti"]')).toBeVisible();
+  await expectResponsiveDocument(page);
   await expect(
     page.getByText(/Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak/),
   ).toBeVisible();
@@ -508,13 +979,53 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     page.getByText("CI Browser Reader Purchase Terms", { exact: true }),
   ).toBeVisible();
 
+  // Two independent browser tabs send the same real server action in
+  // parallel: exactly one creates an order, the other sees the entitlement.
+  await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+    waitUntil: "domcontentloaded",
+  });
+  const paidWorkRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+  await expect(paidWorkRow.getByRole("link", { name: "0 TL ile edin" })).toBeVisible();
+  await paidWorkRow.getByRole("link", { name: "0 TL ile edin" }).click();
+  await expect(page).toHaveURL(/\/satinal\/ci-browser-zero-total-work(?:\?|$)/u);
+  await expect(page.getByRole("heading", { name: "CI Browser 0 TL Eser" })).toBeVisible();
   await page.locator('input[name="acceptDigitalContent"]').check();
-  await page.getByRole("button", { name: "0 TL ile satın al" }).click();
+  const parallelPage = await page.context().newPage();
+  await parallelPage.goto("/satinal/ci-browser-zero-total-work", {
+    waitUntil: "domcontentloaded",
+  });
+  await parallelPage.locator('input[name="acceptDigitalContent"]').check();
 
-  await expect(page).toHaveURL(
-    /\/kutuphanem\/satin-aldiklarim\?durum=eklendi&siparis=ILK-/,
+  await Promise.all([
+    page.getByRole("button", { name: "0 TL ile satın al" }).click(),
+    parallelPage.getByRole("button", { name: "0 TL ile satın al" }).click(),
+  ]);
+  const completionUrl = /\/kutuphanem\/satin-aldiklarim\?durum=(?:eklendi|zaten-erisim-var)/u;
+  await Promise.all([page.waitForURL(completionUrl), parallelPage.waitForURL(completionUrl)]);
+  const successfulPages = [page, parallelPage].filter((tab) =>
+    tab.url().includes("durum=eklendi"),
   );
+  expect(successfulPages, "Only one of two concurrent requests can create a new order").toHaveLength(1);
+  const completedZeroTotalOrderNo = new URL(successfulPages[0].url()).searchParams.get("siparis");
+  expect(completedZeroTotalOrderNo).toMatch(/^ILK-/u);
+  await parallelPage.close();
+  if (page.url().includes("zaten-erisim-var")) {
+    await page.goto(
+      "/kutuphanem/satin-aldiklarim?durum=eklendi&siparis=" +
+        encodeURIComponent(completedZeroTotalOrderNo),
+      { waitUntil: "domcontentloaded" },
+    );
+  }
   await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
+  await expect(
+    page.getByText("Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Sipariş ayrıntısını görüntüle" }),
+  ).toHaveAttribute(
+    "href",
+    "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+  );
 
   const purchasedCard = page
     .locator("article")
@@ -524,7 +1035,37 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
   ).toBeVisible();
+  await expect(purchasedCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
 
+  // Already-owned checkout is not a new order: show the same persisted number.
+  await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+
+  // A tampered URL must not fabricate a successful checkout or a receipt link.
+  await page.goto(
+    "/kutuphanem/satin-aldiklarim?durum=eklendi&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş doğrulanamadı/u)).toBeVisible();
+  await expect(page.getByRole("link", {
+    name: "Sipariş ayrıntısını görüntüle",
+  })).toHaveCount(0);
+  await page.goto(
+    "/satinal/ci-browser-zero-total-work?durum=siparis-bekliyor&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş No: ILK-FAKE-ORDER-NUMBER/u)).toHaveCount(0);
+
+  await page.goto("/kesfet?arama=CI%20Browser%200%20TL%20Eser", {
+    waitUntil: "domcontentloaded",
+  });
+  const entitledRow = page.getByRole("row").filter({ hasText: "CI Browser 0 TL Eser" });
+  await expect(entitledRow).toBeVisible();
+  await expect(entitledRow.getByRole("link", { name: "0 TL ile edin" })).toHaveCount(0);
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
   });
@@ -537,6 +1078,117 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     }),
   ).toBeVisible();
   await expectResponsiveDocument(page);
+
+  // Cross-check the provider-free transaction across reader and admin surfaces.
+  expect(completedZeroTotalOrderNo).toMatch(/^ILK-/u);
+  await page.goto("/hesabim/odeme-gecmisi", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Ödeme Geçmişi" })).toBeVisible();
+  const historyCard = page.locator("article").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(historyCard).toBeVisible();
+  await expect(historyCard.getByText("CI Browser 0 TL Eser")).toBeVisible();
+  await expect(historyCard.getByText("0 TL edinildi · Tahsilat yok", { exact: true })).toBeVisible();
+  await expect(historyCard.getByText(/₺\s?0,00/u).last()).toBeVisible();
+  await expect(historyCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await historyCard.getByRole("link", { name: "Sipariş ayrıntısı" }).click();
+  await expect(page).toHaveURL(
+    /\/hesabim\/odeme-gecmisi\/ILK-/u,
+  );
+  await expect(page.getByRole("heading", { name: "Sipariş ayrıntısı" })).toBeVisible();
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  // Another authenticated reader must not be able to open this buyer's receipt.
+  const otherReaderToken = authFixture.sessions?.readerRaceB;
+  if (otherReaderToken) {
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: otherReaderToken, url: authCookieUrl },
+    ]);
+    const denied = await page.goto(
+      "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(denied?.status(), "Unowned order receipt is private").toBe(404);
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: token, url: authCookieUrl },
+    ]);
+  }
+
+  if (process.env.DATABASE_URL) {
+    const databaseUrl = new URL(process.env.DATABASE_URL);
+    const db = await mysql.createConnection({
+      host: databaseUrl.hostname,
+      port: Number(databaseUrl.port || 3306),
+      user: decodeURIComponent(databaseUrl.username),
+      password: decodeURIComponent(databaseUrl.password),
+      database: decodeURIComponent(databaseUrl.pathname.slice(1)),
+    });
+    try {
+      const sql = [
+        "SELECT o.status, o.finalAmount,",
+        "(SELECT COUNT(*) FROM Payment p WHERE p.orderId = o.id) AS paymentCount,",
+        "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId = o.id) AS consentCount,",
+        "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId = o.id AND s.sellerName = 'CI ONLY MOCK SELLER - NOT A REAL ENTITY') AS legalSnapshotCount,",
+        "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId = o.id AND e.status = 'active') AS entitlementCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType = 'sale_gross' AND l.amount = 0) AS zeroGrossCount,",
+        "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType IN ('author_earning', 'platform_commission', 'payment_provider_fee')) AS moneyMoveCount",
+        "FROM \x60Order\x60 o WHERE o.orderNo = ?",
+      ].join(" ");
+      const [records] = await db.execute(sql, [completedZeroTotalOrderNo]);
+      expect(records, "A single 0 TL order must match").toHaveLength(1);
+      const [totalRows] = await db.execute(
+        "SELECT COUNT(*) AS orderCount FROM `Order` o " +
+          "JOIN Work w ON w.id = o.workId WHERE w.slug = ?",
+        ["ci-browser-zero-total-work"],
+      );
+      expect(
+        Number(totalRows[0].orderCount),
+        "Concurrent checkout must not create a second order for this work",
+      ).toBe(1);
+      const record = records[0];
+      expect(record.status).toBe("paid");
+      expect(Number(record.finalAmount)).toBe(0);
+      expect(Number(record.paymentCount)).toBe(0);
+      expect(Number(record.consentCount)).toBe(1);
+      expect(Number(record.legalSnapshotCount)).toBe(1);
+      expect(Number(record.entitlementCount)).toBe(1);
+      expect(Number(record.zeroGrossCount)).toBe(1);
+      expect(Number(record.moneyMoveCount)).toBe(0);
+    } finally {
+      await db.end();
+    }
+  }
+
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/siparisler?q=" + encodeURIComponent(completedZeroTotalOrderNo),
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByRole("heading", { name: "Siparişler" })).toBeVisible();
+  const orderRow = page.locator("table tbody tr").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(orderRow).toBeVisible();
+  await expect(orderRow.getByText("0 TL edinildi", { exact: true })).toBeVisible();
+  await expect(orderRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
+
+  await page.goto(
+    "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByRole("heading", { name: "Finans Hareketleri" })).toBeVisible();
+  const financeRow = page.locator("table tbody tr").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(financeRow).toBeVisible();
+  await expect(financeRow.getByText("sale_gross", { exact: true })).toBeVisible();
+  await expect(financeRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
 });
 
 test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {
@@ -601,7 +1253,100 @@ test("authenticated admin platform coupon mutation smoke: admin creates and paus
     page.getByRole("heading", { name: "Kuponlar & Kampanyalar" }),
   ).toBeVisible();
 
+  // Coupon management lives inside the dark admin shell. Light-commerce
+  // component defaults must not produce white panels or white-on-white fields.
+  const couponColors = await page.getByTestId("platform-coupon-create").evaluate((panel) => {
+    const css = (selector, property) => {
+      const element = panel.querySelector(selector);
+      if (!element) throw new Error("Missing coupon contrast target: " + selector);
+      return getComputedStyle(element)[property];
+    };
+    const panelColor = getComputedStyle(panel).backgroundColor;
+    return {
+      panelColor,
+      heading: css("h2", "color"),
+      field: css('input[name="code"]', "color"),
+      fieldBackground: css('input[name="code"]', "backgroundColor"),
+      placeholder: getComputedStyle(
+        panel.querySelector('input[name="code"]'), "::placeholder",
+      ).color,
+    };
+  });
+
+  const relativeLuminance = (rgb) => {
+    const channels = rgb.match(/[\d.]+/gu)?.slice(0, 3).map(Number);
+    expect(channels, "Computed RGB channels should be available").toHaveLength(3);
+    const linear = channels.map((channel) => {
+      const normalized = channel / 255;
+      return normalized <= 0.04045
+        ? normalized / 12.92
+        : ((normalized + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+  const ratio = (one, two) => {
+    const [bright, dark] = [relativeLuminance(one), relativeLuminance(two)]
+      .sort((left, right) => right - left);
+    return (bright + 0.05) / (dark + 0.05);
+  };
+  expect(relativeLuminance(couponColors.panelColor)).toBeLessThan(0.035);
+  expect(ratio(couponColors.heading, couponColors.panelColor)).toBeGreaterThan(4.5);
+  expect(ratio(couponColors.field, couponColors.fieldBackground)).toBeGreaterThan(4.5);
+  expect(ratio(couponColors.placeholder, couponColors.fieldBackground)).toBeGreaterThan(4.5);
+  await expect(page.getByTestId("platform-coupon-list")).toBeVisible();
+
   const couponCode = `CIADMIN${Date.now().toString(36).toUpperCase()}`;
+
+  // Regression: an explicit invalid usage limit must not become "unlimited".
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  const totalLimitInput = page.locator('input[name="totalUsageLimit"]');
+  await totalLimitInput.evaluate((element) => element.removeAttribute("min"));
+  await totalLimitInput.fill("0");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+  await expect(
+    page.getByText("Kampanya için gerekli alanları tamamlayın."),
+  ).toBeVisible();
+
+  // Clear the previous redirect so a stale matching flash cannot satisfy
+  // the next assertion before its own server action has finished.
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
+
+  // A submitted invalid per-user limit must never silently revert to 1.
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  const perUserInput = page.locator('input[name="perUserUsageLimit"]');
+  await perUserInput.evaluate((element) => element.removeAttribute("min"));
+  await perUserInput.fill("0");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+  await expect(
+    page.getByText("Kampanya için gerekli alanları tamamlayın."),
+  ).toBeVisible();
+
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
+
+  // Native date controls enforce valid calendar input. Reversed valid dates
+  // exercise the real submission flow without changing the DOM input type.
+  await page.locator('input[name="code"]').fill(couponCode);
+  await page.locator('input[name="discountValue"]').fill("15");
+  await page.locator('input[name="startsAt"]').fill("2026-12-31");
+  await page.locator('input[name="endsAt"]').fill("2026-12-30");
+  await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
+  await expect(page).toHaveURL(/durum=gecersiz-tarih/u);
+  await expect(
+    page.getByText("Bitiş tarihi başlangıç tarihinden önce olamaz."),
+  ).toBeVisible();
+
+  // No live records are created: all mutation tests use disposable CI data.
+  await page.goto("/admin/odeme-sistemi/kuponlar", {
+    waitUntil: "domcontentloaded",
+  });
   await page.locator('input[name="code"]').fill(couponCode);
   await page.locator('input[name="discountValue"]').fill("15");
   await page.getByRole("button", { name: "Kampanyayı oluştur" }).click();
@@ -644,11 +1389,39 @@ test("authenticated author coupon mutation smoke: writer creates and pauses own-
   ).toBeVisible();
 
   const couponCode = `CIWRITER${Date.now().toString(36).toUpperCase()}`;
-  await page.locator('select[name="workId"]').selectOption({
-    label: "CI Browser 0 TL Eser",
-  });
-  await page.locator('input[name="code"]').fill(couponCode);
-  await page.locator('input[name="discountValue"]').fill("10");
+  const prepareWriterCoupon = async () => {
+    await page.locator('select[name="workId"]').selectOption({
+      label: "CI Browser 0 TL Eser",
+    });
+    await page.locator('input[name="code"]').fill(couponCode);
+    await page.locator('input[name="discountValue"]').fill("10");
+  };
+
+  await prepareWriterCoupon();
+  const totalLimit = page.locator('input[name="totalUsageLimit"]');
+  await totalLimit.evaluate((element) => element.removeAttribute("min"));
+  await totalLimit.fill("0");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+  await expect(page.getByText("Kupon için gerekli alanları tamamlamalısın.")).toBeVisible();
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
+  const userLimit = page.locator('input[name="perUserUsageLimit"]');
+  await userLimit.evaluate((element) => element.removeAttribute("min"));
+  await userLimit.fill("0");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=eksik-bilgi/u);
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
+  await page.locator('input[name="startsAt"]').fill("2026-12-31");
+  await page.locator('input[name="endsAt"]').fill("2026-12-30");
+  await page.getByRole("button", { name: "Kupon oluştur" }).click();
+  await expect(page).toHaveURL(/durum=gecersiz-tarih/u);
+
+  await page.goto("/satis-erisim/kuponlar", { waitUntil: "domcontentloaded" });
+  await prepareWriterCoupon();
   await page.getByRole("button", { name: "Kupon oluştur" }).click();
 
   let couponCard = page.locator("article").filter({ hasText: couponCode });
@@ -884,6 +1657,8 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   const response = await page.goto("/sistem-yonetimi/power-seo", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Power-SEO", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Tam Site ve HTTP", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "GSC ve API Bağlantıları", exact: true })).toBeVisible();
   // The default page must not dump the full technical inventory into the overview.
@@ -891,6 +1666,7 @@ test("Power-SEO admin sitemap workflow renders real site inventory on mobile", a
   await expectResponsiveDocument(page);
 
   await page.getByRole("link", { name: "Tam Site ve HTTP", exact: true }).click();
+  await expect(page).toHaveURL(/sekme=tarama&mod=full-links/u);
   await expect(page.getByRole("link", { name: "Tam site / HTTP doğrulaması" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Parçalı bağlantı grafiği" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Yönlendirmeler" })).toBeVisible();
@@ -1254,8 +2030,12 @@ test("secondary navigation is horizontal above the content on desktop and mobile
   await page.setViewportSize(viewports.desktop);
   await page.goto("/icerik/seo", { waitUntil: "domcontentloaded" });
   const panel = page.locator(".admin-secondary-panel");
-  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
   await expect(panel.locator(".admin-tertiary-row")).toHaveCSS("flex-direction", "row");
+  await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeVisible();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" }).click();
+  await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeHidden();
+  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
   await expect(panel.locator('.admin-tertiary-row a[href="/icerik/seo"]')).toBeVisible();
   await expectResponsiveDocument(page);
 });
@@ -1444,11 +2224,6 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
     { path: "/icerik/seo", group: "Eser & İçerik", second: "İçerik Yönetimi", third: "/icerik/seo" },
     { path: "/harita", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
     { path: "/harita/rotalar", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/rotalar" },
-    { path: "/harita/denetim", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/denetim" },
-    { path: "/harita/menuler", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/menuler" },
-    { path: "/harita/altyapi", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/altyapi" },
-    { path: "/harita/sozlesmeler", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/sozlesmeler" },
-    { path: "/harita/tedarik-zinciri", group: "Güvenlik & Sistem", second: "Sistem Haritası", third: "/harita/tedarik-zinciri" },
     { path: "/sozlesme", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
     { path: "/sozlesme/takip", group: "İletişim & Sözleşmeler", second: "Sözleşme Yönetimi", third: "/sozlesme/takip" },
   ];
@@ -1467,17 +2242,9 @@ test("all four admin workspaces share exactly one main sidebar and one right sub
       await expect(page.locator(".admin-secondary-panel").getByRole("link", { name: scenario.second, exact: true })).toBeVisible();
     }
     if (scenario.third) {
-      const toggle = page.locator(".admin-secondary-panel").getByRole("button", {
-        name: new RegExp(`^${scenario.second} alt menüsünü (aç|kapat)`),
-      });
-      const currentlyExpanded = await toggle.getAttribute("aria-expanded");
-      if (currentlyExpanded !== "true") await toggle.click();
-      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const panel = page.locator(".admin-secondary-panel");
+      await expect(panel.getByRole("button", { name: scenario.second + " alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
       await expect(page.locator(`.admin-secondary-panel .admin-nav-child__items a[href="${scenario.third}"]`)).toBeVisible();
-      if (scenario.path === "/harita" || scenario.path.startsWith("/harita/")) {
-        await expect(page.locator(".admin-secondary-panel .admin-tertiary-row a")).toHaveCount(19);
-        await expect(page.locator(`.admin-secondary-panel .admin-tertiary-row a[href="${scenario.path}"]`)).toHaveAttribute("aria-current", "page");
-      }
     }
     await expectResponsiveDocument(page);
   }
@@ -1532,7 +2299,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
   ]) {
     await page.goto(href, { waitUntil: "domcontentloaded" });
     const panel = page.locator(".admin-secondary-panel");
-    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    await expect(panel.getByRole("button", { name: "Power-SEO alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
     const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
     await expect(active).toHaveCount(1);
     await expect(active).toHaveAttribute("href", href);
@@ -1551,7 +2318,7 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
   ]) {
     await page.goto(path, { waitUntil: "domcontentloaded" });
     const panel = page.locator(".admin-secondary-panel");
-    await panel.getByRole("button", { name: "Power-SEO alt menüsünü aç" }).click();
+    await expect(panel.getByRole("button", { name: "Power-SEO alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
     const active = panel.locator('.admin-nav-child__items a.is-active[href^="/sistem-yonetimi/power-seo"]');
     await expect(active).toHaveCount(1);
     await expect(active).toHaveAttribute("href", selectedHref);
@@ -1559,9 +2326,178 @@ test("admin navigation distinguishes Power-SEO tabs and hides CMS utility routes
 
   await page.goto("/icerik", { waitUntil: "domcontentloaded" });
   const panel = page.locator(".admin-secondary-panel");
-  await panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü aç" }).click();
+  await expect(panel.getByRole("button", { name: "İçerik Yönetimi alt menüsünü kapat" })).toHaveAttribute("aria-expanded", "true");
   await expect(panel.locator('a[href="/icerik/seo"]')).toBeVisible();
   await expect(panel.locator('a[href="/icerik/ana-sayfa/history"]')).toHaveCount(0);
   await expect(panel.locator('a[href="/icerik/sayfalar/sablonlar"]')).toHaveCount(0);
   await expectResponsiveDocument(page);
+});
+
+
+test("deletion center category cards open the selected row-column screen on desktop and 390px", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  test.setTimeout(120_000);
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing admin session fixture").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: token, url: authCookieUrl }]);
+
+  const sections = [
+    { key: "yazar", title: "Yazar silme", label: "Yazar silme kayıtları", columns: ["Yazar", "E-posta", "Eser", "Yayınevi başvurusu", "Silme onayı"] },
+    { key: "eser", title: "Eser silme", label: "Eser silme kayıtları", columns: ["Eser", "Yazar", "Bölüm", "Aktif erişim", "Başarılı sipariş", "Silme onayı"] },
+    { key: "yayinevi", title: "Yayınevi silme", label: "Yayınevi silme kayıtları", columns: ["Yayınevi", "Slug", "Aktif üye", "Başvuru", "Silme onayı"] },
+    { key: "editor", title: "Editör silme", label: "Editör silme kayıtları", columns: ["Editör", "E-posta", "Aktif inceleme", "Tamamlanan rapor", "Silme onayı"] },
+  ];
+
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/sistem-yonetimi/silme-merkezi", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Silme Merkezi", exact: true })).toBeVisible();
+    await expect(page.getByRole("note")).toContainText("Güvenli silme kullanılıyor.");
+    await expect(page.locator(".admin-deletion-center .admin-delete-card")).toHaveCount(0);
+    const picker = page.getByRole("navigation", { name: "Silinebilir kayıt türü seçimi" });
+    await expect(picker.getByRole("link")).toHaveCount(4);
+    await expect(picker.locator('a[href*="bolum=yazar"]')).toHaveAttribute("aria-current", "page");
+
+    for (const scenario of sections) {
+      const card = picker.locator('a[href*="bolum=' + scenario.key + '"]');
+      await card.click();
+      await expect(page).toHaveURL(new RegExp("bolum=" + scenario.key));
+      await expect(card).toHaveAttribute("aria-current", "page");
+      await expect(picker.locator('a[aria-current="page"]')).toHaveCount(1);
+      const section = page.locator(".admin-delete-section");
+      await expect(section).toHaveCount(1);
+      await expect(section.getByRole("heading", { name: scenario.title, exact: true })).toBeVisible();
+
+      const table = section.getByRole("table");
+      if (await table.count()) {
+        const region = section.getByRole("region", { name: scenario.label });
+        await expect(region).toHaveCount(1);
+        await expect(table.locator("thead tr")).toHaveCount(1);
+        for (const heading of scenario.columns) {
+          await expect(table.getByRole("columnheader", { name: heading, exact: true })).toHaveCount(1);
+        }
+        const rows = table.locator("tbody tr");
+        expect(await rows.count()).toBeGreaterThan(0);
+        await expect(rows.first().getByRole("rowheader")).toHaveCount(1);
+        await expect(rows.first().locator('input[name="confirmation"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="targetId"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="targetType"]')).toHaveCount(1);
+        await expect(rows.first().locator('input[name="q"]')).toHaveCount(1);
+        await expect(rows.first().getByRole("button")).toHaveCount(1);
+        if (viewport.width === 390) {
+          const geometry = await region.evaluate((el) => ({
+            scroll: el.scrollWidth, client: el.clientWidth, overflow: getComputedStyle(el).overflowX,
+          }));
+          expect(geometry.scroll).toBeGreaterThan(geometry.client);
+          expect(geometry.overflow).toBe("auto");
+        }
+      } else {
+        await expect(section.locator(".admin-profile-empty")).toBeVisible();
+      }
+      await expectResponsiveDocument(page);
+    }
+
+    // Searching and resetting the filter must not switch to another category.
+    await page.locator('.admin-delete-search input[name="q"]').fill("unlikely-test-record-20261022");
+    await page.locator('.admin-delete-search button[type="submit"]').click();
+    await expect(page).toHaveURL(/bolum=editor/u);
+    await expect(page).toHaveURL(/q=unlikely-test-record-20261022/u);
+    await expect(page.locator(".admin-delete-section")).toHaveCount(1);
+    await page.locator(".admin-delete-search a").click();
+    await expect(page).toHaveURL(/bolum=editor/u);
+    await expect(page.locator('.admin-delete-search input[name="q"]')).toHaveValue("");
+
+    await expect(page.locator('.admin-topbar a[href="/hesabim"]')).toHaveCount(1);
+    await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
+    await expectResponsiveDocument(page);
+  }
+});
+
+
+test("finance order review is admin-only, read-only, and rejects unknown order numbers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const route = "/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme";
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Sipariş Mali İnceleme" })).toBeVisible();
+  await expect(page.getByText("Muhasebe doğrulaması bekleniyor")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mali inceleme yap" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?siparis=ILK-UNOWNED-TEST-0000", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/eşleşen kayıt bulunamadı/u)).toBeVisible();
+  await expect(page.getByText(/Yazara örnek banka ödemesi/u)).toHaveCount(0);
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});
+
+
+test("author tax-document review is admin-only and mobile safe without collecting identifiers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Yazar Vergi / Belge İncelemesi" })).toBeVisible();
+  await expect(page.getByText("Haricî doğrulama gerekir")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazarı incele" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=NO_SUCH_WRITER", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Bu ID ile yazar bulunamadı.")).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});
+
+
+test("admin commission rules page remains mobile safe and excludes reader access", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/komisyon-yonetimi";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Komisyon Yönetimi" })).toBeVisible();
+  await expect(page.getByText("Temel oranlar ve öncelik")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazar oranlarını görüntüle" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=UNKNOWN_WRITER_ID", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/bulunamadı/u)).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });

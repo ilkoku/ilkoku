@@ -1,8 +1,11 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { timeBookIndexOperation } from "./performance-trace";
+import type { BookIndexInsightKey } from "./insight-pages";
 
 import {
   getBookIndexSource,
@@ -141,7 +144,7 @@ function historyDays(first: Date, last: Date) {
 }
 
 async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
-  const lists = await prisma.bookIndexList.findMany({
+  const lists = await timeBookIndexOperation("insights.sourceSnapshotSql", () => prisma.bookIndexList.findMany({
     where: {
       active: true,
       includeInComposite: true,
@@ -187,7 +190,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
         },
       },
     },
-  });
+  }));
 
   return lists
     .filter((list) => list.fetchRuns.length > 0)
@@ -199,8 +202,13 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     }));
 }
 
-async function loadLongSellers(limit: number) {
-  const rows = await prisma.$queryRaw<LongSellerRow[]>`
+// Heavy historical GROUP BY is identical across public requests until fresh
+// observations arrive. Cache only this derived history for 30 seconds; the
+// current rankings, publication gate and search policy remain request-fresh.
+// Normalize dates and bigint before Next's JSON data-cache serialization.
+const getCachedLongSellerHistoryRows = unstable_cache(
+  async () => {
+    const rows = await prisma.$queryRaw<LongSellerRow[]>`
     SELECT
       externalBook.masterBookId AS masterBookId,
       MIN(observation.observedAt) AS firstObservedAt,
@@ -227,10 +235,30 @@ async function loadLongSellers(limit: number) {
       DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC,
       COUNT(*) DESC
   `;
+    return rows.map((row) => ({
+      masterBookId: row.masterBookId,
+      firstObservedAt: row.firstObservedAt.toISOString(),
+      lastObservedAt: row.lastObservedAt.toISOString(),
+      sourceCodes: row.sourceCodes,
+      observationCount: Number(row.observationCount),
+    }));
+  },
+  ["ilkoku-book-index-long-seller-history-20261023-v1"],
+  { revalidate: 30 },
+);
+
+async function loadLongSellers(limit: number) {
+  const cachedRows = await timeBookIndexOperation("insights.longSellerHistorySql", getCachedLongSellerHistoryRows);
+  // Restore Date objects because downstream sort/format logic expects them.
+  const rows: LongSellerRow[] = cachedRows.map((row) => ({
+    ...row,
+    firstObservedAt: new Date(row.firstObservedAt),
+    lastObservedAt: new Date(row.lastObservedAt),
+  }));
 
   if (!rows.length) return [];
 
-  const books = await prisma.bookIndexBook.findMany({
+  const books = await timeBookIndexOperation("insights.longSellerBookMetadataSql", () => prisma.bookIndexBook.findMany({
     where: {
       id: { in: rows.map((row) => row.masterBookId) },
     },
@@ -239,7 +267,7 @@ async function loadLongSellers(limit: number) {
       title: true,
       authorName: true,
     },
-  });
+  }));
   const bookById = new Map(books.map((book) => [book.id, book] as const));
 
   return rows
@@ -284,10 +312,12 @@ async function loadLongSellers(limit: number) {
 
 // Page and generateMetadata request the same evidence. Compute it once per
 // request, while running the independent snapshot and history SQL in parallel.
-const getBookIndexInsightsForLimit = cache(async (safeLimit: number): Promise<BookIndexInsights> => {
+const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true): Promise<BookIndexInsights> => {
   const [snapshots, longSellers] = await Promise.all([
     loadSourceSnapshots(),
-    loadLongSellers(safeLimit),
+    // Only the long-seller page needs the historical aggregation. Other
+    // insight views select one of the three source-snapshot collections.
+    includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),
   ]);
 
   const currentSourcesByBook = new Map<string, Set<string>>();
@@ -502,4 +532,17 @@ const getBookIndexInsightsForLimit = cache(async (safeLimit: number): Promise<Bo
 export async function getBookIndexInsights(limit = 20): Promise<BookIndexInsights> {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
   return getBookIndexInsightsForLimit(safeLimit);
+}
+
+/**
+ * The four insight routes only render the selected insight collection.
+ * Skip the full historical GROUP BY outside the long-seller route.
+ * All other consumers of getBookIndexInsights retain complete evidence.
+ */
+export async function getBookIndexPageInsights(
+  key: BookIndexInsightKey,
+  limit = 20,
+): Promise<BookIndexInsights> {
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
+  return getBookIndexInsightsForLimit(safeLimit, key === "longSellers");
 }

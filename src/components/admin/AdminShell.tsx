@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Power-SEO query-only tabs require full navigation to reload their server-rendered workflow. */
 "use client";
 
 import Image from "next/image";
@@ -150,18 +151,6 @@ function isActiveSubItem(
     : !siblings.some((sibling) => matchesQueryLink(sibling.href));
 }
 
-// The existing third-level row must stay available throughout /harita.
-// Use the canonical adminNavigation child links; never render a second tab strip.
-function isSubmenuExpanded(
-  href: string,
-  pathname: string,
-  overrides: Record<string, boolean>,
-) {
-  return overrides[href] ?? (
-    href === "/harita" && (pathname === "/harita" || pathname.startsWith("/harita/"))
-  );
-}
-
 function getInitials(fullName: string) {
   const initials = fullName
     .trim()
@@ -198,6 +187,22 @@ export function AdminShell({
         : routeGroup?.id ?? null;
   const selectedGroup = adminNavigationGroups.find((group) => group.id === selectedGroupId);
   const initials = getInitials(user.fullName);
+
+  // Reuse the same open state for the parent toggle and the actual
+  // horizontal submenu row. No duplicate nav is rendered.
+  function isSubmenuExpanded(item: AdminNavItem) {
+    const activeParent = item.href === SYSTEM_MANAGEMENT_PATH
+      ? pathname === item.href
+      : pathname === item.href || pathname.startsWith(item.href + "/");
+    const nestedRouteActive = item.children?.some((child) => {
+      const childPath = child.href.split("?")[0];
+      return pathname === childPath || pathname.startsWith(childPath + "/");
+    }) ?? false;
+    const expansionKey = `${pathname}::${item.href}`;
+    return expandedSubmenus[expansionKey] ?? (activeParent || nestedRouteActive);
+  }
+
+
 
   return (
     <div className="admin-shell">
@@ -338,7 +343,8 @@ export function AdminShell({
                       ? pathname === item.href
                       : pathname === item.href || pathname.startsWith(item.href + "/");
                   const hasChildren = Boolean(item.children?.length);
-                  const subExpanded = isSubmenuExpanded(item.href, pathname, expandedSubmenus);
+                  const expansionKey = `${pathname}::${item.href}`;
+                  const subExpanded = isSubmenuExpanded(item);
                   return (
                     <div className="admin-nav-child" key={item.href}>
                       <div className="admin-nav-child__header">
@@ -356,7 +362,7 @@ export function AdminShell({
                             aria-controls={`admin-submenu-${selectedGroup.id}-${index}`}
                             onClick={() => setExpandedSubmenus((current) => ({
                               ...current,
-                              [item.href]: !subExpanded,
+                              [expansionKey]: !subExpanded,
                             }))}
                           >
                             <span className={`admin-nav-group__chevron ${subExpanded ? "is-open" : ""}`} aria-hidden="true">⌄</span>
@@ -368,21 +374,24 @@ export function AdminShell({
                 })}
               </nav>
               {selectedGroup.items.map((item, index) =>
-                item.children?.length && isSubmenuExpanded(item.href, pathname, expandedSubmenus) ? (
+                item.children?.length && isSubmenuExpanded(item) ? (
                   <nav
                     key={item.href}
                     id={`admin-submenu-${selectedGroup.id}-${index}`}
                     className="admin-tertiary-row admin-nav-child__items"
                     aria-label={`${item.label} alt bağlantıları`}
                   >
-                    {item.children.map((child) => {
-                      const active = isActiveSubItem(child.href, item.children ?? [], pathname, searchParams);
-                      return (
-                        <Link key={child.href} href={child.href} aria-current={active ? "page" : undefined} className={active ? "is-active" : ""}>
+                    {item.children.map((child) => (
+                      item.href === `${SYSTEM_MANAGEMENT_PATH}/power-seo` ? (
+                        <a key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </a>
+                      ) : (
+                        <Link key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                           <span>{child.label}</span>
                         </Link>
-                      );
-                    })}
+                      )
+                    ))}
                   </nav>
                 ) : null,
               )}

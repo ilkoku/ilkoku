@@ -1,5 +1,6 @@
 "use server";
 
+import { approvedHakkimizdaCmsDraft } from "@/content/approved-hakkimizda-cms-draft";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -212,6 +213,37 @@ export async function saveCmsPageAction(formData: FormData) {
   if (mode === "publish") await deleteCmsDraft(pageDraftKey(existing.id));
   refreshCmsPage(existing.id, existing.slug);
   redirect(savedPageTarget(existing.id, visual, publishBlocked ? "?hata=kalite" : "?kayit=1"));
+}
+
+/**
+ * Stages the owner-approved Hakkımızda content from trusted server code.
+ * The browser does not supply or overwrite content fields, and never requests publish.
+ * Existing published ContentPage remains unchanged via saveCmsPageAction's staged draft branch.
+ */
+export async function saveApprovedHakkimizdaDraftAction() {
+  await requireCmsManager("/icerik/sayfalar");
+  const pageId = "51e2eb80-7192-4cec-ba69-6bf622c569a4";
+  const rows = await prisma.$queryRaw<Array<ExistingPage & { noIndex: boolean }>>`
+    SELECT id, contentKey, slug, status, noIndex
+    FROM ContentPage WHERE id = ${pageId} LIMIT 1
+  `;
+  const page = rows[0];
+  if (!page ||
+      page.contentKey !== approvedHakkimizdaCmsDraft.contentKey ||
+      page.slug !== approvedHakkimizdaCmsDraft.canonical ||
+      page.status === "archived") redirect("/icerik/sayfalar?hata=kayit");
+
+  const approved = approvedHakkimizdaCmsDraft;
+  const data = new FormData();
+  data.set("id", pageId);
+  data.set("mode", "draft");
+  data.set("title", approved.title);
+  data.set("summary", approved.summary);
+  data.set("body", approved.body);
+  data.set("seoTitle", approved.seoTitle);
+  data.set("seoDescription", approved.seoDescription);
+  if (page.noIndex) data.set("noIndex", "on");
+  await saveCmsPageAction(data);
 }
 
 export async function archiveCmsPageAction(formData: FormData) {

@@ -78,12 +78,14 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.equal(result.manifest.checkedGrossMinor,"12000");
   assert.equal(result.manifest.checkedVatMinor,"2000");
   assert.equal(result.manifest.preparationRows,1);
+  assert.equal(result.manifest.reviewedAuthorSummaryGroups,1);
   assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
   assert.equal(result.manifest.ledgerSummaryGroups,1);
-  assert.equal(result.files.length,9);
+  assert.equal(result.files.length,10);
   assert.deepEqual([...result.files.map(f=>f.name)],[
     "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv",
-    "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv","alan_esleme.json","manifest.json",
+    "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv",
+    "yazar_hesap_ozeti.csv","alan_esleme.json","manifest.json",
   ]);
   for (const f of result.files.filter(x=>x.name.endsWith(".csv"))) {
     assert.equal(result.manifest.fileHashes[f.name],createHash("sha256").update(f.data).digest("hex"));
@@ -398,4 +400,33 @@ test("daily export retrieves document reviews as of paidAt, never asks later liv
   assert.ok(repo.includes('reviewedAt: { lt: period.end }'));
   assert.ok(repo.includes("event.reviewedAt <= order.paidAt"));
   assert.ok(repo.includes("reviewEvents.length > DAY_CLOSE_MAX_ROWS"));
+});
+
+
+test("writer-level summary separates faturalı %0 and verified GVK18 %5 service earnings", () => {
+  const gvk=validOrder();
+  const invoice=validOrder();
+  invoice.orderNo="ILK-INVOICE-2";
+  invoice.taxReview={...invoice.taxReview,documentKind:"commercial_invoice"};
+  const ledger=(orderNo,id)=>({
+    id,orderNo,entryType:"sale_gross",amount:12000n,currency:"TRY",
+    createdAt:new Date("2026-10-25T18:00:00+03:00"),
+    authorPublicId:"writer001",
+  });
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[gvk,invoice],
+    ledger:[ledger(gvk.orderNo,"g1"),ledger(invoice.orderNo,"i2")],refunds:[],
+  });
+  assert.equal(result.manifest.readySalesCount,2);
+  assert.equal(result.manifest.reviewedAuthorSummaryGroups,2);
+  assert.equal(result.manifest.reviewedGvk18DocumentSales,1);
+  assert.equal(result.manifest.reviewedInvoiceDocumentSales,1);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"4000");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"500");
+  const authorRows=result.files.find(f=>f.name==="yazar_hesap_ozeti.csv").data;
+  assert.ok(authorRows.includes('"gvk18_expense_receipt"'));
+  assert.ok(authorRows.includes('"commercial_invoice"'));
+  assert.ok(authorRows.includes(",2000,500,"));
+  assert.ok(authorRows.includes(",2000,0,"));
+  assert.equal(authorRows.split("\r\n").filter(Boolean).length,3);
 });

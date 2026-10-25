@@ -73,7 +73,7 @@ test("day close ZIP has four UTF-8 CSV files, JSON manifest and content hashes",
   assert.equal(result.manifest.checkedGrossMinor,"12000");
   assert.equal(result.manifest.checkedVatMinor,"2000");
   assert.equal(result.files.length,5);
-  assert.deepEqual(result.files.map(f=>f.name),[
+  assert.deepEqual([...result.files.map(f=>f.name)],[
     "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv","manifest.json",
   ]);
   for (const f of result.files.filter(x=>x.name.endsWith(".csv"))) {

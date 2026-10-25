@@ -13,6 +13,7 @@ import { resolveLatestAuthorTaxReview } from "./tax-review-policy";
  */
 export type OrderReviewInput = {
   status: string;
+  paidAt: Date | null;
   currency: string;
   originalAmount: bigint;
   discountAmount: bigint;
@@ -49,7 +50,7 @@ export type OrderReviewInput = {
 
 export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   const blockers: string[] = [];
-  const tax = resolveLatestAuthorTaxReview(input.taxReview ?? null);
+  const tax = resolveLatestAuthorTaxReview(input.taxReview ?? null, input.paidAt ?? new Date(0));
   const rate = input.commissionRateSnapshot;
   if (!rate || rate.calculationVersion !== "rate-v1" ||
       !["global", "author", "work"].includes(rate.source) ||
@@ -60,8 +61,9 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
       (rate.source !== "global" && !rate.sourceEventId)) {
     blockers.push("Sipariş anına ait değişmez komisyon oranı kayıtlı değil veya tutarsız.");
   }
+  if (!input.paidAt) blockers.push("Siparişin kesin tahsil tarihi bulunamadı.");
   if (tax.state !== "verified") {
-    blockers.push("Yazarın güncel vergi/belge incelemesi eksik, süresi dolmuş veya geri çekilmiş.");
+    blockers.push("Yazarın sipariş ödeme anındaki mali belge incelemesi eksik, geçersiz veya geri çekilmiş.");
   } else if (tax.documentKind === "self_employed_receipt") {
     blockers.push("e-Serbest meslek makbuzu için ayrı stopaj ve KDV kuralları hesaplanmalı.");
   }

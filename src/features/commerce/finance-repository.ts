@@ -677,7 +677,7 @@ export async function getWriterFinanceOverview(authorId: string) {
  */
 export async function getOrderAccountingReviewSource(orderNo: string) {
   if (!/^ILK-[A-Z0-9-]{4,36}$/u.test(orderNo)) return null;
-  return prisma.order.findUnique({
+  const order = await prisma.order.findUnique({
     where: { orderNo },
     select: {
       id: true,
@@ -740,6 +740,14 @@ export async function getOrderAccountingReviewSource(orderNo: string) {
       },
     },
   });
+  if (!order) return null;
+  // Reproduce day-close's tax status at payment, not latest staff entry today.
+  const taxReviewAtPayment = order.paidAt ? await prisma.authorTaxReviewEvent.findFirst({
+    where: { authorId: order.authorId, reviewedAt: { lte: order.paidAt } },
+    orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+    select: { documentKind: true, decision: true, reviewedAt: true, validUntil: true },
+  }) : null;
+  return { ...order, taxReviewAtPayment };
 }
 
 export async function listRecentOrderAccountingReviews() {

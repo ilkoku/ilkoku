@@ -507,6 +507,14 @@ test("default 15% frozen order commission stays separate from document-specific 
   assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"500");
 });
 
+test("tax review expiring exactly at payment timestamp is not valid", () => {
+  const sale=validOrder();
+  sale.taxReview={...sale.taxReview,validUntil:sale.paidAt};
+  const result=make([sale]);
+  assert.equal(result.manifest.preparationRows,0);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("YAZAR_MALI_BELGE_DOGRULANAMADI"));
+});
+
 test("missing, later, revoked and expired tax reviews fail closed for accountant export", () => {
   const variants=[
     null,

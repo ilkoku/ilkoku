@@ -22,6 +22,7 @@ export default async function OrderAccountingReviewPage({
   ]);
   const review = order ? reviewCommerceOrderSettlement({
     status: order.status,
+    paidAt: order.paidAt,
     currency: order.currency,
     originalAmount: order.originalAmount,
     discountAmount: order.discountAmount,
@@ -33,7 +34,7 @@ export default async function OrderAccountingReviewPage({
     payments: order.payments,
     bookedEntryTypes: order.financialLedgerEntries.map((entry) => entry.entryType),
     commissionRateSnapshot: order.commissionRateSnapshot,
-    taxReview: order.author.taxReviewsAsWriter[0] ?? null,
+    taxReview: order.taxReviewAtPayment,
   }) : null;
 
   const cases = review?.scenarios ? [
@@ -63,6 +64,7 @@ export default async function OrderAccountingReviewPage({
 
       <div className="admin-readonly-notice admin-commerce-readonly" role="status">
         <strong>Muhasebe doğrulaması bekleniyor – ödeme emri oluşturulmaz</strong>
+        <p>Bu siparişin mali senaryosu, yazarın ödeme tarihindeki belge inceleme kararına dayanır. Sonradan alınan onay geçmişe uygulanmaz.</p>
         <p>Buradaki siparişe kayıtlı komisyon ve uygun faturasız telifte ayrıca %5 + KDV aracılık
           yalnız teklif hesabıdır. Yazarın fatura, e-SMM veya gider pusulası
           uygunluğu, lisans sözleşmesi, KDV indirimi ve stopaj mali müşavir

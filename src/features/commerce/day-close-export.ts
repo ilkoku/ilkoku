@@ -143,7 +143,7 @@ export function taxDocumentFeePreview(order: DayCloseOrder) {
   const event = order.taxReview;
   if (!event || !order.paidAt || event.reviewedAt > order.paidAt ||
       event.decision !== "verified" ||
-      (event.validUntil !== null && event.validUntil < order.paidAt)) {
+      (event.validUntil !== null && event.validUntil <= order.paidAt)) {
     return { documentKind: "BELIRSIZ", appliedServiceFeeBps: null as number | null,
       status: "YAZAR_MALI_BELGE_DOGRULANAMADI" };
   }

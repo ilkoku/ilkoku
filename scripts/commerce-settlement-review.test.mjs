@@ -36,6 +36,7 @@ const review = loadTypedModule("src/features/commerce/settlement-review.ts", {
 
 const valid = () => ({
   status: "paid",
+  paidAt: new Date(Date.now()-3600000),
   currency: "TRY",
   originalAmount: 12000n,
   discountAmount: 0n,
@@ -68,6 +69,32 @@ const valid = () => ({
     validUntil: new Date(Date.now() + 86400000 * 30),
     reviewedAt: new Date(Date.now() - 86400000),
   },
+});
+
+test("review verified AFTER payment does not authorize earlier order settlement", () => {
+  const v=valid();
+  v.taxReview.reviewedAt=new Date(v.paidAt.getTime()+1000);
+  const result=review.reviewCommerceOrderSettlement(v);
+  assert.equal(result.scenarios,null);
+  assert.ok(result.blockers.some(x=>x.includes("ödeme anındaki")));
+});
+
+test("historical verification may be shown for review if it expired only after payment", () => {
+  const v=valid();
+  v.paidAt=new Date(Date.now()-7*86400000);
+  v.taxReview.reviewedAt=new Date(Date.now()-8*86400000);
+  v.taxReview.validUntil=new Date(Date.now()-6*86400000);
+  const result=review.reviewCommerceOrderSettlement(v);
+  assert.ok(result.scenarios?.invoiced);
+  assert.equal(result.approvalStatus,"accounting_verification_required");
+});
+
+test("finance view reads tax review as of payment rather than latest current review", () => {
+  const repository=readFileSync(join(ROOT,"src/features/commerce/finance-repository.ts"),"utf8");
+  const page=readFileSync(join(ROOT,"src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx"),"utf8");
+  assert.ok(repository.includes("reviewedAt: { lte: order.paidAt }"));
+  assert.ok(repository.includes("taxReviewAtPayment"));
+  assert.ok(page.includes("taxReview: order.taxReviewAtPayment"));
 });
 
 test("verified commercial invoice shows only the matching example, never an automatic payout", () => {

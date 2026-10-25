@@ -659,3 +659,67 @@ export async function getWriterFinanceOverview(authorId: string) {
     recentOrders: orders,
   };
 }
+
+
+/**
+ * Admin-only UI consumers are guarded by the /admin layout.
+ * This query has no mutation, no tax-status inference and no payment action.
+ */
+export async function getOrderAccountingReviewSource(orderNo: string) {
+  if (!/^ILK-[A-Z0-9-]{4,36}$/u.test(orderNo)) return null;
+  return prisma.order.findUnique({
+    where: { orderNo },
+    select: {
+      id: true,
+      orderNo: true,
+      authorId: true,
+      status: true,
+      createdAt: true,
+      paidAt: true,
+      refundedAt: true,
+      currency: true,
+      originalAmount: true,
+      discountAmount: true,
+      finalAmount: true,
+      couponCodeSnapshot: true,
+      work: { select: { title: true } },
+      author: {
+        select: { displayName: true, fullName: true, publicId: true },
+      },
+      legalSnapshot: { select: { sellerMode: true, sellerName: true } },
+      priceQuoteSnapshot: {
+        select: {
+          taxTreatment: true,
+          vatRateBasisPoints: true,
+          listNetAmount: true,
+          listVatAmount: true,
+          listGrossAmount: true,
+          discountGrossAmount: true,
+          payableGrossAmount: true,
+        },
+      },
+      payments: {
+        select: { status: true, amount: true, currency: true },
+      },
+      financialLedgerEntries: {
+        select: { entryType: true, amount: true, idempotencyKey: true },
+      },
+    },
+  });
+}
+
+export async function listRecentOrderAccountingReviews() {
+  return prisma.order.findMany({
+    where: { status: { in: ["paid", "refunded"] } },
+    take: 25,
+    orderBy: { createdAt: "desc" },
+    select: {
+      orderNo: true,
+      status: true,
+      finalAmount: true,
+      currency: true,
+      work: { select: { title: true } },
+      priceQuoteSnapshot: { select: { taxTreatment: true } },
+    },
+  });
+}

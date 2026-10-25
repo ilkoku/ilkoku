@@ -145,6 +145,16 @@ export default async function FinanceIncomePage() {
           </Link>
         </article>
         <article className="admin-panel">
+          <h2>Gün Sonu Muhasebe Aktarımı</h2>
+          <p>Türkiye iş günü tamamlandığında sipariş, iade, finans hareketi,
+            komisyon ve uyarı kayıtlarını CSV + JSON manifest içeren ZIP
+            olarak dışa aktarın. Fatura oluşturulmaz.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim">
+            Gün sonu aktarımını aç
+          </Link>
+        </article>
+        <article className="admin-panel">
           <h2>Mutabakat</h2>
           <p>
             Paid sipariş, sale_gross ledger hareketi, aktif entitlement ve

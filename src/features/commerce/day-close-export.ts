@@ -183,6 +183,22 @@ export function buildDayCloseFiles(input: {
   const closeEnd = new Date(closeStartMs + 86400000);
   const isOnBusinessDay = (time: Date | null | undefined) =>
     time !== null && time !== undefined && time >= closeStart && time < closeEnd;
+  // Check the input streams independently. A ledger entry may legitimately
+  // appear both in the business-day ledger and the per-order reconciliation
+  // stream; repetition WITHIN either stream must never double-count money.
+  const assertUnique = (kind: string, refs: readonly string[]) => {
+    const seen = new Set<string>();
+    for (const ref of refs) {
+      if (!ref || !ref.trim()) throw new Error("DAY_CLOSE_EMPTY_" + kind + "_REFERENCE");
+      if (seen.has(ref)) throw new Error("DAY_CLOSE_DUPLICATE_" + kind + "_REFERENCE: " + ref);
+      seen.add(ref);
+    }
+  };
+  assertUnique("ORDER", input.orders.map((order) => order.orderNo));
+  assertUnique("REFUND", input.refunds.map((refund) => refund.id));
+  assertUnique("LEDGER", input.ledger.map((entry) => entry.id));
+  assertUnique("RECONCILIATION_LEDGER",
+    (input.reconciliationLedger ?? input.ledger).map((entry) => entry.id));
   const sales: CsvField[][] = [[
     "siparis_no","odeme_tarihi_utc","durum","yazar_kodu","eser",
     "para_birimi","liste_brut_kurus","indirim_kurus","tahsilat_kurus",

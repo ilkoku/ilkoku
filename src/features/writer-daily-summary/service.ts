@@ -512,6 +512,35 @@ async function processWriter(
   }
 }
 
+type DeliveryBacklogRow = {
+  manualReview: bigint | number | string | null;
+  stalePending: bigint | number | string | null;
+  legacyFailed: bigint | number | string | null;
+};
+
+// Read-only, aggregate-only view: this never retries, sends or mutates records.
+async function inspectUnresolvedDeliveryBacklog() {
+  const rows = await prisma.$queryRaw<DeliveryBacklogRow[]>`
+    SELECT
+      COALESCE(SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END), 0) AS manualReview,
+      COALESCE(SUM(CASE WHEN status = 'pending'
+        AND updatedAt < CURRENT_TIMESTAMP(3) - INTERVAL 1 HOUR
+        THEN 1 ELSE 0 END), 0) AS stalePending,
+      COALESCE(SUM(CASE WHEN status = 'failed'
+        AND (failureMessage IS NULL OR failureMessage NOT LIKE 'PREPARE:%')
+        THEN 1 ELSE 0 END), 0) AS legacyFailed
+    FROM WriterDailySummaryDelivery
+    WHERE status IN ('review', 'pending', 'failed')
+  `;
+
+  const row = rows[0];
+  return {
+    manualReview: toNumber(row?.manualReview ?? null),
+    stalePending: toNumber(row?.stalePending ?? null),
+    legacyFailed: toNumber(row?.legacyFailed ?? null),
+  };
+}
+
 export async function runWriterDailySummaries(
   summaryDate?: string | null,
 ) {
@@ -530,8 +559,11 @@ export async function runWriterDailySummaries(
     counts[result] += 1;
   }
 
+  const unresolved = await inspectUnresolvedDeliveryBacklog();
+
   return {
     ...counts,
+    unresolved,
     eligibleWriters: writers.length,
     periodEnd: window.end.toISOString(),
     periodStart: window.start.toISOString(),

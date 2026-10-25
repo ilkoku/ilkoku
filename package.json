@@ -7,6 +7,7 @@
     "audit:supply-chain": "node scripts/audit-lockfile-supply-chain.mjs",
     "dev": "npm run system-map:generate && npm run social-images:prepare && next dev",
     "db:recover:fresh": "node scripts/recover-fresh-database.mjs",
+    "commerce:day-close:compare": "node scripts/commerce-day-close-compare.mjs",
     "release:measure": "node scripts/release-measurement-report.mjs",
     "release:measure:strict": "node scripts/release-measurement-report.mjs --strict",
     "release:sprint7:status": "npm run release:final:status",

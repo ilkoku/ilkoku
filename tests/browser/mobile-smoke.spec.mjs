@@ -666,6 +666,30 @@ test("admin seller rights workbench is connected to 0 TL readiness without activ
   await expect(page.getByRole("link", { name: /Satıcı ve satış yetkisi çalışma alanını aç/u })).toBeVisible();
 });
 
+test("50% coupon cannot simulate 0 TL or unlock paid chapter without a provider", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.reader;
+  expect(token, "Missing reader fixture session").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone430);
+  await page.goto("/satinal/ci-browser-coupon-work?kupon=CIBROWSER50", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByText(/İlkOku kuponu CIBROWSER50 uygulandı/u)).toBeVisible();
+  await expect(page.getByText(/Kalan tutar 0 TL olmadığı için/u)).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: /Ücretli.*0 TL/u })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Satın alma kapalı" })).toBeDisabled();
+
+  await page.goto("/oku/ci-browser-coupon-work/bolum-2", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/satinal\/ci-browser-coupon-work\?from=/u);
+  await expect(page.getByText("CI browser coupon paid chapter unlocks after 100 percent discount.")).toHaveCount(0);
+});
+
+
 test("provider-free 100% platform coupon: preview open, chapter 2 locked, order and finance reconcile at 0 TL", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.reader;

@@ -65,7 +65,14 @@ export default async function DayCloseAccountingTransferPage() {
             hareket tipi ve kuruş bazlı tutar.</p>
           <p><code>iadeler.csv</code> — İşleme alınmış iadeler.</p>
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
-            mükerrer tahsilat ve diğer kontrol gerektiren kayıtlar.</p>
+            mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
+          <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,
+            aynı günün sale_gross ledger kaydı ve tahsilatıyla karşılaştırır.</p>
+          <p><code>muhasebe_on_hazirlik.csv</code> — Yalnız temel veri
+            kontrollerini geçen satışlar için programdan bağımsız, kesin
+            mali belge sayılmayan aktarım alanları.</p>
+          <p><code>alan_esleme.json</code> — Alan tanımları ve Logo, Mikro,
+            Paraşüt şemalarının henüz doğrulanmadığı bilgisi.</p>
           <p><code>manifest.json</code> — İş günü, içerik sayıları,
             sürüm, dosya SHA-256 özetleri ve kontrol durumu.</p>
         </article>
@@ -78,8 +85,11 @@ export default async function DayCloseAccountingTransferPage() {
             ayrı gelir kalemidir; belge uygunluğu doğrulanmadan tutarı
             otomatik fatura satırına çevrilmez.</p>
           <p>Alıcı fatura bilgileri, resmî belge numarası ve mali müşavir
-            onayı burada üretilmez. Doğrulanmamış kayıtlar işlenmeden önce
-            <code>uyarilar.csv</code> üzerinden incelenmelidir.</p>
+            onayı burada üretilmez. <code>muhasebe_on_hazirlik.csv</code>
+            dosyasındaki satırlar bile fatura düzenleme onayı değildir.
+            Doğrulanmamış kayıtlar <code>uyarilar.csv</code> üzerinden incelenmelidir.</p>
+          <p>Logo, Mikro ve Paraşüt için resmî içe aktarma şeması
+            doğrulanmadan dosyalar doğrudan uyumlu olarak işaretlenmez.</p>
         </article>
       </section>
     </>

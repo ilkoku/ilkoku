@@ -1,35 +1,4 @@
-# İlkOku
-
-İlkOku, yazarların eserlerini bölüm bölüm geliştirebildiği; okur geri bildirimi, profesyonel editör incelemesi ve yayınevi keşfini aynı platformda buluşturan dijital yazar ekosistemidir.
-
-**Canlı site:** [https://ilkoku.com/](https://ilkoku.com/)
-
-## Resmî kanallar
-
-- X: [@ilkokucom](https://x.com/ilkokucom)
-- Instagram: [@ilkokucom](https://www.instagram.com/ilkokucom/)
-- E-posta: [ilkoku@ilkoku.com](mailto:ilkoku@ilkoku.com)
-
-## Public surfaces
-
-- [Nasıl Çalışır?](https://ilkoku.com/nasil-calisir)
-- [Hakkımızda](https://ilkoku.com/hakkimizda)
-- [Yazarlar İçin](https://ilkoku.com/yazarlar-icin)
-- [Editörler İçin](https://ilkoku.com/editorler-icin)
-- [Yayınevleri İçin](https://ilkoku.com/yayinevleri-icin)
-- [Editoryal Standartlar](https://ilkoku.com/editoryal-standartlar)
-- [Yardım Merkezi](https://ilkoku.com/yardim)
-- [Site Haritası](https://ilkoku.com/site-haritasi)
-
-### Yazarlık Okulu
-
-- [Kurgu](https://ilkoku.com/yazarlar-icin/kurgu)
-- [Edebiyat](https://ilkoku.com/yazarlar-icin/edebiyat)
-- [Senaryo ve Sahne](https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne)
-- [Akademik](https://ilkoku.com/yazarlar-icin/akademik)
-- [Bilgilendirici](https://ilkoku.com/yazarlar-icin/bilgilendirici)
-- [Çocuk ve Gençlik](https://ilkoku.com/yazarlar-icin/cocuk-ve-genclik)
-- [Çizgi Anlatı](https://ilkoku.com/yazarlar-icin/cizgi-anlati)
+# EU
 
 ## Teknoloji
 

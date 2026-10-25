@@ -3,7 +3,7 @@ import { authContent } from "@/content";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { UpdatePasswordForm } from "@/features/auth/components/UpdatePasswordForm";
 
-export const metadata: Metadata = { title: authContent.updatePassword.metadataTitle, description: authContent.updatePassword.metadataDescription };
+export const metadata: Metadata = { title: authContent.updatePassword.metadataTitle, description: authContent.updatePassword.metadataDescription, robots: { index: false, follow: true } };
 
 export default async function UpdatePasswordPage({ searchParams }: { searchParams: Promise<{ token?: string | string[] }> }) {
   const { token } = await searchParams;

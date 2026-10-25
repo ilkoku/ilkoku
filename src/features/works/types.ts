@@ -47,6 +47,7 @@ export type WorkWithChapterSummary =
   };
 
 export type PublicWorkCommerceState = {
+  configured: boolean;
   chapterAccess: Record<string, "preview" | "locked">;
   currency: string;
   enforcementActive: boolean;

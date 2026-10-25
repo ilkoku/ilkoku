@@ -1,4 +1,5 @@
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
+import { describeWorkSaleModel } from "@/features/commerce/effective-state";
 import {
   isMemberStoredWorkContentRating,
   type MemberStoredWorkContentRating,
@@ -105,6 +106,9 @@ export async function getCommonEditorDiscovery(
           status: true,
         },
       },
+      saleConfiguration: { select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true } },
+      publicationConsents: { orderBy: { confirmedAt: "desc" }, take: 1,
+        select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true } },
       editorFavorites: {
         where: {
           editorId,
@@ -152,6 +156,7 @@ export async function getCommonEditorDiscovery(
         language: work.language,
         publishedAt: work.publishedAt,
         readerCount: work._count.readingProgress,
+        saleDisclosure: describeWorkSaleModel({ configuration: work.saleConfiguration, latestConsent: work.publicationConsents[0] ?? null }),
         slug: work.slug,
         title: work.title,
         totalWords: publishedChapters.reduce(

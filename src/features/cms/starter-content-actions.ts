@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { aboutPageContent } from "@/content/about";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { communityRulesPageContent } from "@/content/community-rules";
@@ -39,40 +40,12 @@ type FaqSeed = {
 const pageSeeds: PageSeed[] = [
   {
     contentKey: "page:tr:hakkimizda",
-    slug: "/hakkimizda",
-    title: "Hakkımızda",
-    summary: "İlkOku, bir eserin ilk taslağından okur geri bildirimine, editör incelemesinden yayınevi keşfine uzanan yolculuğu tek dijital ortamda buluşturur.",
-    body: `İlkOku, yazarların eserlerini geliştirebildiği, okuyucularla buluşturabildiği, profesyonel editör incelemesine taşıyabildiği ve yayınevleri tarafından keşfedilebildiği dijital bir yazar platformudur.
-
-Amacımız yalnızca bir eserin son halini göstermek değil; eserin oluşum ve gelişim yolculuğunu daha düzenli, görünür ve izlenebilir hale getirmektir.
-
-## Yazarın çalışma alanı
-
-Yazarlar eserlerini oluşturur, bölümlerini düzenler ve hazır olduklarında platformda yayımlar. Okur geri bildirimlerini takip edebilir, çalışmalarını geliştirebilir ve isterlerse eserleri için profesyonel editör incelemesi talep edebilirler.
-
-Platformda yayımlanan bir eser, yayıneviyle yapılmış bir basım veya yayın sözleşmesi anlamına gelmez. İlkOku; eserin okuyucuyla buluştuğu, geliştiği ve profesyonel keşfe açıldığı dijital çalışma ortamını sağlar.
-
-## Okurun katkısı
-
-Okuyucular yayındaki eserleri keşfeder, okumaya devam eder ve kendilerine açık etkileşim araçlarıyla yazara geri bildirim verebilir. Böylece yazar, eserinin okuyucuda nasıl karşılık bulduğunu geliştirme sürecinin içinde görebilir.
-
-## İki aşamalı editör incelemesi
-
-Yazar editör incelemesi talep ettiğinde eser Genel Editör Havuzu'na girer. İlk editör görevi üzerine alır, eseri bağımsız biçimde değerlendirir ve incelemesini tamamlar. Ardından eser ikinci editör değerlendirmesine geçer; ikinci editör de bağımsız bir inceleme yapar.
-
-İki incelemenin tamamlanmasıyla yazarın kullanabileceği düzenli bir değerlendirme sonucu oluşur. Bu yapı, editoryal görüşü tek bir bakış açısına bağlı bırakmadan daha sistemli bir inceleme süreci oluşturmayı amaçlar.
-
-## Yayınevi keşfi
-
-Yayınevi hesapları kendilerine açık keşif alanlarında görünür eserleri ve yazarları inceleyebilir. Bu görünürlük, yayınevinin kendi editoryal ve ticari değerlendirme sürecini destekler; otomatik sözleşme, basım veya yayın taahhüdü oluşturmaz.
-
-## Eser Pasaportu
-
-Eser Pasaportu, platform üzerinde oluşan yazım ve revizyon geçmişi ile inceleme durumunu tek yerde görünür kılmak için tasarlanmıştır. Amaç, eserin yalnızca sonucunu değil, İlkOku içindeki gelişim sürecini de anlaşılır bir kayıt yapısıyla sunmaktır.
-
-İlkOku; yazar, okuyucu, editör ve yayınevini aynı eserin etrafında buluşturan, her rolün sınırlarını koruyan ve eser yolculuğunu daha şeffaf hale getiren bir dijital yazar ekosistemi kurmayı hedefler.`,
-    seoTitle: "Hakkımızda | İlkOku Dijital Yazar Platformu",
-    seoDescription: "İlkOku’nun yazarları, okuyucuları, editörleri ve yayınevlerini eser geliştirme, değerlendirme ve keşif sürecinde nasıl buluşturduğunu öğrenin.",
+    slug: aboutPageContent.canonical,
+    title: aboutPageContent.title,
+    summary: aboutPageContent.summary,
+    body: aboutPageContent.body,
+    seoTitle: aboutPageContent.seoTitle,
+    seoDescription: aboutPageContent.seoDescription,
     kind: "page",
   },
   {

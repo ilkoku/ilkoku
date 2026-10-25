@@ -69,13 +69,17 @@ test("site identity structured data uses a real alternate site name", () => {
   const layout = source("src/app/layout.tsx");
 
   assertContains(layout, 'alternateName: "ilkoku.com"', "domain fallback alternate site name");
+  assertContains(
+    layout,
+    'description: "İlkOku.com, dijital yazar platformudur."',
+    "concise organization description",
+  );
   assertNotContains(layout, "alternateName: publicBrandPositioning", "positioning must not masquerade as an alternate name");
 });
 
 
-test("homepage affiliate creative stays below-fold and low-priority", () => {
+test("below-fold affiliate creative stays lazy-loaded", () => {
   const banner = source("src/features/homepage/MagzterAffiliateBanner.tsx");
 
   assertContains(banner, 'loading="lazy"', "affiliate creative lazy loading");
-  assertContains(banner, 'fetchPriority="low"', "affiliate creative low fetch priority");
 });

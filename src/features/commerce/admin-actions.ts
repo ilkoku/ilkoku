@@ -33,6 +33,17 @@ function parseFixedMinorUnits(value: FormDataEntryValue | null) {
 function parseOptionalDate(value: FormDataEntryValue | null, endOfDay = false) {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
+  // Reject invalid calendar days rather than letting Date normalize them
+  // (e.g. 31 February becomes March). Dates are Turkey-local (+03:00).
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return null;
+  const [year, month, day] = normalized.split("-").map(Number);
+  const calendarDay = new Date(0);
+  calendarDay.setUTCFullYear(year, month - 1, day);
+  if (
+    calendarDay.getUTCFullYear() !== year ||
+    calendarDay.getUTCMonth() + 1 !== month ||
+    calendarDay.getUTCDate() !== day
+  ) return null;
   const time = endOfDay ? "23:59:59.999" : "00:00:00.000";
   const parsed = new Date(`${normalized}T${time}+03:00`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -66,12 +77,27 @@ export async function createPlatformCouponAction(formData: FormData) {
     redirect(destination("gecersiz-indirim"));
   }
 
+  const rawStartsAt = String(formData.get("startsAt") ?? "").trim();
+  const rawEndsAt = String(formData.get("endsAt") ?? "").trim();
   const startsAt = parseOptionalDate(formData.get("startsAt"));
   const endsAt = parseOptionalDate(formData.get("endsAt"), true);
-  if (startsAt && endsAt && endsAt < startsAt) redirect(destination("gecersiz-tarih"));
+  if (
+    (rawStartsAt && !startsAt) ||
+    (rawEndsAt && !endsAt) ||
+    (startsAt && endsAt && endsAt < startsAt)
+  ) redirect(destination("gecersiz-tarih"));
 
+  const rawTotalUsageLimit = String(formData.get("totalUsageLimit") ?? "").trim();
+  const rawPerUserUsageLimit = String(formData.get("perUserUsageLimit") ?? "").trim();
   const totalUsageLimit = parsePositiveInteger(formData.get("totalUsageLimit"));
-  const perUserUsageLimit = parsePositiveInteger(formData.get("perUserUsageLimit")) ?? 1;
+  const parsedPerUserUsageLimit = parsePositiveInteger(formData.get("perUserUsageLimit"));
+  // Blank total limit deliberately means unlimited; a supplied invalid
+  // value must never silently remove that limit.
+  if (
+    (rawTotalUsageLimit && totalUsageLimit === null) ||
+    (rawPerUserUsageLimit && parsedPerUserUsageLimit === null)
+  ) redirect(destination("eksik-bilgi"));
+  const perUserUsageLimit = parsedPerUserUsageLimit ?? 1;
   const requestedWorkIds = Array.from(new Set(formData.getAll("workIds").map(String).filter(Boolean)));
   const requestedAuthorIds = Array.from(new Set(formData.getAll("authorIds").map(String).filter(Boolean)));
 

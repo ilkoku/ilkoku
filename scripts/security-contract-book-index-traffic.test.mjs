@@ -33,7 +33,7 @@ test("Book Index public pages expose ranking and freshness SEO signals", () => {
   contains(sitemap, "lastModified", "sitemap lastModified");
 });
 
-test("public site map exposes only currently indexable Book Index routes", () => {
+test("public site map exposes stable indexable Book Index routes without a transient data gate", () => {
   const siteMapPage = source("src/app/site-haritasi/page.tsx");
 
   contains(
@@ -46,15 +46,15 @@ test("public site map exposes only currently indexable Book Index routes", () =>
     "page.indexable !== false",
     "site-map exposes only routes marked indexable",
   );
-  contains(
+  notContains(
     siteMapPage,
-    "getBookIndexPublicPageContext(30)",
-    "site-map mirrors the strict Book Index publication gate",
+    "getBookIndexPublicPageContext",
+    "stable Book Index discovery is not hidden behind transient data availability",
   );
-  contains(
+  notContains(
     siteMapPage,
-    "bookIndexPublished && publishedInsightHrefs.has(page.href)",
-    "site-map exposes trend routes only when indexed publication and data are ready",
+    "bookIndexPublished",
+    "obsolete runtime Book Index publication gate remains removed",
   );
 });
 
@@ -71,7 +71,6 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
       "https://ilkoku.com/",
       "https://ilkoku.com/en-cok-satanlar",
       "https://ilkoku.com/en-cok-satanlar/turkiye",
-      "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
       "https://ilkoku.com/hakkimizda",
     ],
     changedFiles: ["__BOOK_INDEX__"],
@@ -81,7 +80,6 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   assert.deepEqual(result.urls, [
     "https://ilkoku.com/en-cok-satanlar",
     "https://ilkoku.com/en-cok-satanlar/turkiye",
-    "https://ilkoku.com/en-cok-satanlar/turkiye/karsilastirma",
   ]);
 });
 
@@ -121,12 +119,27 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
 });
 
 
+test("homepage footer uses the same published Book Index gate depth", () => {
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+
+  contains(
+    homepage,
+    "getBookIndexPublicPageContext(100).catch(() => null)",
+    "homepage footer evaluates the full Turkey publication threshold",
+  );
+  contains(
+    homepage,
+    "bookIndexPublished={Boolean(bookIndexContext)}",
+    "homepage footer receives the published Book Index state",
+  );
+});
+
 test("Book Index gains a gated site-wide footer discovery link after publication", () => {
   const footer = source("src/components/content/PublicTrustFooter.tsx");
 
   contains(
     footer,
-    "getBookIndexPublicPageContext(10).catch(() => null)",
+    "getBookIndexPublicPageContext(100).catch(() => null)",
     "footer uses the same fail-closed public gate",
   );
   contains(
@@ -139,4 +152,18 @@ test("Book Index gains a gated site-wide footer discovery link after publication
     "const platformLinks = bookIndexContext",
     "footer link only appears when publication is actually allowed",
   );
+});
+
+test("Book Index Turkey TTFB threshold is confirmed twice without changing the other route gate", () => {
+  const audit = source(".github/workflows/book-index-live-link-performance.yml");
+  contains(audit, '"/en-cok-satanlar/turkiye"', "same Turkey live URL");
+  contains(audit, "Turkey TTFB confirmation:", "slow Turkey first response triggers second sample");
+  contains(audit, "n>1.5", "Turkey alert uses stricter 1.5 second threshold");
+  contains(audit, "sleep 4", "repeated read is paced");
+  contains(audit, "isolated TTFB spike did not repeat", "transient spikes do not raise false alarm");
+  contains(audit, "CIRCUIT BREAKER: Turkey calibration blocked by edge", "repeat sample stops on bot block");
+  contains(audit, "n>2.5", "other eight-route alert threshold remains unchanged");
+  contains(audit, '[[ "${check_status:-000}" != "200" ]]', "second response must be HTTP 200");
+  contains(audit, "failed=1", "HTTP failure is never hidden by calibration");
+  notContains(audit, "prisma", "read-only canary never writes to application database");
 });

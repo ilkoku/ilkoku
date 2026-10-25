@@ -70,30 +70,51 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
   contains(
     overview,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "overview metadata and page use the full Turkey publication evidence floor",
+  );
+  notContains(
+    overview,
     "getBookIndexSoftLaunchPageContext(30)",
-    "overview uses route-only soft-launch context",
+    "overview metadata must not truncate Turkey evidence below the publication threshold",
   );
   contains(
     overview,
-    "noIndex: !context.gate.canPublish",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
     "overview stays noindex until full publish gate passes",
   );
   contains(
     overview,
-    "context.gate.canPublish ? (",
+    "searchIndexable ? (",
     "overview structured data stays off during soft launch",
   );
-  contains(
+  notContains(
     overview,
-    "showInsightPages={context.gate.canPublish}",
-    "overview hides unpublished trend links during soft launch",
+    "showInsightPages=",
+    "overview no longer renders a duplicate trend-card surface",
+  );
+  notContains(
+    overview,
+    "getBookIndexInsights(",
+    "overview no longer fetches trend data only for duplicate cards",
   );
 
   contains(
     turkey,
-    "getBookIndexSoftLaunchPageContext(100)",
-    "Turkey route uses route-only soft-launch context",
+    "getBookIndexSoftLaunchPageContext(1200)",
+    "Turkey metadata and page share the full request-scoped dataset",
   );
+  assert.equal(
+    turkey.match(/getBookIndexSoftLaunchPageContext\(1200\)/g)?.length,
+    2,
+    "Turkey metadata and page must use one cache key to avoid duplicate database reads",
+  );
+  notContains(
+    turkey,
+    "getBookIndexSoftLaunchPageContext(100)",
+    "Turkey metadata must not trigger a second data model read",
+  );
+
   contains(
     turkey,
     'context.model.turkey.availability !== "available"',
@@ -101,12 +122,12 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     turkey,
-    "noIndex: !context.gate.canPublish",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
     "Turkey route stays noindex until full publish gate passes",
   );
   contains(
     turkey,
-    "context.gate.canPublish ? (",
+    "searchIndexable ? (",
     "Turkey structured data stays off during soft launch",
   );
 
@@ -117,7 +138,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     insight,
-    "noIndex: !context.gate.canPublish || items.length === 0",
+    "noIndex: isSoftLaunchSearchExcludedPath(canonical(slug)) || !context.gate.canPublish || items.length === 0",
     "trend routes stay noindex until publish gate and data are both ready",
   );
   notContains(
@@ -132,7 +153,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     insight,
-    "context.gate.canPublish && items.length > 0 ? (",
+    "searchIndexable ? (",
     "trend structured data stays off until publication is allowed",
   );
 
@@ -161,10 +182,15 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   notContains(`${view}\n${rankTable}`, "İlkOku Sırası", "no invented public rank heading");
   notContains(`${view}\n${rankTable}`, "Kaynak Sayısı", "no composite source-count column");
   contains(rankTable, "rowMovementLabel(row)", "movement uses verified source snapshot history");
-  contains(
+  notContains(
     view,
-    "showInsightPages && publishedInsightPages.length",
-    "trend links render only after the full publication gate passes",
+    'id="insight-pages-heading"',
+    "overview duplicate trends section stays removed",
+  );
+  notContains(
+    view,
+    "getPublishedBookIndexInsightPages",
+    "overview no longer materializes duplicate trend cards",
   );
 
   contains(
@@ -333,16 +359,16 @@ test("SEO history evidence uses the minimum Turkey composite source history floo
   );
 });
 
-
-test("HTML sitemap mirrors live Book Index indexability instead of linking gated routes", () => {
-  const siteMap = source("src/app/site-haritasi/page.tsx");
-
-  contains(siteMap, "getBookIndexPublicPageContext(30)", "HTML sitemap reads the strict Book Index publication gate");
-  contains(siteMap, "getBookIndexInsights(50)", "HTML sitemap reads current insight availability");
-  contains(siteMap, "getPublishedBookIndexInsightPages", "HTML sitemap publishes only insight pages with usable data");
-  contains(siteMap, '"/en-cok-satanlar/dunya"', "global bestsellers remain independently discoverable");
-  contains(siteMap, '"/yeni-cikanlar"', "new releases remain independently discoverable");
-  contains(siteMap, '"/en-cok-satanlar/turkiye/karsilastirma"', "comparison route stays behind the publication gate");
-  contains(siteMap, "return bookIndexPublished && publishedInsightHrefs.has(page.href)", "trend discovery follows the gate and insight data");
-  contains(siteMap, '|| !page.href.startsWith("/en-cok-satanlar")', "CMS-only fallback cannot leak gated Book Index routes");
+test("Book Index public SEO evidence is briefly cached without caching live book listings", () => {
+  const access = source("src/lib/book-index/public-access.ts");
+  contains(access, 'import { unstable_cache } from "next/cache";', "supported Next.js database cache");
+  contains(access, '["ilkoku-book-index-public-seo-evidence-v1"]', "separate public evidence cache key");
+  contains(access, "{ revalidate: 30 }", "readiness evidence expires after 30 seconds");
+  contains(access, "const readiness = await getBookIndexReadinessSnapshot();", "real SEO readiness still determines the gate");
+  contains(access, "getCachedPublicBookIndexSeoEvidence()", "public routes reuse one bounded evidence snapshot");
+  contains(access, "getBookIndexPublicReadModel(limit)", "public book list remains fresh per request");
+  contains(access, "turkeyItemCount: model.turkey.items.length", "SEO gate keeps live Turkey book count");
+  contains(access, "if (!context.gate.canPublish) return null;", "SEO gate remains fail closed");
+  const pageScope = access.slice(access.indexOf("async function buildBookIndexPageContext("), access.indexOf("export const getBookIndexPublicPageContext"));
+  notContains(pageScope, "getBookIndexReadinessSnapshot()", "public path must not directly recalculate heavy readiness every request");
 });

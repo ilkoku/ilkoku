@@ -1196,6 +1196,10 @@ test("NobelKitap bestseller collector is a bounded independent Turkey composite 
   contains(adapter, '/-(97[89][0-9]{10})$/u', "ISBN-13 extraction from canonical product URL");
   contains(adapter, '\\bfont-medium\\b', "NobelKitap title field");
   contains(adapter, '\\btext-gray-600\\b', "NobelKitap author field");
+  contains(adapter, "allowMissingAuthor = false", "NobelKitap author requirement stays fail-closed by default");
+  contains(adapter, 'sourcePath === "/yeni-cikanlar"', "NobelKitap new releases may omit author metadata");
+  contains(adapter, "authorName: decodedAuthor || null", "NobelKitap missing new-release author remains null");
+  notContains(adapter, "if (!productUrl || !title || !author)", "NobelKitap valid new-release cards are not rejected solely for missing author");
   contains(adapter, "BOOK_INDEX_NOBELKITAP_RESULT_TOO_SMALL", "NobelKitap suspicious result rejection");
   contains(adapter, "BOOK_INDEX_NOBELKITAP_DUPLICATE_SOURCE_KEY", "NobelKitap duplicate key protection");
   contains(lists, 'code: "nobelkitap-tr-live"', "NobelKitap list registry");

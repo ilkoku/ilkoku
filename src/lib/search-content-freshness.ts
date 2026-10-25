@@ -1,2 +1,91 @@
 // Shared freshness timestamp for the Oct 1 structured-data update applied across all writing guides (PR #1450).
 export const WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT = new Date("2026-10-01T08:40:42Z");
+
+// Truthful content update for the Bilgilendirici guide-family differentiation merged in PR #1609.
+export const INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT = new Date("2026-10-04T12:14:35Z");
+
+// Truthful visible-content update for contextual internal links across all writing category hubs and guide pages.
+export const WRITING_INTERNAL_LINKS_UPDATED_AT = new Date("2026-10-04T14:20:31Z");
+
+// Significant search-facing updates merged on Oct 6. These timestamps are
+// intentionally route-specific: Google recommends changing sitemap lastmod
+// only when the page itself received a meaningful content, structured-data,
+// or link update. Do not advance unrelated routes on every deploy.
+const FLAGSHIP_GUIDE_INTENT_UPDATED_AT = new Date("2026-10-06T07:55:57Z");
+const PRIORITY_EDUCATION_INTENT_UPDATED_AT = new Date("2026-10-06T08:04:59Z");
+const PRIORITY_CATEGORY_SCHEMA_UPDATED_AT = new Date("2026-10-06T08:33:10Z");
+const PRIORITY_EDITOR_SCHEMA_UPDATED_AT = new Date("2026-10-06T09:14:20Z");
+
+// Targeted explanatory lesson hand-offs were added on three public editor school guides (Oct 12).
+const EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT = new Date("2026-10-12T15:16:36Z");
+
+// Substantive Oct 12 reading hub guidance and seven unique writing-category practice cases.
+const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:07Z");
+
+// PR #1867 added a meaningful expert-verification disclaimer to the informational category only.
+// Keep its sitemap lastmod faithful to the production content change; do not bump other hubs.
+const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z");
+
+// Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
+const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
+
+// A real HTML sitemap link update: the indexable registration agreement was added in PR #1701 (Oct 14).
+const HTML_SITE_MAP_DISCOVERY_UPDATED_AT = new Date("2026-10-14T12:56:16Z");
+
+// PR #1750 changed the registration agreement's rendered title and description (Oct 15).
+const REGISTRATION_AGREEMENT_METADATA_UPDATED_AT = new Date("2026-10-15T22:21:25Z");
+
+// Visible, CMS-independent quick-start guidance and corrected headline on the how-it-works page (Oct 12).
+const HOW_IT_WORKS_QUICK_START_UPDATED_AT = new Date("2026-10-12T13:20:00Z");
+
+const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
+  ["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT],
+  ["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT],
+  ["/site-haritasi", HTML_SITE_MAP_DISCOVERY_UPDATED_AT],
+  ["/uyelik-sozlesmesi", REGISTRATION_AGREEMENT_METADATA_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/roman", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/oyku", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/fantastik", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/bilim-kurgu", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/distopya", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/edebiyat/siir", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+
+  ["/okurlar-icin/okumaya-baslama", PRIORITY_EDUCATION_INTENT_UPDATED_AT],
+
+  ["/yazarlar-icin/kurgu", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/edebiyat", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/akademik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT],
+  ["/yazarlar-icin/senaryo-ve-sahne", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/cocuk-ve-genclik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/yazarlar-icin/cizgi-anlati", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+  ["/okurlar-icin", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
+
+  ["/editorler-icin/egitim/editorluge-baslama", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+  ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+  ["/editorler-icin/egitim/metin-degerlendirme", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+]);
+
+function normalizeSearchPath(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "/";
+
+  let path = trimmed;
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      path = new URL(trimmed).pathname;
+    } catch {
+      return trimmed;
+    }
+  } else {
+    path = trimmed.split(/[?#]/u, 1)[0] || "/";
+  }
+
+  if (!path.startsWith("/")) path = `/${path}`;
+  if (path.length > 1) path = path.replace(/\/+$/u, "");
+  return path || "/";
+}
+
+export function getSearchCodeFreshness(value: string) {
+  return SEARCH_CODE_FRESHNESS_BY_PATH.get(normalizeSearchPath(value));
+}

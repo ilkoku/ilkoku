@@ -1,0 +1,13 @@
+# Independent Worker. No routes, no DNS changes, no effect on the existing GTM gateway.
+name = "ilkoku-email-ops-cron"
+main = "index.mjs"
+compatibility_date = "2026-10-20"
+workers_dev = false
+
+# Cloudflare Cron Triggers use UTC.
+# GitHub Actions remains active at minute 35 as a separate backup.
+[triggers]
+crons = ["12 * * * *"]
+
+[observability]
+enabled = true

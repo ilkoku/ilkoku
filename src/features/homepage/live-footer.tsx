@@ -10,8 +10,11 @@ import {
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
-import { shouldNofollowSearchExcludedHref } from "@/lib/search-link-policy";
 
+// Footer styling must ship with the shared footer on every public route,
+// not only with src/app/page.tsx (homepage route CSS).
+import "@/app/landing-footer-pro.css";
+import "@/app/landing-footer-tight.css";
 import "./live-footer.css";
 
 type LiveHomepageFooterProps = {
@@ -55,39 +58,39 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
       <footer className="landing-footer" id="iletisim">
         <div className="landing-container landing-footer__grid">
           <div>
-            <Link className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa">
-              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" />
+            <Link prefetch={false} className="landing-logo landing-logo--footer" href="/" aria-label="İlkOku ana sayfa">
+              <Image src={logo} alt="İlkOku" sizes="(max-width: 480px) 128px, 156px" style={{ width: "156px", maxWidth: "100%", height: "auto" }} />
             </Link>
             <p><FooterSlogan value={slogan} /></p>
           </div>
 
           <div>
             <h3>Platform</h3>
-            {publicPlatformLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-            {bookIndexPublished ? <Link href="/en-cok-satanlar">En Çok Satanlar</Link> : null}
+            {publicPlatformLinks.map((item) => <Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
+            {bookIndexPublished ? <Link prefetch={false} href="/en-cok-satanlar">En Çok Satanlar</Link> : null}
           </div>
 
           <div className="landing-footer__trust">
             <h3>Güven &amp; Standartlar</h3>
-            {publicTrustLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {publicTrustLinks.map((item) => <Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
           </div>
 
           <div>
             <h3>Hesap</h3>
             {signedIn && workspaceHref ? <>
-              <Link href="/hesabim" rel={shouldNofollowSearchExcludedHref("/hesabim") ? "nofollow" : undefined}>Hesabım</Link>
-              <Link href={workspaceHref}>Çalışma Alanım</Link>
+              <Link prefetch={false} href="/hesabim">Hesabım</Link>
+              <Link prefetch={false} href={workspaceHref}>Çalışma Alanım</Link>
               <form action={logoutAction}><button className="landing-footer__logout" type="submit">Çıkış Yap</button></form>
             </> : <>
-              <Link href="/giris" rel={shouldNofollowSearchExcludedHref("/giris") ? "nofollow" : undefined}>Giriş Yap</Link>
-              <a href="#roller">Üye Ol</a>
-              <Link href="/sifremi-unuttum" rel={shouldNofollowSearchExcludedHref("/sifremi-unuttum") ? "nofollow" : undefined}>Şifremi Unuttum</Link>
+              <Link prefetch={false} href="/giris">Giriş Yap</Link>
+              <Link prefetch={false} href="/#roller">Üye Ol</Link>
+              <Link prefetch={false} href="/sifremi-unuttum">Şifremi Unuttum</Link>
             </>}
           </div>
 
           <div>
             <h3>Destek</h3>
-            {publicSupportLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {publicSupportLinks.map((item) => <Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
             <div className="site-contact-footer">
               <CloudflareSafeEmailLink />
               <div className="site-social-links" aria-label="İlkOku sosyal medya hesapları">
@@ -100,7 +103,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
         <div className="landing-footer__copyright">
           <span className="landing-footer__copyright-text">{copyright}</span>
           <nav className="landing-footer__legal" aria-label="Yasal bağlantılar">
-            {publicLegalLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {publicLegalLinks.map((item) => <Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
           </nav>
         </div>
       </footer>

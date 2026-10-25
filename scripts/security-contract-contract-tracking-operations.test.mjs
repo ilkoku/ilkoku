@@ -29,14 +29,21 @@ test("contract tracking reminder activity is aggregated in one bounded read-only
   notContains(activity, "UPDATE UserContract", "tracking collector must not mutate contracts");
 });
 
-test("tracking workbench loads contracts and reminder activity without per-row database calls", () => {
+test("tracking workbench loads whole-history counts and page-aligned reminders without N+1", () => {
   const page = source("src/app/sozlesme/takip/page.tsx");
+  const repository = source("src/features/contracts/repository.ts");
+  const activity = source("src/features/contracts/tracking-activity.ts");
 
-  contains(page, "Promise.all([", "parallel bounded workbench reads");
-  contains(page, "listAdminUserContracts(500)", "bounded contract inventory");
-  contains(page, "listContractReminderActivity(500)", "bounded reminder aggregate");
+  contains(page, "Promise.all([", "parallel counts and bounded page read");
+  contains(page, "getAdminUserContractsPage({", "SQL-filtered, paginated contract inventory");
+  contains(page, "getAdminContractSummary()", "complete-history status totals");
+  contains(page, "listContractReminderActivityForIds(", "batch visible IDs");
+  contains(page, "filtered.map((contract) => contract.id)", "visible-page ID selection");
   contains(page, "new Map(reminderActivity.map", "in-memory reminder lookup");
+  contains(repository, "ORDER BY contract.updatedAt DESC, contract.id DESC LIMIT ? OFFSET ?", "deterministic SQL page");
+  contains(activity, "event.contractId IN (${placeholders})", "single grouped reminder query per visible page");
   notContains(page, "listContractReminderActivity(contract.id", "no per-row reminder query");
+  notContains(page, "listAdminUserContracts(500)", "old 500 cap removed");
 });
 
 test("tracking workbench exposes factual waiting, viewing and reminder evidence without inventing an SLA", () => {
@@ -56,11 +63,14 @@ test("tracking workbench exposes factual waiting, viewing and reminder evidence 
   notContains(page, "SLA", "no explicit SLA policy");
 });
 
-test("registration acceptances remain operationally separated from manual reminder activity", () => {
+test("registration acceptances are excluded from manual reminder metrics and filter", () => {
   const page = source("src/app/sozlesme/takip/page.tsx");
+  const repository = source("src/features/contracts/repository.ts");
   const activity = source("src/features/contracts/tracking-activity.ts");
 
-  contains(page, "MANDATORY_REGISTRATION_CONTRACT_CODE", "registration/manual split");
-  contains(page, 'flow === "registration"', "registration filter");
-  contains(activity, "template.code <> ?", "aggregate excludes registration template");
+  contains(page, "MANDATORY_REGISTRATION_CONTRACT_CODE", "stable registration identity for row display");
+  contains(repository, 'flow === "registration"', "registration-only SQL flow");
+  contains(repository, "template.code <> ?", "manual-only SQL flow");
+  contains(repository, "event.eventType = 'reminder_requested'", "manual reminder evidence condition");
+  contains(activity, "event.contractId IN (${placeholders})", "only visible manual contract IDs are checked");
 });

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "Dil ve Anlatım Editörlüğü | İlkOku Editörlük Okulu",
-  description:
-    "Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren.",
-  alternates: { canonical: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu" },
-  robots: { index: true, follow: true },
-};
+  description: "Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren.",
+  canonical: "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+});
 
 const outcomes = [
   {
@@ -144,7 +145,13 @@ export default function DilVeAnlatimEditorluguPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Dil ve Anlatım Editörlüğü"
+        description="Cümle yapısı, akıcılık, tekrar, gereksiz açıklama, ton, kelime seçimi, paragraf ritmi, üslup ve diyalog üzerinde çalışırken yazarın sesini korumayı öğren."
+        canonical="/editorler-icin/egitim/dil-ve-anlatim-editorlugu"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -159,6 +166,8 @@ export default function DilVeAnlatimEditorluguPage() {
             Ana ilke: Editör metni kendi diline çevirmeyecek; yazarın sesini daha temiz duyulur hale getirecek.
           </div>
         </header>
+
+        <PriorityEducationIntentPanel area="editing" slug="dil-ve-anlatim-editorlugu" />
 
         <section className="mt-6 rounded-[2.25rem] border border-black/[0.06] bg-white px-7 py-9 shadow-[0_14px_48px_rgba(34,23,70,0.06)] sm:px-10 sm:py-11">
           <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#6b52c7]">Bu eğitim sana ne kazandıracak?</span>
@@ -288,6 +297,7 @@ export default function DilVeAnlatimEditorluguPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

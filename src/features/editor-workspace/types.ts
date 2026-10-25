@@ -41,6 +41,7 @@ export type EditorWorkTableData = EditorWorkCardData & {
   hasPassport?: boolean;
   publishedAt: Date | null;
   readerCount: number;
+  saleDisclosure?: { label: string; detail: string };
   updatedAt?: Date;
   versionCount?: number;
 };

@@ -33,6 +33,7 @@ function readWritingInventory() {
 test("homepage and all writing education routes stay canonical indexable and sitemap-owned", () => {
   const homepage = source("src/app/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const metadataHelper = source("src/lib/public-page-metadata.ts");
   const { genres, hubs } = readWritingInventory();
 
   assert.equal(hubs.length, 7, "writing category inventory must stay at 7 hubs");
@@ -51,21 +52,27 @@ test("homepage and all writing education routes stay canonical indexable and sit
   assertContains(sitemap, "...writingGenreHrefs", "writing genre CMS duplicate guard");
   assertContains(sitemap, "...WRITING_CATEGORY_HUBS.map((hub) => hub.href)", "writing category CMS duplicate guard");
 
+  assertContains(metadataHelper, "openGraph: {", "shared metadata emits Open Graph");
+  assertContains(metadataHelper, "twitter: {", "shared metadata emits Twitter metadata");
+  assertContains(metadataHelper, "url: canonicalUrl", "shared metadata binds canonical Open Graph URL");
+  assertContains(metadataHelper, "index: true", "shared metadata emits index");
+  assertContains(metadataHelper, "follow: true", "shared metadata emits follow");
+
   const hrefByCategory = new Map(hubs.map((hub) => [hub.category, hub.href]));
 
   for (const hub of hubs) {
     const page = source(`src/app${hub.href}/page.tsx`);
-    assertContains(page, `canonical: "https://ilkoku.com${hub.href}"`, `${hub.href} self canonical`);
-    assertContains(page, "robots: { index: true, follow: true }", `${hub.href} index/follow`);
+    assertContains(page, 'createPublicPageMetadata({', `${hub.href} shared metadata contract`);
+    assertContains(page, `canonical: "${hub.href}"`, `${hub.href} self canonical`);
   }
 
   const informational = source("src/app/yazarlar-icin/bilgilendirici/[slug]/page.tsx");
+  assertContains(informational, "return createPublicPageMetadata({", "informational guide shared metadata contract");
   assertContains(
     informational,
-    'alternates: { canonical: `https://ilkoku.com/yazarlar-icin/bilgilendirici/${slug}` }',
+    'canonical: `/yazarlar-icin/bilgilendirici/${slug}`',
     "informational guide self canonical",
   );
-  assertContains(informational, "robots: { index: true, follow: true }", "informational guides index/follow");
   assertContains(
     informational,
     'return { title: "Eğitim bulunamadı | İlkOku", robots: { index: false, follow: false } };',
@@ -80,8 +87,34 @@ test("homepage and all writing education routes stay canonical indexable and sit
 
     const canonical = `${categoryHref}/${genre.slug}`;
     const page = source(`src/app${canonical}/page.tsx`);
-    assertContains(page, `canonical: "https://ilkoku.com${canonical}"`, `${canonical} self canonical`);
-    assertContains(page, "robots: { index: true, follow: true }", `${canonical} index/follow`);
+    assertContains(page, 'createPublicPageMetadata({', `${canonical} shared metadata contract`);
+
+    if (canonical === "/yazarlar-icin/kurgu/roman") {
+      assertContains(page, 'const canonical = "/yazarlar-icin/kurgu/roman"', `${canonical} canonical source`);
+      assertContains(page, "canonical,", `${canonical} metadata canonical binding`);
+      continue;
+    }
+
+    assertContains(page, `canonical: "${canonical}"`, `${canonical} self canonical`);
+  }
+});
+
+test("editor education routes use the shared public metadata contract", () => {
+  const slugs = [
+    "editorluge-baslama",
+    "metin-degerlendirme",
+    "yapisal-editorluk",
+    "dil-ve-anlatim-editorlugu",
+    "tur-editorlugu",
+    "editor-notu-ve-geri-bildirim",
+    "yazarla-calismak",
+    "yayincilik-ve-profesyonel-editorluk",
+  ];
+
+  for (const slug of slugs) {
+    const page = source(`src/app/editorler-icin/egitim/${slug}/page.tsx`);
+    assertContains(page, 'createPublicPageMetadata({', `${slug} shared metadata contract`);
+    assertContains(page, `canonical: "/editorler-icin/egitim/${slug}"`, `${slug} self canonical`);
   }
 });
 
@@ -98,33 +131,48 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   assertContains(sitemap, "educationLastModifiedByUrl", "education URL freshness map");
   assertContains(sitemap, "liveStaticDiscoveryEntries", "live static sitemap freshness merge");
   assertContains(sitemap, "lastModified", "truthful sitemap lastmod output");
-  assertContains(
-    sitemap,
-    "WRITING_CATEGORY_INDEXABLE_AT",
-    "writing category hub lastmod must use the verified indexable release time",
-  );
-  assertContains(
-    sitemap,
-    'new Date("2026-09-13T19:15:11Z")',
-    "writing category verified indexable timestamp",
-  );
   const searchFreshness = source("src/lib/search-content-freshness.ts");
   const recentUpdatesAtom = source("src/app/recent-updates.atom/route.ts");
 
   assertContains(
     sitemap,
-    'import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness"',
-    "sitemap shared writing guide freshness import",
+    "WRITING_INTERNAL_LINKS_UPDATED_AT,",
+    "sitemap shared writing internal-link freshness symbol",
   );
   assertContains(
     sitemap,
-    "WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT",
-    "writing guide lastmod must preserve the real shared structured-data update",
+    'from "@/lib/search-content-freshness";',
+    "sitemap shared search-content freshness import",
+  );
+  assert.equal(
+    (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,
+    1,
+    "unchanged writing hubs preserve the October 4 content update",
+  );
+  assert.equal(
+    (sitemap.match(/lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/g) ?? []).length,
+    1,
+    "all 85 guide entries reflect their October 18 visible related-link update",
+  );
+  assertContains(
+    sitemap,
+    'WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z")',
+    "writing guides use the truthful PR #1789 release date",
+  );
+  assertContains(
+    searchFreshness,
+    'WRITING_INTERNAL_LINKS_UPDATED_AT = new Date("2026-10-04T14:20:31Z")',
+    "writing internal-link truthful content lastmod",
   );
   assertContains(
     searchFreshness,
     'new Date("2026-10-01T08:40:42Z")',
-    "writing guide structured-data lastmod timestamp",
+    "writing guide structured-data lastmod history",
+  );
+  assertContains(
+    searchFreshness,
+    'INFORMATIONAL_GUIDE_CONTENT_UPDATED_AT = new Date("2026-10-04T12:14:35Z")',
+    "informational guide truthful content lastmod history",
   );
   assertContains(
     recentUpdatesAtom,
@@ -133,23 +181,49 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    "const RECENT_ENTRY_LIMIT = 20",
-    "Atom feed recent-entry cap",
+    'import { buildSitemap } from "@/lib/seo/sitemap-data"',
+    "Atom feed must reuse canonical sitemap inventory",
   );
   assertContains(
     recentUpdatesAtom,
-    "WHERE namespace = 'education_guide'",
-    "Atom feed published writing freshness source",
+    "const RECENT_ENTRY_LIMIT = 150",
+    "Atom feed bounded recent-entry cap with current 129-URL sitemap coverage",
   );
   assertContains(
     recentUpdatesAtom,
-    "AND status = 'published'",
-    "Atom feed published-only freshness",
+    "const sitemap = await buildSitemap()",
+    "Atom feed freshness must come from sitemap lastmod data",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "normalizeLastModified(entry.lastModified)",
+    "Atom feed accepts only explicit sitemap lastmod timestamps",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "parsed.origin !== baseUrl",
+    "Atom feed must stay same-origin",
   );
   assertContains(
     recentUpdatesAtom,
     ".slice(0, RECENT_ENTRY_LIMIT)",
-    "Atom feed keeps only recent guide URLs",
+    "Atom feed keeps only the bounded most-recent indexable URLs",
+  );
+  // The public writing program has 85 genres; the old limit of 50 silently
+  // dropped 50 writing guides from the feed even while sitemap listed them.
+  const guideDefinitions = source("src/lib/genres.ts");
+  const guideCount = [...guideDefinitions.matchAll(/\{ slug: "[^"]+", label: "[^"]+", category: "[^"]+" \}/gu)].length;
+  const atomEntryLimit = Number(recentUpdatesAtom.match(/RECENT_ENTRY_LIMIT = ([0-9]+)/u)?.[1]);
+  assert.equal(guideCount, 85, "public writing guide inventory size");
+  assert.ok(atomEntryLimit >= guideCount, "Atom cap must cover all currently live writing guide URLs");
+  assert.ok(atomEntryLimit >= 129, "Atom window must cover the observed live sitemap size");
+  assertContains(recentUpdatesAtom, ".sort((a, b) => {", "preserve truthful freshness sorting");
+  assertContains(recentUpdatesAtom, "normalizeLastModified(entry.lastModified)", "preserve sitemap-derived lastmod");
+
+  assertNotContains(
+    recentUpdatesAtom,
+    "WHERE namespace = 'education_guide'",
+    "Atom feed must not be restricted to writing-guide freshness only",
   );
   assertContains(
     recentUpdatesAtom,
@@ -168,13 +242,23 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    'request.headers.get("if-none-match") === etag',
+    'const ifNoneMatch = request.headers.get("if-none-match");',
     "Atom feed If-None-Match conditional response",
   );
   assertContains(
     recentUpdatesAtom,
     'request.headers.get("if-modified-since")',
     "Atom feed If-Modified-Since conditional response",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "if (!ifNoneMatch && ifModifiedSince)",
+    "Atom must give If-None-Match precedence over If-Modified-Since",
+  );
+  assertNotContains(
+    recentUpdatesAtom,
+    "if (ifModifiedSince) {",
+    "Atom must never emit a stale 304 after a nonmatching ETag",
   );
   assertContains(
     recentUpdatesAtom,
@@ -192,27 +276,84 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     "Atom feed must not rely on the retired search discovery signal module",
   );
 
+  assertContains(
+    sitemap,
+    "bookIndexLastModified",
+    "dynamic Book Index freshness must be available to sitemap discovery entries",
+  );
+  assertContains(
+    sitemap,
+    'entry.url === \`${baseUrl}/yeni-cikanlar\`',
+    "new releases sitemap entry must inherit live Book Index freshness",
+  );
+
   const websubWorkflow = source(".github/workflows/google-websub-publish.yml");
   assertContains(
     websubWorkflow,
-    "search-content-freshness",
-    "WebSub reacts to real shared guide freshness changes",
+    'cron: "23 */6 * * *"',
+    "WebSub must periodically publish dynamic database/feed updates",
+  );
+  assertContains(
+    websubWorkflow,
+    "workflow_dispatch:",
+    "WebSub keeps an explicit manual dispatch path",
+  );
+  assertContains(
+    websubWorkflow,
+    "github.event_name != 'workflow_run'",
+    "WebSub scheduled/manual events must not depend on workflow_run fields",
+  );
+  assertContains(
+    websubWorkflow,
+    "https://ilkoku.com/recent-updates.atom",
+    "WebSub publishes the canonical recent-updates feed",
+  );
+  assertContains(
+    websubWorkflow,
+    "hub.mode=publish",
+    "WebSub uses the canonical publish notification",
   );
   assertNotContains(
     websubWorkflow,
-    "src/app/robots\\.ts",
-    "robots-only deploy must not republish the Atom feed",
-  );
-  assertNotContains(
-    websubWorkflow,
-    "src/app/sitemap\\.ts",
-    "sitemap-only deploy must not republish the Atom feed",
+    "Check whether discovery feed changed",
+    "WebSub must not remain limited by repository file-diff gating",
   );
   assertNotContains(
     websubWorkflow,
     "search-discovery-signals",
     "WebSub must not reference the retired freshness module",
   );
+});
+
+
+test("writing hubs and guides expose contextual crawlable internal links", () => {
+  const landing = source("src/components/content/WritingCategoryLandingPage.tsx");
+  const shell = source("src/components/content/WritingGuideShell.tsx");
+
+  assertContains(landing, 'import Link from "next/link"', "writing hub Link renderer");
+  assertContains(landing, 'href={`${hub.href}/${genre.slug}`}', "writing hub contextual genre href");
+  assertContains(landing, "{genre.label} eğitimi", "writing hub descriptive genre anchor");
+
+  assertContains(shell, "const categoryHub = WRITING_CATEGORY_HUBS.find", "writing guide parent hub relation");
+  assertContains(shell, "const relatedGenres =", "writing guide related genre selection");
+  assertContains(shell, 'aria-label="İlgili yazarlık eğitimleri"', "writing guide contextual link region");
+  assertContains(shell, "href={categoryHub.href}", "writing guide contextual parent link");
+  assertContains(shell, "LIVE_WRITING_GUIDE_HREFS[genre.slug]", "writing guide contextual sibling href");
+  assertContains(shell, "{genre.label} eğitimi →", "writing guide descriptive sibling anchor");
+});
+
+
+test("informational guides keep shared methodology on the hub and emphasize field-specific content", () => {
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+
+  assertContains(education, 'definition.category === "Bilgilendirici"', "informational differentiation gate");
+  assertContains(education, '-ortak-yazim-sistemi', "informational shared-framework pointer");
+  assertContains(education, '/yazarlar-icin/bilgilendirici', "informational hub contextual link");
+  assertContains(education, '-tam-yazim-rotasi', "shared route block exclusion");
+  assertContains(education, '-structure-visual', "shared structure visual exclusion");
+  assertContains(education, '-yazim-duzeni', "shared workspace exclusion");
+  assertContains(education, '-yayina-hazirlik', "shared final checklist exclusion");
+  assertContains(education, 'blocks={renderedBlocks}', "field-specific rendered block set");
 });
 
 
@@ -254,4 +395,96 @@ test("public writing guides stay ISR-cacheable and CMS reads stay published-only
   assertNotContains(cmsEducation, "cookies(", "writer education cookies dependency");
   assertNotContains(cmsEducation, "headers(", "writer education headers dependency");
   assertNotContains(cmsEducation, "getServerSession", "writer education session dependency");
+});
+
+
+test("bespoke fiction guides use the shared organization-authored structured data renderer", () => {
+  const helper = source("src/components/content/WritingGuideStructuredData.tsx");
+  assertContains(helper, '"@type": "Article"', "shared bespoke Article schema");
+  assertContains(helper, 'author: {', "shared bespoke author relation");
+  assertContains(helper, 'publisher: {', "shared bespoke publisher relation");
+  assertContains(helper, '"@id": "https://ilkoku.com/#organization"', "shared bespoke organization identity");
+
+  for (const slug of ["novella", "fantastik", "bilim-kurgu", "distopya"]) {
+    const page = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
+    assertContains(page, 'WritingGuideStructuredData', `${slug} structured data renderer`);
+    assertContains(
+      page,
+      `canonicalUrl="https://ilkoku.com/yazarlar-icin/kurgu/${slug}"`,
+      `${slug} schema canonical`,
+    );
+  }
+});
+
+
+test("all writing guide renderers expose organization-authored Article structured data", () => {
+  const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+  const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
+  const story = source("src/app/yazarlar-icin/kurgu/oyku/page.tsx");
+
+  const layout = source("src/app/layout.tsx");
+  assertContains(layout, '"@id": `${baseUrl}/#organization`', "root defines the complete Organization entity");
+  assertContains(layout, "name: publicBrandName", "root organization retains a declared name");
+
+  for (const [label, guide] of [
+    ["batched education", education],
+    ["batched fiction", fiction],
+    ["story", story],
+  ]) {
+    assertContains(guide, '"@type": "Article"', `${label} Article schema`);
+    assertContains(guide, 'author: {', `${label} author relation`);
+    assertContains(guide, 'publisher: {', `${label} publisher relation`);
+    assertContains(guide, '"@id": "https://ilkoku.com/#organization"', `${label} organization identity`);
+    if (label === "batched fiction") {
+      assertContains(guide, 'name: "İlkOku"', "untouched batched fiction author remains explicit");
+    } else {
+      assertContains(guide, 'author: { "@id": "https://ilkoku.com/#organization" }', `${label} author refers to root entity`);
+      assertContains(guide, 'publisher: { "@id": "https://ilkoku.com/#organization" }', `${label} publisher refers to root entity`);
+    }
+  }
+
+  assertContains(education, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "education WebPage to Article relation");
+  assertContains(fiction, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "fiction WebPage to Article relation");
+  assertContains(education, 'mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` }', "education Article to WebPage relation");
+  assertContains(fiction, 'mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` }', "fiction Article to WebPage relation");
+  assertContains(story, "mainEntityOfPage: canonicalUrl", "story canonical Article relation");
+});
+
+
+test("roman guide exposes Article and breadcrumb structured data", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, '"@type": "Article"', "Roman Article schema");
+  assertContains(roman, '"@type": "BreadcrumbList"', "Roman breadcrumb schema");
+  assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
+  assertContains(roman, 'author: { "@type": "Organization", name: "İlkOku"', "Roman author schema");
+  assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
+});
+
+
+test("Roman guide uses the shared public metadata contract instead of inheriting homepage social metadata", () => {
+  const roman = source("src/app/yazarlar-icin/kurgu/roman/page.tsx");
+  assertContains(roman, 'import { createPublicPageMetadata } from "@/lib/public-page-metadata"', "Roman shared metadata helper");
+  assertContains(roman, "export const metadata: Metadata = createPublicPageMetadata({", "Roman metadata helper usage");
+  assertContains(roman, 'title: metadataTitle', "Roman metadata title");
+  assertContains(roman, 'description: metadataDescription', "Roman metadata description");
+  assertContains(roman, 'canonical,', "Roman metadata canonical");
+  assertContains(roman, 'image: defaultRomanVisuals.hero', "Roman social image");
+
+  const helper = source("src/lib/public-page-metadata.ts");
+  assertContains(helper, "noIndex = false", "shared metadata defaults to indexable");
+  assertContains(helper, "index: true", "shared metadata emits index");
+  assertContains(helper, "follow: true", "shared metadata emits follow");
+});
+
+
+test("Five bespoke fiction guides use responsive CMS image optimization without visual template changes", () => {
+  const common = source("src/components/content/PublicCmsPageBlocks.tsx");
+  assertContains(common, 'unoptimizedImages = false', "responsive optimizer remains the default");
+  assertContains(common, 'fill sizes="100vw"', "original responsive image area preserved");
+  assertContains(common, 'alt={block.alt}', "CMS image alt text preserved");
+  for (const slug of ["novella", "oyku", "fantastik", "bilim-kurgu", "distopya"]) {
+    const route = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
+    assertContains(route, "<PublicCmsPageBlocks", `${slug} reuses existing visual template`);
+    assertNotContains(route, "unoptimizedImages", `${slug} CMS PNGs must use optimized delivery`);
+  }
 });

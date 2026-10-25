@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import type { UserRole } from "@/features/auth/types";
+import { MANDATORY_REGISTRATION_CONTRACT_CODE } from "./registration-agreement";
 import { prisma } from "@/lib/prisma";
 import type {
   ContractRecipientRecord,
@@ -239,6 +240,139 @@ const contractSelectSql = `
   LEFT JOIN User sender ON sender.id = contract.sentById
 `;
 
+export type AdminContractFlow =
+  | "manual" | "registration" | "waiting" | "accepted" | "rejected" | "cancelled" | "all";
+
+export type AdminContractSummary = {
+  total: number;
+  allWaiting: number;
+  allAccepted: number;
+  allRejected: number;
+  manual: number;
+  registration: number;
+  waiting: number;
+  unopened: number;
+  reminded: number;
+  accepted: number;
+  rejected: number;
+  cancelled: number;
+};
+
+function countValue(value: unknown): number {
+  return Number(value ?? 0);
+}
+
+// Flow is a closed enum; all search terms and offsets are SQL parameters, never interpolated.
+function adminContractFilter(flow: AdminContractFlow, rawQuery: string) {
+  const conditions: string[] = [];
+  const args: unknown[] = [];
+  if (flow === "registration") {
+    conditions.push("template.code = ?");
+    args.push(MANDATORY_REGISTRATION_CONTRACT_CODE);
+  } else if (flow !== "all") {
+    conditions.push("template.code <> ?");
+    args.push(MANDATORY_REGISTRATION_CONTRACT_CODE);
+    if (flow === "waiting") conditions.push("contract.status IN ('sent', 'viewed')");
+    if (flow === "accepted" || flow === "rejected" || flow === "cancelled") {
+      conditions.push("contract.status = ?");
+      args.push(flow);
+    }
+  }
+  const query = rawQuery.trim().slice(0, 120);
+  if (query) {
+    conditions.push(
+      "LOCATE(LOWER(?), LOWER(CONCAT_WS(' ', contract.titleSnapshot, template.code, recipient.fullName, recipient.email, COALESCE(work.title, '')))) > 0",
+    );
+    args.push(query);
+  }
+  return { clause: conditions.length ? `WHERE ${conditions.join(" AND ")}` : "", args };
+}
+
+export async function getAdminUserContractsPage({
+  page = 1,
+  pageSize = 25,
+  flow = "all",
+  query = "",
+}: {
+  page?: number;
+  pageSize?: number;
+  flow?: AdminContractFlow;
+  query?: string;
+}) {
+  const take = Math.max(1, Math.min(100, Math.trunc(Number.isFinite(pageSize) ? pageSize : 25)));
+  const { clause, args } = adminContractFilter(flow, query);
+  const totals = await prisma.$queryRawUnsafe<Array<{ total: bigint | number }>>(
+    `SELECT COUNT(*) AS total
+     FROM UserContract contract
+     INNER JOIN ContractTemplate template ON template.id = contract.templateId
+     INNER JOIN User recipient ON recipient.id = contract.recipientUserId
+     LEFT JOIN Work work ON work.id = contract.relatedWorkId
+     ${clause}`,
+    ...args,
+  );
+  const total = countValue(totals[0]?.total);
+  const totalPages = Math.max(1, Math.ceil(total / take));
+  const requestedPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
+  const currentPage = Math.min(requestedPage, totalPages);
+  const rows = await prisma.$queryRawUnsafe<UserContractListRecord[]>(
+    `${contractSelectSql} ${clause} ORDER BY contract.updatedAt DESC, contract.id DESC LIMIT ? OFFSET ?`,
+    ...args,
+    take,
+    (currentPage - 1) * take,
+  );
+  return { rows, total, page: currentPage, pageSize: take, totalPages };
+}
+
+export async function getAdminContractSummary(): Promise<AdminContractSummary> {
+  const rows = await prisma.$queryRaw<Array<{
+    total: bigint | number;
+    allWaiting: bigint | number;
+    allAccepted: bigint | number;
+    allRejected: bigint | number;
+    manual: bigint | number;
+    registration: bigint | number;
+    waiting: bigint | number;
+    unopened: bigint | number;
+    reminded: bigint | number;
+    accepted: bigint | number;
+    rejected: bigint | number;
+    cancelled: bigint | number;
+  }>>`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN contract.status IN ('sent', 'viewed') THEN 1 ELSE 0 END) AS allWaiting,
+      SUM(CASE WHEN contract.status = 'accepted' THEN 1 ELSE 0 END) AS allAccepted,
+      SUM(CASE WHEN contract.status = 'rejected' THEN 1 ELSE 0 END) AS allRejected,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} THEN 1 ELSE 0 END) AS manual,
+      SUM(CASE WHEN template.code = ${MANDATORY_REGISTRATION_CONTRACT_CODE} THEN 1 ELSE 0 END) AS registration,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status IN ('sent', 'viewed') THEN 1 ELSE 0 END) AS waiting,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status IN ('sent', 'viewed') AND contract.viewedAt IS NULL THEN 1 ELSE 0 END) AS unopened,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status IN ('sent', 'viewed')
+        AND EXISTS (SELECT 1 FROM UserContractEvent event
+                    WHERE event.contractId = contract.id AND event.eventType = 'reminder_requested') THEN 1 ELSE 0 END) AS reminded,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status = 'accepted' THEN 1 ELSE 0 END) AS accepted,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      SUM(CASE WHEN template.code <> ${MANDATORY_REGISTRATION_CONTRACT_CODE} AND contract.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
+    FROM UserContract contract
+    INNER JOIN ContractTemplate template ON template.id = contract.templateId
+  `;
+  const row = rows[0];
+  return {
+    total: countValue(row?.total),
+    allWaiting: countValue(row?.allWaiting),
+    allAccepted: countValue(row?.allAccepted),
+    allRejected: countValue(row?.allRejected),
+    manual: countValue(row?.manual),
+    registration: countValue(row?.registration),
+    waiting: countValue(row?.waiting),
+    unopened: countValue(row?.unopened),
+    reminded: countValue(row?.reminded),
+    accepted: countValue(row?.accepted),
+    rejected: countValue(row?.rejected),
+    cancelled: countValue(row?.cancelled),
+  };
+}
+
 export async function listAdminUserContracts(limit = 150) {
   const safeLimit = Math.max(1, Math.min(500, Math.trunc(limit)));
   return prisma.$queryRawUnsafe<UserContractListRecord[]>(
@@ -296,11 +430,17 @@ export async function listContractEvents(contractId: string) {
   `;
 }
 
+export async function countLegacyPublisherContracts(): Promise<number> {
+  return prisma.publishingContract.count();
+}
+
 export async function listLegacyPublisherContracts(
   limit = 100,
+  offset = 0,
 ): Promise<LegacyPublisherContractRecord[]> {
   const rows = await prisma.publishingContract.findMany({
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    skip: Math.max(0, Math.trunc(offset)),
     include: {
       submission: {
         select: {

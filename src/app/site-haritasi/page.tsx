@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
-import { getBookIndexInsights } from "@/lib/book-index/insights";
-import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
@@ -48,6 +45,12 @@ type LinkGroup = {
   title: string;
   links: Array<{ href: string; label: string }>;
 };
+
+// The published registration agreement is an indexable public legal page.
+const siteMapLegalLinks = [
+  ...publicLegalLinks,
+  { href: "/uyelik-sozlesmesi", label: "Üyelik Sözleşmesi" },
+] as const;
 
 function groupedSitePages(pages: readonly SiteMapPage[]): LinkGroup[] {
   const groups = new Map<string, LinkGroup>();
@@ -111,53 +114,24 @@ async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks, bookIndexContext, bookIndexInsights] = await Promise.all([
+  const [cmsPages, publicWorks] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
     getPublicWorkLinks(),
-    getBookIndexPublicPageContext(30).catch(() => null),
-    getBookIndexInsights(50).catch(() => null),
   ]);
 
-  const bookIndexPublished = Boolean(bookIndexContext);
-  const publishedInsightHrefs = new Set(
-    bookIndexPublished && bookIndexInsights
-      ? getPublishedBookIndexInsightPages(bookIndexInsights).map(
-          (page) => `/en-cok-satanlar/${page.slug}`,
-        )
-      : [],
+  const codeOwnedPages = SITE_MAP_PAGES.filter(
+    (page) => page.indexable !== false,
   );
-  const alwaysDiscoverableBookIndexHrefs = new Set([
-    "/en-cok-satanlar/dunya",
-    "/yeni-cikanlar",
-  ]);
-  const gatedBookIndexHrefs = new Set([
-    "/en-cok-satanlar",
-    "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
-  ]);
-  const codeOwnedPages = SITE_MAP_PAGES.filter((page) => {
-    if (page.indexable === false) return false;
-    if (alwaysDiscoverableBookIndexHrefs.has(page.href)) return true;
-    if (gatedBookIndexHrefs.has(page.href)) return bookIndexPublished;
-    if (page.href.startsWith("/en-cok-satanlar/")) {
-      return bookIndexPublished && publishedInsightHrefs.has(page.href);
-    }
-    return true;
-  });
   const knownHrefs = new Set([
     ...codeOwnedPages.map((page) => page.href),
-    ...publicLegalLinks.map((link) => link.href),
+    ...siteMapLegalLinks.map((link) => link.href),
   ]);
 
   const cmsOnlyPages = cmsPages
     .filter(
       (page) =>
         page.indexable !== false
-        && !knownHrefs.has(page.href)
-        && (
-          bookIndexPublished
-          || !page.href.startsWith("/en-cok-satanlar")
-        ),
+        && !knownHrefs.has(page.href),
     )
     .map((page) => ({ href: page.href, label: page.label }));
 
@@ -221,7 +195,7 @@ export default async function PublicSiteMapPage() {
         <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Yasal</h2>
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-            {publicLegalLinks.map((link) => (
+            {siteMapLegalLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   className="block rounded-xl border border-[#6b52c7]/12 bg-[#f7f4ff] px-4 py-3 text-sm font-bold leading-6 transition hover:border-[#6b52c7]/30 hover:bg-[#ebe5ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6b52c7]"

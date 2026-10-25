@@ -12,11 +12,14 @@ const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
 const DEFAULT_CORE_INSPECTION_URLS = [
   `${BASE_URL}/`,
   `${BASE_URL}/nasil-calisir`,
+  `${BASE_URL}/hakkimizda`,
   `${BASE_URL}/yazarlar-icin`,
+  `${BASE_URL}/okurlar-icin`,
+  `${BASE_URL}/editorler-icin`,
+  `${BASE_URL}/yayinevleri-icin`,
+  `${BASE_URL}/editoryal-standartlar`,
   `${BASE_URL}/yazarlar-icin/kurgu/roman`,
-  `${BASE_URL}/okurlar-icin/okumaya-baslama`,
   `${BASE_URL}/editorler-icin/egitim/editorluge-baslama`,
-  `${BASE_URL}/site-haritasi`,
 ];
 
 function requireSecret(name, value) {
@@ -121,6 +124,28 @@ async function getAccessToken() {
   return body.access_token;
 }
 
+async function getGrantedScopes(accessToken) {
+  try {
+    const response = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
+      {
+        signal: AbortSignal.timeout(20_000),
+      },
+    );
+    const body = await response.json();
+    if (!response.ok) {
+      throw new Error("tokeninfo rejected the access token");
+    }
+    return String(body.scope ?? "")
+      .split(/\s+/u)
+      .map((scope) => scope.trim())
+      .filter(Boolean)
+      .sort();
+  } catch {
+    throw new Error("Google OAuth token scope introspection failed");
+  }
+}
+
 async function listSitemaps(accessToken) {
   const response = await fetch(
     `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/sitemaps`,
@@ -169,12 +194,11 @@ function sitemapTotals(item) {
 
 export function selectDefaultInspectionUrls(sitemapUrls) {
   const preferredSitemapUrls = [
+    sitemapUrls.find((location) => location === `${BASE_URL}/yazarlar-icin/kurgu`),
+    sitemapUrls.find((location) => location === `${BASE_URL}/okurlar-icin/okumaya-baslama`),
     sitemapUrls.find(
-      (location) => location === `${BASE_URL}/en-cok-satanlar/dunya`,
+      (location) => location === `${BASE_URL}/editorler-icin/egitim/dil-ve-anlatim-editorlugu`,
     ),
-    sitemapUrls.find((location) => location === `${BASE_URL}/en-cok-satanlar`),
-    sitemapUrls.find((location) => /^https:\/\/ilkoku\.com\/kitap\//u.test(location)),
-    sitemapUrls.find((location) => /^https:\/\/ilkoku\.com\/yasal\//u.test(location)),
   ].filter(Boolean);
 
   const selectedUrls = [...new Set([
@@ -319,6 +343,8 @@ async function main() {
   console.log(`Inspection cohort: ${scope}`);
 
   const accessToken = await getAccessToken();
+  const grantedScopes = await getGrantedScopes(accessToken);
+  console.log(`GSC OAuth granted scopes: ${grantedScopes.join(" ") || "UNSPECIFIED"}`);
   const sitemaps = await listSitemaps(accessToken);
   console.log(`GSC sitemaps: ${sitemaps.length}`);
   for (const sitemap of sitemaps) {

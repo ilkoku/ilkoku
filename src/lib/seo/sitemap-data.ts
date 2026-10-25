@@ -20,11 +20,41 @@ import { prisma } from "@/lib/prisma";
 import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { READER_EDUCATION_CATEGORIES, readerEducationPublicPath } from "@/lib/reader-education";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
-import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
+import {
+  getSearchCodeFreshness,
+  WRITING_INTERNAL_LINKS_UPDATED_AT,
+} from "@/lib/search-content-freshness";
+import { filterSoftLaunchSitemapEntries } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 
-const WRITING_CATEGORY_INDEXABLE_AT = new Date("2026-09-13T19:15:11Z");
+function applySearchCodeFreshness(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return entries.map((entry) => {
+    const codeFreshness = getSearchCodeFreshness(entry.url);
+    if (!codeFreshness) return entry;
+
+    const currentLastModified =
+      entry.lastModified instanceof Date
+        ? entry.lastModified
+        : entry.lastModified
+          ? new Date(entry.lastModified)
+          : null;
+
+    if (
+      currentLastModified &&
+      !Number.isNaN(currentLastModified.getTime()) &&
+      currentLastModified >= codeFreshness
+    ) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      lastModified: codeFreshness,
+    };
+  });
+}
+
 const READER_EDUCATION_RELEASED_AT = new Date("2026-09-13T21:02:05Z");
 const EDITOR_EDUCATION_RELEASED_AT_BY_SLUG: Record<string, Date> = {
   "editorluge-baslama": new Date("2026-09-15T05:46:22Z"),
@@ -113,10 +143,14 @@ const writingGenreHrefs = GENRES.map((genre) => {
   return `${categoryHref}/${genre.slug}`;
 });
 
+// PR #1789 updated the visible related-guide links on all 85 writing guides.
+// Category hubs were not changed by that PR and retain their own truthful lastmod.
+const WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z");
+
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
-    lastModified: WRITING_CATEGORY_INDEXABLE_AT,
+    lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
@@ -127,7 +161,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified: WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
+      lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };
@@ -199,6 +233,12 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     priority: 0.7,
   },
   {
+    // Published registration agreement is already public and self-canonical.
+    url: `${baseUrl}/uyelik-sozlesmesi`,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  },
+  {
     url: `${baseUrl}/en-cok-satanlar/dunya`,
     changeFrequency: "daily",
     priority: 0.82,
@@ -268,12 +308,6 @@ async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         ...(lastModified ? { lastModified } : {}),
         changeFrequency: "daily",
         priority: 0.85,
-      },
-      {
-        url: `${baseUrl}/en-cok-satanlar/turkiye/karsilastirma`,
-        ...(lastModified ? { lastModified } : {}),
-        changeFrequency: "daily",
-        priority: 0.82,
       },
       ...insightEntries,
     ];
@@ -394,18 +428,34 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
+    const bookIndexLastModifiedValue =
+      bookIndexEntries.find((entry) => entry.lastModified)?.lastModified;
+    const bookIndexLastModified =
+      bookIndexLastModifiedValue instanceof Date
+        ? bookIndexLastModifiedValue
+        : bookIndexLastModifiedValue
+          ? new Date(bookIndexLastModifiedValue)
+          : undefined;
+
     const liveStaticDiscoveryEntries: MetadataRoute.Sitemap =
       staticDiscoveryEntries.map((entry) => {
         const cmsLastModified = educationLastModifiedByUrl.get(entry.url);
         const configuredLastModified = entry.lastModified
           ? new Date(entry.lastModified)
           : undefined;
-        const lastModified =
-          cmsLastModified && configuredLastModified
-            ? (cmsLastModified > configuredLastModified
-                ? cmsLastModified
-                : configuredLastModified)
-            : cmsLastModified ?? configuredLastModified;
+        const runtimeLastModified =
+          entry.url === `${baseUrl}/yeni-cikanlar`
+            ? bookIndexLastModified
+            : undefined;
+
+        let lastModified = configuredLastModified;
+        if (cmsLastModified && (!lastModified || cmsLastModified > lastModified)) {
+          lastModified = cmsLastModified;
+        }
+        if (runtimeLastModified && (!lastModified || runtimeLastModified > lastModified)) {
+          lastModified = runtimeLastModified;
+        }
+
         return lastModified ? { ...entry, lastModified } : entry;
       });
 
@@ -443,7 +493,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
-    return [
+    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([
       ...liveStaticDiscoveryEntries,
       ...bookIndexEntries,
       ...publicPageEntries,
@@ -467,11 +517,11 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
-    ];
+    ]));
   } catch {
     // Search engines must keep seeing the currently enabled code-owned public
     // surface even when CMS/database lookups are temporarily unavailable.
     // Dynamic author, genre, work and CMS-owned URLs fail closed.
-    return staticFallbackEntries;
+    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));
   }
 }

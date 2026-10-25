@@ -1,16 +1,18 @@
 import { createHash } from "node:crypto";
-import { GENRES } from "@/lib/genres";
-import { prisma } from "@/lib/prisma";
+
 import { WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT } from "@/lib/search-content-freshness";
-import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
+import { buildSitemap } from "@/lib/seo/sitemap-data";
 
 const baseUrl = "https://ilkoku.com";
 const feedUrl = `${baseUrl}/recent-updates.atom`;
 const hubUrl = "https://pubsubhubbub.appspot.com/";
-const RECENT_ENTRY_LIMIT = 20;
+// The public sitemap currently lists 129 URLs, including 85 writing guides.
+// Keep the Atom feed bounded to the latest genuine lastModified entries, but
+// avoid dropping entire guide families from the additional discovery channel.
+const RECENT_ENTRY_LIMIT = 150;
 
-type WritingGuideFreshnessRow = {
-  contentKey: string;
+type RecentSearchEntry = {
+  url: string;
   updatedAt: Date;
 };
 
@@ -23,62 +25,73 @@ function escapeXml(value: string) {
     .replaceAll("'", "&apos;");
 }
 
-const categoryHrefByCategory = new Map(
-  WRITING_CATEGORY_HUBS.map((hub) => [hub.category, hub.href] as const),
-);
+function normalizeLastModified(value: Date | string | undefined) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-async function loadPublishedWritingGuideFreshness() {
-  try {
-    const rows = await prisma.$queryRaw<WritingGuideFreshnessRow[]>`
-      SELECT contentKey, updatedAt
-      FROM SiteContent
-      WHERE namespace = 'education_guide'
-        AND status = 'published'
-      ORDER BY updatedAt DESC
-      LIMIT 1000
-    `;
+function displayPath(value: string) {
+  const pathname = new URL(value).pathname;
+  if (pathname === "/") return "Ana sayfa";
 
-    return new Map(rows.map((row) => [row.contentKey, row.updatedAt] as const));
-  } catch {
-    return new Map<string, Date>();
+  return decodeURIComponent(pathname)
+    .split("/")
+    .filter(Boolean)
+    .map((part) => part.replaceAll("-", " "))
+    .join(" › ");
+}
+
+function categoryTerm(value: string) {
+  return new URL(value).pathname.split("/").filter(Boolean)[0] ?? "home";
+}
+
+async function loadRecentSearchEntries(): Promise<RecentSearchEntry[]> {
+  const sitemap = await buildSitemap();
+  const byUrl = new Map<string, RecentSearchEntry>();
+
+  for (const entry of sitemap) {
+    const updatedAt = normalizeLastModified(entry.lastModified);
+    if (!updatedAt) continue;
+
+    const parsed = new URL(entry.url);
+    if (parsed.origin !== baseUrl) continue;
+
+    const current = byUrl.get(entry.url);
+    if (!current || updatedAt > current.updatedAt) {
+      byUrl.set(entry.url, {
+        url: entry.url,
+        updatedAt,
+      });
+    }
   }
+
+  return [...byUrl.values()]
+    .sort((a, b) => {
+      const byFreshness = b.updatedAt.getTime() - a.updatedAt.getTime();
+      if (byFreshness !== 0) return byFreshness;
+      return a.url.localeCompare(b.url, "tr");
+    })
+    .slice(0, RECENT_ENTRY_LIMIT);
 }
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const freshnessBySlug = await loadPublishedWritingGuideFreshness();
-  const recentGuides = GENRES.map((genre) => ({
-    genre,
-    updatedAt:
-      freshnessBySlug.get(genre.slug) ??
-      WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT,
-  }))
-    .sort((a, b) => {
-      const byFreshness = b.updatedAt.getTime() - a.updatedAt.getTime();
-      if (byFreshness !== 0) return byFreshness;
-      return a.genre.slug.localeCompare(b.genre.slug, "tr");
-    })
-    .slice(0, RECENT_ENTRY_LIMIT);
-
+  const recentEntries = await loadRecentSearchEntries();
   const feedUpdated =
-    recentGuides[0]?.updatedAt ?? WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT;
+    recentEntries[0]?.updatedAt ?? WRITING_GUIDE_STRUCTURED_DATA_UPDATED_AT;
 
-  const entries = recentGuides.map(({ genre, updatedAt }) => {
-    const categoryHref = categoryHrefByCategory.get(genre.category);
-    if (!categoryHref) {
-      throw new Error(`Missing writing category hub for ${genre.category}`);
-    }
-
-    const url = `${baseUrl}${categoryHref}/${genre.slug}`;
+  const entries = recentEntries.map(({ url, updatedAt }) => {
+    const label = displayPath(url);
     return [
       "  <entry>",
       `    <id>${url}</id>`,
-      `    <title>${escapeXml(`${genre.label} Yazarlık Rehberi | İlkOku`)}</title>`,
+      `    <title>${escapeXml(`İlkOku güncellemesi — ${label}`)}</title>`,
       `    <link href="${url}" />`,
       `    <updated>${updatedAt.toISOString()}</updated>`,
-      `    <category term="${escapeXml(genre.category)}" />`,
-      `    <summary>${escapeXml(`İlkOku ${genre.label} yazarlık rehberi.`)}</summary>`,
+      `    <category term="${escapeXml(categoryTerm(url))}" />`,
+      `    <summary>${escapeXml(`İlkOku üzerindeki ${label} sayfası güncellendi.`)}</summary>`,
       "  </entry>",
     ].join("\n");
   }).join("\n");
@@ -106,12 +119,15 @@ export async function GET(request: Request) {
     Link: `<${hubUrl}>; rel="hub", <${feedUrl}>; rel="self"`,
   };
 
-  if (request.headers.get("if-none-match") === etag) {
+  const ifNoneMatch = request.headers.get("if-none-match");
+  if (ifNoneMatch === etag) {
     return new Response(null, { status: 304, headers });
   }
 
   const ifModifiedSince = request.headers.get("if-modified-since");
-  if (ifModifiedSince) {
+  // If-None-Match takes precedence: a stale entity tag must not be overridden
+  // by an unchanged Last-Modified value on an otherwise changed feed.
+  if (!ifNoneMatch && ifModifiedSince) {
     const validatorTime = Date.parse(ifModifiedSince);
     if (Number.isFinite(validatorTime) && validatorTime >= feedUpdated.getTime()) {
       return new Response(null, { status: 304, headers });

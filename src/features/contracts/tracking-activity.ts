@@ -43,3 +43,26 @@ export async function listContractReminderActivity(
     reminderCount: Number(row.reminderCount),
   }));
 }
+
+/** Read reminders only for the visible contract page; no global 500-record cap. */
+export async function listContractReminderActivityForIds(
+  contractIds: readonly string[],
+): Promise<ContractReminderActivity[]> {
+  const ids = [...new Set(contractIds)].slice(0, 100);
+  if (!ids.length) return [];
+  const placeholders = ids.map(() => "?").join(",");
+  const rows = await prisma.$queryRawUnsafe<RawReminderActivity[]>(
+    `SELECT event.contractId, MAX(event.createdAt) AS lastReminderAt,
+            COUNT(*) AS reminderCount
+     FROM UserContractEvent event
+     WHERE event.eventType = 'reminder_requested'
+       AND event.contractId IN (${placeholders})
+     GROUP BY event.contractId`,
+    ...ids,
+  );
+  return rows.map((row) => ({
+    contractId: row.contractId,
+    lastReminderAt: row.lastReminderAt,
+    reminderCount: Number(row.reminderCount),
+  }));
+}

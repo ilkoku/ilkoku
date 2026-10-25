@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { authContent, tr } from "@/content";
+import "@/features/auth/auth.css";
 import "@/features/auth/auth-purple-continuity.css";
 
 interface AuthShellProps {

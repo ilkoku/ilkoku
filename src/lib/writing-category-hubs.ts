@@ -20,6 +20,7 @@ export type WritingCategoryHub = {
   choiceHeading: string;
   choiceIntro: string;
   choiceSignals: readonly CategoryLearningItem[];
+  workedExample: { heading: string; scenario: string; comparison: string; assignment: string };
   learningPath: readonly CategoryLearningItem[];
   outcomeHeading: string;
   outcomeIntro: string;
@@ -32,6 +33,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "kurgu",
     href: "/yazarlar-icin/kurgu",
     title: "Kurgu",
+    workedExample: {
+      heading: "Bir fikirden üç ayrı kurgu nasıl çıkar?",
+      scenario: "Kurgusal bir şehirde bütün ışıklar aynı anda sönüyor. Olay aynı kalsa da okurun sorusu türü değiştirir: Kim yaptı, hangi yeni kural çalışıyor ya da bu karanlık düzen kime yarıyor?",
+      comparison: "Polisiyede sahneleri ipucu ve yanlış şüphelerle ilerlet; bilim kurguda kesintinin teknik varsayımını ve sonuç zincirini kur; distopyada elektrik dağıtımını kimin yönettiğini ve karakteri neye zorladığını göster. Üçünü tek bir şablona sıkıştırma.",
+      assignment: "Şimdi aynı olay için üç farklı tek cümlelik tür vaadi yaz. Hangisinde ana karakterin vermek zorunda olduğu karar daha açık? O türden bir ilk sahne taslağı çıkar.",
+    },
     cardText: "Roman, öykü, fantastik, polisiye ve diğer kurgu eğitimlerini keşfet.",
     lead: "Gerçekte olmayanı yazmak değil, kendi gerçekliğini kurmaktır.",
     definition: "Kurgu; karakterlerin, olayların, dünyaların ve çatışmaların yazar tarafından oluşturulduğu anlatı alanıdır. Bazen bugünkü dünyaya çok yakın bir roman, bazen hiç var olmamış bir fantastik evren, bazen gelecekte geçen bir bilim kurgu ya da çözülmesi gereken bir polisiye olabilir.",
@@ -74,6 +81,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "edebiyat",
     href: "/yazarlar-icin/edebiyat",
     title: "Edebiyat",
+    workedExample: {
+      heading: "Aynı vedayı şiir, anı ve deneme olarak dene",
+      scenario: "Bir tren istasyonunda ayrılan iki kişiyi düşün. Konu aynıdır, fakat metnin görevi değiştiğinde okurun neye dikkat edeceği de değişir.",
+      comparison: "Şiirde anons sesi, boş peron ve kısa bir imgeyle duyguyu yoğunlaştırabilirsin. Anıda gerçekten yaşanmış bir karşılaşmayı, belleğinin sınırını dürüstçe belirterek anlatırsın. Denemede vedanın insanın zaman algısını neden değiştirdiğini bir soruyla araştırırsın.",
+      assignment: "Üç tür için ayrı ayrı iki cümle yaz: birinde imge, birinde tanıklık, birinde düşünsel soru olsun. En uygun olanı seçip ilk paragrafı geliştir.",
+    },
     cardText: "Şiirden denemeye, anıdan biyografiye edebî anlatı eğitimlerini keşfet.",
     lead: "Aynı deneyim, anlatım biçimi değiştiğinde başka bir esere dönüşür.",
     definition: "Edebiyat; ses, biçim, bakış ve dil aracılığıyla düşünceyi, deneyimi ve insanı anlatmanın farklı yollarını bir araya getirir. Şiir yoğunlaştırır, deneme düşünceyi araştırır, anı yaşanmış deneyimi seçerek kurar, biyografi ise başka bir hayatı kaynaklarla görünür kılar.",
@@ -116,6 +129,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "senaryo-ve-sahne",
     href: "/yazarlar-icin/senaryo-ve-sahne",
     title: "Senaryo ve Sahne",
+    workedExample: {
+      heading: "Aynı an filmde, tiyatroda ve sesli anlatıda nasıl değişir?",
+      scenario: "Gece vakti telefon çalıyor ama sahnedeki kişi açmıyor. Seyirciye karakterin korkusunu göstermek için uzun bir açıklama yazmak zorunda değilsin.",
+      comparison: "Filmde titreşen telefonu ve karakterin bakışını yakın planlarla kurabilirsin. Tiyatroda oyuncunun telefonu alıp geri bırakması ve sessizlik gerilim üretir. Sesli anlatıda zilin kesilmesi, nefes ve odanın akustiği görünmeyen hareketi okura duyurur.",
+      assignment: "Üç biçimden birini seç. Dört vuruşluk bir sahne akışı çıkar: tetikleyici, tepki, ertelenen karar ve sonucu. Diyalog olmadan da çalışıp çalışmadığını denetle.",
+    },
     cardText: "Film, dizi, tiyatro, podcast ve sahne anlatısı eğitimlerini keşfet.",
     lead: "Burada metin yalnız okunmaz; görülür, duyulur ve oynanır.",
     definition: "Senaryo ve sahne yazarlığı, hikâyeyi performansa dönüşecek biçimde kurar. Sahne, sekans, diyalog, ritim, süre ve görsel-işitsel anlatım; yazılan metnin nasıl deneyimleneceğini doğrudan belirler.",
@@ -158,6 +177,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "akademik",
     href: "/yazarlar-icin/akademik",
     title: "Akademik",
+    workedExample: {
+      heading: "Araştırma sorusunu kanıttan ayıran küçük çalışma",
+      scenario: "Bir okulda öğrencilerin ekran başında geçirdiği zaman ile kitap okuma alışkanlığı arasındaki ilişkiyi incelemek istiyorsun. Başlangıç iddianı 'ekran okumayı azaltır' diye kesinleştirmek yerine önce ölçülebilir bir soru belirle.",
+      comparison: "Hangi yaş grubunu, hangi dönemi ve hangi okuma davranışını ölçtüğünü yaz. Öz bildirimle toplanan ekran süresi verisinin sınırlı olduğunu belirt. İlişki bulmanın tek başına nedensellik kanıtlamadığını açık tut; katılımcı izni ve mahremiyet planını baştan düşün.",
+      assignment: "Bir araştırma sorusu, bir ölçülebilir değişken, bir veri toplama yöntemi ve iki sınırlılık yaz. Bu dört satır tez veya makale taslağının ilk denetlenebilir çekirdeği olsun.",
+    },
     cardText: "Makale, tez, araştırma, bildiri ve akademik inceleme eğitimlerini keşfet.",
     lead: "İyi akademik metin, bilgiyi yalnız toplamaz; soruyu yöntem ve kanıtla cevaplar.",
     definition: "Akademik yazım; araştırma sorusunu, yöntemi, kaynakları, bulguları ve gerekçeli sonucu açık bir yapı içinde birleştirir. Metnin güvenilirliği yalnız ne söylediğine değil, bunu hangi kanıtla ve nasıl temellendirdiğine bağlıdır.",
@@ -200,6 +225,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "bilgilendirici",
     href: "/yazarlar-icin/bilgilendirici",
     title: "Bilgilendirici",
+    workedExample: {
+      heading: "Bir bilgi iddiasını okura güvenle nasıl açıklarsın?",
+      scenario: "Okura bir cihazın bataryasını daha uzun süre kullanmayı anlatacaksın. 'Bu yöntemi uygula, pil ömrü iki katına çıkar' gibi güçlü ama kanıtsız bir vaatle başlama.",
+      comparison: "Önce üretici önerileri ile kişisel deneyimleri ayır. Cihaz modelini, kullanım koşullarını ve bilginin geçerli olduğu tarihi belirt. Değişebilen teknik verileri güncel kaynakla kontrol et; maliyet veya güvenlik sonucu doğurabilecek iddialarda belirsizliği gizleme.",
+      assignment: "İki cümle yaz: ilki somut, kaynağı kontrol edilebilir bir öneri; ikincisi bu önerinin hangi cihaz veya koşul için geçerli olmadığını açıklasın. Okurun yanlış çıkarımını önleyip önlemediğini sınayarak düzelt.",
+    },
     cardText: "Tarih, psikoloji, teknoloji, finans ve diğer bilgi odaklı yazı eğitimlerini keşfet.",
     lead: "Bilgiyi aktarmak yetmez; okurun anlayabileceği bir yol kurmak gerekir.",
     definition: "Bilgilendirici eserler; uzmanlık, araştırma veya deneyimi okurun takip edebileceği bir yapıya dönüştürür. Güçlü bir metin neyi açıklayacağını, hangi sırayla açıklayacağını ve hangi iddianın hangi kaynağa dayanacağını bilir.",
@@ -242,6 +273,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "cocuk-ve-genclik",
     href: "/yazarlar-icin/cocuk-ve-genclik",
     title: "Çocuk ve Gençlik",
+    workedExample: {
+      heading: "Kaybolan çanta hikâyesini iki farklı okur için yaz",
+      scenario: "Bir çocuk okuldan dönerken çantasını bulamıyor. Hikâyenin değeri kayıp eşyanın büyüklüğünde değil, karakterin kendi gücüyle hangi kararı verdiğinde saklı.",
+      comparison: "Birlikte sesli okumaya uygun kısa hikâyede somut ipuçları, açık sahne geçişleri ve destek arama davranışı öne çıkabilir. Daha büyük okur için aidiyet, arkadaşlık baskısı ve kişisel sorumluluk gibi birden fazla yorum katmanı kurulabilir. İki durumda da yetişkinin gelip sorunu tek başına çözmesi yerine çocuğa seçim alanı bırak.",
+      assignment: "Bir yaş ve okuma biçimi tanımla. Karakterin aldığı iki kararı ve bu kararların sonuçlarını yaz; dili sesli okuyarak ritmini, duygusal güvenliği ve temsil biçimini ayrı ayrı kontrol et.",
+    },
     cardText: "Masal, çocuk hikâyesi, çocuk romanı ve genç yetişkin eğitimlerini keşfet.",
     lead: "Yaşa göre sadeleştirmek değil, doğru okura doğru anlatım kurmaktır.",
     definition: "Çocuk ve gençlik yazarlığı; yaş, gelişim düzeyi, dil, ritim, tema ve karakter bakışını birlikte düşünür. Okurun yaşı küçüldükçe hikâyenin değeri küçülmez; yalnız anlatımın sorumluluğu değişir.",
@@ -284,6 +321,12 @@ export const WRITING_CATEGORY_HUBS: readonly WritingCategoryHub[] = [
     slug: "cizgi-anlati",
     href: "/yazarlar-icin/cizgi-anlati",
     title: "Çizgi Anlatı",
+    workedExample: {
+      heading: "Üç panel mi, uzun dikey boşluk mu?",
+      scenario: "Durakta bekleyen karakter cebinde anahtarını bulamıyor. Okurun kayıp anını ne zaman fark edeceğini yazı açıklaması değil panel ve ritim kararı belirler.",
+      comparison: "Üç panelli sayfada elin boş cebin içinde durması, karakterin bakışı ve uzaktan giden otobüs art arda okunabilir. Dikey webtoon akışında boş bir ekran aralığı kayıp hissini uzatır; sonraki görüntüde otobüs kapısının kapanmasını gösterirsin. Balon aynı olayı tekrar anlatmamalı.",
+      assignment: "İki akış için küçük birer taslak çiz: okurun önce gördüğü ipucu, duraklama ve sonuç. Metni kaldırınca da anlaşılır kalan öğeleri işaretle; yalnız gerekli kelimeleri geri ekle.",
+    },
     cardText: "Çizgi roman, grafik roman, manga, webtoon ve karikatür eğitimlerini keşfet.",
     lead: "Hikâye burada yalnız cümlelerle değil, görüntü ve boşlukla da anlatılır.",
     definition: "Çizgi anlatı; metin, görsel, kadraj, panel, geçiş ve ritmi tek anlatım sistemi içinde birleştirir. Bir sahnenin ne kadarının yazıyla, ne kadarının görüntüyle anlatılacağı eserin temposunu ve okurun deneyimini değiştirir.",

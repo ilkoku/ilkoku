@@ -10,6 +10,20 @@ const deploymentId =
   process.env.DEPLOYMENT_VERSION?.trim() ||
   undefined;
 
+const publicAuthNoindexRouteHeaders = [
+  "/giris",
+  "/giris/:path*",
+  "/kayit",
+  "/kayit/:path*",
+  "/sifre-yenile",
+  "/sifre-yenile/:path*",
+  "/sifremi-unuttum",
+  "/sifremi-unuttum/:path*",
+] as const;
+
+// These authentication entry/recovery pages are intentionally reachable so
+// crawlers can read the noindex directive. They are not search targets, but
+// links on them may still be followed.
 const privateRouteHeaders = [
   "/admin/:path*",
   "/sistem-yonetimi/:path*",
@@ -29,16 +43,12 @@ const privateRouteHeaders = [
   "/eserlerim/:path*",
   "/favorilerim/:path*",
   "/geri-bildirimler/:path*",
-  "/giris/:path*",
   "/hesabim/:path*",
-  "/kayit/:path*",
   "/kesfet/:path*",
+  "/yazar-kesfet/:path*",
   "/okumaya-devam/:path*",
   "/okuyucu/:path*",
   "/rol-secimi/:path*",
-  "/sifre-yenile/:path*",
-  "/sifremi-unuttum",
-  "/sifremi-unuttum/:path*",
   "/tamamlanan-eserler/:path*",
   "/yazar/:path*",
   "/satis-erisim/:path*",
@@ -80,15 +90,27 @@ const searchExcludedRouteHeaders = [
 const nextConfig: NextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
   images: {
-    qualities: [60, 75],
+    qualities: [45, 60, 75],
   },
   experimental: {
+    // Hostinger exposes many CPUs but limits process/thread creation.
+    // Prevent Next.js page-data collection from starting 63 workers (EAGAIN).
+    cpus: 2,
     serverActions: {
       bodySizeLimit: "4mb",
     },
   },
   async headers() {
     return [
+      ...publicAuthNoindexRouteHeaders.map((source) => ({
+        source,
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, follow, noarchive",
+          },
+        ],
+      })),
       ...searchExcludedRouteHeaders.map((source) => ({
         source,
         headers: [
@@ -120,6 +142,13 @@ const nextConfig: NextConfig = {
           },
         ],
         destination: "https://ilkoku.com/:path*",
+        permanent: true,
+      },
+      {
+        // Retired public comparison view: preserve old inbound links without
+        // leaving a 404 or publishing a duplicate book-index URL.
+        source: "/en-cok-satanlar/turkiye/karsilastirma",
+        destination: "/en-cok-satanlar/turkiye",
         permanent: true,
       },
       {

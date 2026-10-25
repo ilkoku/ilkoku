@@ -5,6 +5,8 @@ import { HowItWorksExperience } from "@/components/content/HowItWorksExperience"
 import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { getPublishedCmsPublicPageState } from "@/lib/cms-public-page-store";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
+import { getSearchCodeFreshness } from "@/lib/search-content-freshness";
 import "./how-it-works.css";
 import "./hero-proof-light.css";
 import "./role-illustrations.css";
@@ -45,12 +47,13 @@ const resolvePage = cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await resolvePage();
+  const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);
 
   return {
     title: page.seoTitle,
     description: page.seoDescription,
     alternates: { canonical: page.canonical },
-    robots: page.noIndex
+    robots: noIndex
       ? { index: false, follow: true }
       : { index: true, follow: true },
     openGraph: {
@@ -72,6 +75,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HowItWorksPage() {
   const page = await resolvePage();
+  const contentUpdatedAt = getSearchCodeFreshness("/nasil-calisir");
+  const updatedAt = contentUpdatedAt && contentUpdatedAt > page.updatedAt ? contentUpdatedAt : page.updatedAt;
   const absoluteUrl = new URL(page.canonical, baseUrl).toString();
   const schema = [
     {
@@ -81,7 +86,7 @@ export default async function HowItWorksPage() {
       description: page.seoDescription,
       inLanguage: "tr-TR",
       url: absoluteUrl,
-      dateModified: page.updatedAt.toISOString(),
+      dateModified: updatedAt.toISOString(),
       primaryImageOfPage: {
         "@type": "ImageObject",
         url: socialImage,
@@ -125,7 +130,7 @@ export default async function HowItWorksPage() {
           title={page.title}
           summary={page.summary}
           body={page.body}
-          updatedAt={page.updatedAt}
+          updatedAt={updatedAt}
         />
       </div>
       <PublicTrustFooter />

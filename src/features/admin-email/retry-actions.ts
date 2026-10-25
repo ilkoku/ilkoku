@@ -60,6 +60,14 @@ export async function retryEmailDeliveryAction(
     formData.get("deliveryId") ?? "",
   ).trim();
 
+  // A retry sends a new email; require a fresh explicit admin confirmation.
+  if (formData.get("retryConfirmed") !== "confirmed") {
+    return {
+      message: "Yeni e-posta göndermeden önce açık onay gerekiyor.",
+      status: "error",
+    };
+  }
+
   if (!deliveryId || deliveryId.length > 64) {
     return {
       message: "Geçerli bir e-posta kaydı seçilmedi.",

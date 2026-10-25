@@ -12,7 +12,8 @@ import "./about-final-mark.css";
 import "../nasil-calisir/public-trust-footer.css";
 
 const baseUrl = "https://ilkoku.com";
-const socialImage = `${baseUrl}/opengraph-image`;
+const previousSeoDescription = "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin yazım, yayın, gelişim ve profesyonel değerlendirme yolculuğunda nasıl buluşturduğunu öğrenin.";
+const socialImage = `${baseUrl}/og/ilkoku-social-selected-2026.webp`;
 const requiredHeadings = [
   "## Neden İlkOku var?",
   "## Dört rol, tek eser yolculuğu",
@@ -22,10 +23,27 @@ const requiredHeadings = [
   "## Nereye gidiyoruz?",
 ] as const;
 
+// Keep the existing live-code/legacy route unchanged until the approved CMS
+// content is explicitly published. The new seven-section structure is separately
+// recognized so it can be rendered without losing any approved role text.
+const approvedHeadings = [
+  "## Yazarın çalışma alanı",
+  "## Okurun katkısı",
+  "## İki aşamalı editör incelemesi",
+  "## Yayınevi keşfi",
+  "## Bir eseri yalnızca son hâliyle görmüyoruz",
+  "## Güvenin temeli: herkesin rolü belli",
+  "## Nereye gidiyoruz?",
+] as const;
+
 export const revalidate = 300;
 
+function hasApprovedAboutStructure(body: string) {
+  return approvedHeadings.every((heading) => body.includes(heading));
+}
+
 function hasAboutExperienceStructure(body: string) {
-  return requiredHeadings.every((heading) => body.includes(heading));
+  return requiredHeadings.every((heading) => body.includes(heading)) || hasApprovedAboutStructure(body);
 }
 
 const resolvePage = cache(async () => {
@@ -36,7 +54,12 @@ const resolvePage = cache(async () => {
       body: state.page.body,
       canonical: state.page.canonicalUrl || aboutPageContent.canonical,
       noIndex: state.page.noIndex,
-      seoDescription: state.page.seoDescription || state.page.summary || aboutPageContent.seoDescription,
+      seoDescription:
+        hasApprovedAboutStructure(state.page.body)
+          ? state.page.seoDescription || state.page.summary || aboutPageContent.seoDescription
+          : state.page.seoDescription === previousSeoDescription
+            ? aboutPageContent.seoDescription
+            : state.page.seoDescription || state.page.summary || aboutPageContent.seoDescription,
       seoTitle: state.page.seoTitle || state.page.title,
       summary: state.page.summary || aboutPageContent.summary,
       title: state.page.title,

@@ -8,7 +8,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
 const pausedFamilies = ["/eserler", "/yazarlar", "/turler"];
-const privateFamilies = ["/giris", "/kayit", "/sifremi-unuttum", "/yazar", "/eserlerim", "/editor", "/yayinevi", "/icerik", "/admin"];
+const publicAuthFamilies = ["/giris", "/kayit", "/sifremi-unuttum", "/sifre-yenile"];
+const privateFamilies = ["/yazar", "/eserlerim", "/editor", "/yayinevi", "/icerik", "/admin"];
 
 test("authenticated product routes stay outside search while paused discovery fails closed", () => {
   const nextConfig = source("next.config.ts");
@@ -17,7 +18,9 @@ test("authenticated product routes stay outside search while paused discovery fa
 
   assert.match(navigation, /export const publicDiscoveryEnabled = false;/u);
   assert.match(nextConfig, /const pausedPublicDiscoveryRouteHeaders = \[/u);
+  assert.match(nextConfig, /const publicAuthNoindexRouteHeaders = \[/u);
   assert.match(nextConfig, /const searchExcludedRouteHeaders = \[/u);
+  assert.match(nextConfig, /value: "noindex, follow, noarchive"/u);
   assert.match(nextConfig, /value: "noindex, nofollow, noarchive"/u);
 
   for (const route of pausedFamilies) {
@@ -25,12 +28,14 @@ test("authenticated product routes stay outside search while paused discovery fa
     assert.ok(nextConfig.includes(`"${route}/:path*"`), `${route} descendants must have a noindex header guard`);
   }
 
+  for (const route of publicAuthFamilies) {
+    assert.ok(nextConfig.includes(`"${route}"`), `${route} auth root must have an exact noindex-follow header guard`);
+    assert.ok(nextConfig.includes(`"${route}/:path*"`), `${route} auth descendants must have a noindex-follow header guard`);
+  }
+
   for (const route of privateFamilies) {
     assert.ok(nextConfig.includes(route), `${route} private family must remain covered by X-Robots-Tag`);
   }
-
-  assert.ok(nextConfig.includes('"/sifremi-unuttum"'), "forgot-password root must have an exact noindex header guard");
-  assert.ok(nextConfig.includes('"/sifremi-unuttum/:path*"'), "forgot-password descendants must have a noindex header guard");
 
   for (const route of pausedFamilies) {
     assert.ok(
@@ -52,7 +57,11 @@ test("robots is not used as the deindex mechanism for paused discovery", () => {
   }
 
   assert.match(robots, /\$\{baseUrl\}\/sitemap\.xml/u);
-  assert.match(robots, /\$\{baseUrl\}\/recent-updates\.atom/u);
+  assert.doesNotMatch(
+    robots,
+    /\$\{baseUrl\}\/recent-updates\.atom/u,
+    "Atom feed stays a WebSub surface instead of a robots sitemap directive",
+  );
 });
 
 test("route inventory documents the gated-product search boundary", () => {
@@ -83,6 +92,30 @@ test("indexable public experiences never render links into paused discovery fami
       source(relativePath),
       pausedHrefPattern,
       `${relativePath} must not render a paused discovery link into public HTML`,
+    );
+  }
+});
+
+test("private reader author discovery is protected at every SEO and access-control layer", () => {
+  const page = source("src/app/yazar-kesfet/page.tsx");
+  const routeSecurity = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const config = source("next.config.ts");
+  const robots = source("src/app/robots.ts");
+  const productionSmoke = source(".github/workflows/production-smoke.yml");
+
+  assert.match(page, /redirect\("\/giris\?sonraki=\/yazar-kesfet"\)/u, "anonymous requests redirect to login");
+  assert.ok(routeSecurity.includes('"/yazar-kesfet"'), "protected path requires an active session");
+  assert.ok(proxy.includes('"/yazar-kesfet/:path*"'), "request-time proxy enforces login");
+  assert.ok(config.includes('"/yazar-kesfet/:path*"'), "private X-Robots-Tag response covers route");
+  assert.ok(robots.includes('"/yazar-kesfet"'), "private crawl path is disallowed");
+  assert.ok(productionSmoke.includes('check_redirect_and_noindex "https://ilkoku.com/yazar-kesfet" "/giris"'), "production smoke verifies X-Robots-Tag on live redirect");
+
+  for (const guide of ["/yazarlar-icin", "/yazarlar-icin/kurgu"]) {
+    assert.equal(
+      robots.includes('"' + guide + '"'),
+      false,
+      "public writing guides must not be blocked by the private route rule",
     );
   }
 });

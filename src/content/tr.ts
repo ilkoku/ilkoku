@@ -7,6 +7,7 @@ import { publisherContent } from "./publisher";
 import { readingContent } from "./reading";
 import { validationContent } from "./validation";
 import { writerContent } from "./writer";
+import { systemContent } from "./system";
 
 export const tr = {
   brand: {
@@ -15,29 +16,7 @@ export const tr = {
     homeLabel: commonContent.homeLabel,
     logoAlt: commonContent.logoAlt,
   },
-  system: {
-    notFound: {
-      code: "404",
-      title: "Sayfa bulunamadı.",
-      description: "Aradığın sayfa taşınmış, silinmiş veya henüz yazılmamış olabilir.",
-      action: commonContent.homeAction,
-    },
-    pageError: {
-      code: "Bir sorun oluştu",
-      title: "Sayfa şu anda açılmıyor.",
-      description:
-        "Çalışmanı kaybetmedin. Yeniden deneyebilir veya ana sayfaya dönebilirsin.",
-      retry: "Yeniden Dene",
-      home: commonContent.homeAction,
-    },
-    globalError: {
-      code: "500",
-      title: "Beklenmeyen bir sorun oluştu.",
-      description: "İlkOku kısa süre içinde yeniden hazır olacak. Şimdi tekrar deneyebilirsin.",
-      retry: "Yeniden Dene",
-      home: commonContent.homeAction,
-    },
-  },
+  system: systemContent,
   navigation: navigationContent,
   auth: authContent,
   dashboard: dashboardContent,

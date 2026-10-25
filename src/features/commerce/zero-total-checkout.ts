@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
+import { resolveOrderCommissionRate } from "./commission-rates-repository";
 import { quoteCommercePrice } from "./price-quote";
 import { getVerifiedWorkSeller } from "./verified-seller";
 
@@ -144,7 +145,8 @@ export async function completeZeroTotalCheckout(input: {
       });
       const { pricing } = priceQuote;
       const now = new Date();
-      const order = await transaction.order.create({
+      const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
+    const order = await transaction.order.create({
         data: {
           ...buildCommerceOrderSnapshot({
             authorId: work.authorId,
@@ -152,6 +154,8 @@ export async function completeZeroTotalCheckout(input: {
             currency: effectiveCommerce.currency,
             pricing,
             priceQuote,
+            commissionRate,
+          commissionRate,
             readerId: input.readerId,
             workId: work.id,
           }),
@@ -351,6 +355,7 @@ export async function completeZeroTotalCheckout(input: {
     }
 
     const now = new Date();
+    const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
     const order = await transaction.order.create({
       data: {
         ...buildCommerceOrderSnapshot({
@@ -365,6 +370,7 @@ export async function completeZeroTotalCheckout(input: {
           currency: effectiveCommerce.currency,
           pricing,
           priceQuote,
+          commissionRate,
           readerId: input.readerId,
           workId: work.id,
         }),

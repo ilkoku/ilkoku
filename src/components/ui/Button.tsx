@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { notificationContent } from "@/content";
+import { notificationContent } from "@/content/notifications";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "danger";
 

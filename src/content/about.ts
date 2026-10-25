@@ -5,7 +5,7 @@ export const aboutPageContent = {
     "İlkOku, bir eserin ilk cümlesinden okur geri bildirimine, bağımsız editör değerlendirmesinden yayınevi değerlendirmesine uzanan gelişim yolculuğunu aynı dijital ekosistemde buluşturur.",
   seoTitle: "Hakkımızda | İlkOku Dijital Yazar Platformu",
   seoDescription:
-    "İlkOku’nun neden var olduğunu; yazar, okuyucu, editör ve yayınevini bir eserin yazım, yayın, gelişim ve profesyonel değerlendirme yolculuğunda nasıl buluşturduğunu öğrenin.",
+    "İlkOku'nun yazar, okur, editör ve yayınevlerini eserlerin yazım, gelişim ve yayın yolculuğunda nasıl bir araya getirdiğini keşfedin.",
   updatedAt: "2026-09-08T00:00:00.000Z",
   body: `Bir eser çoğu zaman tek bir kişinin zihninde başlar. Ama güçlenmesi; okunmaya, geri bildirime, bağımsız değerlendirmeye ve doğru zamanda doğru insanlar tarafından fark edilmeye ihtiyaç duyar. İlkOku, tam olarak bu yolculuk için kuruldu.
 

@@ -32,6 +32,17 @@ export function AdminEmailRetryButton({
         value={deliveryId}
       />
 
+      <label className="admin-email-retry-confirm">
+        <input
+          type="checkbox"
+          name="retryConfirmed"
+          value="confirmed"
+          required
+          disabled={pending}
+        />
+        <span>Yeni bir e-posta gönderileceğini ve geçmiş hata kaydının silinmeyeceğini onaylıyorum.</span>
+      </label>
+
       <button
         disabled={pending}
         type="submit"

@@ -7,6 +7,7 @@ import { requireCmsManager, requireCmsPublisher } from "@/lib/cms-access";
 import { deleteCmsDraft, getCmsDraftState, pageDraftKey, saveCmsDraft } from "@/lib/cms-drafts";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
 import { normalizeCmsLocale } from "@/lib/cms-locales";
+import { resolveLegalSeoDescription } from "@/lib/cms-legal-seo-description.mjs";
 import {
   cmsLegalContentKey,
   cmsLegalPublicPath,
@@ -14,7 +15,7 @@ import {
 } from "@/lib/cms-legal";
 import { prisma } from "@/lib/prisma";
 
-type ExistingPage = { id: string; status: "draft" | "published" | "archived" };
+type ExistingPage = { id: string; status: "draft" | "published" | "archived"; bodyJson: string; seoDescription: string | null };
 
 async function addRevision(pageId: string, userId: string, snapshot: Record<string, unknown>) {
   const versions = await prisma.$queryRaw<Array<{ version: number | bigint }>>`
@@ -53,7 +54,7 @@ export async function saveCmsDocumentAction(formData: FormData) {
   const contentKey = cmsLegalContentKey(document.slug, locale);
   const path = cmsLegalPublicPath(document.slug, locale);
   const existingRows = await prisma.$queryRaw<ExistingPage[]>`
-    SELECT id, status FROM ContentPage WHERE contentKey = ${contentKey} LIMIT 1
+    SELECT id, status, bodyJson, seoDescription FROM ContentPage WHERE contentKey = ${contentKey} LIMIT 1
   `;
   const existing = existingRows[0] ?? null;
   if (existing) {
@@ -76,6 +77,11 @@ export async function saveCmsDocumentAction(formData: FormData) {
 
   const status = mode === "publish" ? "published" : "draft";
   const bodyJson = JSON.stringify({ description, updatedLabel, body });
+  const seoDescription = resolveLegalSeoDescription({
+    submittedDescription: description,
+    existingBodyJson: existing?.bodyJson,
+    existingSeoDescription: existing?.seoDescription,
+  });
 
   await prisma.$executeRaw`
     INSERT INTO ContentPage (
@@ -84,7 +90,7 @@ export async function saveCmsDocumentAction(formData: FormData) {
       createdById, updatedById, createdAt, updatedAt
     ) VALUES (
       ${randomUUID()}, ${contentKey}, ${path}, ${title}, ${status}, ${bodyJson},
-      ${description || null}, ${path}, false,
+      ${seoDescription}, ${path}, false,
       ${status === "published" ? new Date() : null},
       ${currentUser.id}, ${currentUser.id}, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3)
     )

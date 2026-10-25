@@ -7,12 +7,27 @@ import {
   hasOperationalPaymentProvider,
 } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
+import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
+import { prisma } from "@/lib/prisma";
 
 export default async function CommerceSettingsPage() {
   const [authorAgreement, readerTerms] = await Promise.all([
     getAuthorPublicationAgreementStatus(),
     getReaderPurchaseTermsStatus(),
   ]);
+
+  const [zeroTotalWorks, sampleWork] = await Promise.all([
+    prisma.workSaleConfiguration.count({
+      where: { saleModel: "paid", status: "ready", priceAmount: BigInt(0), activatedAt: null,
+        work: { isActive: true, archivedAt: null, status: "published", visibility: "public" } },
+    }),
+    prisma.work.findUnique({ where: { slug: "yeni-test209-30820c6a" }, select: { id: true, title: true } }),
+  ]);
+  const sampleSeller = sampleWork ? await getVerifiedWorkSeller(sampleWork.id) : null;
+  const readerTermsReady = Boolean(
+    readerTerms?.active && readerTerms.lifecycleStatus === "active" && !readerTerms.placeholder
+  );
+  const zeroTotalExampleReady = Boolean(sampleWork && sampleSeller && readerTermsReady);
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const providerReady = hasOperationalPaymentProvider();
@@ -40,6 +55,60 @@ export default async function CommerceSettingsPage() {
           Ödeme Sistemine dön
         </Link>
       </header>
+
+      <section className="admin-panel" aria-labelledby="zero-total-readiness-title">
+        <div className="admin-panel__heading">
+          <div>
+            <span className="admin-eyebrow">Gerçek tahsilat yok · 0 TL edinim</span>
+            <h2 id="zero-total-readiness-title">0 TL Akış Aktivasyon Denetimi</h2>
+          </div>
+          <b>{zeroTotalExampleReady ? "İşleme hazır" : "Eksikler var"}</b>
+        </div>
+        <p>
+          Bu akış banka/kart/ödeme sağlayıcısı gerektirmez. Yeni sipariş için
+          aktif ve gerçek okur koşulları ile doğrulanmış eser satıcısı ve satış yetkisi zorunludur.
+          Gerçek tahsilat bu ekran üzerinden açılmaz.
+        </p>
+        <div className="admin-settings-grid admin-commerce-summary">
+          <article className="admin-settings-card">
+            <span className="admin-eyebrow">0 TL eser hazırlığı</span>
+            <h3>{zeroTotalWorks.toLocaleString("tr-TR")}</h3>
+            <p>Ücretli modeli seçilmiş, yayımlanmış, henüz etkinleştirilmemiş 0 TL eser.</p>
+          </article>
+          <article className="admin-settings-card">
+            <span className="admin-eyebrow">Okur koşulları</span>
+            <h3>{readerTermsReady ? "Aktif" : "Aktif değil"}</h3>
+            <p>{readerTerms?.placeholder ? "Mevcut metin çalışma taslağı; kullanılamaz." : "Güncel sürümün onayı ve aktivasyonu gerekir."}</p>
+          </article>
+          <article className="admin-settings-card">
+            <span className="admin-eyebrow">YENİ TEST209 satıcısı</span>
+            <h3>{sampleSeller ? "Doğrulandı" : "Doğrulanmadı"}</h3>
+            <p>Hukukî taraf, eser bazlı satıcı ataması ve satış yetkisi birlikte doğrulanır.</p>
+          </article>
+        </div>
+        <p>
+          {zeroTotalExampleReady
+            ? "YENİ TEST209 için gerekli 0 TL edinim kapıları doğrulandı. Son kabul testi okur rolüyle yapılmalıdır."
+            : "Akış kendiliğinden açılmaz: eksik sözleşme veya doğrulanmamış satıcıyla yeni sipariş oluşturulamaz."}
+        </p>
+        <p>
+          <Link href={readerTerms ? `/sozlesme/sablonlar/${readerTerms.id}` : "/sozlesme/sablonlar"}>
+            Okur sözleşmesi çalışma masasını aç →
+          </Link>
+          {" · "}
+          <Link href="/sistem-yonetimi/odeme-sistemi/satici-yetkileri">
+            Satıcı ve satış yetkisi çalışma alanını aç →
+          </Link>
+          {" · "}
+          <Link href="/sistem-yonetimi/eserler/6ebb633f-4356-459c-ac12-4fbd253a49e7">
+            YENİ TEST209 eserini aç →
+          </Link>
+          {" · "}
+          <Link href="/sistem-yonetimi/finans-gelirler/mutabakat">
+            Finans mutabakatını aç →
+          </Link>
+        </p>
+      </section>
 
       <section className="admin-settings-grid admin-commerce-summary">
         <article className="admin-panel admin-settings-card">

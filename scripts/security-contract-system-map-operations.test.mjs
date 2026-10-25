@@ -169,8 +169,12 @@ test("harita left navigation exposes every specialist workbench as a real route"
   }
   contains(navigation, 'usePathname()', "active specialist route indicator");
   contains(navigation, 'aria-label="Harita çalışma masaları"', "navigation accessibility label");
-  contains(layout, "<SystemMapNavigation />", "shared nested navigation shell");
-  contains(styles, "grid-template-columns: 264px minmax(0, 1fr)", "desktop left application shell");
+  const unifiedNavigation = source("src/lib/admin-navigation.ts");
+  contains(layout, "AdminShell", "shared navigation shell for all admin centers");
+  contains(layout, "embeddedWorkspace", "preserve original system map workspace content");
+  notContains(layout, "<SystemMapNavigation />", "old second left menu must not render");
+  contains(unifiedNavigation, "children: systemMapSubNavigation", "all map routes in unified menu");
+  contains(styles, "grid-template-columns: 264px minmax(0, 1fr)", "legacy navigation stylesheet unchanged for style preservation");
   contains(styles, "position: sticky", "sticky navigation");
   contains(styles, "overflow-x: auto", "responsive horizontal navigation fallback");
 });
@@ -202,4 +206,83 @@ test("deep operations panel exposes blocker warn pass semantics and fail-closed 
   contains(panel, "Derin tarama", "scan mode visibility");
   contains(operations, "Build-time kaynak bağımlılık manifesti boş", "manifest failure visibility");
   contains(operations, "Derin kaynak taraması sınırlı", "limited-mode gap");
+});
+
+
+test("all 18 harita submenu pages use one accessible row-column directory", () => {
+  const nav = source("src/features/system-map/navigation.ts");
+  const directory = source("src/features/system-map/SystemMapSectionDirectory.tsx");
+  const overview = source("src/features/system-map/SystemMapOverviewNavigator.tsx");
+  const workspace = source("src/features/system-map/SystemMapWorkspacePage.tsx");
+  const contracts = source("src/app/harita/sozlesmeler/page.tsx");
+  const supply = source("src/app/harita/tedarik-zinciri/page.tsx");
+  const layout = source("src/app/harita/layout.tsx");
+  const styles = source("src/app/harita/workspace.css");
+
+  const menuItems = [...nav.matchAll(/\{ key: "([^"]+)", href: "(\/harita(?:\/[^"]*)?)"/g)];
+  assert.equal(menuItems.length, 19, "Overview and all 18 existing submenu pages remain in one registry");
+  assert.equal(new Set(menuItems.map((match) => match[1])).size, 19, "No duplicated menu keys");
+  assert.equal(new Set(menuItems.map((match) => match[2])).size, 19, "No duplicated menu links");
+
+  for (const item of menuItems) {
+    if (item[2] === "/harita") continue;
+    contains(directory, "systemMapNavigationGroups", "shared canonical submenu registry");
+    assert.ok(existsSync(join(ROOT, `src/app${item[2]}/page.tsx`)), `${item[2]} route file must exist`);
+  }
+
+  for (const heading of ["Bölüm", "Alt sayfa", "Açıklama", "URL"]) {
+    contains(overview, heading, `overview directory ${heading} heading`);
+  }
+  for (const heading of ["Alt sayfa", "İçerik / amaç", "URL", "Bağlantı"]) {
+    contains(directory, heading, `subpage directory ${heading} heading`);
+  }
+  contains(overview, "visibleGroups.map", "all categories and search filters remain connected");
+  contains(overview, "system-map-directory-table", "overview table is rendered");
+  contains(overview, "rowSpan", "group rows retain table semantics on overview");
+  contains(directory, 'aria-current={item.key === activeKey ? "page"', "active page is announced");
+  contains(workspace, "<SystemMapSectionDirectory activeKey={workspace} />", "all standard specialist routes share directory");
+  contains(contracts, '<SystemMapSectionDirectory activeKey="contracts" />', "contract specialist page");
+  contains(supply, '<SystemMapSectionDirectory activeKey="supplyChain" />', "supply chain specialist page");
+  contains(styles, ".system-map-directory-table", "shared table layout");
+  contains(styles, "@media (max-width: 760px)", "responsive overflow");
+  contains(layout, '<AdminShell embeddedWorkspace', "original admin shell preserved");
+  notContains(layout, '<SystemMapNavigation />', "no duplicated sidebar menu");
+  notContains(directory, "fetch(", "navigation does not fetch private data");
+});
+
+
+test("system map API evidence verifies OIDC denial and anonymous-safe session boundaries", () => {
+  const generator = source("scripts/generate-system-map-runtime-manifest.mjs");
+  contains(generator, 'GitHub OIDC JWT authorization', "OIDC evidence classification");
+  contains(generator, 'session profile anonymous boundary', "anonymous-safe account evidence");
+  contains(generator, 'status:\\s*401', "OIDC denial evidence must require HTTP 401");
+  contains(generator, 'signedIn:\\s*false', "account profile evidence requires anonymous response");
+
+  for (const path of [
+    "src/app/api/internal/book-index-readiness/route.ts",
+    "src/app/api/internal/runtime-origin-health/route.ts",
+    "src/app/api/internal/seo-sitemap-inventory/route.ts",
+  ]) {
+    const route = source(path);
+    contains(route, "jwtVerify(", path + " cryptographic token verification");
+    contains(route, "await authorized(request)", path + " request authorization gate");
+    contains(route, "status: 401", path + " unauthorized rejection");
+  }
+  const account = source("src/app/api/public-account/route.ts");
+  contains(account, "getCurrentProfile()", "account session/profile read");
+  contains(account, "if (!profile)", "account anonymous boundary");
+  contains(account, "signedIn: false", "account guest response");
+  contains(account, '"Cache-Control": "private, no-store', "account response is never shared-cached");
+});
+
+
+test("system map routes share the horizontal submenu and expose an active accessible tab", () => {
+  const shell = source("src/components/admin/AdminShell.tsx");
+  const navigation = source("src/features/system-map/navigation.ts");
+  contains(shell, "function isSubmenuExpanded(item: AdminNavItem)", "shared submenu expansion");
+  contains(shell, "admin-tertiary-row admin-nav-child__items", "existing horizontal row");
+  contains(shell, 'aria-current={isActiveSubItem(child.href', "active route marked for accessibility");
+  const paths = [...navigation.matchAll(/\\{ key: "[^"]+", href: "(\\/harita(?:\\/[^"]*)?)"/g)];
+  assert.equal(paths.length, 19, "all harita tabs share the canonical navigation list");
+  assert.equal(new Set(paths.map((match) => match[1])).size, 19, "no duplicate harita links");
 });

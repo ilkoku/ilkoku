@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
+import { PriorityEducationIntentPanel } from "@/components/content/PriorityEducationIntentPanel";
+
 import { ReaderEducationShell } from "@/components/content/ReaderEducationShell";
 import type { ReaderEducationGuideRecord } from "@/lib/cms-reader-education";
 import {
@@ -30,7 +33,8 @@ function ReaderVisual({
         width={visual.recommendedWidth}
         height={visual.recommendedHeight}
         className="h-auto w-full object-contain"
-        unoptimized
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 960px"
+        quality={75}
       />
       <figcaption className="border-t border-black/[0.06] px-5 py-3 text-xs leading-6 text-[#746d7d]">
         {slot.label} · {guide.title}
@@ -56,6 +60,8 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-2">İlkOku’da uygula</span>
           </div>
         </header>
+
+        <PriorityEducationIntentPanel area="reading" slug={category.slug} />
 
         <ReaderVisual guide={guide} slotKey="hero" fallbackAlt={`${category.title} eğitimini anlatan ana görsel`} />
 
@@ -138,6 +144,7 @@ export function ReaderEducationPage({ category, guide }: { category: ReaderEduca
           <Link className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#211746] shadow-sm transition hover:-translate-y-0.5" href={category.application.href}>{category.application.label} →</Link>
           <ReaderVisual guide={guide} slotKey="finalCta" fallbackAlt={`${category.title} eğitimi kapanış görseli`} />
         </section>
+        <EditorialTrustNote context="reading" />
       </article>
     </ReaderEducationShell>
   );

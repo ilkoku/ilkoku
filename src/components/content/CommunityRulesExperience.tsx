@@ -81,7 +81,7 @@ export function CommunityRulesExperience({ body, summary, title, updatedAt }: { 
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">Edebiyat etrafında birlikte büyüyen topluluk</span>
-            <h1>{title.split(/\s+/).map((word) => <span key={word}>{word}</span>)}</h1>
+            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{index > 0 ? " " : null}{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
               <Link className="how-button how-button--primary" href="/kayit?rol=reader">Okur olarak katıl <span aria-hidden="true">→</span></Link>

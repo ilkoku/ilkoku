@@ -1,20 +1,38 @@
-const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
+const SOFT_LAUNCH_INDEXABLE_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/nasil-calisir",
+  "/hakkimizda",
   "/yazarlar-icin",
+  "/okurlar-icin",
   "/editorler-icin",
   "/yayinevleri-icin",
   "/editoryal-standartlar",
-  "/yardim",
-  "/iletisim",
-  "/site-haritasi",
-  "/yasal/kullanim-sartlari",
-  "/yasal/gizlilik-politikasi",
-  "/yasal/kvkk",
-  "/yasal/cerez-politikasi",
-  "/yasal/telif-hakki-politikasi",
+  "/yazarlar-icin/kurgu",
+  "/yazarlar-icin/edebiyat",
+  "/yazarlar-icin/akademik",
+  "/yazarlar-icin/bilgilendirici",
+  "/yazarlar-icin/senaryo-ve-sahne",
+  "/yazarlar-icin/cocuk-ve-genclik",
+  "/yazarlar-icin/cizgi-anlati",
+  "/yazarlar-icin/kurgu/roman",
+  "/yazarlar-icin/kurgu/oyku",
+  "/yazarlar-icin/kurgu/fantastik",
+  "/yazarlar-icin/kurgu/bilim-kurgu",
+  "/yazarlar-icin/kurgu/distopya",
+  "/yazarlar-icin/kurgu/dedektif",
+  "/yazarlar-icin/edebiyat/siir",
+  "/okurlar-icin/okumaya-baslama",
+  "/editorler-icin/egitim/editorluge-baslama",
+  "/editorler-icin/egitim/dil-ve-anlatim-editorlugu",
+  "/editorler-icin/egitim/metin-degerlendirme",
+] as const);
+
+// Only routes that are not yet ready for Google publication remain excluded.
+// Writing, reading, editorial, trust, utility and Turkish legal pages are public.
+const SOFT_LAUNCH_NOINDEX_EXACT_PATHS: ReadonlySet<string> = new Set([
   "/yeni-cikanlar",
 ] as const);
 
+// Book Index stays gated until its independent readiness/publication checks pass.
 const SOFT_LAUNCH_NOINDEX_PREFIXES = [
   "/en-cok-satanlar",
 ] as const;
@@ -39,8 +57,17 @@ function normalizePublicPath(value: string) {
   return path || "/";
 }
 
+export function isSoftLaunchSearchPriorityPath(value: string) {
+  const path = normalizePublicPath(value);
+  return SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path);
+}
+
 export function isSoftLaunchSearchExcludedPath(value: string) {
   const path = normalizePublicPath(value);
+
+  if (SOFT_LAUNCH_INDEXABLE_EXACT_PATHS.has(path)) {
+    return false;
+  }
 
   if (SOFT_LAUNCH_NOINDEX_EXACT_PATHS.has(path)) {
     return true;

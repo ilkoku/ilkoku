@@ -39,6 +39,56 @@ export async function listReaderPurchasedWorks(readerId: string) {
   });
 }
 
+/**
+ * Reader-owned order detail. The immutable seller and consent snapshots must
+ * be read from the order itself, never the seller's current work assignment.
+ */
+export async function getReaderOrderDetail(readerId: string, orderNo: string) {
+  return prisma.order.findFirst({
+    where: { readerId, orderNo },
+    select: {
+      id: true,
+      orderNo: true,
+      status: true,
+      originalAmount: true,
+      discountAmount: true,
+      finalAmount: true,
+      currency: true,
+      couponCodeSnapshot: true,
+      couponOwnerSnapshot: true,
+      createdAt: true,
+      paidAt: true,
+      work: { select: { title: true, slug: true } },
+      entitlement: { select: { status: true } },
+      priceQuoteSnapshot: {
+        select: {
+          taxTreatment: true,
+          vatRateBasisPoints: true,
+          listNetAmount: true,
+          listVatAmount: true,
+          listGrossAmount: true,
+          discountGrossAmount: true,
+          payableGrossAmount: true,
+        },
+      },
+      legalSnapshot: {
+        select: {
+          sellerMode: true,
+          sellerName: true,
+          sellerAddress: true,
+          sellerEmail: true,
+        },
+      },
+      consent: {
+        select: {
+          documentVersion: true,
+          acceptedAt: true,
+        },
+      },
+    },
+  });
+}
+
 export async function listReaderPaymentHistory(readerId: string) {
   return prisma.order.findMany({
     where: {

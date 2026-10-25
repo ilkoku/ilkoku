@@ -7,7 +7,6 @@ export type BookIndexSection =
   | "turkey"
   | "new-releases"
   | "global"
-  | "comparison"
   | "new-entries"
   | "risers"
   | "everywhere"
@@ -29,11 +28,6 @@ const analysisItems: Array<{
   href: string;
   label: string;
 }> = [
-  {
-    key: "comparison",
-    href: "/en-cok-satanlar/turkiye/karsilastirma",
-    label: "Karşılaştırma",
-  },
   {
     key: "new-entries",
     href: "/en-cok-satanlar/cok-satanlara-yeni-girenler",

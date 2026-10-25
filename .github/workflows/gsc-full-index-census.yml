@@ -7,6 +7,12 @@ on:
     paths:
       - ".github/workflows/gsc-full-index-census.yml"
       - "scripts/gsc-full-index-census.mjs"
+      - "src/lib/soft-launch-search-policy.ts"
+      - "src/lib/seo/sitemap-data.ts"
+  # Full current live-sitemap index census (128+ URL): read-only, once daily.
+  # GitHub schedule may run later than the nominal time.
+  schedule:
+    - cron: "17 7 * * *"
   workflow_dispatch:
 
 permissions:
@@ -31,11 +37,18 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Guard against obsolete 25 URL census
+        run: |
+          node --check scripts/gsc-full-index-census.mjs
+          if grep -Eq "loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25" scripts/gsc-full-index-census.mjs; then
+            echo "::error::Obsolete partial census fallback is forbidden"; exit 1
+          fi
+
       - name: Validate Search Console OAuth secrets
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
         run: |
           test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
           test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
@@ -43,16 +56,18 @@ jobs:
 
       - name: Inspect live sitemap census
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
+          GSC_CENSUS_MIN_URLS: "128"
         run: node scripts/gsc-full-index-census.mjs
 
       - name: Upload census artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: gsc-full-index-census
           path: /tmp/ilkoku-gsc-full-index-census.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14

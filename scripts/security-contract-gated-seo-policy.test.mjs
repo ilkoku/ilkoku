@@ -57,7 +57,11 @@ test("robots is not used as the deindex mechanism for paused discovery", () => {
   }
 
   assert.match(robots, /\$\{baseUrl\}\/sitemap\.xml/u);
-  assert.match(robots, /\$\{baseUrl\}\/recent-updates\.atom/u);
+  assert.doesNotMatch(
+    robots,
+    /\$\{baseUrl\}\/recent-updates\.atom/u,
+    "Atom feed stays a WebSub surface instead of a robots sitemap directive",
+  );
 });
 
 test("route inventory documents the gated-product search boundary", () => {
@@ -88,6 +92,30 @@ test("indexable public experiences never render links into paused discovery fami
       source(relativePath),
       pausedHrefPattern,
       `${relativePath} must not render a paused discovery link into public HTML`,
+    );
+  }
+});
+
+test("private reader author discovery is protected at every SEO and access-control layer", () => {
+  const page = source("src/app/yazar-kesfet/page.tsx");
+  const routeSecurity = source("src/lib/route-security.ts");
+  const proxy = source("src/proxy.ts");
+  const config = source("next.config.ts");
+  const robots = source("src/app/robots.ts");
+  const productionSmoke = source(".github/workflows/production-smoke.yml");
+
+  assert.match(page, /redirect\("\/giris\?sonraki=\/yazar-kesfet"\)/u, "anonymous requests redirect to login");
+  assert.ok(routeSecurity.includes('"/yazar-kesfet"'), "protected path requires an active session");
+  assert.ok(proxy.includes('"/yazar-kesfet/:path*"'), "request-time proxy enforces login");
+  assert.ok(config.includes('"/yazar-kesfet/:path*"'), "private X-Robots-Tag response covers route");
+  assert.ok(robots.includes('"/yazar-kesfet"'), "private crawl path is disallowed");
+  assert.ok(productionSmoke.includes('check_redirect_and_noindex "https://ilkoku.com/yazar-kesfet" "/giris"'), "production smoke verifies X-Robots-Tag on live redirect");
+
+  for (const guide of ["/yazarlar-icin", "/yazarlar-icin/kurgu"]) {
+    assert.equal(
+      robots.includes('"' + guide + '"'),
+      false,
+      "public writing guides must not be blocked by the private route rule",
     );
   }
 });

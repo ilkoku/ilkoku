@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AboutExperience } from "@/components/content/AboutExperience";
+import { PublicTrustFooter } from "@/components/content/PublicTrustFooter";
 import { EditorialStandardsExperience } from "@/components/content/EditorialStandardsExperience";
 import { ContentAgePolicyExperience } from "@/components/content/ContentAgePolicyExperience";
 import { CommunityRulesExperience } from "@/components/content/CommunityRulesExperience";
@@ -13,6 +15,11 @@ import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
 
+import "@/app/hakkimizda/about.css";
+import "@/app/hakkimizda/about-hero.css";
+import "@/app/hakkimizda/about-illustrations.css";
+import "@/app/hakkimizda/about-final-mark.css";
+import "@/app/nasil-calisir/public-trust-footer.css";
 import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/editoryal-standartlar/editorial-standards.css";
 import "@/app/icerik-ve-yas-politikasi/content-age-policy.css";
@@ -54,6 +61,18 @@ export default async function CmsPagePreview({ params }: { params: Promise<{ id:
   const title = draft?.title ?? page.title;
   const summary = draft?.summary ?? stored.summary;
   const body = draft?.body ?? stored.body;
+
+  if (page.contentKey === "page:tr:hakkimizda") {
+    return (
+      <>
+        <div style={{ position: "relative", zIndex: 60, padding: ".7rem 1rem", color: "#fff", background: "#4b2dbf", textAlign: "center", fontSize: ".75rem", fontWeight: 800 }}>
+          CMS Taslak Önizleme · {draft ? "Bekleyen taslak" : "Kayıtlı sürüm"} · <Link href={`/icerik/sayfalar/${page.id}`} style={{ textDecoration: "underline" }}>Editöre dön</Link>
+        </div>
+        <AboutExperience title={title} summary={summary} body={body} updatedAt={page.updatedAt} />
+        <PublicTrustFooter />
+      </>
+    );
+  }
 
   if (page.contentKey === "page:tr:nasil-calisir") {
     return (

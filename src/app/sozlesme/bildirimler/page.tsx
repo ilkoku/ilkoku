@@ -65,7 +65,8 @@ export default async function ContractAdminNotificationsPage() {
           <span>{notifications.length} kayıt</span>
         </div>
 
-        <div className={styles.notificationList}>
+        <div className="contract-notification-table-head" aria-hidden="true"><span>Bildirim / tarih</span><span>Okundu durumu</span></div>
+        <div className={`${styles.notificationList} contract-notification-rows`}>
           {notifications.map((notification) => (
             <NotificationListItem
               createdAtIso={notification.createdAt.toISOString()}

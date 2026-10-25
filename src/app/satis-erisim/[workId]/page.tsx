@@ -339,7 +339,10 @@ export default async function WriterCommerceWorkPage({
                   </>
                 ) : (
                   <span className={styles.priceField}>
-                    <span>Eser satış fiyatı</span>
+                    <span>{work.saleConfiguration?.priceTaxTreatment === "net_plus_vat" ||
+                    !work.saleConfiguration?.priceAmount
+                      ? "Eser satış fiyatı (KDV hariç)"
+                      : "Eser satış fiyatı (eski kayıt, otomatik KDV eklenmez)"}</span>
                     <input
                       defaultValue={inputPrice(work.saleConfiguration?.priceAmount)}
                       inputMode="decimal"

@@ -59,8 +59,9 @@ async function readSitemapStatus(accessToken) {
     contents: Array.isArray(body.contents)
       ? body.contents.map((entry) => ({
           type: entry.type ?? null,
+          // Google deprecated Sitemap.contents[].indexed; it is not an
+          // indexing verdict. The complete URL Inspection census owns that metric.
           submitted: entry.submitted ?? null,
-          indexed: entry.indexed ?? null,
         }))
       : [],
   };
@@ -83,7 +84,9 @@ async function main() {
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
   console.log(JSON.stringify(output, null, 2));
 
-  if (!status.found && status.httpStatus !== 404) {
+  if (!status.found) {
+    // A missing sitemap in Search Console is a failed status check, including 404.
+    console.error(`GSC sitemap status unavailable (HTTP ${status.httpStatus ?? "unknown"}): ${status.error ?? "sitemap not found"}`);
     process.exitCode = 1;
   }
 }

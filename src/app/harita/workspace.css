@@ -372,3 +372,211 @@
     width: 100%;
   }
 }
+
+
+/* One reusable row/column directory across all /harita specialist pages. */
+.system-map-section-directory {
+  width: 100%;
+  max-width: 1540px;
+  margin: 18px auto 0;
+  padding: 18px 20px 20px;
+  border: 1px solid #d8d0c3;
+  border-radius: 18px;
+  background: #fffdf9;
+  color: #302a24;
+}
+
+.system-map-section-directory__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.system-map-section-directory__heading span {
+  color: #7a5b27;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+
+.system-map-section-directory__heading h2 {
+  margin: 5px 0 3px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.system-map-section-directory__heading p {
+  margin: 0;
+  color: #746d64;
+  font-size: 12px;
+}
+
+.system-map-section-directory__heading > a {
+  flex: 0 0 auto;
+  color: #6d552b;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.system-map-section-directory__groups {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+
+.system-map-section-directory__groups a {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 10px;
+  border: 1px solid #e2d9cb;
+  border-radius: 10px;
+  background: #faf8f3;
+  color: #554c42;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+}
+
+.system-map-section-directory__groups a[data-active="true"] {
+  border-color: #baa273;
+  background: #fff2d7;
+  color: #47351c;
+}
+
+.system-map-directory-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #ded8ce;
+  border-radius: 12px;
+  scrollbar-gutter: stable;
+}
+
+.system-map-directory-table-wrap:focus-visible {
+  outline: 3px solid #b99a64;
+  outline-offset: 2px;
+}
+
+.system-map-directory-table {
+  width: 100%;
+  min-width: 690px;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;
+  text-align: left;
+}
+
+.system-map-directory-table th,
+.system-map-directory-table td {
+  padding: 11px 13px;
+  border-bottom: 1px solid #ece7df;
+  color: #534d45;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.system-map-directory-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f2ece2;
+  color: #5f513c;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.system-map-directory-table th[scope="row"] {
+  color: #30291f;
+  font-weight: 800;
+}
+
+.system-map-directory-table tbody tr:last-child th,
+.system-map-directory-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.system-map-directory-table tbody + tbody tr:first-child th,
+.system-map-directory-table tbody + tbody tr:first-child td {
+  border-top: 2px solid #d8c8ad;
+}
+
+.system-map-directory-table tbody tr:nth-child(even) {
+  background: #faf8f3;
+}
+
+.system-map-directory-table tbody tr:hover,
+.system-map-directory-table tbody tr[data-current="true"] {
+  background: #fff5df;
+}
+
+.system-map-directory-table a {
+  color: #61471e;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.system-map-directory-table a:focus-visible,
+.system-map-section-directory a:focus-visible {
+  outline: 2px solid #b99a64;
+  outline-offset: 3px;
+}
+
+.system-map-directory-table code {
+  color: #665d53;
+  font-size: 10px;
+  word-break: break-word;
+}
+
+.system-map-directory-table th:nth-child(1) { width: 24%; }
+.system-map-directory-table th:nth-child(2) { width: 40%; }
+.system-map-directory-table th:nth-child(3) { width: 25%; }
+.system-map-directory-table th:nth-child(4) { width: 11%; }
+
+.system-map-directory-table--overview th:nth-child(1) { width: 16%; }
+.system-map-directory-table--overview th:nth-child(2) { width: 23%; }
+.system-map-directory-table--overview th:nth-child(3) { width: 41%; }
+.system-map-directory-table--overview th:nth-child(4) { width: 20%; }
+
+.system-map-directory-table__group {
+  background: #f7f0e2;
+  color: #614b28 !important;
+  font-weight: 900;
+  letter-spacing: .05em;
+  vertical-align: top !important;
+}
+
+.system-map-directory-table__group small {
+  display: block;
+  margin-top: 6px;
+  color: #80715d;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+@media (max-width: 760px) {
+  .system-map-section-directory { padding: 14px; }
+  .system-map-section-directory__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .system-map-section-directory__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .system-map-directory-table { min-width: 700px; }
+  .system-map-directory-table th,
+  .system-map-directory-table td { padding: 10px; }
+}

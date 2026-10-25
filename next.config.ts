@@ -45,6 +45,7 @@ const privateRouteHeaders = [
   "/geri-bildirimler/:path*",
   "/hesabim/:path*",
   "/kesfet/:path*",
+  "/yazar-kesfet/:path*",
   "/okumaya-devam/:path*",
   "/okuyucu/:path*",
   "/rol-secimi/:path*",
@@ -89,9 +90,12 @@ const searchExcludedRouteHeaders = [
 const nextConfig: NextConfig = {
   ...(deploymentId ? { deploymentId } : {}),
   images: {
-    qualities: [60, 75],
+    qualities: [45, 60, 75],
   },
   experimental: {
+    // Hostinger exposes many CPUs but limits process/thread creation.
+    // Prevent Next.js page-data collection from starting 63 workers (EAGAIN).
+    cpus: 2,
     serverActions: {
       bodySizeLimit: "4mb",
     },
@@ -138,6 +142,13 @@ const nextConfig: NextConfig = {
           },
         ],
         destination: "https://ilkoku.com/:path*",
+        permanent: true,
+      },
+      {
+        // Retired public comparison view: preserve old inbound links without
+        // leaving a 404 or publishing a duplicate book-index URL.
+        source: "/en-cok-satanlar/turkiye/karsilastirma",
+        destination: "/en-cok-satanlar/turkiye",
         permanent: true,
       },
       {

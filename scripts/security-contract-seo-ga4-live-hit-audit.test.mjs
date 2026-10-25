@@ -1,0 +1,87 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readFileSync } from "node:fs";
+import { classifyGa4Request, summarizeHits, assessCtaHitDelivery } from "./seo-ga4-live-hit-rules.mjs";
+
+test("First-party GA4 page_view is recognized without user/session parameters", () => {
+  const record = classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?v=2&tid=G-MCF2YN9SL8&en=page_view&cid=SECRET&dl=https%3A%2F%2Filkoku.com%2Ffoo");
+  assert.deepEqual(record, { type: "ga4-hit", firstParty: true, event: "page_view", measurement: "G-MCF2YN9SL8" });
+  assert.doesNotMatch(JSON.stringify(record), /SECRET|cid|dl=/);
+});
+
+test("POST-encoded GA4 event is safely extracted without persisting visitor fields", () => {
+  const record = classifyGa4Request(
+    "https://www.google-analytics.com/g/collect?v=2",
+    "en=page_view&tid=G-MCF2YN9SL8&cid=SENSITIVE&sid=SENSITIVE2&dl=https%3A%2F%2Filkoku.com%2Fprivate"
+  );
+  assert.deepEqual(record, { type: "ga4-hit", firstParty: false, event: "page_view", measurement: "G-MCF2YN9SL8" });
+  assert.doesNotMatch(JSON.stringify(record), /SENSITIVE|sid|cid|private/);
+});
+
+test("Newline-delimited POST collects are parsed safely", () => {
+  const record = classifyGa4Request("https://www.google-analytics.com/g/collect?v=2",
+    "en=page_view&cid=SECRET\nen=user_engagement&cid=SECRET2");
+  assert.equal(record.event, "page_view");
+  assert.doesNotMatch(JSON.stringify(record), /SECRET/);
+});
+
+test("Third-party GA4 requests count but arbitrary domains cannot", () => {
+  assert.equal(classifyGa4Request("https://www.google-analytics.com/g/collect?en=page_view").type, "ga4-hit");
+  assert.equal(classifyGa4Request("https://analytics.google.com/g/collect?en=form_submit").event, "form_submit");
+  assert.equal(classifyGa4Request("https://evil.example/g/collect?en=page_view"), null);
+  assert.equal(classifyGa4Request("garbage"), null);
+});
+
+test("Gateway GA4 hit paths are measured; health and JS resources are not", () => {
+  assert.deepEqual(
+    classifyGa4Request("https://ilkoku.com/ilkgtm/ag/g/c?v=2",
+      "en=page_view&tid=G-MCF2YN9SL8&cid=PRIVATE"),
+    { type: "ga4-hit", firstParty: true, event: "page_view", measurement: "G-MCF2YN9SL8" }
+  );
+  assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/ga/g/c").type, "ga4-hit");
+  assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/healthy").type, "gateway-health");
+  assert.equal(classifyGa4Request("https://ilkoku.com/ilkgtm/tyfn-random"), null);
+});
+
+test("Aggregate only GA4 collection endpoints and successful HTTP response count", () => {
+  const example = [
+    { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=page_view"), status: 204 },
+    { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=page_view"), status: 200 },
+    { ...classifyGa4Request("https://ilkoku.com/ilkgtm/g/collect?en=click"), status: 503 },
+    { type: "gateway-health", status: 200 }
+  ];
+  assert.deepEqual(summarizeHits(example), {
+    count: 3, events: { page_view: 2, click: 1 }, firstPartyCount: 3, status2xx: 2
+  });
+});
+
+test("Browser GA4 audit does not submit forms, inject synthetic hits or log raw URLs", () => {
+  const script = readFileSync("scripts/seo-ga4-live-hit-audit.mjs", "utf8");
+  assert.match(script, /"Tümünü reddet"/);
+  assert.match(script, /"Tümünü kabul et"/);
+  assert.match(script, /\/nasil-calisir/);
+  assert.doesNotMatch(script, /\.fill\(|\.submit\(|gtag\("event"|api\/debug|localStorage\.setItem/);
+  assert.match(script, /GA4_HIT_BEFORE_CONSENT/);
+  assert.match(script, /NO_GA4_HITS_AFTER_ACCEPT/);
+  assert.match(script, /safe-cta-click/);
+  assert.match(script, /ctaEvidence/);
+  assert.doesNotMatch(script, /CTA_DATALAYER_EVENT_MISSING/);
+  assert.match(script, /assessCtaHitDelivery/);
+  assert.match(script, /gtagEventNames/);
+  assert.match(script, /gtagEventPresent/);
+  assert.match(script, /ga4SuccessfulHitCount/);
+  assert.match(script, /preventDefault\(\)/);
+});
+
+test("CTA succeeds on exactly one successful network hit even after the GTM event-object pathway is removed", () => {
+  const hits = [{ type: "ga4-hit", phase: "safe-cta-click", event: "site_cta_click", status: 204 }];
+  assert.deepEqual(assessCtaHitDelivery(true, hits), { violations: [], successfulHitCount: 1 });
+});
+
+test("CTA network gate rejects absent, duplicated, unsuccessful or unclicked hits", () => {
+  const good = { type: "ga4-hit", event: "site_cta_click", status: 204 };
+  assert.deepEqual(assessCtaHitDelivery(true, []).violations, ["CTA_GA4_HIT_NOT_EXACTLY_ONE"]);
+  assert.deepEqual(assessCtaHitDelivery(true, [good, good]).violations, ["CTA_GA4_HIT_NOT_EXACTLY_ONE"]);
+  assert.deepEqual(assessCtaHitDelivery(true, [{ ...good, status: 403 }]).violations, ["CTA_GA4_HIT_NOT_SUCCESSFUL"]);
+  assert.deepEqual(assessCtaHitDelivery(false, [good]).violations, ["CTA_NOT_CLICKED"]);
+});

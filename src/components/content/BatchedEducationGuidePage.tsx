@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
@@ -23,6 +24,13 @@ type ExtraEducationSection = {
 type ExtendedEducationGuideDefinition = EducationGuideDefinition & {
   extraSections?: ExtraEducationSection[];
 };
+
+const EXPERT_VERIFICATION_GUIDE_SLUGS = new Set([
+  "psikoloji",
+  "finans",
+  "hukuk",
+  "saglik",
+]);
 
 function visualBlock(id: string, imageUrl: string, alt: string, caption: string): CmsPageBlock[] {
   if (!imageUrl) return [];
@@ -280,6 +288,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
   const canonicalUrl = categoryHub
     ? `https://ilkoku.com${categoryHub.href}/${definition.slug}`
     : `https://ilkoku.com/yazarlar-icin`;
+  const expertVerificationRequired = EXPERT_VERIFICATION_GUIDE_SLUGS.has(definition.slug);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -305,18 +314,9 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
-      author: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
-      publisher: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
       about: [
         { "@type": "Thing", name: definition.label },
         { "@type": "Thing", name: `${definition.category} yazarlığı` },
@@ -339,7 +339,11 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-      <WritingGuideShell activeCategory={definition.category} activeGenreSlug={definition.slug}>
+      <WritingGuideShell
+        activeCategory={definition.category}
+        activeGenreSlug={definition.slug}
+        expertVerificationRequired={expertVerificationRequired}
+      >
       <div className="batched-education-writing-guide">
         <PublicCmsPageBlocks
           blocks={renderedBlocks}

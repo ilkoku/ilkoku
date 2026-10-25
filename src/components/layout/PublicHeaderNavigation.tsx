@@ -35,6 +35,8 @@ function MenuGroups({
   menu: PublicHeaderMenu;
   onNavigate?: () => void;
 }) {
+  if (menu.groups.length === 0) return null;
+
   const columns = Math.min(menu.groups.length, 3);
 
   return (
@@ -48,6 +50,7 @@ function MenuGroups({
           <div className="public-site-header__mega-links">
             {group.links.map((link) => (
               <Link
+                prefetch={false}
                 href={link.href}
                 data-primary={link.primary ? "true" : undefined}
                 key={`${menu.id}-${group.id}-${link.pageId}`}
@@ -63,7 +66,11 @@ function MenuGroups({
   );
 }
 
-export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] }) {
+export function PublicHeaderNavigation({
+  menus,
+}: {
+  menus: PublicHeaderMenu[];
+}) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileMenuId, setMobileMenuId] = useState<string | null>(null);
@@ -148,6 +155,7 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
             if (menu.directHref) {
               return (
                 <Link
+                  prefetch={false}
                   className="public-site-header__menu-trigger"
                   data-direct="true"
                   href={menu.directHref}
@@ -178,22 +186,18 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
           })}
         </nav>
 
-        {menus.filter((menu) => !menu.directHref).map((menu) => {
-          const isActive = menu.id === activeId;
-          return (
-            <div
-              aria-hidden={!isActive}
-              aria-label={`${menu.label} menüsü`}
-              className="public-site-header__mega"
-              data-active={isActive ? "true" : undefined}
-              id={`public-site-header-mega-panel-${menu.id}`}
-              key={`desktop-panel-${menu.id}`}
-              role="region"
-            >
-              <MenuGroups menu={menu} onNavigate={closeDesktop} />
-            </div>
-          );
-        })}
+        {activeMenu ? (
+          <div
+            aria-label={`${activeMenu.label} menüsü`}
+            className="public-site-header__mega"
+            data-active="true"
+            id={`public-site-header-mega-panel-${activeMenu.id}`}
+            key={`desktop-panel-${activeMenu.id}`}
+            role="region"
+          >
+            <MenuGroups menu={activeMenu} onNavigate={closeDesktop} />
+          </div>
+        ) : null}
       </div>
 
       <div className="public-site-header__mobile-menu" data-open={mobileOpen ? "true" : undefined}>
@@ -233,6 +237,7 @@ export function PublicHeaderNavigation({ menus }: { menus: PublicHeaderMenu[] })
                     {menus.map((menu) =>
                       menu.directHref ? (
                         <Link
+                          prefetch={false}
                           className="public-site-header__mobile-category"
                           data-direct="true"
                           href={menu.directHref}

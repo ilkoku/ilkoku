@@ -8,6 +8,7 @@ import {
   getReaderEducationCategory,
   readerEducationPublicPath,
 } from "@/lib/reader-education";
+import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 export const revalidate = 300;
 
@@ -27,22 +28,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const canonical = `https://ilkoku.com${readerEducationPublicPath(category)}`;
+  const noIndex = isSoftLaunchSearchExcludedPath(canonical);
+  const socialImage = "https://ilkoku.com/og/ilkoku-social-selected-2026.webp";
   return {
     title: category.seoTitle,
     description: category.seoDescription,
     alternates: { canonical },
-    robots: { index: true, follow: true },
+    robots: noIndex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
       title: category.seoTitle,
       description: category.seoDescription,
       type: "article",
       locale: "tr_TR",
       url: canonical,
+      images: [{ url: socialImage }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: category.seoTitle,
       description: category.seoDescription,
+      images: [socialImage],
     },
   };
 }
@@ -64,17 +69,9 @@ export default async function ReaderEducationRoute({ params }: PageProps) {
       description: guide.summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonical,
+      image: "https://ilkoku.com/og/ilkoku-social-selected-2026.webp",
       author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: "https://ilkoku.com/" },
-        { "@type": "ListItem", position: 2, name: "Okurlar İçin", item: "https://ilkoku.com/okurlar-icin" },
-        { "@type": "ListItem", position: 3, name: guide.title, item: canonical },
-      ],
     },
   ];
 

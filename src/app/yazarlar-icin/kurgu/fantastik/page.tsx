@@ -360,7 +360,6 @@ export default async function FantastikYazarlikRehberiPage() {
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
       </WritingGuideShell>

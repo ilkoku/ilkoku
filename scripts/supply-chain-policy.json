@@ -25,6 +25,23 @@
         "5": "5.0.11"
       },
       "note": "Hat bazlı backport eşikleri kullanılır. 28 Eylül 2026 tarihli CVE-2026-102276 ve CVE-2026-102278 yüksek seviye DoS açıkları önceki 1.1.18 / 5.0.9 eşiklerini geçersiz kıldı; tanımlanmayan major sürüm fail-closed kabul edilir."
+    },
+    {
+      "package": "next",
+      "severity": "high",
+      "advisories": [
+        "GHSA-h694-7cp9-m8p3",
+        "GHSA-3w37-wq28-93x7",
+        "GHSA-cjq9-62q9-8jv4",
+        "GHSA-39w2-rjm5-chcv",
+        "GHSA-4jqv-mc3x-m676",
+        "GHSA-mcj8-r9mp-w47p",
+        "GHSA-f87g-xv8r-7p7x"
+      ],
+      "fixedByMajor": {
+        "16": "16.3.8"
+      },
+      "note": "Next.js September 30, 2026 security release. Next.js 16.3.8 is the minimum patched 16.x baseline for the seven disclosed advisories; fail closed below this version even if npm audit metadata lags."
     }
   ],
   "deploymentBuildContract": {

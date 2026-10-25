@@ -23,6 +23,7 @@ jobs:
 
     steps:
       - name: Validate explicit confirmation
+        if: github.event_name == 'workflow_dispatch'
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
@@ -36,15 +37,15 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate Search Console write OAuth secrets
+      - name: Require Search Console write OAuth
         env:
           GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
           GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
           GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
         run: |
-          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
-          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
-          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || { echo "Missing GSC_OAUTH_WRITE_REFRESH_TOKEN" >&2; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "::error::Missing GSC_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "::error::Missing GSC_OAUTH_CLIENT_SECRET"; exit 1; }
+          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN" || { echo "::error::Missing GSC_OAUTH_WRITE_REFRESH_TOKEN"; exit 1; }
 
       - name: Submit live sitemap
         env:

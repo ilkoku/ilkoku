@@ -33,6 +33,7 @@ export const protectedPaths = [
   "/favorilerim",
   "/bildirimler",
   "/kesfet",
+  "/yazar-kesfet",
   "/okuyucu",
   "/okumaya-devam",
   "/oku",

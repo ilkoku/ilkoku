@@ -1,0 +1,53 @@
+name: Yandex stale index cleanup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/yandex-index-cleanup.yml"
+      - "scripts/yandex-index-cleanup.mjs"
+      - "scripts/yandex-index-cleanup.test.mjs"
+      - "src/lib/soft-launch-search-policy.ts"
+      - "src/lib/public-page-metadata.ts"
+      - "src/app/robots.ts"
+      - "src/app/editorler/**"
+      - "src/app/yardim/**"
+      - "next.config.ts"
+  pull_request:
+    paths:
+      - ".github/workflows/yandex-index-cleanup.yml"
+      - "scripts/yandex-index-cleanup.mjs"
+      - "scripts/yandex-index-cleanup.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yandex-stale-index-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Notify Yandex about stale and refreshed URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Test cleanup candidate policy and payload safety
+        run: node --test scripts/yandex-index-cleanup.test.mjs
+
+      - name: Validate live states and submit Yandex IndexNow cleanup
+        if: github.event_name != 'pull_request'
+        env:
+          INDEXNOW_KEY: "f4c33493caf6550560462af5a424980e"
+        run: node scripts/yandex-index-cleanup.mjs

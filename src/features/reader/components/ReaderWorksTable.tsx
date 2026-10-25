@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WorkCoverImage } from "@/components/media/WorkCoverImage";
 import { useEffect, useMemo, useState } from "react";
 
 import { toggleFavoriteAction } from "@/features/reader/favorites";
@@ -40,6 +41,9 @@ export type ReaderWorkRow = {
   progressPercent?: number | null;
   publishedAt?: string | null;
   readerCount: number;
+  saleDisclosure?: { label: string; detail: string };
+  paidAccessRestricted?: boolean;
+  purchaseAction?: { href: string; label: string };
   readingHref?: string | null;
   readingState?: "unread" | "in_progress" | "completed";
   slug: string;
@@ -210,8 +214,13 @@ export function ReaderWorksTable({
                           type="button"
                         >
                           {work.coverUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img alt="" src={work.coverUrl} />
+                            <WorkCoverImage
+                              alt=""
+                              src={work.coverUrl}
+                              width={96}
+                              height={144}
+                              sizes="44px"
+                            />
                           ) : (
                             <span aria-hidden="true">İO</span>
                           )}
@@ -228,6 +237,7 @@ export function ReaderWorksTable({
                             <span>{work.authorName}</span>
                             <span aria-hidden="true">·</span>
                             <span>{formatNumber(work.chapterCount)} bölüm</span>
+                            {work.saleDisclosure ? <><span aria-hidden="true">·</span><span>{work.saleDisclosure.label}</span></> : null}
                           </div>
                         </div>
                       </div>
@@ -293,7 +303,7 @@ export function ReaderWorksTable({
                           Detay
                         </button>
                         <FavoriteToggle iconOnly returnTo={returnTo} work={work} />
-                        {work.readingState === "completed" ? (
+                        {work.readingState === "completed" && !work.paidAccessRestricted ? (
                           <form action={restartReadingAction}>
                             <input name="workId" type="hidden" value={work.id} />
                             <input name="returnTo" type="hidden" value={returnTo} />
@@ -319,6 +329,14 @@ export function ReaderWorksTable({
                               : "Aç"}
                           </Link>
                         )}
+                        {work.purchaseAction ? (
+                          <Link
+                            className="workspace-row-action workspace-row-action--primary"
+                            href={appendReturnPath(work.purchaseAction.href, returnTo)}
+                          >
+                            {work.purchaseAction.label}
+                          </Link>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -416,6 +434,9 @@ export function ReaderWorksTable({
                 <dt>Editör durumu</dt>
                 <dd>{reviewLabel(selectedWork.editorReviewStatus)}</dd>
               </div>
+              {selectedWork.saleDisclosure ? (
+                <div><dt>Satış modeli</dt><dd>{selectedWork.saleDisclosure.label} · {selectedWork.saleDisclosure.detail}</dd></div>
+              ) : null}
 
               {selectedWork.publishedAt && (
                 <div>
@@ -482,7 +503,7 @@ export function ReaderWorksTable({
               Eser Pasaportu
             </Link>
             <FavoriteToggle returnTo={returnTo} work={selectedWork} />
-            {selectedWork.readingState === "completed" ? (
+            {selectedWork.readingState === "completed" && !selectedWork.paidAccessRestricted ? (
               <form action={restartReadingAction}>
                 <input name="workId" type="hidden" value={selectedWork.id} />
                 <input name="returnTo" type="hidden" value={returnTo} />
@@ -505,6 +526,14 @@ export function ReaderWorksTable({
                   : "Eseri Aç"}
               </Link>
             )}
+            {selectedWork.purchaseAction ? (
+              <Link
+                className="button button--primary"
+                href={appendReturnPath(selectedWork.purchaseAction.href, returnTo)}
+              >
+                {selectedWork.purchaseAction.label}
+              </Link>
+            ) : null}
           </footer>
         </aside>
       )}

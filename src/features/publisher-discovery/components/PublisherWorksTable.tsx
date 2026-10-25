@@ -165,7 +165,7 @@ export function PublisherWorksTable({
         genre: work.genre,
         href: `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`,
         id: work.id,
-        meta: `${work.subtitle ? `${work.subtitle} · ` : ""}${languageLabel(work.language)} · ${dateLabel(work.publishedAt)}`,
+        meta: `${work.subtitle ? `${work.subtitle} · ` : ""}${languageLabel(work.language)} · ${dateLabel(work.publishedAt)}${work.saleDisclosure ? ` · ${work.saleDisclosure.label}` : ""}`,
         readerCount: work.readerCount,
         statusLabel: reviewLabels[work.editorReviewStatus],
         statusMeta: `${work.completion === "completed" ? "Tamamlandı" : "Devam ediyor"} · ${work.hasPassportRecord ? "Pasaport kayıtlı" : "Pasaport bekliyor"} · ${work.versionCount} sürüm`,

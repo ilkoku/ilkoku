@@ -99,7 +99,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/yardim" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     locale: "tr_TR",

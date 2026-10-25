@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import retinaLogo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
-import { tr } from "@/content";
+import { commonContent } from "@/content/navigation";
 
 type BrandAppearance = "dark" | "light";
 
@@ -15,12 +15,12 @@ export function Brand({ appearance = "dark" }: BrandProps) {
       <Link
         className={`brand brand--${appearance}`}
         href="/"
-        aria-label={tr.brand.homeLabel}
+        aria-label={commonContent.homeLabel}
       >
         <Image
           className="brand__logo brand__logo--desktop"
           src={retinaLogo}
-          alt={tr.brand.logoAlt}
+          alt={commonContent.logoAlt}
           priority
           sizes="(max-width: 767px) 84px, (max-width: 1024px) 112px, 144px"
         />

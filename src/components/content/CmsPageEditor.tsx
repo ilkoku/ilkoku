@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { archiveCmsPageAction, saveCmsPageAction } from "@/features/cms/page-actions";
+import { archiveCmsPageAction, saveApprovedHakkimizdaDraftAction, saveCmsPageAction } from "@/features/cms/page-actions";
 import { requireCmsManager } from "@/lib/cms-access";
 import { getCmsDraftState, pageDraftKey } from "@/lib/cms-drafts";
 import { evaluateCmsPagePublishQuality } from "@/lib/cms-page-quality";
 import { parseCmsPageBody } from "@/lib/cms-pages";
 import { prisma } from "@/lib/prisma";
+import { approvedHakkimizdaCmsDraft } from "@/content/approved-hakkimizda-cms-draft";
 import { isCorePublicCmsPage } from "@/lib/public-cms-page-catalog";
 
 type PageRow = {
@@ -178,6 +179,30 @@ export async function CmsPageEditor({ id, publishQualityBlocked = false }: CmsPa
           ) : (
             <p>Yeni sayfayı önce taslak olarak da kaydedebilirsiniz. Yayın sırasında başlık, özet, içerik, canonical ve indexlenebilir sayfalarda arama metadata kalitesi sunucu tarafında doğrulanır.</p>
           )}
+        </div>
+      ) : null}
+
+      {page?.id === "51e2eb80-7192-4cec-ba69-6bf622c569a4" &&
+      page.contentKey === approvedHakkimizdaCmsDraft.contentKey &&
+      page.status !== "archived" && !corruptDraft ? (
+        <div className="content-panel cms-editor-notice is-info">
+          <strong>Onaylanan Hakkımızda çalışma metni</strong>
+          <p>Bu işlem yalnızca CMS çalışma taslağını günceller. Kayıt yayında olsa bile mevcut canlı sürüm değiştirilmez; yayınlama ayrıca onay gerektirir.</p>
+          {hasPendingDraft &&
+          currentTitle === approvedHakkimizdaCmsDraft.title &&
+          currentSummary === approvedHakkimizdaCmsDraft.summary &&
+          currentBody === approvedHakkimizdaCmsDraft.body &&
+          currentSeoTitle === approvedHakkimizdaCmsDraft.seoTitle &&
+          currentSeoDescription === approvedHakkimizdaCmsDraft.seoDescription ? (
+            <p role="status">Onaylanan metin bekleyen CMS taslağıyla birebir eşleşiyor. Canlı sürüm korunuyor.</p>
+          ) : (
+            <p role="status">Bekleyen taslak onaylanan metinle henüz eşleşmiyor; aşağıdaki güvenli aktarım işlemini kullanın.</p>
+          )}
+          <form action={saveApprovedHakkimizdaDraftAction}>
+            <button className="cms-button--secondary" type="submit">
+              Onaylı Hakkımızda metnini taslağa aktar
+            </button>
+          </form>
         </div>
       ) : null}
 

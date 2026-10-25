@@ -73,7 +73,7 @@ export default async function PlatformCouponsPage({
 
       {flash ? <div className={styles.flash}>{flash}</div> : null}
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.adminCouponPanel}`} data-testid="platform-coupon-create">
         <div className={styles.panelHeader}>
           <div>
             <span className={styles.eyebrow}>Yeni kampanya</span>
@@ -184,7 +184,7 @@ export default async function PlatformCouponsPage({
         </form>
       </section>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.adminCouponPanel}`} data-testid="platform-coupon-list">
         <div className={styles.panelHeader}>
           <div>
             <span className={styles.eyebrow}>Platform kampanyaları</span>

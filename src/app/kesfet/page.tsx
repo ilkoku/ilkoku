@@ -8,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { commonDiscoveryWorkWhereFor } from "@/features/discovery/common-work-scope";
-import { describeWorkSaleModel, resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { describeWorkSaleModel, resolveEffectiveCommerceState, shouldEnforcePaidChapterAccess } from "@/features/commerce/effective-state";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
@@ -91,9 +91,11 @@ function mapReaderWork(
   const hasEntitlement = work.entitlements.length > 0;
   const purchaseAvailable = stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
   const paidAccessRestricted =
-    effective.saleModel === "paid" &&
-    (Boolean(configuration?.activatedAt) || configuration?.status === "ready" || purchaseAvailable) &&
-    !hasEntitlement;
+    shouldEnforcePaidChapterAccess({
+      activatedAt: configuration?.activatedAt,
+      saleModel: effective.saleModel,
+      status: effective.status,
+    }) && !hasEntitlement;
   const canRead = (chapter: typeof publishedChapters[number]) =>
     !paidAccessRestricted ||
     (effective.useConfirmedSnapshot
@@ -106,10 +108,12 @@ function mapReaderWork(
     ? resumeChapter
     : publishedChapters.find(canRead) ?? null;
   const purchaseAction =
-    paidAccessRestricted && purchaseAvailable
+    paidAccessRestricted
       ? {
           href: `/satinal/${work.slug}`,
-          label: stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al",
+          label: purchaseAvailable
+            ? (stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al")
+            : "Erişim koşullarını gör",
         }
       : undefined;
 

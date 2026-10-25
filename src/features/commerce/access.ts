@@ -1,11 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { getActiveReaderPurchaseTerms } from "./checkout-terms";
-import { resolveEffectiveCommerceState } from "./effective-state";
-import { hasOperationalPaymentProvider } from "./payment-providers";
-import { isCommerceCheckoutEnabled } from "./runtime";
-import { getVerifiedWorkSeller } from "./verified-seller";
+import { resolveEffectiveCommerceState, shouldEnforcePaidChapterAccess } from "./effective-state";
 
 export type CommerceAccessDecision =
   | { allowed: true; reason: "checkout_disabled" | "provider_unavailable" | "free_work" | "staged_paid_work" | "preview" | "entitled" }
@@ -16,9 +12,6 @@ export async function getCommerceChapterAccessDecision(input: {
   readerId: string | null;
   workId: string;
 }): Promise<CommerceAccessDecision> {
-  const checkoutEnabled = isCommerceCheckoutEnabled();
-  const paymentProviderReady = hasOperationalPaymentProvider();
-
   const work = await prisma.work.findUnique({
     where: { id: input.workId },
     select: {
@@ -75,54 +68,16 @@ export async function getCommerceChapterAccessDecision(input: {
     return { allowed: true, reason: "free_work" };
   }
 
-  const previouslyActivatedPaid = Boolean(configuration.activatedAt);
-  const stagedZeroCandidate =
-    !previouslyActivatedPaid &&
-    effective.saleModel === "paid" &&
-    effective.status === "ready" &&
-    effective.priceAmount === BigInt(0);
-  // A published, ready paid work enforces its chapter plan even when the
-  // legal onboarding or checkout is not yet ready. No locked content leaks.
-  const preparedPaidChapterGate =
-    !previouslyActivatedPaid &&
-    effective.saleModel === "paid" &&
-    effective.status === "ready";
-  const stagedZeroPurchaseReady = stagedZeroCandidate
-    ? Boolean(await getActiveReaderPurchaseTerms()) &&
-      Boolean(await getVerifiedWorkSeller(input.workId))
-    : false;
-
-  if (!preparedPaidChapterGate && !previouslyActivatedPaid && !stagedZeroPurchaseReady && !checkoutEnabled) {
-    return { allowed: true, reason: "checkout_disabled" };
-  }
-
-  if (
-    !preparedPaidChapterGate &&
-    !previouslyActivatedPaid &&
-    !stagedZeroPurchaseReady &&
-    !paymentProviderReady
-  ) {
-    return { allowed: true, reason: "provider_unavailable" };
-  }
-
-  if (
-    !preparedPaidChapterGate &&
-    !previouslyActivatedPaid &&
-    !stagedZeroPurchaseReady &&
-    configuration.status !== "active"
-  ) {
+  // Reader protection is independent of contract approval and payment
+  // availability. A confirmed/ready paid chapter must not leak content simply
+  // because checkout is temporarily unable to issue an entitlement.
+  const enforcePaidChapterAccess = shouldEnforcePaidChapterAccess({
+    activatedAt: configuration.activatedAt,
+    saleModel: effective.saleModel,
+    status: effective.status,
+  });
+  if (!enforcePaidChapterAccess) {
     return { allowed: true, reason: "staged_paid_work" };
-  }
-
-  if (
-    !preparedPaidChapterGate &&
-    !previouslyActivatedPaid &&
-    !stagedZeroPurchaseReady
-  ) {
-    const readerPurchaseTerms = await getActiveReaderPurchaseTerms();
-    if (!readerPurchaseTerms) {
-      return { allowed: true, reason: "staged_paid_work" };
-    }
   }
 
   const chapterAccessType = effective.useConfirmedSnapshot

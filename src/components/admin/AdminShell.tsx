@@ -383,11 +383,11 @@ export function AdminShell({
                   >
                     {item.children.map((child) => (
                       item.href === `${SYSTEM_MANAGEMENT_PATH}/power-seo` ? (
-                        <a key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                        <a key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                           <span>{child.label}</span>
                         </a>
                       ) : (
-                        <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                        <Link key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                           <span>{child.label}</span>
                         </Link>
                       )

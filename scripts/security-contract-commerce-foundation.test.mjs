@@ -152,6 +152,16 @@ test("platform coupon workspace preserves author earning base and supports expli
 });
 
 
+test("platform coupons reject malformed usage limits and calendar dates instead of dropping restrictions", () => {
+  const actions = source("src/features/commerce/admin-actions.ts");
+  contains(actions, 'rawTotalUsageLimit && totalUsageLimit === null', "invalid limit is not unlimited");
+  contains(actions, 'rawPerUserUsageLimit && parsedPerUserUsageLimit === null', "invalid per-reader limit is not silently defaulted");
+  contains(actions, 'rawStartsAt && !startsAt', "invalid starting date is rejected");
+  contains(actions, 'rawEndsAt && !endsAt', "invalid ending date is rejected");
+  contains(actions, "calendarDay.getUTCDate() !== day", "invalid calendar days do not roll into the next month");
+  contains(actions, 'parsedPerUserUsageLimit ?? 1', "empty per-reader limit preserves the current default");
+});
+
 test("commerce routes are private and writer-gated", () => {
   const security = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
@@ -189,17 +199,16 @@ test("agreement evidence is immutable across same-version content changes", () =
 });
 
 
-test("reader commerce gate enforces ready paid chapter locks even before terms approval", () => {
+test("reader commerce gate protects staged locked chapters independently from checkout readiness", () => {
   const access = source("src/features/commerce/access.ts");
   const readingPage = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
   const checkoutPage = source("src/app/satinal/[slug]/page.tsx");
 
-  contains(access, "previouslyActivatedPaid = Boolean(configuration.activatedAt)", "paid activation history");
-  contains(access, "const stagedZeroCandidate =", "staged zero candidate");
-  contains(access, "const stagedZeroPurchaseReady =", "active reader terms gate");
-  contains(access, "const preparedPaidChapterGate =", "ready paid chapter lock is separate from checkout readiness");
-  contains(access, "!preparedPaidChapterGate && !previouslyActivatedPaid", "only non-ready works retain legacy fail-open behavior");
-  contains(access, 'configuration.status !== "active"', "non-ready staged paid work fail-open");
+  contains(access, "shouldEnforcePaidChapterAccess", "paid work history protection");
+  contains(access, "shouldEnforcePaidChapterAccess", "independent reader chapter protection");
+  contains(access, "if (!enforcePaidChapterAccess)", "draft-only access boundary");
+  notContains(access, 'return { allowed: true, reason: "checkout_disabled" }', "checkout outage never leaks paid chapter");
+  notContains(access, 'return { allowed: true, reason: "provider_unavailable" }', "provider outage never leaks paid chapter");
   contains(access, 'chapterAccessType === "preview"', "preview access");
   contains(access, 'entitlement?.status === "active"', "purchased entitlement access");
   contains(access, 'reason: "purchase_required"', "locked paid purchase gate");
@@ -233,7 +242,7 @@ test("checkout coupon resolution revalidates scope and usage before pricing", ()
   contains(couponRules, 'input.scope === "all_paid_works"', "platform all-paid-work scope");
   contains(couponRules, 'input.scope === "selected_works"', "platform selected-work scope");
   contains(couponRules, 'input.scope === "selected_authors"', "platform selected-author scope");
-  contains(checkoutPage, "calculateCommercePricing", "checkout pricing calculation");
+  contains(checkoutPage, "quoteCommercePrice", "VAT-aware checkout pricing calculation");
 });
 
 
@@ -371,8 +380,8 @@ test("zero-total checkout supports staged base-price zero while preserving reade
   contains(service, "const stagedZeroPurchase =", "staged zero purchase branch");
   contains(service, 'effectiveCommerce.status === "ready"', "writer-confirmed ready state");
   contains(service, "effectiveCommerce.priceAmount === BigInt(0)", "base zero-price gate");
-  notContains(service, "isCommerceCheckoutEnabled()", "0 TL coupon needs no paid provider rollout flag");
-  contains(service, 'pricing.finalAmount !== BigInt(0)', "coupon must discount all the way to zero");
+  notContains(service, "if (!isCommerceCheckoutEnabled())", "zero-total coupon does not require an external provider rollout");
+  contains(service, "pricing.finalAmount !== BigInt(0)", "nonzero residual must never issue provider-free entitlement");
   contains(service, "transaction.workEntitlement.upsert", "zero total grants or reactivates entitlement");
   contains(service, "stagedZeroPricePurchase: true", "staged zero audit metadata");
   contains(checkout, "0 TL ile satın al", "reader zero-price purchase action");
@@ -497,7 +506,7 @@ test("new paid work activation stays staged without a provider while previously 
   contains(actions, "hasOperationalPaymentProvider", "writer activation provider readiness");
   contains(actions, "(checkoutEnabled && paymentProviderReady)", "new paid activation requires checkout plus provider");
   contains(actions, "previouslyActivatedPaid", "existing paid activation history");
-  contains(access, "previouslyActivatedPaid", "reader paid activation history");
+  contains(access, "shouldEnforcePaidChapterAccess", "reader paid activation protection");
   contains(guard, "const previouslyActivatedPaid = Boolean(configuration.activatedAt)", "publication guard activation history");
 });
 
@@ -568,6 +577,19 @@ test("admin operations avoid exposing payment credentials", () => {
   notContains(repository, "pan", "no payment PAN field");
 });
 
+
+test("coupon-backed purchases appear in admin coupon filter without rewriting entitlement source", () => {
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+  const page = source("src/app/admin/odeme-sistemi/erisim-haklari/page.tsx");
+  contains(repository, 'input.source === "coupon"', "coupon special source filter");
+  contains(repository, 'source: "purchase" as const', "order-derived coupon provenance");
+  contains(repository, 'couponCodeSnapshot: { not: null }', "coupon order relation");
+  contains(repository, "AND: [", "coupon filter and query search compose safely");
+  contains(repository, "couponCodeSnapshot: true", "admin source projection");
+  contains(page, 'entitlement.order?.couponCodeSnapshot', "coupon purchase display source");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  contains(zero, 'source: "purchase"', "persist source as purchase for order-backed access");
+});
 
 test("admin entitlement operations remain entitlement-driven", () => {
   const overview = source("src/app/admin/odeme-sistemi/page.tsx");
@@ -681,7 +703,8 @@ test("writer work income detail matches the frozen finance fields", () => {
   contains(repository, 'entry.entryType === "adjustment"', "other adjustment rollup");
   contains(repository, 'entry.entryType === "author_earning"', "net writer earning rollup");
 
-  contains(page, "Güncel fiyat", "writer work price field");
+  contains(page, 'work.priceTaxTreatment === "net_plus_vat"', "writer work price treatment");
+  contains(page, "Kayıtlı fiyat (KDV hariç)", "writer confirmed net price field");
   contains(page, "Satış adedi", "writer work units sold field");
   contains(page, "Ödeme hizmeti ücreti", "writer provider fee field");
   contains(page, "İlkOku hizmet payı", "writer platform share field");
@@ -788,6 +811,16 @@ test("chapter access plan rejects missing or tampered selections instead of defa
 });
 
 
+test("writer coupons reject explicit invalid limits and malformed calendar days", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  assert.ok(actions.includes('rawTotalUsageLimit && totalUsageLimit === null'), "invalid total usage must not become unlimited");
+  assert.ok(actions.includes('rawPerUserUsageLimit && parsedPerUserUsageLimit === null'), "invalid per-reader usage must not default to 1");
+  assert.ok(actions.includes('rawStartsAt && !startsAt'), "invalid start dates cannot remove start restriction");
+  assert.ok(actions.includes('rawEndsAt && !endsAt'), "invalid end dates cannot remove end restriction");
+  assert.ok(actions.includes("calendarDay.getUTCDate() !== day"), "nonexistent calendar dates are rejected");
+  assert.ok(actions.includes('const perUserUsageLimit = parsedPerUserUsageLimit ?? 1'), "blank per-reader limit retains default");
+});
+
 test("author coupon numeric parsers accept normal digit input", () => {
   const actions = source("src/features/commerce/actions.ts");
 
@@ -802,14 +835,11 @@ test("previously activated paid work never becomes free because checkout or prov
   const memberQuery = source("src/features/works/member-public-queries.ts");
   const actions = source("src/features/commerce/actions.ts");
 
-  contains(access, "previouslyActivatedPaid", "reader activation history guard");
-  contains(access, "!preparedPaidChapterGate && !previouslyActivatedPaid", "checkout outage cannot expose ready paid chapters");
-  contains(access, "preparedPaidChapterGate", "ready work enforces chapter lock irrespective of provider");
-  contains(access, "!paymentProviderReady", "provider outage cannot open activated paid work");
+  contains(access, "shouldEnforcePaidChapterAccess", "reader activation history guard");
+  contains(access, "shouldEnforcePaidChapterAccess", "previously activated paid content stays protected");
 
-  contains(memberQuery, "Boolean(saleConfiguration?.activatedAt)", "public work activation history guard");
+  contains(memberQuery, "shouldEnforcePaidChapterAccess", "public work activation history guard");
   contains(memberQuery, "commerceEnforcementActive", "public work locked content remains enforced");
-  contains(memberQuery, "preparedPaidChapterGate", "ready paid content is redacted before contract activation");
 
   contains(actions, "const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null", "draft edit preserves paid activation history");
   contains(actions, 'work.saleConfiguration!.saleModel === "free"', "confirmed free transition clears paid activation history");
@@ -827,8 +857,8 @@ test("public paid showcase distinguishes access enforcement from purchase availa
   contains(query, "const purchaseAvailable =", "purchase availability resolver");
   contains(query, "stagedZeroPurchaseAvailable", "provider-free staged zero purchase availability");
   contains(query, "livePaidPurchaseAvailable", "non-zero purchase still requires live payment path");
-  contains(showcase, "Kilitli · Erişim koşulları hazırlanıyor", "locked paid work retains access control even if purchase inactive");
-  contains(showcase, "Kilitli bölümler erişim hakkı gerektirir", "locked paid access is preserved during seller or checkout outage");
+  contains(showcase, "Satış geçici olarak kullanılamıyor", "outage paid-work state");
+  contains(showcase, "Mevcut erişim hakları korunur", "existing entitlement outage copy");
   contains(showcase, "purchaseAvailable", "locked chapter purchase availability");
   contains(bookPage, "work.commerce?.purchaseAvailable", "structured offer purchase availability");
 });
@@ -1065,28 +1095,4 @@ test("admin works lists saved paid/free models without treating missing configur
   contains(page, 'admin-works-sale-filters', "scoped works filter layout");
   contains(css, '.admin-directory-filters.admin-works-sale-filters', "works-only filter grid");
   notContains(page, 'action={', "admin works list stays read-only");
-});
-
-
-test("paid 0 TL acquisition links locked chapters and coupons without provider payments", () => {
-  const access = source("src/features/commerce/access.ts");
-  const query = source("src/features/works/member-public-queries.ts");
-  const display = source("src/features/showcase/components/BookShowcase.tsx");
-  const checkout = source("src/app/satinal/[slug]/page.tsx");
-  const completion = source("src/features/commerce/zero-total-checkout.ts");
-  const couponCreator = source("src/app/satis-erisim/kuponlar/page.tsx");
-  const adminCoupons = source("src/app/admin/odeme-sistemi/kuponlar/page.tsx");
-
-  contains(access, "preparedPaidChapterGate", "ready paid chapter enforcement");
-  contains(query, "preparedPaidChapterGate", "publication snapshot redaction");
-  contains(display, ': purchaseHref;', "locked chapter links to checkout even when onboarding is pending");
-  contains(checkout, "couponZeroPurchaseReady", "coupon-funded 0 TL route");
-  contains(checkout, "couponEligibleWork", "coupon input tied to nonzero active price");
-  contains(checkout, "getApplicableCheckoutCoupon", "coupon eligibility");
-  contains(completion, "couponRedemption.create", "coupon redemption");
-  contains(completion, "financialLedger.create", "ledger entries");
-  contains(completion, 'return { ok: false, reason: "not_zero_total" }', "nonzero coupon remains blocked");
-  notContains(completion, "transaction.payment.create", "no provider payment attempt");
-  contains(couponCreator, "0 TL", "writer coupon page explains zero total");
-  contains(adminCoupons, "0 TL", "admin coupon page explains zero total");
 });

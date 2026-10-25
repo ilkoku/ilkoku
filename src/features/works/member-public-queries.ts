@@ -12,7 +12,8 @@ import {
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
-import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
+import { resolveEffectiveCommerceState, shouldEnforcePaidChapterAccess } from "@/features/commerce/effective-state";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
@@ -122,6 +123,7 @@ export async function getMemberPublicWorkBySlug(
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           activatedAt: true,
@@ -133,6 +135,7 @@ export async function getMemberPublicWorkBySlug(
         select: {
           publicationModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           accessPlanSnapshot: true,
         },
@@ -170,16 +173,11 @@ export async function getMemberPublicWorkBySlug(
     Boolean(await getVerifiedWorkSeller(work.id));
   const livePaidPurchaseAvailable =
     livePaidCandidate && Boolean(readerPurchaseTerms);
-  const preparedPaidChapterGate =
-    !saleConfiguration?.activatedAt &&
-    effectiveCommerce.saleModel === "paid" &&
-    effectiveCommerce.status === "ready";
-  const commerceEnforcementActive =
-    effectiveCommerce.saleModel === "paid" &&
-    (preparedPaidChapterGate ||
-      Boolean(saleConfiguration?.activatedAt) ||
-      stagedZeroPurchaseAvailable ||
-      livePaidPurchaseAvailable);
+  const commerceEnforcementActive = shouldEnforcePaidChapterAccess({
+    activatedAt: saleConfiguration?.activatedAt,
+    saleModel: effectiveCommerce.saleModel,
+    status: effectiveCommerce.status,
+  });
   const purchaseAvailable =
     stagedZeroPurchaseAvailable || livePaidPurchaseAvailable;
 
@@ -354,7 +352,12 @@ export async function getMemberPublicWorkBySlug(
       currency: effectiveCommerce.currency,
       enforcementActive: commerceEnforcementActive,
       hasEntitlement,
-      priceAmount: effectiveCommerce.priceAmount,
+      priceAmount: effectiveCommerce.priceAmount === null
+        ? null
+        : quoteCommercePrice({
+            configuredPriceAmount: effectiveCommerce.priceAmount,
+            taxTreatment: effectiveCommerce.priceTaxTreatment,
+          }).listGrossAmount,
       purchaseAvailable,
       saleModel: effectiveCommerce.saleModel,
       saleStatus: saleConfiguration?.status ?? "draft",

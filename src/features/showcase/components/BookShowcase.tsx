@@ -510,9 +510,11 @@ export function BookShowcase({
                             href={chapterHref}
                           >
                             {!readable
-                              ? zeroPricePurchase || commerce?.priceAmount === BigInt(0)
-                                ? "0 TL edinim ekranına git"
-                                : "Satın alma ekranına git"
+                              ? zeroPricePurchase
+                                ? "0 TL ile satın al"
+                                : purchaseAvailable
+                                  ? "Erişimi Aç"
+                                  : "Erişim koşullarını gör"
                               : index === 0
                                 ? "Okumaya Başla"
                                 : "Bölümü Oku"}

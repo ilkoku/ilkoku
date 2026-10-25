@@ -76,3 +76,38 @@ Public baseline temiz geçtikten sonra ayrı senaryolar hazırlanacaktır:
 3. kontrollü 100+ VU capacity/stress testi.
 
 Bu sonraki senaryolar production'a veri yazmadan önce sentetik test hesapları ve açık çalışma sınırları ile hazırlanmalıdır.
+
+## Hostinger yüksek yük / origin-direct için ek koruma
+
+`tests/load/hostinger-support-1000.js` **1.000 sanal kullanıcıya kadar**
+çıkabilen ayrı bir senaryodur. `tests/load/hostinger-origin-direct.js`
+ise Cloudflare aracısını atlayarak belirtilen origin IP'sine bağlanabilir.
+Bu betikler **normal doğrulama, hata teşhisi veya otomatik CI testi değildir**.
+
+Artık her ikisi de çalıştırılmadan önce **ayrı bir açık onay değişkenini**
+zorunlu kılar. Onay yoksa k6 betiği daha ilk aşamada hata vererek
+**tek bir HTTP isteği bile göndermeden** durur. Her iki senaryo için de
+yük düzeyi, hedef origin, test saati ve alternatif sitesi etkileri
+operatör tarafından ayrıca onaylanmalıdır.
+
+- 1.000 VU betiğinin onayı: `ILKOKU_STRESS_APPROVAL`;
+  beklenen metin `APPROVE-ILKOKU-1000-VU`.
+- Origin-direct betiğinin onayı: `ILKOKU_ORIGIN_DIRECT_APPROVAL`;
+  beklenen metin `APPROVE-ORIGIN-DIRECT-PROBE`.
+
+Aynı şekilde `tests/load/public-baseline.js` içindeki
+`capacity100`, `capacity200`, `diagnostic150` ve
+`distributedprobe100` profilleri doğrudan k6 ile çalıştırıldığında
+`ILKOKU_HIGH_LOAD_APPROVAL=RUN-PUBLIC-LOAD-TEST` onayını zorunlu kılar.
+Mevcut manuel GitHub workflow'u bu onayı doğruladıktan sonra k6
+konteynerine iletir. `smoke` ve `baseline` profilleri değişmemiştir.
+
+Mevcut GitHub `Public Load Test` iş akışı zaten yalnızca
+`workflow_dispatch` ile ve `RUN-PUBLIC-LOAD-TEST` onayıyla çalışır;
+bu değişiklik onun çalışma seçeneklerini veya otomatik izlemeyi
+değiştirmez. Hiçbir yeni yük testi çalıştırılmadı.
+
+**Arıza kanıtı sınırı:** Yük betiklerinin depoda bulunması, 20 Ekim 503
+veya 23 Ekim 525 olaylarında çalıştırıldıkları anlamına gelmez.
+Bu koruma geçmiş arızanın nedeni için kanıt oluşturmaz ve 503/525'i
+tek başına onarmaz; kazara yeni yüksek yük yaratılmasını önler.

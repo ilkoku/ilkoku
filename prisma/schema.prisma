@@ -75,6 +75,10 @@ model User {
   workEntitlements             WorkEntitlement[]            @relation("WorkEntitlementReader")
   financialLedgerEntries       FinancialLedger[]            @relation("FinancialLedgerAuthor")
   authorBalances               AuthorBalance[]              @relation("AuthorBalanceAuthor")
+  taxReviewsAsWriter            AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewWriter")
+  commissionRulesAsWriter       AuthorCommissionRateEvent[]   @relation("CommissionRuleWriter")
+  commissionRulesAsAdmin        AuthorCommissionRateEvent[]   @relation("CommissionRuleAdmin")
+  taxReviewsAsReviewer          AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewReviewer")
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
   orderConsents                OrderConsent[]               @relation("OrderConsentReader")
@@ -286,6 +290,7 @@ model Work {
   commerceChapterAccesses ChapterAccess[]
   couponScopes            CouponWorkScope[]
   commerceOrders          Order[]
+  commissionRateEvents    AuthorCommissionRateEvent[]
   entitlements            WorkEntitlement[]
   financialLedgerEntries  FinancialLedger[]
   priceHistory            WorkPriceHistory[]
@@ -895,6 +900,7 @@ model WorkPublicationConsent {
   authorId           String           @db.Char(36)
   publicationModel   PublicationModel
   priceAmount        BigInt?          @db.UnsignedBigInt
+  priceTaxTreatment  String           @default("legacy_inclusive") @db.VarChar(24)
   currency           String           @default("TRY") @db.Char(3)
   accessPlanSnapshot Json
   agreementVersion   String           @db.VarChar(40)
@@ -913,6 +919,7 @@ model WorkSaleConfiguration {
   authorId         String           @db.Char(36)
   saleModel        PublicationModel @default(free)
   priceAmount      BigInt?          @db.UnsignedBigInt
+  priceTaxTreatment String          @default("legacy_inclusive") @db.VarChar(24)
   currency         String           @default("TRY") @db.Char(3)
   status           WorkSaleStatus   @default(draft)
   agreementVersion String?          @db.VarChar(40)
@@ -1061,6 +1068,8 @@ model Order {
   financialLedgerEntries   FinancialLedger[]
   consent                  OrderConsent?
   legalSnapshot            OrderLegalSnapshot?
+  priceQuoteSnapshot      OrderPriceQuoteSnapshot?
+  commissionRateSnapshot  OrderCommissionRateSnapshot?
 
   @@index([readerId, createdAt])
   @@index([authorId, createdAt])
@@ -1071,6 +1080,54 @@ model Order {
 
 // Immutable legal seller identity at 0 TL or paid order creation.
 // Never rewrite this snapshot if the active work seller changes.
+// Informational checkout price snapshot, NOT an invoice or tax declaration.
+// Populated only for explicitly tagged net_plus_vat prices.
+// Append-only, admin-authored exception to the global 15% commission.
+// workId == NULL means author-wide; workId set means work-specific.
+// Active=false reverts to the next less-specific level.
+model AuthorCommissionRateEvent {
+  id           String   @id @default(uuid()) @db.Char(36)
+  authorId     String   @db.Char(36)
+  workId       String?  @db.Char(36)
+  actorId      String   @db.Char(36)
+  rateBps      Int      @db.UnsignedSmallInt
+  active       Boolean
+  createdAt    DateTime @default(now())
+  author       User     @relation("CommissionRuleWriter", fields: [authorId], references: [id], onDelete: Restrict)
+  work         Work?    @relation(fields: [workId], references: [id], onDelete: Restrict)
+  actor        User     @relation("CommissionRuleAdmin", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([authorId, createdAt])
+  @@index([workId, createdAt])
+}
+
+model OrderCommissionRateSnapshot {
+  id                       String   @id @default(uuid()) @db.Char(36)
+  orderId                  String   @unique @db.Char(36)
+  commissionRateBps        Int      @db.UnsignedSmallInt
+  serviceFeeRateBps        Int      @default(500) @db.UnsignedSmallInt
+  source                   String   @db.VarChar(16)
+  sourceEventId            String?  @db.Char(36)
+  calculationVersion       String   @default("rate-v1") @db.VarChar(32)
+  createdAt                DateTime @default(now())
+  order                    Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
+model OrderPriceQuoteSnapshot {
+  id                  String   @id @default(uuid()) @db.Char(36)
+  orderId             String   @unique @db.Char(36)
+  taxTreatment        String   @db.VarChar(24)
+  calculationVersion  String   @default("quote-v1") @db.VarChar(32)
+  vatRateBasisPoints  Int      @db.UnsignedSmallInt
+  listNetAmount       BigInt   @db.UnsignedBigInt
+  listVatAmount       BigInt   @db.UnsignedBigInt
+  listGrossAmount     BigInt   @db.UnsignedBigInt
+  discountGrossAmount BigInt   @db.UnsignedBigInt
+  payableGrossAmount  BigInt   @db.UnsignedBigInt
+  createdAt           DateTime @default(now())
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
 model OrderLegalSnapshot {
   id                  String         @id @default(uuid()) @db.Char(36)
   orderId             String         @unique @db.Char(36)
@@ -1149,6 +1206,36 @@ model WorkEntitlement {
   @@unique([readerId, workId])
   @@index([workId, status])
   @@index([readerId, status])
+}
+
+// Append-only internal tax-document examination records. These do not
+// verify tax status with the government and NEVER authorize payouts.
+model AuthorTaxReviewEvent {
+  id                String                   @id @default(uuid()) @db.Char(36)
+  authorId          String                   @db.Char(36)
+  reviewerId        String                   @db.Char(36)
+  documentKind      AuthorTaxDocumentKind
+  decision          AuthorTaxReviewDecision
+  evidenceReference String?                  @db.VarChar(64)
+  validUntil        DateTime?
+  reviewedAt        DateTime                 @default(now())
+  author            User                     @relation("AuthorTaxReviewWriter", fields: [authorId], references: [id], onDelete: Restrict)
+  reviewer          User                     @relation("AuthorTaxReviewReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([authorId, reviewedAt])
+  @@index([reviewerId, reviewedAt])
+}
+
+enum AuthorTaxDocumentKind {
+  commercial_invoice
+  self_employed_receipt
+  gvk18_expense_receipt
+}
+
+enum AuthorTaxReviewDecision {
+  verified
+  needs_revision
+  revoked
 }
 
 model FinancialLedger {

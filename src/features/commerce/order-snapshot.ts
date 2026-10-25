@@ -1,4 +1,5 @@
 import type { CommercePricingBreakdown } from "./pricing";
+import { buildOrderPriceQuoteSnapshot, type quoteCommercePrice } from "./price-quote";
 
 export type CommerceOrderCouponSnapshot = {
   code: string;
@@ -13,6 +14,7 @@ export function buildCommerceOrderSnapshot(input: {
   coupon?: CommerceOrderCouponSnapshot | null;
   currency: string;
   pricing: CommercePricingBreakdown;
+  priceQuote?: ReturnType<typeof quoteCommercePrice>;
   readerId: string;
   workId: string;
 }) {
@@ -25,6 +27,9 @@ export function buildCommerceOrderSnapshot(input: {
     discountAmount: input.pricing.discountAmount,
     finalAmount: input.pricing.finalAmount,
     authorEarningBaseAmount: input.pricing.authorEarningBaseAmount,
+    ...(input.priceQuote && buildOrderPriceQuoteSnapshot(input.priceQuote)
+      ? { priceQuoteSnapshot: { create: buildOrderPriceQuoteSnapshot(input.priceQuote)! } }
+      : {}),
     currency: input.currency,
     couponCodeSnapshot: input.coupon?.code ?? null,
     couponOwnerSnapshot: input.coupon?.owner ?? null,

@@ -123,6 +123,39 @@ for (const [label, patch] of [
   });
 }
 
+test("two successful captures for one order block accounting preview even when both match", () => {
+  const source = valid();
+  source.payments.push({ status: "succeeded", amount: 12000n, currency: "TRY" });
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.equal(result.scenarios, null);
+  assert.ok(result.blockers.some(s => s.includes("mükerrer tahsilat")));
+});
+
+test("an extra successful capture with a different amount also blocks accounting preview", () => {
+  const source = valid();
+  source.payments.push({ status: "succeeded", amount: 100n, currency: "TRY" });
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.equal(result.scenarios, null);
+  assert.ok(result.blockers.some(s => s.includes("mükerrer tahsilat")));
+});
+
+test("unsettled pending attempts alongside a single matched capture do not block preview", () => {
+  const source = valid();
+  source.payments.push({ status: "pending", amount: 12000n, currency: "TRY" });
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.deepEqual([...result.blockers], []);
+  assert.ok(result.scenarios?.invoiced);
+});
+
+test("mathematically inconsistent quote VAT is blocked even when gross total matches", () => {
+  const source = valid();
+  source.priceQuote.listNetAmount = 9999n;
+  source.priceQuote.listVatAmount = 2001n;
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.equal(result.scenarios, null);
+  assert.ok(result.blockers.some(s => s.includes("snapshot")));
+});
+
 test("mismatched VAT and order amounts cannot create an illustrative settlement", () => {
   const v = valid();
   v.priceQuote.listVatAmount = 1900n;

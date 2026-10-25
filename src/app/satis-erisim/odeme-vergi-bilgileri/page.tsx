@@ -28,7 +28,7 @@ export default async function WriterTaxPaymentPreparationPage() {
               kontrol edildikten sonra net hakediş belirlenir.</p>
           </div>
           <Link className={styles.secondaryAction} href="/satis-erisim">
-            Satış & Erişim'e dön
+            Satış &amp; Erişim&apos;e dön
           </Link>
         </header>
         <div className={styles.notice} role="status">
@@ -44,7 +44,7 @@ export default async function WriterTaxPaymentPreparationPage() {
             <p>Vergi mükellefiyetine uygun belge düzenleyen yazar için
               gelir ve KDV işlemleri belgenin niteliğine göre yapılır.</p>
             <div className={styles.summaryGrid}>
-              <div><span>İlkOku komisyonu</span><strong>%15 + komisyon KDV'si</strong></div>
+              <div><span>İlkOku komisyonu</span><strong>%15 + komisyon KDV&apos;si</strong></div>
               <div><span>Ek aracılık hizmet bedeli</span><strong>Yok</strong></div>
               <div><span>Yazar belgesi</span><strong>Fatura veya uygun makbuz</strong></div>
               <div><span>Stopaj</span><strong>Belge ve statüye göre</strong></div>
@@ -64,7 +64,7 @@ export default async function WriterTaxPaymentPreparationPage() {
               <div><span>İlkOku komisyon payı</span><strong>%15</strong></div>
               <div><span>Ayrı aracılık hizmet bedeli</span><strong>%5 + KDV</strong></div>
               <div><span>Stopaj örneği</span><strong>GVK 18 uygunsa %17</strong></div>
-              <div><span>Telif alış KDV'si</span><strong>2 No.lu KDV koşullarına göre</strong></div>
+              <div><span>Telif alış KDV&apos;si</span><strong>2 No.lu KDV koşullarına göre</strong></div>
             </div>
             <p className={styles.helper}>
               Gider pusulası yalnızca yazarın isteğiyle seçilemez. Kimlik,

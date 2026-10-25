@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
@@ -1025,4 +1027,36 @@ test("offline archive comparison refuses duplicate ZIP entries and unsupported c
   unsupported.writeUInt16LE(8,8); // deflate method, not day-close STORE
   assert.throws(()=>inspectDayCloseArchive(unsupported),
     /DAY_CLOSE_COMPARE_INVALID_UNSUPPORTED_ZIP_METHOD/);
+});
+
+
+test("offline day-close CLI returns status 0 same, 2 changed, 1 invalid without writing outputs", () => {
+  const temp=mkdtempSync(join(tmpdir(),"ilkoku-close-compare-"));
+  try {
+    const older=join(temp,"earlier.zip");
+    const newer=join(temp,"later.zip");
+    writeFileSync(older,make([validOrder()]).zip);
+    const changedOrder=validOrder();
+    changedOrder.workTitle="Updated work";
+    writeFileSync(newer,make([changedOrder]).zip);
+    const cli=join(root,"scripts/commerce-day-close-compare.mjs");
+    const run=(a,b)=>spawnSync(process.execPath,[cli,a,b],{
+      encoding:"utf8",timeout:10000,
+    });
+    const equal=run(older,older);
+    assert.equal(equal.status,0,equal.stderr);
+    assert.equal(JSON.parse(equal.stdout).result,"IDENTICAL");
+    const changed=run(older,newer);
+    assert.equal(changed.status,2,changed.stderr);
+    assert.ok(JSON.parse(changed.stdout).changedFiles.includes("siparisler.csv"));
+    const previousDay=join(temp,"other-day.zip");
+    writeFileSync(previousDay,exportModule.buildDayCloseFiles({
+      day:"2026-10-24",orders:[],ledger:[],refunds:[],
+    }).zip);
+    const invalid=run(older,previousDay);
+    assert.equal(invalid.status,1,invalid.stderr);
+    assert.match(invalid.stderr,/DAY_CLOSE_COMPARE_INVALID_DIFFERENT_DAYS/);
+  } finally {
+    rmSync(temp,{recursive:true,force:true});
+  }
 });

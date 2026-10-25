@@ -120,7 +120,7 @@ test("official vendor handoff gates distinguish verified internal columns from u
   assert.equal(audit.dataRows,1);
   assert.deepEqual([...audit.internalSourceColumns].sort(),
     Object.keys(mapping.fields).sort());
-  assert.equal(audit.declaredColumnCount,15);
+  assert.equal(audit.declaredColumnCount,19);
   assert.equal(result.manifest.sourceMappingVerified,true);
   assert.equal(result.manifest.vendorImportReady,false);
   for(const vendor of ["logo","mikro","parasut"]){
@@ -1200,4 +1200,77 @@ test("offline CLI rejects oversized ZIP before loading archive into memory", () 
   } finally {
     rmSync(temp,{recursive:true,force:true});
   }
+});
+
+
+test("15 percent invoicing-author commission and VAT are separate; 5 percent intermediary is zero", () => {
+  const invoiced=validOrder();
+  invoiced.commission={
+    commissionRateBps:1500,serviceFeeRateBps:500,
+    source:"global",sourceEventId:null,calculationVersion:"rate-v1",
+  };
+  invoiced.taxReview={...invoiced.taxReview,documentKind:"commercial_invoice"};
+  const result=make([invoiced]);
+  assert.equal(result.manifest.readySalesCount,1);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"1500");
+  assert.equal(result.manifest.reviewedCommissionVatIllustrationMinor,"300");
+  assert.equal(result.manifest.reviewedCommissionGrossIllustrationMinor,"1800");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeVatIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeGrossIllustrationMinor,"0");
+  const map=JSON.parse(result.files.find(x=>x.name==="alan_esleme.json").data);
+  assert.equal(map.sourceColumnAudit.declaredColumnCount,19);
+  for(const field of ["komisyon_kdv_ornek_kurus","komisyon_brut_ornek_kurus",
+      "aracilik_kdv_ornek_kurus","aracilik_brut_ornek_kurus"])
+    assert.ok(Object.hasOwn(map.fields,field),field);
+  for(const name of ["muhasebe_on_hazirlik.csv","yazar_hesap_ozeti.csv"]) {
+    const csv=result.files.find(x=>x.name===name).data;
+    assert.ok(csv.includes("komisyon_kdv_ornek_kurus"));
+    assert.ok(csv.includes("aracilik_kdv_ornek_kurus"));
+    assert.ok(csv.includes(",300,1800,0,0"),name);
+  }
+  const lira=result.files.find(x=>x.name==="muhasebe_tl_inceleme.csv").data;
+  assert.ok(lira.includes('"3,00";"18,00";"0,00";"0,00"'));
+});
+
+test("15 percent commission and separate eligible 5 percent intermediary include independently calculated VAT", () => {
+  const eligible=validOrder();
+  eligible.commission={
+    commissionRateBps:1500,serviceFeeRateBps:500,
+    source:"global",sourceEventId:null,calculationVersion:"rate-v1",
+  };
+  const result=make([eligible]);
+  assert.equal(result.manifest.readySalesCount,1);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"1500");
+  assert.equal(result.manifest.reviewedCommissionVatIllustrationMinor,"300");
+  assert.equal(result.manifest.reviewedCommissionGrossIllustrationMinor,"1800");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"500");
+  assert.equal(result.manifest.reviewedServiceFeeVatIllustrationMinor,"100");
+  assert.equal(result.manifest.reviewedServiceFeeGrossIllustrationMinor,"600");
+  const prep=result.files.find(x=>x.name==="muhasebe_on_hazirlik.csv").data;
+  assert.ok(prep.includes(",300,1800,100,600"));
+  assert.ok(result.files.find(x=>x.name==="yazar_hesap_ozeti.csv").data
+    .includes(",300,1800,100,600"));
+  assert.ok(result.files.find(x=>x.name==="muhasebe_tl_inceleme.csv").data
+    .includes('"3,00";"18,00";"1,00";"6,00"'));
+});
+
+test("frozen custom work commission still controls VAT base independently of global rate", () => {
+  const custom=make([validOrder()]);
+  assert.equal(custom.manifest.reviewedCommissionIllustrationMinor,"2000");
+  assert.equal(custom.manifest.reviewedCommissionVatIllustrationMinor,"400");
+  assert.equal(custom.manifest.reviewedCommissionGrossIllustrationMinor,"2400");
+  assert.equal(custom.manifest.reviewedServiceFeeVatIllustrationMinor,"100");
+  assert.equal(custom.manifest.reviewedServiceFeeGrossIllustrationMinor,"600");
+});
+
+test("unverified tax-document review produces no commission or intermediary VAT preparation", () => {
+  const uncertain=validOrder();
+  uncertain.taxReview=null;
+  const result=make([uncertain]);
+  assert.equal(result.manifest.preparationRows,0);
+  assert.equal(result.manifest.reviewedCommissionVatIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeVatIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedCommissionGrossIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeGrossIllustrationMinor,"0");
 });

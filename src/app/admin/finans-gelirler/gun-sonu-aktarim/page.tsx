@@ -95,8 +95,10 @@ export default async function DayCloseAccountingTransferPage() {
             satışların TL tutarlarıyla, noktalı virgül ayracı ve
             virgüllü iki ondalık içeren muhasebeci inceleme tablosu.
             Resmî fiş veya doğrulanmış program içe aktarma formatı değildir.</p>
-          <p><code>alan_esleme.json</code> — Alan tanımları ve Logo, Mikro,
-            Paraşüt şemalarının henüz doğrulanmadığı bilgisi.</p>
+          <p><code>alan_esleme.json</code> — İç sütun eşleştirme
+            doğrulaması, Logo/Mikro/Paraşüt için ayrı aktarım koşulları ve
+            henüz onaylanmamış hedef şema engelleri. Muhasebe programına
+            otomatik gönderim veya belge düzenleme yapılmaz.</p>
           <p><code>manifest.json</code> — İş günü, içerik sayıları,
             sürüm, dosya SHA-256 özetleri ve kontrol durumu.</p>
         </article>

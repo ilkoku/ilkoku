@@ -1120,7 +1120,7 @@ test("offline comparison distinguishes changed manifest-only metadata from uncha
   const entries=old.files.map(item => ({
     name:item.name,
     data:item.name==="manifest.json"
-      ? JSON.stringify({...old.manifest,note:"Additional review note"})+"\\n"
+      ? JSON.stringify({...old.manifest,note:"Additional review note"})+"\n"
       :item.data,
   }));
   const newer=exportModule.zipFiles(entries);

@@ -36,6 +36,7 @@ type HighlightRow = {
 };
 
 type DeliveryRow = {
+  failureMessage: string | null;
   id: string;
   status: string;
 };
@@ -324,7 +325,7 @@ async function claimDelivery(
   `;
 
   const rows = await prisma.$queryRaw<DeliveryRow[]>`
-    SELECT id, status
+    SELECT id, status, failureMessage
     FROM WriterDailySummaryDelivery
     WHERE authorId = ${authorId}
       AND summaryDate = ${summaryDate}
@@ -335,7 +336,9 @@ async function claimDelivery(
   if (!row) throw new Error("SUMMARY_DELIVERY_CLAIM_FAILED");
   if (row.id === candidateId) return row.id;
 
-  if (row.status === "failed") {
+  // Legacy failed rows may reflect a completed but unacknowledged SMTP send.
+  // Retry only preparation errors that happened before any mail attempt.
+  if (row.status === "failed" && row.failureMessage?.startsWith("PREPARE:")) {
     const updated = await prisma.$executeRaw`
       UPDATE WriterDailySummaryDelivery
       SET status = 'pending',
@@ -344,6 +347,7 @@ async function claimDelivery(
         updatedAt = CURRENT_TIMESTAMP(3)
       WHERE id = ${row.id}
         AND status = 'failed'
+        AND failureMessage LIKE 'PREPARE:%'
     `;
 
     return updated === 1 ? row.id : null;
@@ -357,7 +361,7 @@ async function updateDelivery(input: {
   emailDeliveryId?: string;
   failureMessage?: string;
   metrics: WriterDailySummaryMetrics;
-  status: "failed" | "sent" | "skipped";
+  status: "failed" | "review" | "sent" | "skipped";
 }) {
   const metricsJson = JSON.stringify(input.metrics);
   const failureMessage = input.failureMessage?.slice(0, 1000) ?? null;
@@ -388,8 +392,8 @@ async function processWriter(
 
   if (!deliveryId) return "duplicate" as const;
 
-  // A failed metrics/highlight query must not leave a permanently pending
-  // delivery. Only "failed" deliveries are eligible for a later retry.
+  // A pre-send SQL failure can be retried after repair. Once email delivery
+  // starts, a timeout may be ambiguous; require manual reconciliation.
   let metrics: WriterDailySummaryMetrics = {
     comments: 0,
     completions: 0,
@@ -440,6 +444,18 @@ async function processWriter(
       return "skipped" as const;
     }
 
+    if (result.delivery === "deduplicated") {
+      // The earlier delivery could be in flight or already sent.
+      await updateDelivery({
+        deliveryId,
+        emailDeliveryId: result.deliveryId,
+        failureMessage: "SEND_REQUIRES_REVIEW:DEDUPLICATED",
+        metrics,
+        status: "review",
+      });
+      return "failed" as const;
+    }
+
     await updateDelivery({
       deliveryId,
       emailDeliveryId: result.deliveryId,
@@ -452,16 +468,30 @@ async function processWriter(
       ? error.message
       : "UNKNOWN_WRITER_DAILY_SUMMARY_ERROR";
 
-    await updateDelivery({
-      deliveryId,
-      failureMessage: message,
-      metrics,
-      status: "failed",
-    });
+    const status = phase === "prepare" ? "failed" : "review";
+    const failureMessage = phase === "prepare"
+      ? "PREPARE:" + message
+      : "SEND_REQUIRES_REVIEW:" + message;
+
+    try {
+      await updateDelivery({
+        deliveryId,
+        failureMessage,
+        metrics,
+        status,
+      });
+    } catch (stateError) {
+      // A pending record remains blocked if persistence also fails.
+      console.error("WRITER_DAILY_SUMMARY_STATE_PERSIST_FAILED", {
+        authorId: writer.id,
+        error: stateError instanceof Error ? stateError.message : "UNKNOWN_ERROR",
+        summaryDate: window.summaryDate,
+      });
+    }
     console.error(
       phase === "prepare"
         ? "WRITER_DAILY_SUMMARY_PREPARE_FAILED"
-        : "WRITER_DAILY_SUMMARY_SEND_FAILED",
+        : "WRITER_DAILY_SUMMARY_SEND_REQUIRES_REVIEW",
       {
         authorId: writer.id,
         error: message,

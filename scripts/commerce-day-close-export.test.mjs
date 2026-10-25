@@ -758,3 +758,101 @@ test("daily bridge never mixes currencies or includes a sale outside selected bu
   assert.ok(csv.includes('"EUR",0,0,0,0,0,1,0,1,1000,0,-1000'));
   assert.ok(!csv.includes('"TRY"'));
 });
+
+
+test("duplicate order numbers refuse archive rather than double booking revenue", () => {
+  const first=validOrder();
+  const second={...validOrder(),workTitle:"A second duplicated row"};
+  assert.throws(()=>exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[first,second],ledger:[],refunds:[],
+  }),/DAY_CLOSE_DUPLICATE_ORDER_REFERENCE/);
+});
+
+test("duplicate refund IDs refuse archive rather than doubling refund totals", () => {
+  const refund={
+    id:"R-REPEATED",orderNo:"ILK-PREV",amount:1500n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T12:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-20T12:00:00+03:00"),
+    cumulativeProcessedAmount:1500n,historicalCurrencyMismatch:false,
+  };
+  assert.throws(()=>exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],refunds:[refund,{...refund}],
+  }),/DAY_CLOSE_DUPLICATE_REFUND_REFERENCE/);
+});
+
+test("duplicate same-day or per-order ledger IDs cannot enter archive twice", () => {
+  const ledger={
+    id:"LEDGER-DUP",entryType:"sale_gross",orderNo:"ILK-ABCDE1234",
+    amount:12000n,currency:"TRY",authorPublicId:"writer001",
+    createdAt:new Date("2026-10-25T18:00:00+03:00"),
+  };
+  assert.throws(()=>exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[ledger,{...ledger}],refunds:[],
+  }),/DAY_CLOSE_DUPLICATE_LEDGER_REFERENCE/);
+  assert.throws(()=>exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[validOrder()],ledger:[],refunds:[],
+    reconciliationLedger:[ledger,{...ledger}],
+  }),/DAY_CLOSE_DUPLICATE_RECONCILIATION_LEDGER_REFERENCE/);
+});
+
+test("same ledger ID legitimately appears once in both daily and per-order evidence", () => {
+  const ledger={
+    id:"SAME-LEGITIMATE-ID",entryType:"sale_gross",orderNo:"ILK-ABCDE1234",
+    amount:12000n,currency:"TRY",authorPublicId:"writer001",
+    createdAt:new Date("2026-10-25T18:00:00+03:00"),
+  };
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[validOrder()],
+    ledger:[ledger],reconciliationLedger:[ledger],refunds:[],
+  });
+  assert.equal(result.manifest.readySalesCount,1);
+  assert.equal(result.manifest.preparationRows,1);
+  assert.equal(result.manifest.ledgerCount,1);
+  assert.equal(result.manifest.checkedGrossMinor,"12000");
+});
+
+test("missing identifiers fail closed with typed errors and safe admin reasons", () => {
+  const badOrder=validOrder();badOrder.orderNo="";
+  assert.throws(()=>exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[badOrder],ledger:[],refunds:[],
+  }),/DAY_CLOSE_EMPTY_ORDER_REFERENCE/);
+  const repo=source("src/features/commerce/day-close-repository.ts");
+  assert.ok(repo.includes("error instanceof DayCloseDataIntegrityError"));
+  assert.ok(repo.includes("paket oluşturulmadı"));
+});
+
+test("distinct orders and partial refunds remain independent in same-day totals", () => {
+  const first=validOrder();
+  const second=validOrder();
+  second.orderNo="ILK-OTHER-ORDER";second.authorPublicId="writer002";
+  const gross=(orderNo,id,authorPublicId)=>({
+    id,entryType:"sale_gross",orderNo,amount:12000n,currency:"TRY",
+    authorPublicId,createdAt:new Date("2026-10-25T18:00:00+03:00"),
+  });
+  const refund=(id,orderNo,amount)=>({
+    id,orderNo,amount,currency:"TRY",status:"processed",
+    processedAt:new Date("2026-10-25T15:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-20T14:00:00+03:00"),
+    cumulativeProcessedAmount:3000n,historicalCurrencyMismatch:false,
+  });
+  const refunds=[
+    refund("r-a","ILK-EARLIER-ORDER",1200n),
+    refund("r-b","ILK-EARLIER-ORDER",1800n),
+  ];
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[first,second],
+    ledger:[gross(first.orderNo,"g1",first.authorPublicId),
+      gross(second.orderNo,"g2",second.authorPublicId)],
+    refunds,
+  });
+  assert.equal(result.manifest.salesCount,2);
+  assert.equal(result.manifest.readySalesCount,2);
+  assert.equal(result.manifest.refundsCount,2);
+  assert.equal(result.manifest.reviewedRefundMinor,"3000");
+  assert.equal(result.manifest.checkedGrossMinor,"24000");
+  assert.equal(result.manifest.reviewedAuthorSummaryGroups,2);
+  const bridge=result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data;
+  assert.ok(bridge.includes('"TRY",2,2,0,24000,24000,2,2,0,3000,3000,21000'));
+});

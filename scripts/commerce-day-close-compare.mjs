@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +8,14 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_ENTRIES = 64;
 const SAFE_NAME = /^[a-z0-9._-]+$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
+const REQUIRED_FILES = [
+  "siparisler.csv", "finans_hareketleri.csv", "iadeler.csv",
+  "iade_ledger_mutabakat.csv", "gunluk_satis_iade_koprusu.csv",
+  "uyarilar.csv", "mutabakat.csv", "gun_sonu_ozet.csv",
+  "muhasebe_on_hazirlik.csv", "yazar_hesap_ozeti.csv",
+  "muhasebe_tl_inceleme.csv", "alan_esleme.json",
+  "manifest.json",
+];
 // Values are compared as stored, never through floating point conversion.
 // A numeric total can remain unchanged even when money moved between orders
 // or authors: source CSV changes must still trigger a separate review.
@@ -57,6 +65,8 @@ export function inspectDayCloseArchive(buffer) {
   const end = buffer.length - 22;
   check(buffer.readUInt32LE(end) === 0x06054b50, "ZIP_END");
   check(buffer.readUInt16LE(end + 20) === 0, "ZIP_COMMENT");
+  check(buffer.readUInt16LE(end + 4) === 0 &&
+    buffer.readUInt16LE(end + 6) === 0, "MULTI_DISK_ARCHIVE");
   const count = buffer.readUInt16LE(end + 10);
   check(count > 1 && count <= MAX_ENTRIES && count === buffer.readUInt16LE(end + 8),
     "ZIP_ENTRY_COUNT");
@@ -106,13 +116,15 @@ export function inspectDayCloseArchive(buffer) {
     const method = buffer.readUInt16LE(dir + 10);
     const crc = buffer.readUInt32LE(dir + 16);
     const size = buffer.readUInt32LE(dir + 20);
+    const uncompressedSize = buffer.readUInt32LE(dir + 24);
     const nameLength = buffer.readUInt16LE(dir + 28);
     const extraLength = buffer.readUInt16LE(dir + 30);
     const commentLength = buffer.readUInt16LE(dir + 32);
     const offset = buffer.readUInt32LE(dir + 42);
     const next = dir + 46 + nameLength + extraLength + commentLength;
-    check(flags === 0x0800 && method === 0 && next <= end,
-      "CENTRAL_FORMAT");
+    check(flags === 0x0800 && method === 0 &&
+      size === uncompressedSize && next <= end &&
+      buffer.readUInt16LE(dir + 34) === 0, "CENTRAL_FORMAT");
     const name = buffer.subarray(dir + 46, dir + 46 + nameLength).toString("utf8");
     const local = localMetadata.get(name);
     check(local && !centralNames.has(name) &&
@@ -122,6 +134,11 @@ export function inspectDayCloseArchive(buffer) {
     dir = next;
   }
   check(dir === end && centralNames.size === count, "CENTRAL_COUNT");
+  // A minimal ZIP with only a self-consistent manifest is not a real
+  // İlkOku day-close package. v1 requires the exact 13-file contract.
+  const required = [...REQUIRED_FILES].sort();
+  check(JSON.stringify([...entries.keys()].sort()) === JSON.stringify(required),
+    "REQUIRED_FILES");
 
   const manifestBuffer = entries.get("manifest.json");
   check(Boolean(manifestBuffer), "MISSING_MANIFEST");
@@ -214,6 +231,14 @@ export function compareDayCloseArchives(first, second) {
 }
 
 const invokedPath = process.argv[1] ? resolve(process.argv[1]) : "";
+function loadLocalArchive(path) {
+  const filename = resolve(path);
+  const stat = statSync(filename);
+  check(stat.isFile() && stat.size >= 22 &&
+    stat.size <= MAX_ARCHIVE_BYTES, "ARCHIVE_SIZE");
+  return readFileSync(filename);
+}
+
 if (invokedPath === fileURLToPath(import.meta.url)) {
   if (process.argv.length !== 4) {
     console.error("Usage: node scripts/commerce-day-close-compare.mjs <old-day-close.zip> <new-day-close.zip>");
@@ -221,8 +246,8 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   } else {
     try {
       const comparison = compareDayCloseArchives(
-        readFileSync(resolve(process.argv[2])),
-        readFileSync(resolve(process.argv[3])),
+        loadLocalArchive(process.argv[2]),
+        loadLocalArchive(process.argv[3]),
       );
       process.stdout.write(JSON.stringify(comparison, null, 2) + "\n");
       process.exitCode = comparison.archiveChanged ? 2 : 0;

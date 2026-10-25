@@ -300,9 +300,24 @@ export function buildDayCloseFiles(input: {
     commissionNotice: "Illustration from frozen rate and sale net; never an issued service invoice",
     optionalServiceFee: "5% rate only; applicability, VAT and document require accountant review",
     vendors: {
-      logo: { schemaVerified: false, automaticImportReady: false },
-      mikro: { schemaVerified: false, automaticImportReady: false },
-      parasut: { schemaVerified: false, automaticImportReady: false },
+      logo: {
+        schemaVerified: false, automaticImportReady: false,
+        researchedCapability: "Product/version-dependent Excel data import, not a verified accounting transaction template",
+        referenceUrl: "https://polaris.logo.com.tr/docs/tiger-3-enterprise/detail/ZXh0ZXJuYWw_Y2lkPTkzZjJhODlkLWZmZGYtNGJiYS04ZjgyLTcyYzA0ZGI0OWJmYyZsaW5rPTJmZGMwMjNhLTM1NzgtNDQ3OC1iYjcxLTc5YzYyZmZmZDEwNiZ0ZW5hbnRJZD1jZGQ4N2UxMy0zMDA5LTRkZDEtYTViOC0yYTAwNWMwZTU4ZGEmaGlkZU5hbWU9VHJ1ZQ",
+        needed: "Specific Logo product/version, supported transfer module and approved accountant account mapping",
+      },
+      mikro: {
+        schemaVerified: false, automaticImportReady: false,
+        researchedCapability: "Official accounting voucher API exists; it MUTATES records and is deliberately never called",
+        referenceUrl: "https://apidocs.mikro.com.tr/apis/muhasebe",
+        needed: "Specific Mikro product/version and its supported file-import template; no API token or voucher posting",
+      },
+      parasut: {
+        schemaVerified: false, automaticImportReady: false,
+        researchedCapability: "Official Excel import templates are separate for sales, contacts, expenses, and services",
+        referenceUrl: "https://www.parasut.com/kullanim-kilavuzu/mevcut-verilerin-parasute-aktarilmasi",
+        needed: "Current official template supplied by accountant, buyer identity and document category checked externally",
+      },
     },
   };
   const documents = [

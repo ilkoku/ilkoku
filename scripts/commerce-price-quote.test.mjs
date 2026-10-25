@@ -16,7 +16,7 @@ function loadTypedModule(relativePath, imports = {}) {
     reportDiagnostics: true,
   });
   assert.equal((output.diagnostics ?? []).filter(d => d.category === ts.DiagnosticCategory.Error).length, 0);
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   const wrapper = runInNewContext(
     "(function (require, module, exports) {\n" + output.outputText + "\n})",
     {},
@@ -25,8 +25,8 @@ function loadTypedModule(relativePath, imports = {}) {
   wrapper((specifier) => {
     assert.ok(Object.hasOwn(imports, specifier), "Unexpected import: " + specifier);
     return imports[specifier];
-  }, module, module.exports);
-  return module.exports;
+  }, loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }
 
 const pricing = loadTypedModule("src/features/commerce/pricing.ts");

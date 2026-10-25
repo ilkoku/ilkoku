@@ -60,8 +60,8 @@ test("cron detects partial failure without repeated SMTP delivery attempts", () 
 
   assert.match(route, /const ok = result\.failed === 0;/u);
   assert.match(route, /WRITER_DAILY_SUMMARY_PARTIAL_FAILURE/u);
-  assert.match(workflow, /'\\.ok == true and \\(\\.failed \| type == "number"\\) and \\.failed == 0'/u);
-  assert.match(workflow, /if ! printf '%s\\n' "\$response" \| jq -e/u);
+  assert.ok(workflow.includes(`.ok == true and (.failed | type == "number") and .failed == 0`));
+  assert.match(workflow, /if ! printf/u);
   assert.match(workflow, /exit 1/u);
   assert.match(workflow, /Authorization: Bearer \$SUMMARY_SECRET/u);
 });

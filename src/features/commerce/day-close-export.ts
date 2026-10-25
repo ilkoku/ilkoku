@@ -227,6 +227,8 @@ export function buildDayCloseFiles(input: {
     "komisyon_bps","komisyon_net_ornek_kurus","aracilik_bps_uygulanan",
     "aracilik_net_ornek_kurus","yazar_mali_belge_turu",
     "kayit_durumu","mali_belge_durumu",
+    "komisyon_kdv_ornek_kurus","komisyon_brut_ornek_kurus",
+    "aracilik_kdv_ornek_kurus","aracilik_brut_ornek_kurus",
   ]];
   const grossLedger = new Map<string, DayCloseLedger[]>();
   for (const entry of input.reconciliationLedger ?? input.ledger) {
@@ -260,10 +262,12 @@ export function buildDayCloseFiles(input: {
   const details = { ready: 0, review: 0, zero: 0 };
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
   let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
+  let commissionVatPreviewMinor = BigInt(0), serviceVatPreviewMinor = BigInt(0);
   let invoiceDocumentSales = 0, gvk18DocumentSales = 0;
   const byAuthor = new Map<string,{
     author: string; kind: string; currency: string; count: number;
-    net: bigint; vat: bigint; gross: bigint; commission: bigint; service: bigint;
+    net: bigint; vat: bigint; gross: bigint;
+    commission: bigint; service: bigint; commissionVat: bigint; serviceVat: bigint;
   }>();
 
   for (const order of input.orders) {
@@ -374,8 +378,16 @@ export function buildDayCloseFiles(input: {
         BigInt(5000)) / BigInt(10000);
       const serviceFeePreview = (quote.listNetAmount * BigInt(tax.appliedServiceFeeBps!) +
         BigInt(5000)) / BigInt(10000);
+      // Revenue streams have their own tax previews; the 20% rate is the
+      // validated checkout quote rate, NOT an externally approved tax invoice.
+      const commissionVatPreview = (commissionPreview * BigInt(quote.vatRateBasisPoints) +
+        BigInt(5000)) / BigInt(10000);
+      const serviceVatPreview = (serviceFeePreview * BigInt(quote.vatRateBasisPoints) +
+        BigInt(5000)) / BigInt(10000);
       commissionPreviewMinor += commissionPreview;
       serviceFeePreviewMinor += serviceFeePreview;
+      commissionVatPreviewMinor += commissionVatPreview;
+      serviceVatPreviewMinor += serviceVatPreview;
       if (tax.documentKind === "gvk18_expense_receipt") gvk18DocumentSales++;
       else invoiceDocumentSales++;
       const authorKey = [order.authorPublicId, tax.documentKind, order.currency].join("\u001f");
@@ -383,6 +395,7 @@ export function buildDayCloseFiles(input: {
         author: order.authorPublicId, kind: tax.documentKind, currency: order.currency,
         count: 0, net: BigInt(0), vat: BigInt(0), gross: BigInt(0),
         commission: BigInt(0), service: BigInt(0),
+        commissionVat: BigInt(0), serviceVat: BigInt(0),
       };
       authorGroup.count++;
       authorGroup.net += quote.listNetAmount;
@@ -390,6 +403,8 @@ export function buildDayCloseFiles(input: {
       authorGroup.gross += order.finalAmount;
       authorGroup.commission += commissionPreview;
       authorGroup.service += serviceFeePreview;
+      authorGroup.commissionVat += commissionVatPreview;
+      authorGroup.serviceVat += serviceVatPreview;
       byAuthor.set(authorKey, authorGroup);
       preparation.push([
         order.orderNo,order.paidAt?.toISOString() ?? null,
@@ -398,6 +413,8 @@ export function buildDayCloseFiles(input: {
         rate.commissionRateBps,commissionPreview,tax.appliedServiceFeeBps,
         serviceFeePreview,tax.documentKind,
         review,"DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
+        commissionVatPreview, commissionPreview + commissionVatPreview,
+        serviceVatPreview, serviceFeePreview + serviceVatPreview,
       ]);
     }
   }
@@ -407,24 +424,34 @@ export function buildDayCloseFiles(input: {
     "siparis_no","odeme_tarihi_utc","yazar_kodu","eser","para_birimi",
     "satis_net_tl","satis_kdv_tl","tahsilat_brut_tl","komisyon_net_ornek_tl",
     "aracilik_net_ornek_tl","mali_belge_turu","durum",
+    "komisyon_kdv_ornek_tl","komisyon_brut_ornek_tl",
+    "aracilik_kdv_ornek_tl","aracilik_brut_ornek_tl",
   ]];
   for (const row of preparation.slice(1)) {
     const net = row[5], vat = row[6], gross = row[7];
     const commission = row[9], service = row[11];
+    const commissionVat = row[15], commissionGross = row[16];
+    const serviceVat = row[17], serviceGross = row[18];
     if (typeof net !== "bigint" || typeof vat !== "bigint" ||
         typeof gross !== "bigint" || typeof commission !== "bigint" ||
-        typeof service !== "bigint") throw new Error("Accounting worksheet missing reviewed money amount");
+        typeof service !== "bigint" || typeof commissionVat !== "bigint" ||
+        typeof commissionGross !== "bigint" || typeof serviceVat !== "bigint" ||
+        typeof serviceGross !== "bigint") throw new Error("Accounting worksheet missing reviewed money amount");
     liraWorksheet.push([
       row[0],row[1],row[2],row[3],row[4],
       minorToTurkishLira(net),minorToTurkishLira(vat),minorToTurkishLira(gross),
       minorToTurkishLira(commission),minorToTurkishLira(service),row[12],
       "ON_INCELEME_FATURA_DEGIL",
+      minorToTurkishLira(commissionVat),minorToTurkishLira(commissionGross),
+      minorToTurkishLira(serviceVat),minorToTurkishLira(serviceGross),
     ]);
   }
   const authorRows: CsvField[][] = [[
     "yazar_kodu","yazar_mali_belge_turu","para_birimi","siparis_adedi",
     "net_satis_kurus","satis_kdv_kurus","tahsilat_brut_kurus",
     "komisyon_net_ornek_kurus","aracilik_net_ornek_kurus","mali_belge_durumu",
+    "komisyon_kdv_ornek_kurus","komisyon_brut_ornek_kurus",
+    "aracilik_kdv_ornek_kurus","aracilik_brut_ornek_kurus",
   ]];
   for (const group of [...byAuthor.values()].sort((a,b) =>
     a.author.localeCompare(b.author) || a.kind.localeCompare(b.kind) ||
@@ -433,6 +460,8 @@ export function buildDayCloseFiles(input: {
       group.author,group.kind,group.currency,group.count,
       group.net,group.vat,group.gross,group.commission,group.service,
       "DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
+      group.commissionVat, group.commission + group.commissionVat,
+      group.serviceVat, group.service + group.serviceVat,
     ]);
   }
   const movements: CsvField[][] = [[
@@ -653,6 +682,10 @@ export function buildDayCloseFiles(input: {
       komisyon_net_ornek_kurus: { source: "calculated from frozen net price and commission rate", meaning: "estimate, not posted income", required: false },
       aracilik_bps_uygulanan: { source: "Frozen OrderCommissionRateSnapshot plus AuthorTaxReviewEvent as-of paidAt", meaning: "0 for verified invoice/receipt, 500 for verified eligible GVK18; never auto-bill", required: false },
       aracilik_net_ornek_kurus: { source: "sale net multiplied by verified applicable rate", meaning: "illustrative separate service amount, not a ledger or invoice", required: false },
+      komisyon_kdv_ornek_kurus: { source: "commission net illustration times frozen quote VAT bps, rounded per order", meaning: "service VAT illustration, separate from sale VAT; not a tax declaration", required: false },
+      komisyon_brut_ornek_kurus: { source: "commission net plus its service VAT illustration", meaning: "net+VAT, not issued or collected", required: false },
+      aracilik_kdv_ornek_kurus: { source: "eligible service net illustration times frozen quote VAT bps, rounded per order", meaning: "separate intermediary service VAT illustration; zero when not eligible", required: false },
+      aracilik_brut_ornek_kurus: { source: "eligible service net plus its VAT illustration", meaning: "net+VAT, not issued or collected", required: false },
       yazar_mali_belge_turu: { source: "latest valid verified AuthorTaxReviewEvent at paidAt", meaning: "internal review, not government validation", required: true },
       kayit_durumu: { source: "review flags", meaning: "technical record check, not fiscal approval", required: true },
       mali_belge_durumu: { source: "fixed fail-closed disclaimer", meaning: "accountant review required", required: true },
@@ -694,9 +727,12 @@ export function buildDayCloseFiles(input: {
     vat: sum.vat + group.vat,
     commission: sum.commission + group.commission,
     service: sum.service + group.service,
+    commissionVat: sum.commissionVat + group.commissionVat,
+    serviceVat: sum.serviceVat + group.serviceVat,
   }), {
     count: 0, gross: BigInt(0), vat: BigInt(0),
     commission: BigInt(0), service: BigInt(0),
+    commissionVat: BigInt(0), serviceVat: BigInt(0),
   });
   if (authorTotals.count !== preparation.length - 1 ||
       authorTotals.count !== details.ready ||
@@ -704,6 +740,8 @@ export function buildDayCloseFiles(input: {
       authorTotals.vat !== vatMinor ||
       authorTotals.commission !== commissionPreviewMinor ||
       authorTotals.service !== serviceFeePreviewMinor ||
+      authorTotals.commissionVat !== commissionVatPreviewMinor ||
+      authorTotals.serviceVat !== serviceVatPreviewMinor ||
       authorTotals.count !== invoiceDocumentSales + gvk18DocumentSales) {
     throw new Error("DAY_CLOSE_INTERNAL_AUTHOR_TOTALS_MISMATCH");
   }
@@ -819,6 +857,10 @@ export function buildDayCloseFiles(input: {
     checkedVatMinor: vatMinor.toString(),
     reviewedCommissionIllustrationMinor: commissionPreviewMinor.toString(),
     reviewedServiceFeeIllustrationMinor: serviceFeePreviewMinor.toString(),
+    reviewedCommissionVatIllustrationMinor: commissionVatPreviewMinor.toString(),
+    reviewedCommissionGrossIllustrationMinor: (commissionPreviewMinor + commissionVatPreviewMinor).toString(),
+    reviewedServiceFeeVatIllustrationMinor: serviceVatPreviewMinor.toString(),
+    reviewedServiceFeeGrossIllustrationMinor: (serviceFeePreviewMinor + serviceVatPreviewMinor).toString(),
     reviewedInvoiceDocumentSales: invoiceDocumentSales,
     reviewedGvk18DocumentSales: gvk18DocumentSales,
     fileHashes: Object.fromEntries(documents.map((file) => [file.name,sha256(file.data)])),

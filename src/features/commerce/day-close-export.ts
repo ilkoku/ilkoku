@@ -212,6 +212,28 @@ export function buildDayCloseFiles(input: {
     entries.push(entry);
     grossLedger.set(entry.orderNo, entries);
   }
+  // This is a PERIOD-BASED bridge, not a cohort margin or accounting P&L:
+  // sales are grouped by paidAt while refunds are grouped by processedAt.
+  // They may relate to purchases completed on entirely different days.
+  type DayBridgeGroup = {
+    currency: string; saleRows: number; reviewedSaleRows: number;
+    flaggedSaleRows: number; candidateSalesMinor: bigint; reviewedSalesMinor: bigint;
+    refundRows: number; reviewedRefundRows: number; flaggedRefundRows: number;
+    processedRefundMinor: bigint; reviewedRefundMinor: bigint;
+  };
+  const dayBridge = new Map<string,DayBridgeGroup>();
+  const groupFor = (currency: string) => {
+    const group = dayBridge.get(currency);
+    if (group) return group;
+    const created: DayBridgeGroup = {
+      currency, saleRows: 0, reviewedSaleRows: 0, flaggedSaleRows: 0,
+      candidateSalesMinor: BigInt(0), reviewedSalesMinor: BigInt(0),
+      refundRows: 0, reviewedRefundRows: 0, flaggedRefundRows: 0,
+      processedRefundMinor: BigInt(0), reviewedRefundMinor: BigInt(0),
+    };
+    dayBridge.set(currency, created);
+    return created;
+  };
   const details = { ready: 0, review: 0, zero: 0 };
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
   let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
@@ -291,6 +313,16 @@ export function buildDayCloseFiles(input: {
       warnings.push("SIFIR_TL_MALI_BELGE_DEGIL");
     }
     const review = warnings.length > 0 ? "INCELEME_GEREKLI" : "VERI_KONTROLU_GECTI";
+    if (isOnBusinessDay(order.paidAt)) {
+      const group = groupFor(order.currency);
+      group.saleRows++;
+      if (order.finalAmount > BigInt(0)) group.candidateSalesMinor += order.finalAmount;
+      if (warnings.length) group.flaggedSaleRows++;
+      else {
+        group.reviewedSaleRows++;
+        group.reviewedSalesMinor += order.finalAmount;
+      }
+    }
     if (warnings.length) {
       details.review++;
       for (const warning of warnings) issues.push(["siparis",order.orderNo,warning,"Muhasebe kontrolu gerekli"]);
@@ -435,6 +467,16 @@ export function buildDayCloseFiles(input: {
           refund.cumulativeProcessedAmount > refund.orderFinalAmount))
       warnings.push("KUMULATIF_IADE_TAHSILATI_ASIYOR");
     const state = warnings.length ? "INCELEME_GEREKLI" : "TEMEL_KONTROL_GECTI";
+    if (refund.status === "processed" && isOnBusinessDay(refund.processedAt)) {
+      const group = groupFor(refund.currency);
+      group.refundRows++;
+      if (refund.amount > BigInt(0)) group.processedRefundMinor += refund.amount;
+      if (warnings.length) group.flaggedRefundRows++;
+      else {
+        group.reviewedRefundRows++;
+        group.reviewedRefundMinor += refund.amount;
+      }
+    }
     if (warnings.length) {
       flaggedRefundCount++;
       for (const warning of warnings) {
@@ -526,6 +568,29 @@ export function buildDayCloseFiles(input: {
       matched ? "Eslesme muhasebe fisini dogrulamaz" : warning,
     ]);
   }
+  // No deduction of commission, VAT, operating costs or withholding from
+  // the difference below. Both amounts are dated period events, NOT
+  // same-order cohorts and NOT actual bank cash-flow verification.
+  const periodBridge: CsvField[][] = [[
+    "para_birimi","donem_odeme_siparis_adedi","teknik_kontrolden_gecen_satis_adedi",
+    "incelemeli_satis_adedi","pozitif_satis_tahsilat_adayi_kurus",
+    "teknik_kontrolden_gecen_tahsilat_kurus",
+    "donem_islenen_iade_adedi","teknik_kontrolden_gecen_iade_adedi",
+    "incelemeli_iade_adedi","donem_pozitif_islenen_iade_kurus",
+    "teknik_kontrolden_gecen_iade_kurus","donem_satis_eksi_iade_aday_farki_kurus",
+    "on_inceleme_notu",
+  ]];
+  for (const group of [...dayBridge.values()].sort((a,b) =>
+    a.currency.localeCompare(b.currency))) {
+    periodBridge.push([
+      group.currency,group.saleRows,group.reviewedSaleRows,
+      group.flaggedSaleRows,group.candidateSalesMinor,group.reviewedSalesMinor,
+      group.refundRows,group.reviewedRefundRows,group.flaggedRefundRows,
+      group.processedRefundMinor,group.reviewedRefundMinor,
+      group.candidateSalesMinor - group.processedRefundMinor,
+      "Fark yalniz donem hareketlerinin aritmetik farkidir; net gelir, nakit, kar veya vergi degildir",
+    ]);
+  }
   const fieldMap = {
     version: "generic-accounting-map-v1",
     status: "UNVERIFIED_VENDOR_MAPPING",
@@ -595,6 +660,7 @@ export function buildDayCloseFiles(input: {
     { name: "finans_hareketleri.csv", data: safeCsv(movements) },
     { name: "iadeler.csv", data: safeCsv(refundRows) },
     { name: "iade_ledger_mutabakat.csv", data: safeCsv(refundReconciliation) },
+    { name: "gunluk_satis_iade_koprusu.csv", data: safeCsv(periodBridge) },
     { name: "uyarilar.csv", data: safeCsv(issues) },
     { name: "mutabakat.csv", data: safeCsv(reconciliation) },
     { name: "gun_sonu_ozet.csv", data: safeCsv(summary) },
@@ -620,6 +686,7 @@ export function buildDayCloseFiles(input: {
     flaggedRefundCount,
     refundLedgerMatchedGroups,
     refundLedgerReviewGroups,
+    periodBridgeCurrencyGroups: dayBridge.size,
     reviewedRefundMinor: reviewedRefundMinor.toString(),
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,

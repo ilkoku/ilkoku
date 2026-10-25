@@ -242,7 +242,7 @@ test("checkout coupon resolution revalidates scope and usage before pricing", ()
   contains(couponRules, 'input.scope === "all_paid_works"', "platform all-paid-work scope");
   contains(couponRules, 'input.scope === "selected_works"', "platform selected-work scope");
   contains(couponRules, 'input.scope === "selected_authors"', "platform selected-author scope");
-  contains(checkoutPage, "calculateCommercePricing", "checkout pricing calculation");
+  contains(checkoutPage, "quoteCommercePrice", "VAT-aware checkout pricing calculation");
 });
 
 

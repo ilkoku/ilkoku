@@ -69,7 +69,9 @@ export default async function DayCloseAccountingTransferPage() {
             mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,
             tarihinden bağımsız ilgili siparişin sale_gross ledger kayıtlarıyla
-            ve tahsilat bilgisiyle karşılaştırır.</p>
+            ve tamamlanma tarihi doğrulanan tahsilat bilgisiyle karşılaştırır.
+            Sonradan iade edilmiş ödemelerde ilk tahsilatın kanıtı korunur;
+            eksik veya çelişkili ödeme zamanı uyarıya ayrılır.</p>
           <p><code>gun_sonu_ozet.csv</code> — Gün içinde kaydedilen finans
             hareketlerinin tür ve para birimi bazında toplamı.
             Ledger toplamı muhasebe kârı değildir.</p>

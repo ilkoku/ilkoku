@@ -112,7 +112,7 @@ test("requested refund and refund ledger also independently block full payout pr
   assert.equal(ledger.scenarios,null);
   const repo=readFileSync(join(ROOT,"src/features/commerce/finance-repository.ts"),"utf8");
   const page=readFileSync(join(ROOT,"src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx"),"utf8");
-  assert.ok(repo.includes('status: { in: ["requested", "processed"] }'));
+  assert.ok(repo.includes('status: { in: ["requested", "approved", "processing", "processed"] }'));
   assert.ok(page.includes("hasOpenOrProcessedRefund: order.refunds.length > 0"));
 });
 

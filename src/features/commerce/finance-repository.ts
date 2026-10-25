@@ -736,9 +736,9 @@ export async function getOrderAccountingReviewSource(orderNo: string) {
         select: { status: true, amount: true, currency: true },
       },
       // A partial refund can leave Order.status=paid and refundedAt=null.
-      // Pending or processed refunds must block a full author payout preview.
+      // Any active refund workflow must block a full author payout preview.
       refunds: {
-        where: { status: { in: ["requested", "processed"] } },
+        where: { status: { in: ["requested", "approved", "processing", "processed"] } },
         take: 1,
         select: { status: true },
       },

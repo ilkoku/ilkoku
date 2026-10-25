@@ -58,7 +58,10 @@ test("cron detects partial failure without repeated SMTP delivery attempts", () 
     "utf8",
   );
 
-  assert.match(route, /const ok = result\.failed === 0 && result\.review === 0;/u);
+  assert.match(route, /const ok = result\.failed === 0 && result\.review === 0/u);
+  assert.match(route, /result\.unresolved\.manualReview === 0/u);
+  assert.match(route, /result\.unresolved\.stalePending === 0/u);
+  assert.match(route, /result\.unresolved\.legacyFailed === 0/u);
   assert.match(route, /WRITER_DAILY_SUMMARY_PARTIAL_FAILURE/u);
   assert.ok(workflow.includes(`.ok == true and (.failed | type == "number") and .failed == 0`));
   assert.match(workflow, /if ! printf/u);
@@ -85,4 +88,30 @@ test("ambiguous email sends are held for manual review, never automatically retr
   assert.match(workflow, /\.review == 0/u);
   assert.doesNotMatch(workflow, /--retry(?:-all-errors)?\b/u);
   assert.match(workflow, /--request POST/u);
+});
+
+test("historical delivery backlog is aggregate-only and fails the cron health check", () => {
+  const route = readFileSync(
+    new URL("../src/app/api/internal/writer-daily-summary/route.ts", import.meta.url),
+    "utf8",
+  );
+  const workflow = readFileSync(
+    new URL("../.github/workflows/writer-daily-summary.yml", import.meta.url),
+    "utf8",
+  );
+  const fn = service.slice(
+    service.indexOf("async function inspectUnresolvedDeliveryBacklog()"),
+    service.indexOf("export async function runWriterDailySummaries("),
+  );
+
+  assert.match(fn, /SELECT/u);
+  assert.match(fn, /CASE WHEN status = 'review'/u);
+  assert.match(fn, /status = 'pending'/u);
+  assert.match(fn, /status = 'failed'/u);
+  assert.doesNotMatch(fn, /\b(?:UPDATE|DELETE|INSERT)\b/u);
+  assert.match(service, /const unresolved = await inspectUnresolvedDeliveryBacklog\(\)/u);
+  for (const field of ["manualReview", "stalePending", "legacyFailed"]) {
+    assert.ok(route.includes("result.unresolved." + field + " === 0"));
+    assert.ok(workflow.includes(".unresolved." + field + " == 0"));
+  }
 });

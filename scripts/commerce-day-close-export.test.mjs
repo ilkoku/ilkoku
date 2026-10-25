@@ -277,3 +277,59 @@ test("0TL order unexpectedly carrying a successful capture is always flagged", (
   assert.ok(issues.includes("SIFIR_TL_GEREKSIZ_TAHSILAT"));
   assert.equal(result.manifest.preparationRows,0);
 });
+
+
+test("processed refunds reconcile to paid order and cumulative historical balance", () => {
+  const common={
+    orderNo: "ILK-PAID-2026", status: "processed",
+    processedAt: new Date("2026-10-25T17:00:00+03:00"),
+    orderCurrency: "TRY", currency: "TRY",
+    orderFinalAmount: 12000n,
+    orderPaidAt: new Date("2026-10-20T14:00:00+03:00"),
+    historicalCurrencyMismatch: false,
+  };
+  const ok=exportModule.buildDayCloseFiles({
+    day: "2026-10-25",orders:[],ledger:[],
+    refunds:[{...common,id:"r1",amount:5000n,cumulativeProcessedAmount:9000n}],
+  });
+  assert.equal(ok.manifest.flaggedRefundCount,0);
+  assert.equal(ok.manifest.reviewedRefundMinor,"5000");
+  assert.ok(ok.files.find(f=>f.name==="iadeler.csv").data.includes("TEMEL_KONTROL_GECTI"));
+  assert.ok(!ok.files.find(f=>f.name==="uyarilar.csv").data.includes("KUMULATIF_IADE_TAHSILATI_ASIYOR"));
+  const over=exportModule.buildDayCloseFiles({
+    day: "2026-10-25",orders:[],ledger:[],
+    refunds:[{...common,id:"r2",amount:6000n,cumulativeProcessedAmount:15000n}],
+  });
+  assert.equal(over.manifest.flaggedRefundCount,1);
+  assert.equal(over.manifest.reviewedRefundMinor,"0");
+  assert.ok(over.files.find(f=>f.name==="uyarilar.csv").data.includes("KUMULATIF_IADE_TAHSILATI_ASIYOR"));
+  assert.ok(over.files.find(f=>f.name==="iadeler.csv").data.includes("INCELEME_GEREKLI"));
+});
+
+test("refunds reject currency mismatch, missing historical sum, zero amount and never create ledger records", () => {
+  const disputed=exportModule.buildDayCloseFiles({
+    day: "2026-10-25",orders:[],ledger:[],
+    refunds:[{
+      id:"bad",orderNo:"ILK-FOREIGN",amount:0n,currency:"EUR",
+      status:"processed",processedAt:new Date("2026-10-25T12:00:00+03:00"),
+      orderCurrency:"TRY",orderFinalAmount:12000n,orderPaidAt:null,
+      historicalCurrencyMismatch:true,
+    }],
+  });
+  assert.equal(disputed.manifest.flaggedRefundCount,1);
+  const issues=disputed.files.find(f=>f.name==="uyarilar.csv").data;
+  assert.ok(issues.includes("IADE_PARA_BIRIMI_UYUSMAZLIGI"));
+  assert.ok(issues.includes("IADE_TUTARI_GECERSIZ"));
+  assert.ok(issues.includes("IADE_ORIJINAL_ODEME_DURUMU_DOGRULANAMADI"));
+  assert.ok(issues.includes("KUMULATIF_IADE_TAHSILATI_ASIYOR"));
+  assert.equal(disputed.manifest.preparationRows,0);
+});
+
+test("refund repository aggregates all processed refunds only up to closing date", () => {
+  const repository=source("src/features/commerce/day-close-repository.ts");
+  assert.ok(repository.includes('prisma.refund.groupBy({'));
+  assert.ok(repository.includes('by: ["orderId", "currency"]'));
+  assert.ok(repository.includes('processedAt: { lt: period.end }'));
+  assert.ok(repository.includes('cumulativeProcessedAmount: refundTotals.get(refund.orderId)'));
+  assert.ok(!repository.includes("refund.create("));
+});

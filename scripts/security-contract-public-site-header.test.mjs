@@ -5,8 +5,11 @@ import test from "node:test";
 const read = (path) => readFileSync(path, "utf8");
 
 const headerPath = "src/components/layout/PublicSiteHeader.tsx";
+const headerAccountPath = "src/components/layout/PublicSiteAccount.tsx";
+const headerAccountRoutePath = "src/app/api/public-account/route.ts";
 const headerNavigationClientPath = "src/components/layout/PublicHeaderNavigation.tsx";
 const headerMegaCssPath = "src/components/layout/public-site-mega-menu.css";
+const headerTerminalCssPath = "src/components/layout/public-site-header-terminal.css";
 const headerConfigPath = "src/lib/cms-header-navigation.ts";
 const headerServerPath = "src/lib/cms-header-navigation-server.ts";
 const headerWorkbenchPath = "src/components/content/HeaderNavigationWorkbench.tsx";
@@ -72,8 +75,11 @@ const trustRoutes = [
 
 test("public header exposes one canonical CMS-backed single-active mega navigation with a fail-safe code default", () => {
   const header = read(headerPath);
+  const headerAccount = read(headerAccountPath);
+  const headerAccountRoute = read(headerAccountRoutePath);
   const navigationClient = read(headerNavigationClientPath);
   const megaCss = read(headerMegaCssPath);
+  const terminalCss = read(headerTerminalCssPath);
   const config = read(headerConfigPath);
   const server = read(headerServerPath);
   const identity = read(identityPath);
@@ -128,7 +134,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/site-haritasi",
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -158,7 +163,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   for (const href of [
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -169,7 +173,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
   }
   assert.match(header, /title: "Ana Listeler"/);
-  assert.match(header, /title: "Karşılaştır"/);
+  assert.doesNotMatch(header, /title: "Karşılaştır"/, "retired comparison header group must not reappear");
   assert.match(header, /title: "Çok Satan Analizleri"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
@@ -184,12 +188,37 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.match(identity, /headerKicker:\s*"Dijital yazar platformu"/);
   assert.match(identity, /normalizeLegacyHeaderKicker/);
   assert.match(identity, /dijital edebiyat platformu/);
-  assert.match(header, /public-site-header__account/);
-  assert.match(header, /href="\/giris"/);
-  assert.match(header, /href="\/kayit"/);
-  assert.match(header, /href="\/hesabim"/);
+  assert.match(header, /<PublicSiteAccount \/>/);
+  assert.match(headerAccount, /public-site-header__account/);
+  assert.match(headerAccount, /public-site-header__identity/);
+  assert.match(headerAccount, /fetch\("\/api\/public-account"/);
+  assert.match(headerAccount, /data-account-label=\{account\.signedIn \? account\.fullName : "GİRİŞ YAP"\}/);
+  assert.match(terminalCss, /content:\s*"> "\s*attr\(data-account-label\)/);
+  assert.doesNotMatch(terminalCss, /content:\s*"> HESABIM"/);
+  assert.match(headerAccount, /href="\/giris"/);
+  assert.match(headerAccount, /href="\/kayit"/);
+  assert.match(headerAccount, /href="\/hesabim"/);
+  assert.match(headerAccount, /action="\/cikis"/);
+  assert.match(headerAccount, /method="post"/);
+  assert.match(headerAccountRoute, /getCurrentProfile\(\)/);
+  assert.match(headerAccountRoute, /getRoleNavigation\(profile\)/);
+  assert.match(headerAccountRoute, /private, no-store, max-age=0, must-revalidate/);
+  assert.match(headerAccountRoute, /Vary:\s*"Cookie"/);
+  assert.doesNotMatch(headerAccountRoute, /email:/);
+  assert.doesNotMatch(headerAccountRoute, /userId:/);
   assert.match(megaCss, /\.homepage-live \.nx-header\s*\{[\s\S]*display:\s*none\s*!important/);
-  assert.doesNotMatch(header, /getCurrentProfile|navigation\.workspaceHref|logoutAction/);
+  assert.doesNotMatch(header, /getCurrentProfile|getRoleNavigation|navigation\.workspaceHref|logoutAction/);
+});
+
+test("public header loads independent CMS reads concurrently without losing safe fallback", () => {
+  const server = read(headerServerPath);
+  assert.match(server, /const \[cmsPages, row\] = await Promise\.all\(\[/u, "CMS page and menu queries must begin together");
+  assert.match(server, /loadPublishedCmsSiteMapPages\(\)/u, "Published CMS page set must be preserved");
+  assert.match(server, /loadPublishedHeaderRow\(\)/u, "Published menu settings must be preserved");
+  assert.match(server, /return rows\[0\] \?\? null/u, "Missing menu settings safely fall back");
+  assert.match(server, /if \(!row \|\| row\.status !== "published"\)/u, "Draft navigation never leaks");
+  assert.match(server, /parseHeaderNavigation\(row\.valueJson, pages\) \?\? defaultHeaderNavigation/u, "Invalid menus still fall back to safe default");
+  assert.match(server, /catch \{[\s\S]*payload: defaultHeaderNavigation/u, "Parse errors retain public default");
 });
 
 test("CMS menu management stores page ids in a safe draft before publishing to the shared header", () => {

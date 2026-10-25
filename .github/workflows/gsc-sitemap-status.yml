@@ -9,6 +9,10 @@ on:
       - "scripts/gsc-sitemap-status.mjs"
       - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/seo/sitemap-data.ts"
+  # Read-only: cross-check whether Google has downloaded the current sitemap.
+  # 08:02 UTC = 11:02 Türkiye; scheduled workflows can start late.
+  schedule:
+    - cron: "2 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -35,9 +39,9 @@ jobs:
 
       - name: Validate Search Console read OAuth secrets
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
         run: |
           test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
           test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
@@ -45,9 +49,9 @@ jobs:
 
       - name: Read sitemap status
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
         run: node scripts/gsc-sitemap-status.mjs
 

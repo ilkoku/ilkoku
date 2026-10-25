@@ -44,7 +44,13 @@ export async function GET(request: Request) {
       });
 
     return NextResponse.json({ locale, enabled: true, items });
-  } catch {
-    return NextResponse.json({ locale, enabled: true, items: [] });
+  } catch (error) {
+    // A failed database read must not look like a successful empty FAQ collection.
+    // Keep internal error details out of the public response.
+    console.error("[content-faq] published FAQ query failed", error instanceof Error ? error.name : "unknown");
+    return NextResponse.json(
+      { locale, enabled: true, items: [], error: "faq_read_failed" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }

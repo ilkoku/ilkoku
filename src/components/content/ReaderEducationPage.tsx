@@ -33,7 +33,8 @@ function ReaderVisual({
         width={visual.recommendedWidth}
         height={visual.recommendedHeight}
         className="h-auto w-full object-contain"
-        unoptimized
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 960px"
+        quality={75}
       />
       <figcaption className="border-t border-black/[0.06] px-5 py-3 text-xs leading-6 text-[#746d7d]">
         {slot.label} · {guide.title}

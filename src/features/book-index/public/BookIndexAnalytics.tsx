@@ -50,10 +50,7 @@ function isBookIndexPath(pathname: string) {
 
 function surfaceFromPath(pathname: string) {
   if (pathname === "/yeni-cikanlar") return "new_releases";
-  if (
-    pathname === "/en-cok-satanlar/turkiye"
-    || pathname === "/en-cok-satanlar/turkiye/karsilastirma"
-  ) return "turkey";
+  if (pathname === "/en-cok-satanlar/turkiye") return "turkey";
   if (
     pathname === "/en-cok-satanlar/yeni-girisler"
     || pathname === "/en-cok-satanlar/yukselenler"

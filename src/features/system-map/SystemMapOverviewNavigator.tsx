@@ -107,21 +107,34 @@ export function SystemMapOverviewNavigator() {
       </div>
 
       {visibleGroups.length > 0 ? (
-        <div className="system-map-overview-groups" aria-live="polite">
-          {visibleGroups.map((group) => (
-            <section key={group.label}>
-              <h3>{group.label}</h3>
-              <div>
-                {group.items.map((item) => (
-                  <Link href={item.href} key={item.href}>
-                    <strong>{item.label}</strong>
-                    <span>{item.description}</span>
-                    <small>Çalışma masasını aç →</small>
-                  </Link>
+        <div className="system-map-directory-table-wrap" role="region" aria-label="Tüm harita alt sayfaları tablosu" tabIndex={0}>
+          <table className="system-map-directory-table system-map-directory-table--overview" aria-live="polite">
+            <thead>
+              <tr>
+                <th scope="col">Bölüm</th>
+                <th scope="col">Alt sayfa</th>
+                <th scope="col">Açıklama</th>
+                <th scope="col">URL</th>
+              </tr>
+            </thead>
+            {visibleGroups.map((group) => (
+              <tbody key={group.label}>
+                {group.items.map((item, index) => (
+                  <tr key={item.key}>
+                    {index === 0 ? (
+                      <th className="system-map-directory-table__group" scope="rowgroup" rowSpan={group.items.length}>
+                        {group.label}
+                        <small>{group.items.length} alt sayfa</small>
+                      </th>
+                    ) : null}
+                    <th scope="row"><Link href={item.href}>{item.label} <span aria-hidden="true">→</span></Link></th>
+                    <td>{item.description}</td>
+                    <td><code>{item.href}</code></td>
+                  </tr>
                 ))}
-              </div>
-            </section>
-          ))}
+              </tbody>
+            ))}
+          </table>
         </div>
       ) : (
         <div className="system-map-overview-empty" role="status">

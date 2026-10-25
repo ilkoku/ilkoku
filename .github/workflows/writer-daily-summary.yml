@@ -23,11 +23,18 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$SUMMARY_SECRET"
-          curl \
+          response="$(curl \
             --fail-with-body \
             --max-time 300 \
-            --retry 2 \
-            --retry-all-errors \
             --request POST \
             --header "Authorization: Bearer $SUMMARY_SECRET" \
-            https://ilkoku.com/api/internal/writer-daily-summary
+            https://ilkoku.com/api/internal/writer-daily-summary)"
+          # POST is deliberately single-attempt. An HTTP timeout cannot prove
+          # that the email send did not complete on the origin.
+          # A 200 may still contain failed writers: check JSON separately.
+          if ! printf '%s\n' "$response" | jq -e \
+            '.ok == true and (.failed | type == "number") and .failed == 0 and (.review | type == "number") and .review == 0 and (.unresolved.manualReview | type == "number") and .unresolved.manualReview == 0 and (.unresolved.stalePending | type == "number") and .unresolved.stalePending == 0 and (.unresolved.legacyFailed | type == "number") and .unresolved.legacyFailed == 0' >/dev/null; then
+            echo "::error::Writer daily summary contained failed writers or invalid JSON."
+            exit 1
+          fi
+          printf '%s\n' "$response"

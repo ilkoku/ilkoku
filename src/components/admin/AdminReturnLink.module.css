@@ -1,0 +1,27 @@
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 2.4rem;
+  padding: .55rem .8rem;
+  border: 1px solid rgba(139, 92, 246, .2);
+  border-radius: .7rem;
+  background: rgba(124, 58, 237, .07);
+  color: #c4b5fd;
+  font-size: .75rem;
+  font-weight: 750;
+  text-decoration: none;
+  transition: 160ms ease;
+}
+
+.link:hover {
+  border-color: rgba(167, 139, 250, .42);
+  background: rgba(124, 58, 237, .14);
+  color: #fff;
+  transform: translateX(-2px);
+}
+
+.link:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}

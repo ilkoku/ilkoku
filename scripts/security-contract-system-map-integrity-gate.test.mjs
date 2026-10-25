@@ -129,6 +129,7 @@ test("harita renders integrity as its own specialist page while sharing the cano
   contains(loader, "getIntegrityControlReport(snapshot, operations, infrastructure)", "integrity report generation");
   contains(workspace, '<IntegrityControlPanel report={integrity} />', "integrity specialist panel render");
   contains(page, 'workspace="integrity"', "dedicated integrity route");
-  contains(layout, '<SystemMapNavigation />', "shared specialist navigation shell");
+  contains(layout, '<AdminShell embeddedWorkspace', "specialist page uses one canonical admin navigation shell");
+  notContains(layout, '<SystemMapNavigation />', "no second navigation rail inside system map");
   contains(layout, 'import "./integrity-control.css"', "integrity styles");
 });

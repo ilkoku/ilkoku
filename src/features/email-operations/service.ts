@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { beginEmailOperationsCheck, finishEmailOperationsCheck, type EmailOperationsSource } from "./scheduler-state";
 
 const STALE_PENDING_MS = 10 * 60 * 1000;
 const FAILURE_ALERT_THRESHOLD = 3;
@@ -99,7 +100,7 @@ async function notifyAdmins(input: {
   return notificationsCreated;
 }
 
-export async function runEmailOperationsCheck() {
+async function performEmailOperationsCheck() {
   const now = new Date();
   const staleBefore = new Date(now.getTime() - STALE_PENDING_MS);
   const hourStart = new Date(now.getTime() - 60 * 60 * 1000);
@@ -176,4 +177,28 @@ export async function runEmailOperationsCheck() {
     staleMarked: staleUpdate.count,
     unresolvedFailed,
   };
+}
+
+ 
+// A successful HTTP status means the real check completed and was persisted.
+// Concurrent external triggers must never run the side effects twice.
+export async function runEmailOperationsCheck(source: EmailOperationsSource = "github") {
+  const token = await beginEmailOperationsCheck(source);
+  if (token === null) {
+    return { skipped: true, checkedAt: new Date().toISOString() };
+  }
+  const startedAtMs = Date.now();
+
+  try {
+    const result = await performEmailOperationsCheck();
+    await finishEmailOperationsCheck(token, startedAtMs, true);
+    return { skipped: false, ...result };
+  } catch (error) {
+    try {
+      await finishEmailOperationsCheck(token, startedAtMs, false);
+    } catch (heartbeatError) {
+      console.error("EMAIL_OPERATIONS_HEARTBEAT_WRITE_FAILED", heartbeatError);
+    }
+    throw error;
+  }
 }

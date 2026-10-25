@@ -1,0 +1,110 @@
+name: LCP hero static versus optimized cache comparison
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/seo-lcp-hero-static-comparison.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-lcp-hero-static-comparison
+  cancel-in-progress: false
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe both live image paths with matching accept headers
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo -n '' >/tmp/ilkoku-hero-compare.ndjson
+          check() {
+            local path="$1" sample="$2" url="$3" hdr meta http
+            hdr="$(mktemp)"
+            meta="$(curl --silent --show-error --compressed --location \
+              --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-Hero-Cache-Comparison/1.0' \
+              --header 'Accept: image/webp,image/avif,image/*;q=0.8' \
+              --dump-header "$hdr" --output /dev/null \
+              --write-out '%{json}' "$url" || true)"
+            if [[ -z "$meta" ]]; then
+              echo "::error::Missing curl data, abort"; rm -f "$hdr"; exit 1
+            fi
+            KIND="$path" SAMPLE="$sample" META="$meta" HEADERS="$hdr" node <<'NODE' | tee -a /tmp/ilkoku-hero-compare.ndjson
+          const fs=require('node:fs');
+          const cur=JSON.parse(process.env.META);
+          const final=fs.readFileSync(process.env.HEADERS,'utf8').trim().split(/\r?\n\r?\n/).at(-1)||'';
+          const h={};
+          for(const line of final.split(/\r?\n/)){
+            const i=line.indexOf(':');
+            if(i>0){
+              const key=line.slice(0,i).toLowerCase();
+              if(['cf-ray','cf-cache-status','x-nextjs-cache','cache-control','content-type','content-length','age','vary','etag','server'].includes(key))h[key]=line.slice(i+1).trim();
+            }
+          }
+          const ms=n=>Number.isFinite(n)?Math.round(n*1000):null;
+          console.log(JSON.stringify({
+            kind:process.env.KIND,seq:Number(process.env.SAMPLE),
+            status:cur.http_code,bytes:cur.size_download,httpVersion:cur.http_version,
+            firstByteMs:ms(cur.time_starttransfer),totalMs:ms(cur.time_total),
+            tlsMs:ms(cur.time_appconnect), postTlsWaitMs:ms(cur.time_starttransfer-cur.time_pretransfer),
+            err:cur.errormsg||null,headers:h
+          }));
+          NODE
+            rm -f "$hdr"
+            http="$(RESULT="$meta" node -p 'JSON.parse(process.env.RESULT).http_code')"
+            if [[ "$http" == "403" || "$http" == "429" ]];then echo "::error::WAF circuit breaker";exit 1;fi
+            if [[ "$http" != "200" ]];then echo "::error::HTTP $http for $path, stop";exit 1;fi
+          }
+          for i in 1 2 3; do
+            check static "$i" 'https://ilkoku.com/landing/ilkoku-hero-user-final.webp'
+            sleep 3
+            check optimized "$i" 'https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=750&q=60'
+            if [[ "$i" != "3" ]]; then sleep 12; fi
+          done
+
+      - name: Summarize and test data validity
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),file='/tmp/ilkoku-hero-compare.ndjson';
+          if(!fs.existsSync(file))process.exit(0);
+          const rows=fs.readFileSync(file,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+          const median=(key,kind)=>{const v=rows.filter(r=>r.kind===kind&&r.status===200).map(r=>r[key]).sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:'n/a';};
+          const out=[
+            '# FirstOku hero image: original static WebP vs Next optimizer',
+            '',
+            'Only six sequential requests from a GitHub runner. A cloud edge POP can vary; no user field-LCP conclusions or site changes.',
+            '',
+            '| Route | Sample | HTTP | CF status | Next status | CF POP | Type | Bytes | First byte ms | Total ms | After TLS ms |',
+            '|---|---:|---:|---|---|---|---|---:|---:|---:|---:|',
+            ...rows.map(r=>'| '+[r.kind,r.seq,r.status,r.headers['cf-cache-status']||'?',r.headers['x-nextjs-cache']||'?',(r.headers['cf-ray']||'').split('-').at(-1),r.headers['content-type']||'?',r.bytes,r.firstByteMs,r.totalMs,r.postTlsWaitMs].join(' | ')+' |'),
+            '',
+            'Static first-byte median: '+median('firstByteMs','static')+' ms; optimized first-byte median: '+median('firstByteMs','optimized')+' ms.',
+            'Static transfer median: '+median('bytes','static')+' bytes; optimized transfer median: '+median('bytes','optimized')+' bytes.',
+            '',
+            'Do not change homepage Image component until the browser-quality and cache trade-offs are verified. Never apply broad HTML cache rules.',
+            ''
+          ].join('\n');
+          fs.writeFileSync('/tmp/ilkoku-hero-compare.md',out);
+          if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,out);
+          console.log(out);
+          NODE
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-hero-static-vs-next
+          path: |
+            /tmp/ilkoku-hero-compare.ndjson
+            /tmp/ilkoku-hero-compare.md
+          if-no-files-found: warn
+          retention-days: 14

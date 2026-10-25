@@ -15,6 +15,8 @@ export async function getAuthorCommerceWorks(authorId: string) {
       id: true,
       publicId: true,
       title: true,
+      slug: true,
+      visibility: true,
       coverUrl: true,
       status: true,
       updatedAt: true,
@@ -29,6 +31,7 @@ export async function getAuthorCommerceWorks(authorId: string) {
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           activatedAt: true,
@@ -71,6 +74,7 @@ export async function getAuthorCommerceWork(authorId: string, workId: string) {
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           agreementVersion: true,
@@ -263,6 +267,7 @@ export async function listPlatformCouponPaidWorks() {
       saleConfiguration: {
         select: {
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
         },

@@ -1,0 +1,60 @@
+# Temporary, manual-only smoke test for the isolated GSC Production OAuth client.
+# Existing daily GSC census remains unchanged until this test passes.
+name: GSC production OAuth smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gsc-production-oauth-smoke
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify production OAuth against live GSC URL Inspection
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+      GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+      GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
+      GSC_SITE_URL: "sc-domain:ilkoku.com"
+      GSC_CENSUS_MIN_URLS: "128"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Verify staged production secrets exist
+        shell: bash
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID" || { echo "::error::Missing GSC_PRODUCTION_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "::error::Missing GSC_PRODUCTION_OAUTH_CLIENT_SECRET"; exit 1; }
+          test -n "$GSC_OAUTH_REFRESH_TOKEN" || { echo "::error::Missing GSC_PRODUCTION_OAUTH_REFRESH_TOKEN"; exit 1; }
+
+      - name: Verify existing census syntax and safety guard
+        run: |
+          node --check scripts/gsc-full-index-census.mjs
+          if grep -Eq "loadSourcePolicyFallbackUrls|GSC_CENSUS_ALLOW_SOURCE_FALLBACK|source-policy-fallback-25" scripts/gsc-full-index-census.mjs; then
+            echo "::error::Obsolete partial census fallback is forbidden"; exit 1
+          fi
+
+      - name: Inspect live sitemap with new production OAuth
+        run: node scripts/gsc-full-index-census.mjs
+
+      - name: Upload production OAuth census evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: gsc-production-oauth-smoke
+          path: /tmp/ilkoku-gsc-full-index-census.json
+          if-no-files-found: warn
+          retention-days: 14

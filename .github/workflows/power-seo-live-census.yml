@@ -1,0 +1,35 @@
+name: Power-SEO Live Sitemap Census
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/power-seo-live-census.mjs"
+      - ".github/workflows/power-seo-live-census.yml"
+      - "src/components/content/EditorEducationStructuredData.tsx"
+      - "src/app/editorler-icin/egitim/**/page.tsx"
+
+permissions:
+  contents: read
+
+jobs:
+  public-census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scan live sitemap public HTML (maximum two concurrent URLs)
+        run: node scripts/power-seo-live-census.mjs
+      - name: Keep evidence even when errors exist
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: power-seo-live-census
+          path: artifacts/power-seo-live-census.json
+          if-no-files-found: warn
+          retention-days: 7

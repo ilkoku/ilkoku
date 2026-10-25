@@ -1,3 +1,4 @@
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
@@ -313,18 +314,9 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
-      author: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
-      publisher: {
-        "@type": "Organization",
-        "@id": "https://ilkoku.com/#organization",
-        name: "İlkOku",
-        url: "https://ilkoku.com/",
-      },
+      image: `https://ilkoku.com${publicBrandSocialImage}`,
+      author: { "@id": "https://ilkoku.com/#organization" },
+      publisher: { "@id": "https://ilkoku.com/#organization" },
       about: [
         { "@type": "Thing", name: definition.label },
         { "@type": "Thing", name: `${definition.category} yazarlığı` },

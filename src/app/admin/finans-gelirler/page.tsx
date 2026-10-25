@@ -113,6 +113,48 @@ export default async function FinanceIncomePage() {
 
       <section className="admin-detail-grid">
         <article className="admin-panel">
+          <h2>Komisyon Yönetimi</h2>
+          <p>Genel %15, yazara özel ve esere özel komisyon oranlarını
+            geçmiş siparişleri değiştirmeden yönetin. Ayrı %5 aracılık
+            hizmeti bu oranlardan bağımsız kalır.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/komisyon-yonetimi">
+            Komisyon yönetimini aç
+          </Link>
+        </article>
+        <article className="admin-panel">
+          <h2>Yazar Vergi / Belge İncelemesi</h2>
+          <p>Yazarın fatura, e-SMM veya gider pusulası statüsünü
+            inceleyin; geçerlilik süresi ve yönetici kararı geçmişini
+            kaydedin. Bu inceleme ödeme yetkisi vermez.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme">
+            Yazar vergi incelemesini aç
+          </Link>
+        </article>
+        <article className="admin-panel">
+          <h2>Sipariş Mali İnceleme</h2>
+          <p>Sipariş No ile KDV fiyat kaydını, tahsilatı, mevcut ledger
+            hareketlerini ve faturalı / faturasız örnek yazar gelirlerini
+            salt okunur olarak çapraz sorgulayın.</p>
+          <Link
+            className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme"
+          >
+            Sipariş mali incelemeyi aç
+          </Link>
+        </article>
+        <article className="admin-panel">
+          <h2>Gün Sonu Muhasebe Aktarımı</h2>
+          <p>Türkiye iş günü tamamlandığında sipariş, iade, finans hareketi,
+            komisyon ve uyarı kayıtlarını CSV + JSON manifest içeren ZIP
+            olarak dışa aktarın. Fatura oluşturulmaz.</p>
+          <Link className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim">
+            Gün sonu aktarımını aç
+          </Link>
+        </article>
+        <article className="admin-panel">
           <h2>Mutabakat</h2>
           <p>
             Paid sipariş, sale_gross ledger hareketi, aktif entitlement ve

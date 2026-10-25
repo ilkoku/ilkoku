@@ -72,6 +72,17 @@ function parseOptionalDate(
 ) {
   const normalized = String(value ?? "").trim();
   if (!normalized) return null;
+  // The date-picker submits ISO calendar dates. Reject invalid days rather
+  // than silently removing the date restriction or normalizing into March.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return null;
+  const [year, month, day] = normalized.split("-").map(Number);
+  const calendarDay = new Date(0);
+  calendarDay.setUTCFullYear(year, month - 1, day);
+  if (
+    calendarDay.getUTCFullYear() !== year ||
+    calendarDay.getUTCMonth() + 1 !== month ||
+    calendarDay.getUTCDate() !== day
+  ) return null;
   const time = endOfDay ? "23:59:59.999" : "00:00:00.000";
   const parsed = new Date(`${normalized}T${time}+03:00`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -173,6 +184,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
       saleConfiguration: {
         select: {
           priceAmount: true,
+          priceTaxTreatment: true,
           saleModel: true,
           activatedAt: true,
         },
@@ -203,12 +215,26 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
   }
 
+  // New priced works start VAT-exclusive; existing nonzero legacy list prices
+  // retain their original meaning, even if edited or republished.
+  const previousPrice = work.saleConfiguration?.priceAmount ?? null;
+  const priceTaxTreatment =
+    parsedModel.data === "paid" &&
+    priceAmount !== null &&
+    priceAmount > BigInt(0) &&
+    (previousPrice === null || previousPrice === BigInt(0))
+      ? "net_plus_vat"
+      : work.saleConfiguration?.priceTaxTreatment ?? "legacy_inclusive";
+
   const auditContext = await requestAuditContext();
 
   await prisma.$transaction(async (transaction) => {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;
     const oldModel = work.saleConfiguration?.saleModel ?? null;
-    const modelChanged = oldPrice !== priceAmount || oldModel !== parsedModel.data;
+    const modelChanged =
+      oldPrice !== priceAmount ||
+      oldModel !== parsedModel.data ||
+      (work.saleConfiguration?.priceTaxTreatment ?? "legacy_inclusive") !== priceTaxTreatment;
 
     const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null;
 
@@ -219,12 +245,14 @@ export async function saveWorkSaleModelAction(formData: FormData) {
         authorId: writer.id,
         saleModel: parsedModel.data,
         priceAmount,
+        priceTaxTreatment,
         currency: "TRY",
         status: "draft",
       },
       update: {
         saleModel: parsedModel.data,
         priceAmount,
+        priceTaxTreatment,
         currency: "TRY",
         status: "draft",
         activatedAt: nextActivatedAt,
@@ -254,6 +282,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
             previousSaleModel: oldModel,
             saleModel: parsedModel.data,
             previousPriceAmount: oldPrice?.toString() ?? null,
+            priceTaxTreatment,
             priceAmount: priceAmount?.toString() ?? null,
             currency: "TRY",
             status: "draft",
@@ -392,6 +421,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         select: {
           currency: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           saleModel: true,
           activatedAt: true,
         },
@@ -463,6 +493,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         authorId: writer.id,
         publicationModel: work.saleConfiguration!.saleModel,
         priceAmount: work.saleConfiguration!.priceAmount,
+        priceTaxTreatment: work.saleConfiguration!.priceTaxTreatment,
         currency: work.saleConfiguration!.currency,
         accessPlanSnapshot,
         agreementVersion: agreement.version,
@@ -574,15 +605,29 @@ export async function createAuthorCouponAction(formData: FormData) {
     redirect("/satis-erisim/kuponlar?durum=gecersiz-indirim");
   }
 
+  const rawStartsAt = String(formData.get("startsAt") ?? "").trim();
+  const rawEndsAt = String(formData.get("endsAt") ?? "").trim();
   const startsAt = parseOptionalDate(formData.get("startsAt"));
   const endsAt = parseOptionalDate(formData.get("endsAt"), true);
-  if (startsAt && endsAt && endsAt < startsAt) {
+  if (
+    (rawStartsAt && !startsAt) ||
+    (rawEndsAt && !endsAt) ||
+    (startsAt && endsAt && endsAt < startsAt)
+  ) {
     redirect("/satis-erisim/kuponlar?durum=gecersiz-tarih");
   }
 
+  const rawTotalUsageLimit = String(formData.get("totalUsageLimit") ?? "").trim();
+  const rawPerUserUsageLimit = String(formData.get("perUserUsageLimit") ?? "").trim();
   const totalUsageLimit = parsePositiveInteger(formData.get("totalUsageLimit"));
-  const perUserUsageLimit =
-    parsePositiveInteger(formData.get("perUserUsageLimit")) ?? 1;
+  const parsedPerUserUsageLimit = parsePositiveInteger(formData.get("perUserUsageLimit"));
+  if (
+    (rawTotalUsageLimit && totalUsageLimit === null) ||
+    (rawPerUserUsageLimit && parsedPerUserUsageLimit === null)
+  ) {
+    redirect("/satis-erisim/kuponlar?durum=eksik-bilgi");
+  }
+  const perUserUsageLimit = parsedPerUserUsageLimit ?? 1;
 
   try {
     await prisma.$transaction(async (transaction) => {

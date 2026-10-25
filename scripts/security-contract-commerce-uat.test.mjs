@@ -21,8 +21,8 @@ test("UAT W/A/R: staged paid work stays zero-priced and can use provider-free 0 
   has(actions, ": BigInt(0)", "staged paid zero price");
   has(page, '<span className={styles.paidPrice}>0 TL</span>', "paid zero-price UI");
   has(page, "!paidPricingEnabled", "staged paid UI gate");
-  has(access, "stagedZeroPurchaseReady", "reader staged zero acquisition gate");
-  has(access, "getActiveReaderPurchaseTerms", "reader terms prerequisite");
+  has(access, "shouldEnforcePaidChapterAccess", "locked chapter enforced independently");
+  has(publicQuery, "getActiveReaderPurchaseTerms", "public purchase readiness preserves terms gate");
   has(publicQuery, "stagedZeroPurchaseAvailable", "public staged zero purchase availability");
   has(publicQuery, "effectiveCommerce.priceAmount === BigInt(0)", "public zero-price gate");
 });
@@ -46,8 +46,8 @@ test("UAT R: previously activated paid work never becomes free during payment ou
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
 
   has(contract, "temporary checkout/provider outage does **not** unlock", "frozen outage rule");
-  has(access, "previouslyActivatedPaid", "runtime activation history");
-  has(query, "Boolean(saleConfiguration?.activatedAt)", "public activation history");
+  has(access, "shouldEnforcePaidChapterAccess", "runtime activation history protection");
+  has(query, "shouldEnforcePaidChapterAccess", "public activation history");
   has(query, "commerceEnforcementActive", "public enforcement state");
   has(checkout, "eser bu nedenle ücretsiz erişime açılmaz", "checkout outage lock copy");
   has(showcase, "Mevcut erişim hakları korunur", "public outage entitlement copy");
@@ -71,6 +71,42 @@ test("UAT R: active editor review can bypass commerce without opening normal rea
   has(page, "{ bypassCommerce: isReviewReading }", "verified editor commerce bypass");
   has(page, "canAccessReaderWorkspace(user.role) && !isReviewReading", "normal reader commerce gate");
   has(query, "options.bypassCommerce", "query-level explicit bypass");
+});
+
+test("UAT C: provider checkout enforces verified seller and freezes immutable legal snapshot", () => {
+  const paid = source("src/features/commerce/paid-checkout.ts");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+
+  for (const [name, code] of [["provider", paid], ["0 TL", zero]]) {
+    has(code, "getVerifiedWorkSeller(work.id, transaction)", name + " checks verified seller in checkout transaction");
+    has(code, 'reason: "seller_unverified"', name + " fails closed on missing seller");
+    has(code, "transaction.orderLegalSnapshot.create", name + " persists immutable legal seller snapshot");
+    for (const field of [
+      "legalPartyId: verifiedSeller.party.id",
+      "sellerAssignmentId: verifiedSeller.assignmentId",
+      "authorizationId: verifiedSeller.rights.id",
+      "sellerName: verifiedSeller.party.legalName!",
+      "sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!",
+      "rightsDocumentHash: verifiedSeller.rights.documentHash!",
+    ]) {
+      has(code, field, name + " legal evidence " + field);
+    }
+  }
+
+  const sellerGate = paid.indexOf("const verifiedSeller = await getVerifiedWorkSeller");
+  const orderWrite = paid.indexOf("const order = await transaction.order.create");
+  const legalWrite = paid.indexOf("await transaction.orderLegalSnapshot.create");
+  const consentWrite = paid.indexOf("await transaction.orderConsent.create");
+  const paymentWrite = paid.indexOf("const payment = await transaction.payment.create");
+  const handoff = paid.indexOf("await adapter.createPayment");
+  assert.ok(
+    sellerGate >= 0 && sellerGate < orderWrite &&
+    orderWrite < legalWrite && legalWrite < consentWrite &&
+    consentWrite < paymentWrite && paymentWrite < handoff,
+    "provider checkout must verify seller before all writes and persist legal snapshot before handoff",
+  );
+  has(action, 'seller_unverified: "satici-yetkisi-dogrulanmadi"', "same denial shown to reader for both checkout routes");
 });
 
 test("UAT C: non-zero checkout persists pending state before provider handoff", () => {
@@ -121,6 +157,46 @@ test("UAT K/R: zero-total orders skip provider and grant entitlement atomically"
   has(library, "Satın alma başarılı. Eser kütüphanene eklendi", "successful library redirect message");
   lacks(zero, "transaction.payment.create", "zero-total external payment");
   lacks(zero, "adapter.createPayment", "zero-total provider handoff");
+});
+
+test("UAT K: a locked coupon must be re-read with fresh committed global and per-reader usage", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+
+  for (const [name, code] of [["zero-total", zero], ["provider checkout", paid]]) {
+    has(code, 'isolationLevel: "ReadCommitted"', name + " uses fresh snapshots after coupon row lock");
+    const lock = code.indexOf("FROM Coupon");
+    const freshRead = code.indexOf("const coupon = await transaction.coupon.findUnique") >= 0
+      ? code.indexOf("const coupon = await transaction.coupon.findUnique")
+      : code.indexOf("const record = await transaction.coupon.findUnique");
+    const validation = code.indexOf("const validation = validateCouponRules");
+    assert.ok(lock >= 0 && freshRead > lock && validation > freshRead,
+      name + " must re-read coupon usage only after acquiring the coupon mutex");
+  }
+});
+
+test("UAT K: concurrent 0 TL requests serialize by reader before entitlement and order reads", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+
+  for (const [name, code] of [["zero-total", zero], ["provider checkout", paid]]) {
+    assert.match(
+      code,
+      /SELECT id\s+FROM User\s+WHERE id = \$\{input\.readerId\}\s+FOR UPDATE/u,
+      name + " must lock the same reader row",
+    );
+  }
+  const mutexIndex = zero.indexOf("await transaction.$queryRaw");
+  const workReadIndex = zero.indexOf("const work = await transaction.work.findFirst");
+  const entitlementIndex = zero.indexOf("const entitlement = await transaction.workEntitlement.findUnique");
+  const orderIndex = zero.indexOf("const order = await transaction.order.create");
+  assert.ok(
+    mutexIndex >= 0 &&
+      mutexIndex < workReadIndex &&
+      workReadIndex < entitlementIndex &&
+      entitlementIndex < orderIndex,
+    "reader lock must precede work/entitlement snapshot and all zero-total order writes",
+  );
 });
 
 test("UAT K/F: coupon funder determines earning base without mixing platform campaign cost into writer deductions", () => {
@@ -269,11 +345,150 @@ test("reader discovery checkout actions require terms, entitlement and operation
   has(page, "work.entitlements.length > 0", "existing entitlement avoids repeat purchase");
   has(page, 'chapter.commerceAccess?.accessType ?? "locked"', "unknown chapter plan is closed");
   has(page, "effective.useConfirmedSnapshot", "confirmed access plan survives draft edits");
-  has(page, 'label: stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al"', "no false checkout label");
+  has(page, 'stagedZeroPurchaseAvailable ? "0 TL ile edin" : "Satın al"', "no false checkout label");
   has(table, "work.purchaseAction.href", "direct purchase from reader discovery row");
   has(table, "selectedWork.purchaseAction.href", "direct purchase from discovery detail panel");
   has(table, "!work.paidAccessRestricted", "paid restriction prevents misleading restart");
   has(checkout, "stagedZeroPurchaseReady", "backend checkout still enforces terms");
   has(book, "const stagedZeroPurchaseAvailable =", "showcase also enforces terms");
   lacks(page, "completeZeroTotalCheckoutAction", "discovery cannot create orders");
+});
+
+test("reader checkout placeholders cannot pass the admin approval or acquisition gate", () => {
+  const terms = source("src/features/commerce/checkout-terms.ts");
+  const lifecycle = source("src/features/contracts/template-lifecycle.ts");
+  const lifecycleUi = source("src/features/contracts/ContractTemplateLifecyclePanel.tsx");
+  const zero = source("src/features/commerce/checkout-actions.ts");
+
+  has(terms, "export function isReaderPurchaseTermsPlaceholder", "placeholder detector");
+  has(terms, 'normalized.startsWith("çalışma taslağı")', "seeded placeholder heading");
+  has(terms, 'normalized.includes("nihai hukuki metnin hazırlanacağı çalışma alanıdır")', "seeded draft description");
+  has(terms, "isReaderPurchaseTermsPlaceholder(row.body)", "reader checkout fails closed");
+  has(lifecycle, 'input.transition === "approve" || input.transition === "activate"', "both approval and activation guarded");
+  has(lifecycle, 'status: "purchase_terms_placeholder"', "placeholder status");
+  has(lifecycle, "template.code === READER_DIGITAL_CONTENT_TERMS_CODE", "no unrelated contract affected");
+  has(lifecycleUi, "purchaseTermsPlaceholder", "admin sees clear restriction");
+  has(lifecycleUi, "0 TL edinim de kapalı kalır", "plain-language readiness explanation");
+  has(zero, "if (!terms)", "zero-total action requires active terms");
+});
+
+test("checkout maintains normal İlkOku overview while preparation is not purchasable", () => {
+  const page = source("src/app/satinal/[slug]/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+  has(page, "readerCheckoutLayout", "two-column normal purchase layout");
+  has(page, "Platform: İlkOku", "platform seller display label");
+  has(page, "stagedZeroCandidate", "staged offer is represented without false charge");
+  has(page, "!checkoutConfigurationActive", "unready checkout stays inactive");
+  has(page, "type=\"button\" className={styles.action} disabled", "blocked checkout cannot submit");
+  has(page, "checkoutConfigurationActive && pricing.finalAmount === BigInt(0) && purchaseTerms", "0 TL action requires live terms");
+  has(page, "completeZeroTotalCheckoutAction", "real provider-free acquisition path retained");
+  has(page, "beginPaidCheckoutAction", "existing paid checkout action retained");
+  has(css, ".readerCheckoutSummary", "dedicated order summary UI styles");
+  has(css, "@media (max-width: 800px)", "checkout responsive layout");
+});
+
+
+test("UAT: reader order detail is scoped to the authenticated buyer and immutable sale snapshots", () => {
+  const repo = source("src/features/commerce/reader-repository.ts");
+  const page = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  has(repo, "where: { readerId, orderNo }", "buyer-bound order read");
+  has(repo, "legalSnapshot:", "historical seller snapshot");
+  has(repo, "consent:", "purchase terms consent snapshot");
+  has(page, "getReaderOrderDetail(profile.id, orderNo)", "buyer authentication");
+  has(page, 'order.status === "paid"', "entitlement requires paid order");
+  has(page, 'order.entitlement?.status === "active"', "entitlement requires active access");
+  has(page, "resmî", "do not claim an invoice");
+  has(history, "/hesabim/odeme-gecmisi/", "order-detail navigation");
+});
+
+test("UAT: writer fee example is read-only and preserves invoice vs GVK18 assumptions", () => {
+  const preview = source("src/features/commerce/settlement-preview.ts");
+  const page = source("src/app/satis-erisim/kazanc-hesaplama/page.tsx");
+  const writer = source("src/app/satis-erisim/page.tsx");
+  for (const fragment of [
+    'mode === "invoice"',
+    'commissionRateBps = 1500',
+    'serviceFeeRateBps = 500',
+    'percentBps(saleNetAmount, commissionRateBps)',
+    'percentBps(saleNetAmount, serviceFeeRateBps)',
+    'BigInt(17)',
+    'BigInt(20)',
+    'BigInt(25)',
+    "authorBankPayment",
+    "vat1Payment",
+    "vat2Payment",
+  ]) has(preview, fragment, "illustrative financial breakdown");
+  has(page, 'profile.role !== "writer"', "writer-only preview");
+  has(page, 'method="get"', "read-only GET form");
+  has(page, "gerçek hakediş", "illustrative label");
+  has(writer, "/satis-erisim/kazanc-hesaplama", "writer preview navigation");
+  const tax = source("src/app/satis-erisim/odeme-vergi-bilgileri/page.tsx");
+  has(tax, 'profile.role !== "writer"', "tax info role gate");
+  has(tax, "bu sürümde alınmıyor", "no unsafe tax PII input");
+  has(writer, "/satis-erisim/odeme-vergi-bilgileri", "tax overview navigation");
+  lacks(preview, "prisma.", "illustrative calculator never writes records");
+});
+
+test("UAT: checkout steps and library receipts do not open a paid provider or change 0 TL guards", () => {
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+  has(checkout, "checkoutStages", "checkout-before navigation");
+  has(checkout, "completeZeroTotalCheckoutAction", "existing 0 TL checkout path");
+  has(checkout, "beginPaidCheckoutAction", "existing paid checkout gate");
+  has(library, "Sipariş ve onay kayıtları", "postpurchase detail link");
+  has(css, ".readerCheckoutPage .checkoutStages", "scoped mobile styles");
+  has(css, "@media (max-width: 640px)", "small viewport layout");
+});
+
+test("UAT: purchase order number is shown only from reader-owned persisted order snapshots", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const paymentHistory = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  const orderDetail = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const readerRepo = source("src/features/commerce/reader-repository.ts");
+
+  has(zero, 'orderNo: orderNumber()', "persistent order identifier generation");
+  has(action, "encodeURIComponent(result.orderNo)", "purchase redirect includes saved order number");
+  has(repository, "orderNo: true", "checkout existing entitlement reads persisted number");
+  has(checkout, "Sipariş numarası:", "existing entitlement shows verified number");
+  has(library, "completedOrderNo", "success notice selects confirmed order number");
+  has(library, "entitlements.find((item) => item.order?.orderNo === query.siparis)", "query order number cross-checked against buyer entitlement");
+  has(library, "Sipariş No:", "library item displays order number");
+  has(paymentHistory, "Sipariş No:", "history displays order number");
+  has(orderDetail, "Sipariş numarası:", "receipt displays order number");
+  has(readerRepo, "where: { readerId, orderNo }", "order detail access remains buyer-scoped");
+});
+
+
+test("UAT: VAT-exclusive new prices are frozen per order without retroactive legacy migration", () => {
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20261025143000_commerce_price_tax_quote/migration.sql");
+  const quote = source("src/features/commerce/price-quote.ts");
+  const state = source("src/features/commerce/effective-state.ts");
+  const actions = source("src/features/commerce/actions.ts");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const reader = source("src/features/commerce/reader-repository.ts");
+  const details = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+
+  has(schema, "model OrderPriceQuoteSnapshot", "per-order immutable quote relation");
+  has(migration, "DEFAULT 'legacy_inclusive'", "non-retroactive schema migration");
+  has(quote, 'input.taxTreatment === "net_plus_vat"', "explicit opt-in for price plus VAT");
+  has(quote, "calculateCommercePricing(listGrossAmount", "coupons apply to VAT-inclusive total");
+  has(state, "priceTaxTreatment: input.latestConsent.priceTaxTreatment", "confirmed writer price-tax basis");
+  has(actions, '"net_plus_vat"', "new work explicitly records net VAT-plus basis");
+  has(actions, "priceTaxTreatment: work.saleConfiguration!.priceTaxTreatment", "writer final approval freezes price treatment");
+  has(zero, "priceQuote,", "0 TL and coupon orders preserve quote source");
+  has(paid, "priceQuote,", "paid orders preserve quote source");
+  has(checkout, "priceQuote.listVatAmount", "reader sees VAT separately when supported");
+  has(publicQuery, ".listGrossAmount", "work reader metadata shows VAT-inclusive price");
+  has(reader, "priceQuoteSnapshot:", "order reader retrieves frozen quote");
+  has(details, "order.priceQuoteSnapshot", "order receipt shows frozen net price and VAT");
 });

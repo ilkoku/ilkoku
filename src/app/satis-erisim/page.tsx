@@ -7,6 +7,7 @@ import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorCommerceWorks } from "@/features/commerce/repository";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -67,6 +68,12 @@ export default async function WriterCommercePage() {
             <Link className={styles.quietAction} href="/satis-erisim/kuponlar">
               Kuponları yönet
             </Link>
+            <Link className={styles.quietAction} href="/satis-erisim/kazanc-hesaplama">
+              Kazanç hesaplaması
+            </Link>
+            <Link className={styles.quietAction} href="/satis-erisim/odeme-vergi-bilgileri">
+              Ödeme ve vergi bilgileri
+            </Link>
           </div>
         </header>
 
@@ -86,14 +93,20 @@ export default async function WriterCommercePage() {
           <section className={styles.grid} aria-label="Eserler">
             {works.map((work) => {
               const configuration = work.saleConfiguration;
+              const previewQuote = configuration?.saleModel === "paid" && configuration.priceAmount !== null
+                ? quoteCommercePrice({
+                    configuredPriceAmount: configuration.priceAmount,
+                    taxTreatment: configuration.priceTaxTreatment,
+                  })
+                : null;
               const modelLabel =
                 configuration?.saleModel === "paid"
                   ? configuration.priceAmount === BigInt(0)
                     ? "Ücretli · 0 TL"
                     : `Ücretli · ${formatMinorUnits(
-                        configuration.priceAmount ?? BigInt(0),
+                        previewQuote?.pricing.originalAmount ?? configuration.priceAmount ?? BigInt(0),
                         configuration.currency,
-                      )}`
+                      )}${configuration.priceTaxTreatment === "net_plus_vat" ? " (KDV dâhil)" : " (eski fiyat kaydı)"}`
                   : configuration?.saleModel === "free"
                     ? "Ücretsiz"
                     : "Ayarlanmadı";
@@ -120,6 +133,12 @@ export default async function WriterCommercePage() {
                   <Link className={styles.action} href={`/satis-erisim/${work.id}`}>
                     Erişimi planla
                   </Link>
+                  {configuration?.saleModel === "paid" ? (
+                    <Link className={styles.quietAction}
+                      href={`/satis-erisim/kazanc-hesaplama?eser=${encodeURIComponent(work.id)}`}>
+                      Bu eserin komisyon ve kazanç hesabı
+                    </Link>
+                  ) : null}
                   {work.status === "published" && work.visibility === "public" ? (
                     <Link className={styles.quietAction} href={`/kitap/${work.slug}`}>Okur eser sayfasını gör</Link>
                   ) : null}

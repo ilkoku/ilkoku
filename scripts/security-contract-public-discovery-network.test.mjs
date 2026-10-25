@@ -323,8 +323,29 @@ test("related-book navigation uses a bounded one-hop from param while reading pa
   contains(
     showcase,
     "const encodedBookContextPath = encodeURIComponent(bookContextPath);",
-    "reading, purchases and passport still preserve the existing return path",
+    "reading, purchase and passport links retain current book route",
   );
+  contains(
+    showcase,
+    'const bookContextPath = `/kitap/${work.slug}`;',
+    "only the immediate book path is propagated to reading, purchase and passport",
+  );
+  notContains(
+    showcase,
+    'const bookContextPath = `/kitap/${work.slug}?from=${encodeURIComponent(returnTo)}`;',
+    "reading links cannot nest previous-page history inside from",
+  );
+  for (const incoming of [
+    "/",
+    "/kitap/demo-ikinci-bakis",
+    "/kitap/demo-ikinci-bakis?from=%2Fkitap%2Fdemo-cifte-koridor",
+  ]) {
+    const nextBookContext = "/kitap/demo-dis-editor-hazir";
+    const target = `/kitap/demo-dis-editor-hazir/pasaport?from=${encodeURIComponent(nextBookContext)}`;
+    const from = new URL(target, "https://ilkoku.com").searchParams.get("from");
+    assert.equal(from, nextBookContext, `one-hop passport return for ${incoming}`);
+    assert.ok(!from.includes("?"), "no nested navigation history");
+  }
 
   // Even a long incoming legacy ?from= chain must never propagate to the next book.
   let current = "/kitap/demo-ikinci-bakis?from=%2Fkitap%2Fdemo-kayip-harfler%3Ffrom%3D%252F";

@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isReaderPurchaseTermsPlaceholder, READER_DIGITAL_CONTENT_TERMS_CODE } from "@/features/commerce/checkout-terms";
 import type {
   ContractTargetRole,
   ContractTemplateLifecycleStatus,
@@ -325,6 +326,16 @@ export async function transitionContractTemplateLifecycle(input: {
     if (input.transition === "deactivate" && current === "active") next = "approved";
     if (input.transition === "return_draft" && (current === "review" || current === "approved")) next = "draft";
     if (!next) return { current, status: "invalid_transition" as const };
+
+    // Admin approval cannot legitimize a working outline that has no final
+    // purchase terms. Keep this safeguard limited to the reader checkout code.
+    if (
+      template.code === READER_DIGITAL_CONTENT_TERMS_CODE &&
+      (input.transition === "approve" || input.transition === "activate") &&
+      isReaderPurchaseTermsPlaceholder(template.body)
+    ) {
+      return { status: "purchase_terms_placeholder" as const };
+    }
 
     if (input.transition === "approve") {
       const evidence = await transaction.$queryRaw<Array<{ id: string }>>`

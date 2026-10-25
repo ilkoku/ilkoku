@@ -8,7 +8,7 @@ import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Yapısal Editörlük | İlkOku Editörlük Okulu",
-  description: "Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren.",
+  description: "Bir eseri olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirip yeniden yapılandırmayı öğren.",
   canonical: "/editorler-icin/egitim/yapisal-editorluk",
 });
 
@@ -132,7 +132,7 @@ export default function YapisalEditorlukPage() {
     <>
       <EditorEducationStructuredData
         title="Yapısal Editörlük"
-        description="Bir eserin ana omurgasını; olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirmeyi ve yeniden yapılandırmayı öğren."
+        description="Bir eseri olay örgüsü, sahne ve bölüm işlevi, karakter dönüşümü, tempo, bakış açısı ve bilgi akışı üzerinden değerlendirip yeniden yapılandırmayı öğren."
         canonical="/editorler-icin/egitim/yapisal-editorluk"
       />
       <EditorEducationShell activeCategory={category}>

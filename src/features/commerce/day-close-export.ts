@@ -678,6 +678,66 @@ export function buildDayCloseFiles(input: {
       },
     },
   };
+  // Internal source-column coverage is verifiable without a vendor account.
+  // It must never be confused with approval of any vendor's import template.
+  const sourceColumns = preparation[0].map((column) => String(column));
+  const declaredColumns = Object.keys(fieldMap.fields);
+  const missingDeclaredColumns = declaredColumns.filter((column) => !sourceColumns.includes(column));
+  const undeclaredColumns = sourceColumns.filter((column) => !declaredColumns.includes(column));
+  if (missingDeclaredColumns.length || undeclaredColumns.length ||
+      new Set(sourceColumns).size !== sourceColumns.length) {
+    throw new Error("DAY_CLOSE_INTERNAL_MAPPING_INCONSISTENT");
+  }
+  const externalRequirements = {
+    vendorProductVersion: false,
+    officialDestinationTemplateReviewed: false,
+    sourceToDestinationFieldsApproved: false,
+    accountCodesApprovedByAccountant: false,
+    customerOrCounterpartyIdentityVerified: false,
+    documentTypeAndTaxTreatmentApproved: false,
+    importDryRunVerifiedByAccountant: false,
+  };
+  const vendorGate = (sourceUrl: string, track: string, additionalBlockers: string[]) => ({
+    sourceUrl,
+    track,
+    destinationSchemaVerified: false,
+    automaticImportReady: false,
+    postToVendorAllowed: false,
+    readiness: "BLOCKED_REQUIRES_EXTERNAL_ACCOUNTANT_REVIEW",
+    requirements: { ...externalRequirements },
+    additionalBlockers,
+  });
+  const mappingAudit = {
+    verificationScope: "ILKOKU_INTERNAL_COLUMN_NAMES_ONLY",
+    internalSourceColumnsMatchDeclarations: true,
+    internalSourceColumns: sourceColumns,
+    declaredColumnCount: declaredColumns.length,
+    dataRows: preparation.length - 1,
+    vendorImportReady: false,
+    fiscalApproval: false,
+    gate: "BLOCKED_UNTIL_VENDOR_ACCOUNTANT_TEMPLATE_VERIFICATION",
+    vendors: {
+      logo: vendorGate(
+        "https://go3.logo.com.tr/logo-ekosistem-cozumleri/collector",
+        "PRODUCT_SPECIFIC_FILE_OR_PARTNER_IMPORT_UNCONFIRMED",
+        ["Logo product/version and transfer module not selected",
+         "Account/branch/department codes and destination schema not approved"],
+      ),
+      mikro: vendorGate(
+        "https://apidocs.mikro.com.tr/apis/muhasebe",
+        "MUTATING_API_EXISTS_BUT_NOT_USED_NO_FILE_SCHEMA_VERIFIED",
+        ["Mikro accounting API can create/update/delete vouchers; never call it",
+         "Supported read-only file-import format and target ERP version not confirmed"],
+      ),
+      parasut: vendorGate(
+        "https://www.parasut.com/kullanim-kilavuzu/mevcut-verilerin-parasute-aktarilmasi",
+        "ACCOUNT_DOWNLOADED_EXCEL_TEMPLATE_REQUIRED",
+        ["Sales invoices, contacts, expenses and services have distinct official templates",
+         "Account download and accountant validation of actual Excel header/layout missing",
+         "Existing issued document and customer identity data are not exported"],
+      ),
+    },
+  };
   const documents = [
     { name: "siparisler.csv", data: safeCsv(sales) },
     { name: "finans_hareketleri.csv", data: safeCsv(movements) },
@@ -690,7 +750,9 @@ export function buildDayCloseFiles(input: {
     { name: "muhasebe_on_hazirlik.csv", data: safeCsv(preparation) },
     { name: "yazar_hesap_ozeti.csv", data: safeCsv(authorRows) },
     { name: "muhasebe_tl_inceleme.csv", data: safeCsvDelimited(liraWorksheet,";") },
-    { name: "alan_esleme.json", data: JSON.stringify(fieldMap,null,2)+"\n" },
+    { name: "alan_esleme.json", data: JSON.stringify({
+      ...fieldMap, sourceColumnAudit: mappingAudit,
+    },null,2)+"\n" },
   ];
   const manifest = {
     version: DAY_CLOSE_VERSION,
@@ -710,6 +772,8 @@ export function buildDayCloseFiles(input: {
     refundLedgerMatchedGroups,
     refundLedgerReviewGroups,
     periodBridgeCurrencyGroups: dayBridge.size,
+    sourceMappingVerified: mappingAudit.internalSourceColumnsMatchDeclarations,
+    vendorImportReady: false,
     reviewedRefundMinor: reviewedRefundMinor.toString(),
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,

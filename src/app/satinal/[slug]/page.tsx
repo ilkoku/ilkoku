@@ -18,7 +18,7 @@ import {
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
 import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
-import { calculateCommercePricing } from "@/features/commerce/pricing";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
 import styles from "@/features/commerce/commerce.module.css";
@@ -208,16 +208,18 @@ export default async function CheckoutPreparationPage({
       }`
     : null;
 
-  const pricing = calculateCommercePricing(
-    originalAmount,
-    coupon
+  const priceQuote = quoteCommercePrice({
+    configuredPriceAmount: originalAmount,
+    taxTreatment: effectiveCommerce.priceTaxTreatment,
+    coupon: coupon
       ? {
           discountType: coupon.discountType,
           discountValue: coupon.discountValue,
           owner: coupon.owner,
         }
       : null,
-  );
+  });
+  const { pricing } = priceQuote;
   const couponZeroPurchaseReady =
     Boolean(purchaseTerms) &&
     Boolean(verifiedSeller) &&
@@ -455,11 +457,19 @@ export default async function CheckoutPreparationPage({
           <h2>Sipariş özeti</h2>
           <div className={styles.summaryGrid}>
             <div>
-              <span>Eser fiyatı</span>
+              <span>{priceQuote.taxTreatment === "net_plus_vat"
+                ? "Eser fiyatı (KDV hariç)"
+                : "Eser fiyatı"}</span>
               <strong>
                 {formatMoney(originalAmount, effectiveCommerce.currency)}
               </strong>
             </div>
+            {priceQuote.listVatAmount !== null ? (
+              <div>
+                <span>Satış KDV&apos;si (%20)</span>
+                <strong>{formatMoney(priceQuote.listVatAmount, effectiveCommerce.currency)}</strong>
+              </div>
+            ) : null}
             <div>
               <span>İlkOku kupon indirimi</span>
               <strong>

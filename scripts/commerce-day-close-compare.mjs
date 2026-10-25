@@ -22,6 +22,8 @@ const REQUIRED_FILES = [
 const FINANCIAL_FIELDS = [
   "checkedGrossMinor", "checkedVatMinor", "reviewedRefundMinor",
   "reviewedCommissionIllustrationMinor", "reviewedServiceFeeIllustrationMinor",
+  "reviewedCommissionVatIllustrationMinor", "reviewedCommissionGrossIllustrationMinor",
+  "reviewedServiceFeeVatIllustrationMinor", "reviewedServiceFeeGrossIllustrationMinor",
 ];
 const COUNT_FIELDS = [
   "salesCount", "readySalesCount", "flaggedSalesCount", "zeroAmountCount",

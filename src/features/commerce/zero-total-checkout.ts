@@ -146,7 +146,7 @@ export async function completeZeroTotalCheckout(input: {
       const { pricing } = priceQuote;
       const now = new Date();
       const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
-    const order = await transaction.order.create({
+      const order = await transaction.order.create({
         data: {
           ...buildCommerceOrderSnapshot({
             authorId: work.authorId,
@@ -155,7 +155,7 @@ export async function completeZeroTotalCheckout(input: {
             pricing,
             priceQuote,
             commissionRate,
-          commissionRate,
+
             readerId: input.readerId,
             workId: work.id,
           }),

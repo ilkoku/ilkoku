@@ -23,7 +23,7 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       orderBy: [{ paidAt: "asc" }, { id: "asc" }],
       take: DAY_CLOSE_MAX_ROWS + 1,
       select: {
-        orderNo: true, paidAt: true, status: true, currency: true,
+        orderNo: true, paidAt: true, refundedAt: true, status: true, currency: true,
         originalAmount: true, discountAmount: true, finalAmount: true,
         couponCodeSnapshot: true,
         legalSnapshot: { select: { sellerMode: true } },
@@ -44,6 +44,14 @@ export async function getDayClosePackage(day: string, now = new Date()) {
         },
         payments: {
           select: { status: true, amount: true, currency: true },
+        },
+        // A paid order can have its ledger posted just after midnight.
+        // Reconcile against the order's OWN records, not only day ledger.
+        financialLedgerEntries: {
+          where: { entryType: "sale_gross" },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: 2, // one expected; a second entry is an anomaly
+          select: { id: true, entryType: true, amount: true, currency: true, createdAt: true },
         },
       },
     }),
@@ -83,7 +91,11 @@ export async function getDayClosePackage(day: string, now = new Date()) {
     orders: orders.map((order) => ({
       orderNo: order.orderNo,
       paidAt: order.paidAt,
-      status: order.status,
+      // A later refund belongs in its processing day's refund CSV.
+      // It does not retroactively turn a completed sale into a refund
+      // within the original sale's closing day.
+      status: order.status === "refunded" && order.refundedAt &&
+        order.refundedAt >= period.end ? "paid" : order.status,
       sellerMode: order.legalSnapshot?.sellerMode ?? null,
       authorPublicId: order.author.publicId,
       workTitle: order.work.title,
@@ -96,6 +108,17 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       quote: order.priceQuoteSnapshot,
       payments: order.payments,
     })),
+    reconciliationLedger: orders.flatMap((order) =>
+      order.financialLedgerEntries.map((entry) => ({
+        id: entry.id,
+        entryType: entry.entryType,
+        amount: entry.amount,
+        currency: entry.currency,
+        createdAt: entry.createdAt,
+        orderNo: order.orderNo,
+        authorPublicId: order.author.publicId,
+      })),
+    ),
     ledger: ledger.map((entry) => ({
       id: entry.id,
       entryType: entry.entryType,

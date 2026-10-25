@@ -73,11 +73,13 @@ jobs:
         env:
           BASE_URL: ${{ inputs.base_url }}
           PROFILE: ${{ inputs.profile }}
+          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
           docker run --rm \
             -e BASE_URL="$BASE_URL" \
             -e PROFILE="$PROFILE" \
+            -e ILKOKU_HIGH_LOAD_APPROVAL="$CONFIRMATION" \
             -v "$PWD:/work" \
             -w /work \
             grafana/k6:latest \

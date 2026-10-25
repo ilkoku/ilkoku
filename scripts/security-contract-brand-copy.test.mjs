@@ -34,9 +34,10 @@ test("root social share card uses the selected İlkOku artwork as static metadat
   assert.match(prepare, /opengraph-image\.jpg/u);
   assert.match(prepare, /twitter-image\.jpg/u);
   assert.match(prepare, /resize\(1200, 630/u);
-  assert.match(packageJson.scripts.dev, /social-images:prepare/u);
-  assert.match(packageJson.scripts.build, /social-images:prepare/u);
-  assert.match(packageJson.scripts["build:ci"], /social-images:prepare/u);
+  assert.doesNotMatch(packageJson.scripts.dev, /social-images:prepare/u);
+  assert.doesNotMatch(packageJson.scripts.build, /social-images:prepare/u);
+  assert.doesNotMatch(packageJson.scripts["build:ci"], /social-images:prepare/u);
+  assert.match(source("src/lib/public-brand.ts"), /publicBrandSocialImage = "\/og\/ilkoku-social-selected-2026.webp"/u);
   assert.match(ogAlt, /İlkOku — Dijital Yazar Platformu/u);
   assert.match(ogAlt, /İlk cümle, ilk adım\./u);
   assert.equal(twitterAlt, ogAlt);

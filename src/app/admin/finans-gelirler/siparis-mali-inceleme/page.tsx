@@ -38,10 +38,10 @@ export default async function OrderAccountingReviewPage({
 
   const cases = review?.scenarios ? [
     ...(review.scenarios.invoiced
-      ? [{ title: "Faturalı yazar", subtitle: "%15 komisyon + komisyon KDV; aracılık yok", data: review.scenarios.invoiced }]
+      ? [{ title: "Faturalı yazar", subtitle: "Siparişe kayıtlı komisyon + KDV; aracılık yok", data: review.scenarios.invoiced }]
       : []),
     ...(review.scenarios.expenseReceipt
-      ? [{ title: "Gider pusulasına uygun telif – örnek", subtitle: "%15 telif paylaşımı + ayrıca %5 aracılık + KDV", data: review.scenarios.expenseReceipt }]
+      ? [{ title: "Gider pusulasına uygun telif – örnek", subtitle: "Siparişe kayıtlı komisyon + ayrıca %5 aracılık + KDV", data: review.scenarios.expenseReceipt }]
       : []),
   ] : [];
 
@@ -142,6 +142,9 @@ export default async function OrderAccountingReviewPage({
                   <tr><th>İskonto (KDV dâhil)</th><td>{fmt(order.discountAmount)}</td></tr>
                   <tr><th>Okurun sipariş tutarı</th><td>{fmt(order.finalAmount)}</td></tr>
                   <tr><th>Başarılı ödeme adedi</th><td>{order.payments.filter((p) => p.status === "succeeded").length}</td></tr>
+                  <tr><th>Siparişe kayıtlı komisyon</th><td>{order.commissionRateSnapshot ? (order.commissionRateSnapshot.commissionRateBps / 100).toLocaleString("tr-TR") + "%" : "Geçmiş kayıt: doğrulama gerekli"}</td></tr>
+                  <tr><th>Komisyonun kaynağı</th><td>{order.commissionRateSnapshot?.source ?? "Kayıt yok"}</td></tr>
+                  <tr><th>Faturasız yazar aracılık hizmeti</th><td>{order.commissionRateSnapshot ? (order.commissionRateSnapshot.serviceFeeRateBps / 100).toLocaleString("tr-TR") + "% + hizmet KDV (uygun telifte)" : "Kayıt yok"}</td></tr>
                   <tr><th>Mevcut finans hareketi adedi</th><td>{order.financialLedgerEntries.length}</td></tr>
                   <tr><th>Mevcut finans hareketleri</th><td>{order.financialLedgerEntries.map((e) => e.entryType).join(", ") || "Yok"}</td></tr>
                 </tbody>
@@ -197,7 +200,7 @@ export default async function OrderAccountingReviewPage({
               {cases.map((c) => <p key={c.title}><strong>{c.title}:</strong> {c.subtitle}</p>)}
               <p>Bu hesap yalnız KDV indiriminin uygulanabildiği, başka işletme gideri
                 olmayan ve hukuken uygun belge düzenlenen varsayımsal işlemi anlatır.
-                Yazar ve eser özel oranları, kupon, iadeler veya farklı vergi statüsü
+                Kupon, iadeler veya farklı vergi statüsü
                 için kesin hakediş hesaplanmadı. Kurumlar vergisi şirket dönem matrahına bağlıdır.</p>
             </section>
           ) : null}

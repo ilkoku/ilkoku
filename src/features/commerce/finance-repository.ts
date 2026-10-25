@@ -684,7 +684,21 @@ export async function getOrderAccountingReviewSource(orderNo: string) {
       couponCodeSnapshot: true,
       work: { select: { title: true } },
       author: {
-        select: { displayName: true, fullName: true, publicId: true },
+        select: {
+          displayName: true,
+          fullName: true,
+          publicId: true,
+          taxReviewsAsWriter: {
+            orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+            take: 1,
+            select: {
+              documentKind: true,
+              decision: true,
+              reviewedAt: true,
+              validUntil: true,
+            },
+          },
+        },
       },
       legalSnapshot: { select: { sellerMode: true, sellerName: true } },
       priceQuoteSnapshot: {

@@ -74,9 +74,11 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       take: DAY_CLOSE_MAX_ROWS + 1,
       orderBy: [{ processedAt: "asc" }, { id: "asc" }],
       select: {
-        id: true, status: true, processedAt: true,
+        id: true, orderId: true, status: true, processedAt: true,
         amount: true, currency: true,
-        order: { select: { orderNo: true } },
+        order: { select: {
+          orderNo: true, finalAmount: true, currency: true, paidAt: true,
+        } },
       },
     }),
   ]);
@@ -84,6 +86,27 @@ export async function getDayClosePackage(day: string, now = new Date()) {
   if (orders.length > DAY_CLOSE_MAX_ROWS || ledger.length > DAY_CLOSE_MAX_ROWS ||
       refunds.length > DAY_CLOSE_MAX_ROWS) {
     return { ok: false as const, reason: "Gün sonu kayıt limiti aşıldı. Eksik paket oluşturulmaz; dönem bölünerek ayrı bir dışa aktarma geliştirilmelidir." };
+  }
+
+  // Historical totals stop at this day's end. A refund processed the next
+  // day must NOT retroactively change the original day's daily package.
+  const refundsByOrder = refunds.length ? await prisma.refund.groupBy({
+    by: ["orderId", "currency"],
+    where: {
+      orderId: { in: [...new Set(refunds.map((refund) => refund.orderId))] },
+      status: "processed",
+      processedAt: { lt: period.end },
+    },
+    _sum: { amount: true },
+  }) : [];
+  const refundTotals = new Map<string,bigint>();
+  const refundCurrencies = new Map<string,Set<string>>();
+  for (const row of refundsByOrder) {
+    refundTotals.set(row.orderId,
+      (refundTotals.get(row.orderId) ?? BigInt(0)) + (row._sum.amount ?? BigInt(0)));
+    const currencies = refundCurrencies.get(row.orderId) ?? new Set<string>();
+    currencies.add(row.currency);
+    refundCurrencies.set(row.orderId,currencies);
   }
 
   const prepared = buildDayCloseFiles({
@@ -135,6 +158,12 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       currency: refund.currency,
       processedAt: refund.processedAt!,
       status: refund.status,
+      orderCurrency: refund.order.currency,
+      orderFinalAmount: refund.order.finalAmount,
+      orderPaidAt: refund.order.paidAt,
+      cumulativeProcessedAmount: refundTotals.get(refund.orderId),
+      historicalCurrencyMismatch: [...(refundCurrencies.get(refund.orderId) ?? [])]
+        .some((currency) => currency !== refund.order.currency),
     })),
   });
   return { ok: true as const, ...prepared };

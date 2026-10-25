@@ -17,6 +17,7 @@
 - Sipariş numarası ILK-... dış muhasebe eşleştirme referansıdır, fatura numarası DEĞİLDİR.
 - Manifest: ILK-DAY-YYYY-MM-DD toplu işlem anahtarı; dosyaların SHA-256 değerleri.
 - Her veri türünde üst sınır 5.000 kayıt; aşılırsa eksik paket oluşturulmaz.
+- **Mükerrer referans koruması:** Aynı gün sonu veri akışında aynı sipariş numarası, iade kimliği veya ledger kimliği birden fazla kez görünürse ZIP üretilmez ve yöneticiye kaynağın türünü bildiren hata gösterilir. Günlük ledger ile siparişe bağlı mutabakat ledger akışları **ayrı ayrı** denetlenir: Aynı finans hareketinin bu iki farklı akışta birer kez bulunması normaldir. Kimlik boşsa da işlem durdurulur. Bu koruma hem hatalı toplamları hem de iki kez muhasebe ön hazırlığı oluşturulmasını önler; veritabanındaki kayıtlara dokunmaz.
 
 ## Kontroller
 - Eksik komisyon oranı veya KDV snapshot, kupon, 0 TL, iade, doğrulanmamış satıcı, yanlış para birimi, tahsilat uyuşmazlığı, siparişe ait eksik/çift sale_gross ledger veya mükerrer başarılı ödeme ayrı uyarı satırı doğurur.

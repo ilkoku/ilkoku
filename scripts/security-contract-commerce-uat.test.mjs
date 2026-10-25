@@ -408,8 +408,10 @@ test("UAT: writer fee example is read-only and preserves invoice vs GVK18 assump
   const writer = source("src/app/satis-erisim/page.tsx");
   for (const fragment of [
     'mode === "invoice"',
-    'BigInt(15)',
-    'BigInt(5)',
+    'commissionRateBps = 1500',
+    'serviceFeeRateBps = 500',
+    'percentBps(saleNetAmount, commissionRateBps)',
+    'percentBps(saleNetAmount, serviceFeeRateBps)',
     'BigInt(17)',
     'BigInt(20)',
     'BigInt(25)',

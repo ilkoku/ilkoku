@@ -245,16 +245,16 @@ export function buildDayCloseFiles(input: {
     // completedAt is the historical capture evidence; the CURRENT status
     // alone must not erase a valid payment from an earlier day's sale.
     const closeEnd = new Date(Date.parse(input.day + "T00:00:00.000+03:00") + 86400000);
-    const captures = order.payments.filter((payment) => {
-      if (payment.status === "succeeded") {
-        return !payment.completedAt || payment.completedAt < closeEnd;
-      }
-      return payment.status === "refunded" &&
-        payment.completedAt !== null && payment.completedAt !== undefined &&
-        order.paidAt !== null &&
-        payment.completedAt <= order.paidAt &&
-        payment.completedAt < closeEnd;
-    });
+    const isHistoricalCapture = (payment: DayCloseOrder["payments"][number]) =>
+      (payment.status === "succeeded" || payment.status === "refunded") &&
+      payment.completedAt !== null && payment.completedAt !== undefined &&
+      order.paidAt !== null && payment.completedAt <= order.paidAt &&
+      payment.completedAt < closeEnd;
+    const claimedCaptures = order.payments.filter((payment) =>
+      payment.status === "succeeded" || payment.status === "refunded");
+    const captures = claimedCaptures.filter(isHistoricalCapture);
+    if (claimedCaptures.length !== captures.length)
+      warnings.push("TAHSILAT_TARIH_KANITI_EKSIK_GECERSIZ");
     const ledgerEntries = grossLedger.get(order.orderNo) ?? [];
     const ledgerGross = ledgerEntries.reduce((sum,entry) => sum + entry.amount, BigInt(0));
     const ledgerMatches = ledgerEntries.length === 1 &&

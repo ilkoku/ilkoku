@@ -196,6 +196,16 @@ const staticCmsPageSlugs = new Set<string>([
   "/okurlar-icin",
 ]);
 
+const WEBTOON_SITEMAP_ENTRY: MetadataRoute.Sitemap[number] = {
+  url: `${baseUrl}/yazarlar-icin/cizgi-anlati/webtoon`,
+  lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT,
+  changeFrequency: "monthly",
+  priority: 0.7,
+};
+function dedupeSitemapEntries(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return Array.from(new Map(entries.map((entry) => [entry.url, entry] as const)).values());
+}
+
 const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   {
     url: `${baseUrl}/`,
@@ -250,8 +260,9 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
   },
 ];
 
-const staticFallbackEntries: MetadataRoute.Sitemap = [
+const staticFallbackEntries: MetadataRoute.Sitemap = dedupeSitemapEntries([
   ...staticDiscoveryEntries,
+  WEBTOON_SITEMAP_ENTRY,
   ...bundledPublicPages.map((page) => ({
     url: page.url,
     lastModified: new Date(page.updatedAt),
@@ -263,7 +274,7 @@ const staticFallbackEntries: MetadataRoute.Sitemap = [
     changeFrequency: "monthly" as const,
     priority: 0.4,
   })),
-];
+]);
 
 type CmsSitemapRow = {
   slug: string;
@@ -493,8 +504,9 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
-    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([
+    return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([
       ...liveStaticDiscoveryEntries,
+      WEBTOON_SITEMAP_ENTRY,
       ...bookIndexEntries,
       ...publicPageEntries,
       ...legalEntries,
@@ -517,7 +529,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "monthly" as const,
           priority: 0.6,
         })),
-    ]));
+    ])));
   } catch {
     // Search engines must keep seeing the currently enabled code-owned public
     // surface even when CMS/database lookups are temporarily unavailable.

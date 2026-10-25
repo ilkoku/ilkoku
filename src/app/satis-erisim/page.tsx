@@ -104,7 +104,7 @@ export default async function WriterCommercePage() {
                   ? configuration.priceAmount === BigInt(0)
                     ? "Ücretli · 0 TL"
                     : `Ücretli · ${formatMinorUnits(
-                        previewQuote?.pricing.originalAmount ?? configuration.priceAmount,
+                        previewQuote?.pricing.originalAmount ?? configuration.priceAmount ?? BigInt(0),
                         configuration.currency,
                       )}${configuration.priceTaxTreatment === "net_plus_vat" ? " (KDV dâhil)" : " (eski fiyat kaydı)"}`
                   : configuration?.saleModel === "free"

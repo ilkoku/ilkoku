@@ -130,8 +130,26 @@ export async function registerWorkSalesRightsDraftAction(data: FormData) {
   });
   if (!parsed.success) go("yetki-bilgisi-eksik");
 
-  const validUntil = parsed.data.validUntil
-    ? new Date(`${parsed.data.validUntil}T23:59:59+03:00`)
+  const rawValidUntil = parsed.data.validUntil;
+  // An invalid calendar date must not roll over into another month and
+  // silently extend the approved sales authorization (e.g. 31 February).
+  if (rawValidUntil && !/^\d{4}-\d{2}-\d{2}$/.test(rawValidUntil)) {
+    go("yetki-gecerlilik-tarihi-hatali");
+  }
+  if (rawValidUntil) {
+    const [year, month, day] = rawValidUntil.split("-").map(Number);
+    const calendarDate = new Date(0);
+    calendarDate.setUTCFullYear(year, month - 1, day);
+    if (
+      calendarDate.getUTCFullYear() !== year ||
+      calendarDate.getUTCMonth() + 1 !== month ||
+      calendarDate.getUTCDate() !== day
+    ) {
+      go("yetki-gecerlilik-tarihi-hatali");
+    }
+  }
+  const validUntil = rawValidUntil
+    ? new Date(`${rawValidUntil}T23:59:59+03:00`)
     : null;
   if (validUntil && (Number.isNaN(validUntil.getTime()) || validUntil <= new Date())) {
     go("yetki-gecerlilik-tarihi-hatali");

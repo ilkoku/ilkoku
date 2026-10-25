@@ -5,6 +5,23 @@ import { Counter, Rate, Trend } from "k6/metrics";
 const BASE_URL = (__ENV.BASE_URL || "https://ilkoku.com").replace(/\/$/, "");
 const PROFILE = (__ENV.PROFILE || "smoke").toLowerCase();
 const SHARD_ID = __ENV.SHARD_ID || "single";
+
+// High-impact profiles can also be invoked directly with k6, bypassing the
+// manual GitHub Actions confirmation step. Fail closed before HTTP requests.
+const HIGH_IMPACT_PROFILES = new Set([
+  "capacity100",
+  "capacity200",
+  "diagnostic150",
+  "distributedprobe100",
+]);
+if (
+  HIGH_IMPACT_PROFILES.has(PROFILE) &&
+  (__ENV.ILKOKU_HIGH_LOAD_APPROVAL || "").trim() !== "RUN-PUBLIC-LOAD-TEST"
+) {
+  throw new Error(
+    "HIGH_IMPACT_LOAD_TEST_BLOCKED: explicit ILKOKU_HIGH_LOAD_APPROVAL is required.",
+  );
+}
 const FAILURE_DIAGNOSTICS = (__ENV.FAILURE_DIAGNOSTICS || "0") === "1";
 
 const pageFailureRate = new Rate("page_failure_rate");

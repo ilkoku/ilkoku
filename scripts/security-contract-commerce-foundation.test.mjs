@@ -152,6 +152,16 @@ test("platform coupon workspace preserves author earning base and supports expli
 });
 
 
+test("platform coupons reject malformed usage limits and calendar dates instead of dropping restrictions", () => {
+  const actions = source("src/features/commerce/admin-actions.ts");
+  contains(actions, 'rawTotalUsageLimit && totalUsageLimit === null', "invalid limit is not unlimited");
+  contains(actions, 'rawPerUserUsageLimit && parsedPerUserUsageLimit === null', "invalid per-reader limit is not silently defaulted");
+  contains(actions, 'rawStartsAt && !startsAt', "invalid starting date is rejected");
+  contains(actions, 'rawEndsAt && !endsAt', "invalid ending date is rejected");
+  contains(actions, "calendarDay.getUTCDate() !== day", "invalid calendar days do not roll into the next month");
+  contains(actions, 'parsedPerUserUsageLimit ?? 1', "empty per-reader limit preserves the current default");
+});
+
 test("commerce routes are private and writer-gated", () => {
   const security = source("src/lib/route-security.ts");
   const proxy = source("src/proxy.ts");
@@ -232,7 +242,7 @@ test("checkout coupon resolution revalidates scope and usage before pricing", ()
   contains(couponRules, 'input.scope === "all_paid_works"', "platform all-paid-work scope");
   contains(couponRules, 'input.scope === "selected_works"', "platform selected-work scope");
   contains(couponRules, 'input.scope === "selected_authors"', "platform selected-author scope");
-  contains(checkoutPage, "calculateCommercePricing", "checkout pricing calculation");
+  contains(checkoutPage, "quoteCommercePrice", "VAT-aware checkout pricing calculation");
 });
 
 
@@ -568,6 +578,19 @@ test("admin operations avoid exposing payment credentials", () => {
 });
 
 
+test("coupon-backed purchases appear in admin coupon filter without rewriting entitlement source", () => {
+  const repository = source("src/features/commerce/admin-operations-repository.ts");
+  const page = source("src/app/admin/odeme-sistemi/erisim-haklari/page.tsx");
+  contains(repository, 'input.source === "coupon"', "coupon special source filter");
+  contains(repository, 'source: "purchase" as const', "order-derived coupon provenance");
+  contains(repository, 'couponCodeSnapshot: { not: null }', "coupon order relation");
+  contains(repository, "AND: [", "coupon filter and query search compose safely");
+  contains(repository, "couponCodeSnapshot: true", "admin source projection");
+  contains(page, 'entitlement.order?.couponCodeSnapshot', "coupon purchase display source");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  contains(zero, 'source: "purchase"', "persist source as purchase for order-backed access");
+});
+
 test("admin entitlement operations remain entitlement-driven", () => {
   const overview = source("src/app/admin/odeme-sistemi/page.tsx");
   const repository = source("src/features/commerce/admin-operations-repository.ts");
@@ -680,7 +703,8 @@ test("writer work income detail matches the frozen finance fields", () => {
   contains(repository, 'entry.entryType === "adjustment"', "other adjustment rollup");
   contains(repository, 'entry.entryType === "author_earning"', "net writer earning rollup");
 
-  contains(page, "Güncel fiyat", "writer work price field");
+  contains(page, 'work.priceTaxTreatment === "net_plus_vat"', "writer work price treatment");
+  contains(page, "Kayıtlı fiyat (KDV hariç)", "writer confirmed net price field");
   contains(page, "Satış adedi", "writer work units sold field");
   contains(page, "Ödeme hizmeti ücreti", "writer provider fee field");
   contains(page, "İlkOku hizmet payı", "writer platform share field");
@@ -786,6 +810,16 @@ test("chapter access plan rejects missing or tampered selections instead of defa
   contains(page, "chapter.commerceAccess?.accessType ?? null", "unconfigured chapter has no implicit access choice");
 });
 
+
+test("writer coupons reject explicit invalid limits and malformed calendar days", () => {
+  const actions = source("src/features/commerce/actions.ts");
+  assert.ok(actions.includes('rawTotalUsageLimit && totalUsageLimit === null'), "invalid total usage must not become unlimited");
+  assert.ok(actions.includes('rawPerUserUsageLimit && parsedPerUserUsageLimit === null'), "invalid per-reader usage must not default to 1");
+  assert.ok(actions.includes('rawStartsAt && !startsAt'), "invalid start dates cannot remove start restriction");
+  assert.ok(actions.includes('rawEndsAt && !endsAt'), "invalid end dates cannot remove end restriction");
+  assert.ok(actions.includes("calendarDay.getUTCDate() !== day"), "nonexistent calendar dates are rejected");
+  assert.ok(actions.includes('const perUserUsageLimit = parsedPerUserUsageLimit ?? 1'), "blank per-reader limit retains default");
+});
 
 test("author coupon numeric parsers accept normal digit input", () => {
   const actions = source("src/features/commerce/actions.ts");

@@ -171,7 +171,11 @@ jobs:
 
       - name: Install Chromium for browser QA
         if: ${{ !cancelled() && success() }}
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 8
+        # All browser QA runs headlessly on Ubuntu 24.04. Download only
+        # Chromium's headless shell and avoid transient apt-get stalls in
+        # Playwright's --with-deps installer.
+        run: npx playwright install --only-shell chromium
 
       - name: Run mobile and browser QA gate
         if: ${{ !cancelled() && success() }}

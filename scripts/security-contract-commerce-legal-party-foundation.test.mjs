@@ -44,6 +44,18 @@ test("P0 schema addition does not activate production payments", () => {
   assert.ok(providers.includes("const adapters: PaymentProviderAdapter[] = [];"));
 });
 
+test("P0 seller authorization expiry cannot normalize a nonexistent calendar day", () => {
+  const actions = source("src/features/commerce/seller-admin-actions.ts");
+  assert.ok(actions.includes('rawValidUntil && !/^\\d{4}-\\d{2}-\\d{2}$/.test(rawValidUntil)'), "seller rights expiry must use strict YYYY-MM-DD");
+  assert.ok(actions.includes("calendarDate.setUTCFullYear(year, month - 1, day)"), "calendar day must be reconstructed explicitly");
+  assert.ok(actions.includes("calendarDate.getUTCDate() !== day"), "invalid day must not roll over");
+  assert.ok(actions.includes('go("yetki-gecerlilik-tarihi-hatali")'), "invalid date must keep existing error path");
+  assert.ok(actions.includes("validUntil <= new Date()"), "expired sales rights must remain invalid");
+  const strictValidation = actions.indexOf("calendarDate.getUTCDate() !== day");
+  const expiryParsing = actions.indexOf('new Date(`${rawValidUntil}T23:59:59+03:00`)');
+  assert.ok(strictValidation >= 0 && expiryParsing > strictValidation, "calendar validation must precede expiry conversion");
+});
+
 test("P0 seller workbench requires admin identity, independent evidence review and auditable transitions", () => {
   const actions = source("src/features/commerce/seller-admin-actions.ts");
   const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");

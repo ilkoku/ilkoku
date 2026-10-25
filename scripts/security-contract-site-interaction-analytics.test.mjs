@@ -41,26 +41,31 @@ test("site events never send before consent and remain blocked after revocation"
   const api = createEmitter("denied");
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), false);
   assert.equal(api.sent.length, 0);
+  assert.equal(api.direct.length, 0);
   api.dataset.ilkokuAnalyticsConsent = "granted";
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), true);
-  assert.equal(api.sent.length, 1);
+  assert.equal(api.direct.length, 1);
+  assert.equal(api.direct[0][2].send_to, "G-MCF2YN9SL8");
   api.dataset.ilkokuAnalyticsConsent = "denied";
   assert.equal(api.emitPublicInteraction("site_cta_click", { placement: "home_hero" }), false);
-  assert.equal(api.sent.length, 1);
-  assert.equal(api.direct.length, 0);
+  assert.equal(api.direct.length, 1);
+  assert.equal(api.sent.length, 0);
 });
 
-test("GTM custom event uses object event key exactly once with no parallel gtag event", () => {
+test("GTM routes allowlisted events to its existing GA4 tag with no duplicate custom event", () => {
   const api = createEmitter("granted", "loading", "loaded");
   assert.equal(api.emitPublicInteraction("site_contact_click", { channel: "linkedin" }), true);
-  assert.equal(api.sent.length, 1);
-  assert.equal(api.sent[0].event, "site_contact_click");
-  assert.equal(api.sent[0].channel, "linkedin");
-  assert.equal(api.direct.length, 0);
+  assert.equal(api.sent.length, 0);
+  assert.equal(api.direct.length, 1);
+  assert.equal(api.direct[0][0], "event");
+  assert.equal(api.direct[0][1], "site_contact_click");
+  assert.equal(api.direct[0][2].channel, "linkedin");
+  assert.equal(api.direct[0][2].send_to, "G-MCF2YN9SL8");
   api.dataset.ilkokuAnalyticsGtm = "loaded";
   api.emitPublicInteraction("site_contact_click", { channel: "email" });
-  assert.equal(api.sent.length, 2);
-  assert.equal(api.direct.length, 0, "GTM wins even when GA4 provider is ready");
+  assert.equal(api.direct.length, 2);
+  assert.equal(api.direct[1][2].send_to, "G-MCF2YN9SL8");
+  assert.equal(api.sent.length, 0, "GTM custom-event tag must not be triggered twice");
 });
 
 test("GA4-only fallback preserves existing direct event delivery, no extra pageview", () => {

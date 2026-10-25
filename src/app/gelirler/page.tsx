@@ -155,7 +155,8 @@ export default async function WriterIncomePage() {
                   <div>
                     <h3>{work.title}</h3>
                     <span>
-                      Güncel fiyat
+                      {work.priceTaxTreatment === "net_plus_vat"
+                        ? "Kayıtlı fiyat (KDV hariç)" : "Kayıtlı fiyat (eski KDV sınıfı)"}
                       <strong>
                         {work.priceAmount === null
                           ? "—"

@@ -520,6 +520,13 @@ export async function getWriterFinanceOverview(authorId: string) {
           status: true,
           paidAt: true,
           refundedAt: true,
+          commissionRateSnapshot: {
+            select: {
+              commissionRateBps: true,
+              source: true,
+              calculationVersion: true,
+            },
+          },
           work: {
             select: {
               id: true,

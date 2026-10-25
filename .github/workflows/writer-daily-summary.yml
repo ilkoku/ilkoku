@@ -33,7 +33,7 @@ jobs:
           # that the email send did not complete on the origin.
           # A 200 may still contain failed writers: check JSON separately.
           if ! printf '%s\n' "$response" | jq -e \
-            '.ok == true and (.failed | type == "number") and .failed == 0' >/dev/null; then
+            '.ok == true and (.failed | type == "number") and .failed == 0 and (.review | type == "number") and .review == 0' >/dev/null; then
             echo "::error::Writer daily summary contained failed writers or invalid JSON."
             exit 1
           fi

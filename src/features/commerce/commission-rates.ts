@@ -21,7 +21,7 @@ export type ResolvedCommissionRate = {
 
 export function readRateBasisPoints(value: string) {
   const input = value.trim().replace(",", ".");
-  if (!/^(?:0|[1-9]\\d?)(?:\\.\\d{1,2})?$|^90(?:\\.0{1,2})?$/u.test(input)) return null;
+  if (!/^(?:0|[1-9]\d?)(?:\.\d{1,2})?$|^90(?:\.0{1,2})?$/u.test(input)) return null;
   const [whole, fraction = ""] = input.split(".");
   const rate = Number(whole) * 100 + Number((fraction + "00").slice(0, 2));
   return Number.isInteger(rate) && rate >= 0 && rate <= MAX_SPECIAL_COMMISSION_BPS ? rate : null;

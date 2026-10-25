@@ -2000,3 +2000,50 @@
     justify-self: stretch;
   }
 }
+
+
+/* Purchase stages are scoped to checkout to preserve the fixed sidebar,
+   shared shell, reader dark mode and global footer. */
+.readerCheckoutPage .checkoutStages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.readerCheckoutPage .checkoutStages > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  column-gap: 0.75rem;
+  row-gap: 0.2rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #655434;
+  border-radius: 12px;
+  background: #23232b;
+  color: #f5f4f7;
+}
+.readerCheckoutPage .checkoutStages span {
+  grid-row: span 2;
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e4bc42;
+  color: #1b1f27;
+  font-weight: 800;
+}
+.readerCheckoutPage .checkoutStages strong { font-size: 0.88rem; }
+.readerCheckoutPage .checkoutStages small {
+  color: #c1c4d0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .readerCheckoutPage .checkoutStages {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .readerCheckoutPage .checkoutStages > div { padding: 0.65rem 0.8rem; }
+}

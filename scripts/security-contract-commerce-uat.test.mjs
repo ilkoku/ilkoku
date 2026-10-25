@@ -439,3 +439,25 @@ test("UAT: checkout steps and library receipts do not open a paid provider or ch
   has(css, ".readerCheckoutPage .checkoutStages", "scoped mobile styles");
   has(css, "@media (max-width: 640px)", "small viewport layout");
 });
+
+test("UAT: purchase order number is shown only from reader-owned persisted order snapshots", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const paymentHistory = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  const orderDetail = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const readerRepo = source("src/features/commerce/reader-repository.ts");
+
+  has(zero, 'orderNo: orderNumber()', "persistent order identifier generation");
+  has(action, "encodeURIComponent(result.orderNo)", "purchase redirect includes saved order number");
+  has(repository, "orderNo: true", "checkout existing entitlement reads persisted number");
+  has(checkout, "Sipariş numarası:", "existing entitlement shows verified number");
+  has(library, "completedOrderNo", "success notice selects confirmed order number");
+  has(library, "entitlements.find((item) => item.order?.orderNo === query.siparis)", "query order number cross-checked against buyer entitlement");
+  has(library, "Sipariş No:", "library item displays order number");
+  has(paymentHistory, "Sipariş No:", "history displays order number");
+  has(orderDetail, "Sipariş numarası:", "receipt displays order number");
+  has(readerRepo, "where: { readerId, orderNo }", "order detail access remains buyer-scoped");
+});

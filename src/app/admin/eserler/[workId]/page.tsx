@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { describeWorkSaleModel, resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 
 function formatDate(value: Date | null) {
@@ -16,8 +17,8 @@ export default async function AdminWorkDetailPage({ params }: { params: Promise<
       assignedEditor: { select: { email: true, fullName: true } },
       author: { select: { email: true, fullName: true } },
       chapters: { orderBy: { position: "asc" }, select: { id: true, position: true, status: true, title: true, commerceAccess: { select: { accessType: true } } } },
-      saleConfiguration: { select: { saleModel: true, priceAmount: true, currency: true, status: true, activatedAt: true } },
-      publicationConsents: { orderBy: { confirmedAt: "desc" }, take: 1, select: { publicationModel: true, priceAmount: true, currency: true, accessPlanSnapshot: true } },
+      saleConfiguration: { select: { saleModel: true, priceAmount: true, priceTaxTreatment: true, currency: true, status: true, activatedAt: true } },
+      publicationConsents: { orderBy: { confirmedAt: "desc" }, take: 1, select: { publicationModel: true, priceAmount: true, priceTaxTreatment: true, currency: true, accessPlanSnapshot: true } },
       _count: { select: { comments: true, favorites: true, publisherSubmissions: true, readingProgress: true } },
     },
   });
@@ -47,7 +48,10 @@ export default async function AdminWorkDetailPage({ params }: { params: Promise<
         <div><dt>Satış modeli</dt><dd>{disclosure.label}</dd></div>
         <div><dt>Okura yansıyan durum</dt><dd>{disclosure.detail}</dd></div>
         <div><dt>Yazarın son kaydı</dt><dd>{work.saleConfiguration?.status ?? "Ayarlanmadı"}</dd></div>
-        <div><dt>Aktif ücretli fiyat</dt><dd>{effectiveSale.saleModel === "paid" && effectiveSale.priceAmount !== null && effectiveSale.priceAmount > BigInt(0) && effectiveSale.status === "active" ? new Intl.NumberFormat("tr-TR", { style: "currency", currency: effectiveSale.currency }).format(Number(effectiveSale.priceAmount) / 100) : "Aktif ücretli fiyat yok"}</dd></div>
+        <div><dt>Aktif ücretli fiyat</dt><dd>{effectiveSale.saleModel === "paid" && effectiveSale.priceAmount !== null && effectiveSale.priceAmount > BigInt(0) && effectiveSale.status === "active" ? new Intl.NumberFormat("tr-TR", { style: "currency", currency: effectiveSale.currency }).format(Number(quoteCommercePrice({
+  configuredPriceAmount: effectiveSale.priceAmount,
+  taxTreatment: effectiveSale.priceTaxTreatment,
+}).listGrossAmount) / 100) : "Aktif ücretli fiyat yok"}</dd></div>
       </dl>
       <p>0 TL hazırlık fiyatı gerçek tahsilat veya aktif ücretli satış anlamına gelmez.</p>
       <Link href="/sistem-yonetimi/odeme-sistemi/ayarlar">Ödeme ve sözleşme durumunu incele</Link>

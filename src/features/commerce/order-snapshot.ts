@@ -1,5 +1,6 @@
 import type { CommercePricingBreakdown } from "./pricing";
 import { buildOrderPriceQuoteSnapshot, type quoteCommercePrice } from "./price-quote";
+import type { ResolvedCommissionRate } from "./commission-rates";
 
 export type CommerceOrderCouponSnapshot = {
   code: string;
@@ -14,6 +15,7 @@ export function buildCommerceOrderSnapshot(input: {
   coupon?: CommerceOrderCouponSnapshot | null;
   currency: string;
   pricing: CommercePricingBreakdown;
+  commissionRate: ResolvedCommissionRate;
   priceQuote?: ReturnType<typeof quoteCommercePrice>;
   readerId: string;
   workId: string;
@@ -30,6 +32,15 @@ export function buildCommerceOrderSnapshot(input: {
     ...(input.priceQuote && buildOrderPriceQuoteSnapshot(input.priceQuote)
       ? { priceQuoteSnapshot: { create: buildOrderPriceQuoteSnapshot(input.priceQuote)! } }
       : {}),
+    commissionRateSnapshot: {
+      create: {
+        commissionRateBps: input.commissionRate.commissionRateBps,
+        serviceFeeRateBps: input.commissionRate.serviceFeeRateBps,
+        source: input.commissionRate.source,
+        sourceEventId: input.commissionRate.sourceEventId,
+        calculationVersion: "rate-v1",
+      },
+    },
     currency: input.currency,
     couponCodeSnapshot: input.coupon?.code ?? null,
     couponOwnerSnapshot: input.coupon?.owner ?? null,

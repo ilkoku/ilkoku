@@ -26,6 +26,7 @@ export async function getDayClosePackage(day: string, now = new Date()) {
         orderNo: true, paidAt: true, status: true, currency: true,
         originalAmount: true, discountAmount: true, finalAmount: true,
         couponCodeSnapshot: true,
+        legalSnapshot: { select: { sellerMode: true } },
         author: { select: { publicId: true } },
         work: { select: { title: true } },
         commissionRateSnapshot: {
@@ -83,6 +84,7 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       orderNo: order.orderNo,
       paidAt: order.paidAt,
       status: order.status,
+      sellerMode: order.legalSnapshot?.sellerMode ?? null,
       authorPublicId: order.author.publicId,
       workTitle: order.work.title,
       currency: order.currency,

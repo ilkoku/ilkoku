@@ -37,7 +37,10 @@ const validOrder = () => ({
     listNetAmount: 10000n,listVatAmount: 2000n,listGrossAmount: 12000n,
     discountGrossAmount: 0n,payableGrossAmount: 12000n,
   },
-  payments: [{ status: "succeeded",amount: 12000n,currency: "TRY" }],
+  payments: [{
+    status: "succeeded",amount: 12000n,currency: "TRY",
+    completedAt: new Date("2026-10-25T18:00:00+03:00"),
+  }],
   taxReview: {
     documentKind: "gvk18_expense_receipt", decision: "verified",
     reviewedAt: new Date("2026-10-20T12:00:00+03:00"),
@@ -106,7 +109,7 @@ test("missing snapshot, coupon, duplicate payments and 0TL produce review lines,
   missing.orderNo = "ILK-MISSING";
   const duplicate = validOrder();
   duplicate.orderNo = "ILK-DUPLICATE";
-  duplicate.payments.push({ status:"succeeded",amount:12000n,currency:"TRY" });
+  duplicate.payments.push({ ...duplicate.payments[0] });
   const coupon = validOrder();
   coupon.orderNo = "ILK-COUPON";
   coupon.couponCode = "PROMO";
@@ -266,7 +269,7 @@ test("repository loads sales' own ledger records independent of ledger day and k
 
 test("reconciliation CSV does not certify a mismatched or duplicate capture", () => {
   const order=validOrder();
-  order.payments.push({status:"succeeded",amount:12000n,currency:"TRY"});
+  order.payments.push({ ...order.payments[0] });
   const result=make([order]);
   const ledgerResult=result.files.find(f=>f.name==="mutabakat.csv").data;
   assert.ok(ledgerResult.includes("LEDGER_KONTROLU_GECTI"));
@@ -280,7 +283,7 @@ test("0TL order unexpectedly carrying a successful capture is always flagged", (
   order.originalAmount=0n;
   order.finalAmount=0n;
   order.quote=null;
-  order.payments=[{status:"succeeded",amount:1n,currency:"TRY"}];
+  order.payments=[{status:"succeeded",amount:1n,currency:"TRY",completedAt:order.paidAt}];
   const result=make([order]);
   const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
   assert.ok(issues.includes("SIFIR_TL_GEREKSIZ_TAHSILAT"));
@@ -516,4 +519,26 @@ test("already-succeeded payment completed in future cannot pass past-day close",
 test("repository includes payment completedAt for historical refund reconciliation", () => {
   const repo=source("src/features/commerce/day-close-repository.ts");
   assert.ok(repo.includes("status: true, amount: true, currency: true, completedAt: true"));
+});
+
+
+test("a succeeded payment without a verifiable original completion date is blocked", () => {
+  const noProof=validOrder();
+  noProof.payments=[{status:"succeeded",amount:12000n,currency:"TRY",completedAt:null}];
+  const result=make([noProof]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.equal(result.manifest.preparationRows,0);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("TAHSILAT_TARIH_KANITI_EKSIK_GECERSIZ"));
+});
+
+test("a second unproven captured payment cannot silently pass as one verified payment", () => {
+  const duplicate=validOrder();
+  duplicate.payments.push({
+    status:"refunded",amount:12000n,currency:"TRY",
+    completedAt:new Date("2026-10-26T12:00:00+03:00"),
+  });
+  const result=make([duplicate]);
+  assert.equal(result.manifest.readySalesCount,0);
+  const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
+  assert.ok(issues.includes("TAHSILAT_TARIH_KANITI_EKSIK_GECERSIZ"));
 });

@@ -701,6 +701,15 @@ export async function getOrderAccountingReviewSource(orderNo: string) {
         },
       },
       legalSnapshot: { select: { sellerMode: true, sellerName: true } },
+      commissionRateSnapshot: {
+        select: {
+          commissionRateBps: true,
+          serviceFeeRateBps: true,
+          source: true,
+          sourceEventId: true,
+          calculationVersion: true,
+        },
+      },
       priceQuoteSnapshot: {
         select: {
           taxTreatment: true,

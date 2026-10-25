@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
+import { resolveOrderCommissionRate } from "./commission-rates-repository";
 import { quoteCommercePrice } from "./price-quote";
 import { getPaymentProviderAdapter, type CommercePaymentMethod } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
@@ -321,6 +322,7 @@ export async function startPaidCheckout(input: {
     }
 
     const now = new Date();
+    const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
     const order = await transaction.order.create({
       data: {
         ...buildCommerceOrderSnapshot({
@@ -329,6 +331,7 @@ export async function startPaidCheckout(input: {
           currency: effectiveCommerce.currency,
           pricing,
           priceQuote,
+          commissionRate,
           readerId: input.readerId,
           workId: work.id,
         }),

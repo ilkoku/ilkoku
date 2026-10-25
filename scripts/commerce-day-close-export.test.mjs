@@ -85,9 +85,11 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.equal(result.manifest.liraWorksheetRows,1);
   assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
   assert.equal(result.manifest.ledgerSummaryGroups,1);
-  assert.equal(result.files.length,11);
+  assert.equal(result.manifest.refundLedgerMatchedGroups,0);
+  assert.equal(result.manifest.refundLedgerReviewGroups,0);
+  assert.equal(result.files.length,12);
   assert.deepEqual([...result.files.map(f=>f.name)],[
-    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv",
+    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","iade_ledger_mutabakat.csv","uyarilar.csv",
     "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv",
     "yazar_hesap_ozeti.csv","muhasebe_tl_inceleme.csv","alan_esleme.json","manifest.json",
   ]);
@@ -585,4 +587,108 @@ test("wrong-day ledger entry is reported and bad day identifiers are refused", (
   assert.throws(() => exportModule.buildDayCloseFiles({
     day:"2026-02-30",orders:[],ledger:[],refunds:[],
   }),/Invalid Istanbul business date/);
+});
+
+
+test("same-day refund ledger reconciliation accepts signed or unsigned amounts but not missing entries", () => {
+  const base={
+    id:"r-1",orderNo:"ILK-REFUND-1",amount:4200n,currency:"TRY",status:"processed",
+    processedAt:new Date("2026-10-25T16:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-20T12:00:00+03:00"),
+    cumulativeProcessedAmount:4200n,historicalCurrencyMismatch:false,
+  };
+  const refundLedger=(amount,id="f-1")=>({
+    id,entryType:"refund",amount,currency:"TRY",orderNo:base.orderNo,
+    authorPublicId:"writer001",
+    createdAt:new Date("2026-10-25T16:01:00+03:00"),
+  });
+  for(const amount of [-4200n,4200n]){
+    const result=exportModule.buildDayCloseFiles({
+      day:"2026-10-25",orders:[],ledger:[refundLedger(amount)],refunds:[base],
+    });
+    assert.equal(result.manifest.refundLedgerMatchedGroups,1);
+    assert.equal(result.manifest.refundLedgerReviewGroups,0);
+    assert.ok(result.files.find(f=>f.name==="iade_ledger_mutabakat.csv")
+      .data.includes("GUNLUK_TUTAR_ESLESTI"));
+  }
+  const missing=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],refunds:[base],
+  });
+  assert.equal(missing.manifest.refundLedgerMatchedGroups,0);
+  assert.equal(missing.manifest.refundLedgerReviewGroups,1);
+  assert.ok(missing.files.find(f=>f.name==="uyarilar.csv")
+    .data.includes("DONEMDE_IADE_LEDGER_KARSILIGI_YOK"));
+  assert.equal(missing.manifest.reviewedRefundMinor,"4200",
+    "Refund validation is independent of whether its ledger was posted this day");
+});
+
+test("partial refunds on the same day match the aggregated ledger, never only first refund", () => {
+  const r1={id:"r1",orderNo:"ILK-R",amount:1200n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T11:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-24T11:00:00+03:00"),
+    cumulativeProcessedAmount:3000n,historicalCurrencyMismatch:false};
+  const r2={...r1,id:"r2",amount:1800n,
+    processedAt:new Date("2026-10-25T13:00:00+03:00")};
+  const ledger={id:"entry",entryType:"refund",orderNo:"ILK-R",
+    authorPublicId:"writer001",currency:"TRY",amount:-3000n,
+    createdAt:new Date("2026-10-25T13:02:00+03:00")};
+  const equal=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],
+    ledger:[ledger],refunds:[r1,r2]});
+  assert.equal(equal.manifest.refundLedgerMatchedGroups,1);
+  assert.ok(equal.files.find(f=>f.name==="iade_ledger_mutabakat.csv")
+    .data.includes(",2,3000,1,-3000,3000,"));
+  const wrong=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],
+    ledger:[{...ledger,amount:-2500n}],refunds:[r1,r2]});
+  assert.equal(wrong.manifest.refundLedgerReviewGroups,1);
+  assert.ok(wrong.files.find(f=>f.name==="uyarilar.csv")
+    .data.includes("IADE_LEDGER_TOPLAM_TUTARSIZ"));
+});
+
+test("ledger without same-day processed refund, missing order binding, and sign cancellation are review only", () => {
+  const common={entryType:"refund",currency:"TRY",amount:-1000n,
+    createdAt:new Date("2026-10-25T11:00:00+03:00"),
+    authorPublicId:"writer001"};
+  const result=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],refunds:[],
+    ledger:[
+      {...common,id:"other-day",orderNo:"ILK-PREV"},
+      {...common,id:"unbound",orderNo:null},
+    ]});
+  assert.equal(result.manifest.refundLedgerReviewGroups,2);
+  const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
+  assert.ok(issues.includes("DONEMDE_REFUND_LEDGER_KARSILIGI_YOK"));
+  assert.ok(issues.includes("IADE_LEDGER_SIPARIS_BAGI_YOK"));
+
+  const base={id:"r3",orderNo:"ILK-MIXED",amount:1000n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T15:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-20T11:00:00+03:00"),
+    cumulativeProcessedAmount:1000n,historicalCurrencyMismatch:false};
+  const mixed=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],
+    refunds:[base],ledger:[
+      {...common,id:"pos",orderNo:base.orderNo,amount:500n},
+      {...common,id:"neg",orderNo:base.orderNo,amount:-500n},
+    ]});
+  assert.equal(mixed.manifest.refundLedgerMatchedGroups,0);
+  assert.ok(mixed.files.find(f=>f.name==="uyarilar.csv")
+    .data.includes("IADE_LEDGER_TOPLAM_TUTARSIZ"));
+});
+
+test("cross-period refund ledger entries cannot pass same-day refund reconciliation", () => {
+  const refund={id:"r4",orderNo:"ILK-LATE",amount:1000n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T12:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-24T12:00:00+03:00"),
+    cumulativeProcessedAmount:1000n,historicalCurrencyMismatch:false};
+  const late={id:"post-next-day",entryType:"refund",
+    orderNo:refund.orderNo,authorPublicId:"writer001",currency:"TRY",
+    amount:-1000n,createdAt:new Date("2026-10-26T00:01:00+03:00")};
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[late],refunds:[refund],
+  });
+  assert.equal(result.manifest.refundLedgerMatchedGroups,0);
+  assert.equal(result.manifest.refundLedgerReviewGroups,1);
+  assert.ok(result.files.find(f=>f.name==="uyarilar.csv")
+    .data.includes("HAREKET_TARIHI_IS_GUNU_DISINDA"));
 });

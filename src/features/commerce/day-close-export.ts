@@ -132,6 +132,26 @@ export function buildDayCloseFiles(input: {
     "komisyon_kaynagi","aracilik_bps_kosullu","kupon","kontrol",
   ]];
   const issues: CsvField[][] = [["kaynak","referans","uyari","islem"]];
+  const reconciliation: CsvField[][] = [[
+    "siparis_no","beklenen_satis_brut_kurus","ledger_satis_brut_kurus",
+    "ledger_satis_brut_kayit_sayisi","basarili_tahsilat_kurus",
+    "basarili_tahsilat_sayisi","mutabakat",
+  ]];
+  // Accountants can map this neutral pre-transfer view into the actual
+  // external software template. This is NOT a fiscal document payload.
+  const preparation: CsvField[][] = [[
+    "referans_siparis_no","satis_tarihi_utc","yazar_kodu","eser",
+    "para_birimi","satis_net_kurus","satis_kdv_kurus","satis_brut_kurus",
+    "komisyon_bps","komisyon_net_ornek_kurus","aracilik_bps_kosullu",
+    "kayit_durumu","mali_belge_durumu",
+  ]];
+  const grossLedger = new Map<string, DayCloseLedger[]>();
+  for (const entry of input.ledger) {
+    if (entry.entryType !== "sale_gross" || entry.orderNo === null) continue;
+    const entries = grossLedger.get(entry.orderNo) ?? [];
+    entries.push(entry);
+    grossLedger.set(entry.orderNo, entries);
+  }
   const details = { ready: 0, review: 0, zero: 0 };
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
 
@@ -162,6 +182,17 @@ export function buildDayCloseFiles(input: {
     if (order.couponCode || order.discountAmount !== BigInt(0)) warnings.push("KUPON_VERGI_MATRAHI_INCELEME");
     if (order.status === "refunded") warnings.push("IADE_SONRASI_SIPARIS");
     const captures = order.payments.filter((payment) => payment.status === "succeeded");
+    const ledgerEntries = grossLedger.get(order.orderNo) ?? [];
+    const ledgerGross = ledgerEntries.reduce((sum,entry) => sum + entry.amount, BigInt(0));
+    const ledgerMatches = ledgerEntries.length === 1 &&
+      ledgerEntries[0].currency === order.currency &&
+      ledgerEntries[0].amount === order.originalAmount;
+    if (!ledgerMatches) warnings.push("LEDGER_BRUT_SATIS_MUTABAKATSIZ");
+    const capturedTotal = captures.reduce((sum,payment) => sum + payment.amount, BigInt(0));
+    reconciliation.push([
+      order.orderNo,order.originalAmount,ledgerGross,ledgerEntries.length,
+      capturedTotal,captures.length,ledgerMatches ? "LEDGER_KONTROLU_GECTI" : "INCELEME_GEREKLI",
+    ]);
     if (order.finalAmount > BigInt(0) &&
         (captures.length !== 1 || captures[0].amount !== order.finalAmount ||
          captures[0].currency !== order.currency)) warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
@@ -185,6 +216,19 @@ export function buildDayCloseFiles(input: {
       quote?.listVatAmount,rate?.commissionRateBps,rate?.source,
       rate?.serviceFeeRateBps,order.couponCode,review,
     ]);
+    if (review === "VERI_KONTROLU_GECTI" && quote && rate) {
+      // This is only the net commission illustration at the frozen order
+      // rate, not a platform invoice, ledger posting or tax determination.
+      const commissionPreview = (quote.listNetAmount * BigInt(rate.commissionRateBps) +
+        BigInt(5000)) / BigInt(10000);
+      preparation.push([
+        order.orderNo,order.paidAt?.toISOString() ?? null,
+        order.authorPublicId,order.workTitle,order.currency,
+        quote.listNetAmount,quote.listVatAmount,order.finalAmount,
+        rate.commissionRateBps,commissionPreview,rate.serviceFeeRateBps,
+        review,"DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
+      ]);
+    }
   }
   const movements: CsvField[][] = [[
     "hareket_id","olusturulma_utc","tur","siparis_no","yazar_kodu","para_birimi","tutar_kurus",
@@ -200,11 +244,35 @@ export function buildDayCloseFiles(input: {
     refund.id,refund.processedAt.toISOString(),refund.orderNo,refund.status,
     refund.currency,refund.amount,
   ]);
+  const fieldMap = {
+    version: "generic-accounting-map-v1",
+    status: "UNVERIFIED_VENDOR_MAPPING",
+    purpose: "External bookkeeping preparation; never issue invoices in IlkOku",
+    currencyUnit: "kurus",
+    timestamps: "UTC ISO-8601; batch grouped by Europe/Istanbul business day",
+    batchReference: "ILK-DAY-" + input.day,
+    exportFile: "muhasebe_on_hazirlik.csv",
+    referenceField: "referans_siparis_no",
+    customerLegalIdentity: "NOT_EXPORTED_MUST_BE_VERIFIED_EXTERNALLY",
+    documentType: "NOT_DETERMINED",
+    fiscalApproval: "REQUIRED_EXTERNALLY",
+    commissionField: "komisyon_net_ornek_kurus",
+    commissionNotice: "Illustration from frozen rate and sale net; never an issued service invoice",
+    optionalServiceFee: "5% rate only; applicability, VAT and document require accountant review",
+    vendors: {
+      logo: { schemaVerified: false, automaticImportReady: false },
+      mikro: { schemaVerified: false, automaticImportReady: false },
+      parasut: { schemaVerified: false, automaticImportReady: false },
+    },
+  };
   const documents = [
     { name: "siparisler.csv", data: safeCsv(sales) },
     { name: "finans_hareketleri.csv", data: safeCsv(movements) },
     { name: "iadeler.csv", data: safeCsv(refundRows) },
     { name: "uyarilar.csv", data: safeCsv(issues) },
+    { name: "mutabakat.csv", data: safeCsv(reconciliation) },
+    { name: "muhasebe_on_hazirlik.csv", data: safeCsv(preparation) },
+    { name: "alan_esleme.json", data: JSON.stringify(fieldMap,null,2)+"\n" },
   ];
   const manifest = {
     version: DAY_CLOSE_VERSION,
@@ -221,6 +289,8 @@ export function buildDayCloseFiles(input: {
     zeroAmountCount: details.zero,
     refundsCount: input.refunds.length,
     ledgerCount: input.ledger.length,
+    preparationRows: preparation.length - 1,
+    unmatchedGrossLedgerOrderCount: reconciliation.slice(1).filter(row => row[6] !== "LEDGER_KONTROLU_GECTI").length,
     checkedGrossMinor: grossMinor.toString(),
     checkedVatMinor: vatMinor.toString(),
     fileHashes: Object.fromEntries(documents.map((file) => [file.name,sha256(file.data)])),

@@ -117,12 +117,25 @@ export default async function CheckoutPreparationPage({
               <span className={styles.eyebrow}>Satın alındı</span>
               <h1>{work.title}</h1>
               <p>Bu eser için aktif erişim hakkın zaten bulunuyor.</p>
+              {entitlement.order?.orderNo ? (
+                <p>Sipariş numarası: <strong>{entitlement.order.orderNo}</strong></p>
+              ) : null}
             </div>
           </header>
 
-          <Link className={styles.action} href={returnTo}>
-            Okumaya dön
-          </Link>
+          <div className={styles.heroActions}>
+            <Link className={styles.action} href={returnTo}>
+              Okumaya dön
+            </Link>
+            {entitlement.order?.orderNo ? (
+              <Link
+                className={styles.secondaryAction}
+                href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(entitlement.order.orderNo)}
+              >
+                Sipariş ayrıntısını görüntüle
+              </Link>
+            ) : null}
+          </div>
         </div>
       </AppShell>
     );

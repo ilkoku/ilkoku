@@ -16,6 +16,23 @@
 - Gün: Europe/Istanbul 00:00–24:00. Satış paidAt, iade processedAt, günlük finans hareketi createdAt tarihine göre. Mutabakat için brüt satış ledger kayıtları sipariş bağlantısından, farklı bir günde oluşmuş olsa da okunur.
 - Sipariş numarası ILK-... dış muhasebe eşleştirme referansıdır, fatura numarası DEĞİLDİR.
 - Manifest: ILK-DAY-YYYY-MM-DD toplu işlem anahtarı; dosyaların SHA-256 değerleri.
+
+## Aynı günün iki indirimi arasında değişiklik tespiti (salt okunur)
+Önceki ve yeni gün sonu ZIP dosyaları saklanmışsa aynı Türkiye iş gününe ait olup olmadıkları ve içlerindeki dosya SHA-256 özetleri yerel olarak karşılaştırılabilir:
+
+```bash
+npm run commerce:day-close:compare -- \
+  "/dosya/yolu/ilkoku-gun-sonu-onceki.zip" \
+  "/dosya/yolu/ilkoku-gun-sonu-yeni.zip"
+```
+
+- `scripts/commerce-day-close-compare.mjs` yalnız yerel ZIP dosyalarını okur. Her arşivin ZIP içindekilerinin boyut, isim, CRC ve `manifest.fileHashes` değerlerini doğrular; farklı günlerin arşivleri karşılaştırılmaz.
+- Standart çıktıya **yalnız dosya adları, SHA-256 toplamları, değişmiş manifest sayaçları ve durum kodu** içeren JSON yazar; yazara/okura ait kayıtları veya eser metnini çıkartmaz. `IDENTICAL` / `CHANGED_REVIEW_REQUIRED` durumları vardır.
+- Çıkış kodu `0`: aynı ZIP baytları; `2`: aynı günün iki arşivi farklı (muhasebe incelemesi gerekli); `1`: kullanım hatası, farklı gün veya geçersiz/bozulmuş arşiv. Değişiklik, yeni bir iade veya geç eklenen kayıt gibi normal bir neden de taşıyabilir; araç nedenin doğruluğunu kanıtlamaz.
+- ZIP/SHA/CRC karşılaştırması *kriptografik imza değildir*. Geçmiş paketin gerçekten İlkOku tarafından üretildiğini bağımsız olarak ispatlamaz; iki dosyanın kendi iç denetim değerlerini ve içerik farklarını ölçer.
+- **Veritabanına, mali kayıtlara, banka hesabına, dış muhasebe programına veya aktif gece görevine hiçbir yazma işlemi yapılmaz.** Muhasebe fişi veya fatura da üretilmez.
+
+
 - `alan_esleme.json > sourceColumnAudit`: **İlkOku iç kaynak sütunları** ile belgelenen alanlar birbiriyle birebir kontrol edilir. Listelenen 15 sütun, `muhasebe_on_hazirlik.csv` sütunlarıyla uyuşmazsa ZIP hiç üretilmez. Bu yalnız **İlkOku şema kontrolüdür**, Logo/Mikro/Paraşüt uyumluluk sertifikası değildir.
 - Aynı JSON içindeki Logo/Mikro/Paraşüt aktarım kapıları `destinationSchemaVerified=false`, `automaticImportReady=false`, `postToVendorAllowed=false` kalır. Eksikler açık şekilde sıralanır: **seçilen ürün/sürüm**, o hesapta indirilen **resmî hedef şablon**, **kaynak-hedef sütun eşlemesi**, **mali müşavir hesap kodları**, **alıcı/cari kimliği**, **belge ve KDV işlemi onayı**, **gerçek hedefte sınanmış aktarım**. Bu onayların hiçbirini İlkOku kendi kendine veremez.
 - **Resmî kaynak kontrolü (25.10.2026):** Paraşüt: https://www.parasut.com/kullanim-kilavuzu/mevcut-verilerin-parasute-aktarilmasi (satış faturası, cari, gider ve ürün için ayrı Excel şablonları, kullanıcı hesabından indirilir); Mikro: https://apidocs.mikro.com.tr/apis/muhasebe (`MuhasebeFisKaydetV2` kayıt oluşturabilir/güncelleyebilir/silebilir; **kullanılmayacak**); Logo: https://go3.logo.com.tr/logo-ekosistem-cozumleri/collector (firmalar arası aktarım, hesap kodu eşlemesi ve kurulu ürüne bağımlı). Bunların hiçbiri İlkOku'nun genel CSV'sine doğrudan resmî muhasebe şeması onayı vermez.

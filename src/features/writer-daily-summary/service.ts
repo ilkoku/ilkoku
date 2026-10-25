@@ -41,6 +41,11 @@ type DeliveryRow = {
   status: string;
 };
 
+type DeliveryClaim =
+  | { kind: "claimed"; id: string }
+  | { kind: "duplicate" }
+  | { kind: "review" };
+
 function toNumber(value: bigint | number | string | null) {
   if (typeof value === "bigint") return Number(value);
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -297,7 +302,7 @@ async function claimDelivery(
   summaryDate: string,
   start: Date,
   end: Date,
-) {
+): Promise<DeliveryClaim> {
   const candidateId = randomUUID();
 
   await prisma.$executeRaw`
@@ -334,7 +339,7 @@ async function claimDelivery(
   const row = rows[0];
 
   if (!row) throw new Error("SUMMARY_DELIVERY_CLAIM_FAILED");
-  if (row.id === candidateId) return row.id;
+  if (row.id === candidateId) return { kind: "claimed", id: row.id };
 
   // Legacy failed rows may reflect a completed but unacknowledged SMTP send.
   // Retry only preparation errors that happened before any mail attempt.
@@ -350,10 +355,13 @@ async function claimDelivery(
         AND failureMessage LIKE 'PREPARE:%'
     `;
 
-    return updated === 1 ? row.id : null;
+    return updated === 1
+      ? { kind: "claimed", id: row.id }
+      : { kind: "duplicate" };
   }
 
-  return null;
+  if (row.status === "review") return { kind: "review" };
+  return { kind: "duplicate" };
 }
 
 async function updateDelivery(input: {
@@ -383,14 +391,16 @@ async function processWriter(
   writer: WriterRow,
   window: ReturnType<typeof parseSummaryDate>,
 ) {
-  const deliveryId = await claimDelivery(
+  const claim = await claimDelivery(
     writer.id,
     window.summaryDate,
     window.start,
     window.end,
   );
 
-  if (!deliveryId) return "duplicate" as const;
+  if (claim.kind === "review") return "review" as const;
+  if (claim.kind === "duplicate") return "duplicate" as const;
+  const deliveryId = claim.id;
 
   // A pre-send SQL failure can be retried after repair. Once email delivery
   // starts, a timeout may be ambiguous; require manual reconciliation.
@@ -510,6 +520,7 @@ export async function runWriterDailySummaries(
   const counts = {
     duplicate: 0,
     failed: 0,
+    review: 0,
     sent: 0,
     skipped: 0,
   };

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -123,7 +124,7 @@ export default async function WriterIncomePage() {
         <div className={styles.notice}>
           Komisyon (%15), uygun faturasız telifte ayrı aracılık hizmeti (%5),
           stopaj ve KDV varsayımlarını satış öncesinde karşılaştırmak için{" "}
-          <a href="/satis-erisim/kazanc-hesaplama">kazanç hesaplama örneğini</a>{" "}
+          <Link href="/satis-erisim/kazanc-hesaplama">kazanç hesaplama örneğini</Link>{" "}
           inceleyebilirsin. Bu önizleme gerçek muhasebe hareketi oluşturmaz.
         </div>
 

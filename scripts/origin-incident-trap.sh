@@ -12,7 +12,9 @@ BLOCKED=false
 CUTOVER_OBSERVED=false
 EXPECTED_COMMIT_SHA="${EXPECTED_COMMIT_SHA:-}"
 TSV="$EVIDENCE_DIR/probes.tsv"
-printf 'observed_utc\tpath\thttp_code\tcf_ray\tcurl_exit\tremote_ip\tdns_sec\ttcp_sec\ttls_sec\tttfb_sec\ttotal_sec\tserved_commit_sha\n' > "$TSV"
+# All curl timing and remote_ip fields measure GitHub runner -> Cloudflare edge,
+# never Cloudflare -> Hostinger origin. 525 origin TLS details are not exposed here.
+printf 'observed_utc\tpath\thttp_code\tcf_ray\tcurl_exit\tclient_edge_ip\tclient_edge_dns_complete_sec\tclient_edge_tcp_connected_sec\tclient_edge_tls_complete_sec\tclient_edge_ttfb_sec\tclient_edge_total_sec\tserved_commit_sha\n' > "$TSV"
 
 header_value() {
   local name="$1" path="$2"
@@ -97,6 +99,8 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     echo 'Scheduler: every 5 minutes (GitHub may delay scheduled runs).'
     echo "Sampling: ${SAMPLE_COUNT} dynamic requests spaced ${SAMPLE_INTERVAL} seconds apart, plus one sitemap request."
     echo 'A passing sample does not prove zero outages between probes.'
+    echo 'All TCP/TLS timings and client_edge_ip describe the GitHub runner to Cloudflare edge leg (curl), NOT the Cloudflare to Hostinger origin leg.'
+    echo 'HTTP 520/521/522/525 cannot be attributed to origin TLS/listener without Hostinger reverse-proxy/443 logs. First-observed served_commit_sha is NOT deploy completion.'
     echo
     echo '~~~text'
     cat "$TSV"

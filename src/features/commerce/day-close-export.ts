@@ -253,6 +253,23 @@ export function buildDayCloseFiles(input: {
     batchReference: "ILK-DAY-" + input.day,
     exportFile: "muhasebe_on_hazirlik.csv",
     referenceField: "referans_siparis_no",
+    // Canonical export columns; destination account codes and document fields
+    // must be mapped by the accountant for the selected vendor/version.
+    fields: {
+      referans_siparis_no: { source: "Order.orderNo", meaning: "external reconciliation key", required: true },
+      satis_tarihi_utc: { source: "Order.paidAt", meaning: "sale settlement date in UTC", required: true },
+      yazar_kodu: { source: "Order.author.publicId", meaning: "writer reference, not buyer tax number", required: true },
+      eser: { source: "Order.work.title", meaning: "sale item description", required: true },
+      para_birimi: { source: "Order.currency", meaning: "TRY for this profile", required: true },
+      satis_net_kurus: { source: "OrderPriceQuoteSnapshot.listNetAmount", meaning: "net list amount", required: true },
+      satis_kdv_kurus: { source: "OrderPriceQuoteSnapshot.listVatAmount", meaning: "20% VAT illustration, not declaration", required: true },
+      satis_brut_kurus: { source: "Order.finalAmount", meaning: "customer collected gross", required: true },
+      komisyon_bps: { source: "OrderCommissionRateSnapshot.commissionRateBps", meaning: "frozen commission rate", required: true },
+      komisyon_net_ornek_kurus: { source: "calculated from frozen net price and commission rate", meaning: "estimate, not posted income", required: false },
+      aracilik_bps_kosullu: { source: "OrderCommissionRateSnapshot.serviceFeeRateBps", meaning: "only eligible un-invoiced writer status; never auto-bill", required: false },
+      kayit_durumu: { source: "review flags", meaning: "technical record check, not fiscal approval", required: true },
+      mali_belge_durumu: { source: "fixed fail-closed disclaimer", meaning: "accountant review required", required: true },
+    },
     customerLegalIdentity: "NOT_EXPORTED_MUST_BE_VERIFIED_EXTERNALLY",
     documentType: "NOT_DETERMINED",
     fiscalApproval: "REQUIRED_EXTERNALLY",

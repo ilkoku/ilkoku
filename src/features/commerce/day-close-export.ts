@@ -174,6 +174,15 @@ export function buildDayCloseFiles(input: {
   day: string; orders: DayCloseOrder[]; ledger: DayCloseLedger[]; refunds: DayCloseRefund[];
   reconciliationLedger?: DayCloseLedger[];
 }) {
+  const closeStartMs = Date.parse(input.day + "T00:00:00.000+03:00");
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(input.day) ||
+      !Number.isFinite(closeStartMs) ||
+      new Date(closeStartMs + 3 * 3600000).toISOString().slice(0,10) !== input.day)
+    throw new Error("Invalid Istanbul business date");
+  const closeStart = new Date(closeStartMs);
+  const closeEnd = new Date(closeStartMs + 86400000);
+  const isOnBusinessDay = (time: Date | null | undefined) =>
+    time !== null && time !== undefined && time >= closeStart && time < closeEnd;
   const sales: CsvField[][] = [[
     "siparis_no","odeme_tarihi_utc","durum","yazar_kodu","eser",
     "para_birimi","liste_brut_kurus","indirim_kurus","tahsilat_kurus",
@@ -216,6 +225,7 @@ export function buildDayCloseFiles(input: {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
     const tax = taxDocumentFeePreview(order);
+    if (!isOnBusinessDay(order.paidAt)) warnings.push("ODEME_TARIHI_IS_GUNU_DISINDA");
     if (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
         tax.appliedServiceFeeBps === null) warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
@@ -244,7 +254,6 @@ export function buildDayCloseFiles(input: {
     // A captured payment may later become "refunded". Its original
     // completedAt is the historical capture evidence; the CURRENT status
     // alone must not erase a valid payment from an earlier day's sale.
-    const closeEnd = new Date(Date.parse(input.day + "T00:00:00.000+03:00") + 86400000);
     const isHistoricalCapture = (payment: DayCloseOrder["payments"][number]) =>
       (payment.status === "succeeded" || payment.status === "refunded") &&
       payment.completedAt !== null && payment.completedAt !== undefined &&
@@ -369,10 +378,15 @@ export function buildDayCloseFiles(input: {
   const movements: CsvField[][] = [[
     "hareket_id","olusturulma_utc","tur","siparis_no","yazar_kodu","para_birimi","tutar_kurus",
   ]];
-  for (const entry of input.ledger) movements.push([
-    entry.id,entry.createdAt.toISOString(),entry.entryType,entry.orderNo,
-    entry.authorPublicId,entry.currency,entry.amount,
-  ]);
+  for (const entry of input.ledger) {
+    if (!isOnBusinessDay(entry.createdAt))
+      issues.push(["ledger",entry.id,"HAREKET_TARIHI_IS_GUNU_DISINDA",
+        "Dönem mutabakatı incelemesi gerekli"]);
+    movements.push([
+      entry.id,entry.createdAt.toISOString(),entry.entryType,entry.orderNo,
+      entry.authorPublicId,entry.currency,entry.amount,
+    ]);
+  }
   // Ledger entryType is not an income/expense determination. Reconcile
   // daily movement totals by their exact source type and currency only.
   const byMovement = new Map<string,{ type: string; currency: string; count: number; total: bigint }>();
@@ -405,6 +419,10 @@ export function buildDayCloseFiles(input: {
     const warnings: string[] = [];
     if (refund.status !== "processed" || !refund.orderPaidAt)
       warnings.push("IADE_ORIJINAL_ODEME_DURUMU_DOGRULANAMADI");
+    if (!isOnBusinessDay(refund.processedAt))
+      warnings.push("IADE_TARIHI_IS_GUNU_DISINDA");
+    if (refund.orderPaidAt && refund.processedAt < refund.orderPaidAt)
+      warnings.push("IADE_ODEMEDEN_ONCE");
     if (!refund.orderCurrency || refund.currency !== refund.orderCurrency ||
         refund.historicalCurrencyMismatch)
       warnings.push("IADE_PARA_BIRIMI_UYUSMAZLIGI");

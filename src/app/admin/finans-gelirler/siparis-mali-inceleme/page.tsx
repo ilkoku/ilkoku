@@ -63,7 +63,7 @@ export default async function OrderAccountingReviewPage({
 
       <div className="admin-readonly-notice admin-commerce-readonly" role="status">
         <strong>Muhasebe doğrulaması bekleniyor – ödeme emri oluşturulmaz</strong>
-        <p>Buradaki %15 komisyon ve faturasız yazara özgü ayrıca %5 + KDV aracılık
+        <p>Buradaki siparişe kayıtlı komisyon ve uygun faturasız telifte ayrıca %5 + KDV aracılık
           yalnız teklif hesabıdır. Yazarın fatura, e-SMM veya gider pusulası
           uygunluğu, lisans sözleşmesi, KDV indirimi ve stopaj mali müşavir
           tarafından doğrulanmadan gerçek hakediş, beyanname ya da banka

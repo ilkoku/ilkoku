@@ -195,6 +195,10 @@ export function buildDayCloseFiles(input: {
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
   let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
   let invoiceDocumentSales = 0, gvk18DocumentSales = 0;
+  const byAuthor = new Map<string,{
+    author: string; kind: string; currency: string; count: number;
+    net: bigint; vat: bigint; gross: bigint; commission: bigint; service: bigint;
+  }>();
 
   for (const order of input.orders) {
     const warnings: string[] = [];
@@ -280,6 +284,19 @@ export function buildDayCloseFiles(input: {
       serviceFeePreviewMinor += serviceFeePreview;
       if (tax.documentKind === "gvk18_expense_receipt") gvk18DocumentSales++;
       else invoiceDocumentSales++;
+      const authorKey = [order.authorPublicId, tax.documentKind, order.currency].join("\u001f");
+      const authorGroup = byAuthor.get(authorKey) ?? {
+        author: order.authorPublicId, kind: tax.documentKind, currency: order.currency,
+        count: 0, net: BigInt(0), vat: BigInt(0), gross: BigInt(0),
+        commission: BigInt(0), service: BigInt(0),
+      };
+      authorGroup.count++;
+      authorGroup.net += quote.listNetAmount;
+      authorGroup.vat += quote.listVatAmount;
+      authorGroup.gross += order.finalAmount;
+      authorGroup.commission += commissionPreview;
+      authorGroup.service += serviceFeePreview;
+      byAuthor.set(authorKey, authorGroup);
       preparation.push([
         order.orderNo,order.paidAt?.toISOString() ?? null,
         order.authorPublicId,order.workTitle,order.currency,
@@ -289,6 +306,20 @@ export function buildDayCloseFiles(input: {
         review,"DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
       ]);
     }
+  }
+  const authorRows: CsvField[][] = [[
+    "yazar_kodu","yazar_mali_belge_turu","para_birimi","siparis_adedi",
+    "net_satis_kurus","satis_kdv_kurus","tahsilat_brut_kurus",
+    "komisyon_net_ornek_kurus","aracilik_net_ornek_kurus","mali_belge_durumu",
+  ]];
+  for (const group of [...byAuthor.values()].sort((a,b) =>
+    a.author.localeCompare(b.author) || a.kind.localeCompare(b.kind) ||
+    a.currency.localeCompare(b.currency))) {
+    authorRows.push([
+      group.author,group.kind,group.currency,group.count,
+      group.net,group.vat,group.gross,group.commission,group.service,
+      "DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI",
+    ]);
   }
   const movements: CsvField[][] = [[
     "hareket_id","olusturulma_utc","tur","siparis_no","yazar_kodu","para_birimi","tutar_kurus",
@@ -418,6 +449,7 @@ export function buildDayCloseFiles(input: {
     { name: "mutabakat.csv", data: safeCsv(reconciliation) },
     { name: "gun_sonu_ozet.csv", data: safeCsv(summary) },
     { name: "muhasebe_on_hazirlik.csv", data: safeCsv(preparation) },
+    { name: "yazar_hesap_ozeti.csv", data: safeCsv(authorRows) },
     { name: "alan_esleme.json", data: JSON.stringify(fieldMap,null,2)+"\n" },
   ];
   const manifest = {
@@ -439,6 +471,7 @@ export function buildDayCloseFiles(input: {
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,
     preparationRows: preparation.length - 1,
+    reviewedAuthorSummaryGroups: byAuthor.size,
     unmatchedGrossLedgerOrderCount: reconciliation.slice(1).filter(row => row[6] !== "LEDGER_KONTROLU_GECTI").length,
     checkedGrossMinor: grossMinor.toString(),
     checkedVatMinor: vatMinor.toString(),

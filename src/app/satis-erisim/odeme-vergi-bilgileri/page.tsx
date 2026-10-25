@@ -35,7 +35,7 @@ export default async function WriterTaxPaymentPreparationPage() {
           Bu bölüm bilgilendirme ve ön hazırlıktır. Belge türü seçimi, kimlik,
           vergi numarası veya IBAN kaydı bu sürümde alınmıyor. Vergi
           doğrulama sistemi ve güvenli saklama altyapısı tamamlanana kadar
-          gerçek ödeme talebi oluşturulamaz.
+          gerçek ödeme talebi oluşturulamaz. Bu ekran fatura veya mali belge düzenlemez.
         </div>
         <div className={styles.grid}>
           <section className={styles.panel}>
@@ -44,7 +44,7 @@ export default async function WriterTaxPaymentPreparationPage() {
             <p>Vergi mükellefiyetine uygun belge düzenleyen yazar için
               gelir ve KDV işlemleri belgenin niteliğine göre yapılır.</p>
             <div className={styles.summaryGrid}>
-              <div><span>İlkOku komisyonu</span><strong>%15 + komisyon KDV&apos;si</strong></div>
+              <div><span>İlkOku komisyonu</span><strong>Genel %15 veya özel oran + komisyon KDV&apos;si</strong></div>
               <div><span>Ek aracılık hizmet bedeli</span><strong>Yok</strong></div>
               <div><span>Yazar belgesi</span><strong>Fatura veya uygun makbuz</strong></div>
               <div><span>Stopaj</span><strong>Belge ve statüye göre</strong></div>
@@ -61,7 +61,7 @@ export default async function WriterTaxPaymentPreparationPage() {
             <p>Gider pusulasıyla ödeme talep eden kişinin ilgili mevzuata
               göre uygunluğu muhasebe tarafından değerlendirilecektir.</p>
             <div className={styles.summaryGrid}>
-              <div><span>İlkOku komisyon payı</span><strong>%15</strong></div>
+              <div><span>İlkOku komisyon payı</span><strong>Genel %15 veya özel oran</strong></div>
               <div><span>Ayrı aracılık hizmet bedeli</span><strong>%5 + KDV</strong></div>
               <div><span>Stopaj örneği</span><strong>GVK 18 uygunsa %17</strong></div>
               <div><span>Telif alış KDV&apos;si</span><strong>2 No.lu KDV koşullarına göre</strong></div>

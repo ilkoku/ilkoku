@@ -22,7 +22,7 @@ export function closedDayRange(day: string, now = new Date()) {
 }
 
 export type CsvField = string | number | bigint | null | undefined;
-export function safeCsv(rows: readonly CsvField[][]) {
+export function safeCsvDelimited(rows: readonly CsvField[][], delimiter: "," | ";") {
   const cell = (value: CsvField): string => {
     if (value === null || value === undefined) return "";
     if (typeof value === "number" || typeof value === "bigint") return String(value);
@@ -30,7 +30,19 @@ export function safeCsv(rows: readonly CsvField[][]) {
     const text = /^[\s]*[=+@-]/u.test(value) || /^[\t\r\n]/u.test(value) ? "'" + value : value;
     return '"' + text.replace(/"/gu, '""') + '"';
   };
-  return "\uFEFF" + rows.map((row) => row.map(cell).join(",")).join("\r\n") + "\r\n";
+  return "\uFEFF" + rows.map((row) => row.map(cell).join(delimiter)).join("\r\n") + "\r\n";
+}
+
+export function safeCsv(rows: readonly CsvField[][]) {
+  return safeCsvDelimited(rows, ",");
+}
+
+/** Human/accountant-facing Turkish-locale amount; exact bigint arithmetic, no floating point. */
+export function minorToTurkishLira(minor: bigint): string {
+  const sign = minor < BigInt(0) ? "-" : "";
+  const absolute = minor < BigInt(0) ? -minor : minor;
+  return sign + (absolute / BigInt(100)).toString() + "," +
+    (absolute % BigInt(100)).toString().padStart(2,"0");
 }
 
 export function sha256(value: Buffer | string) {
@@ -307,6 +319,26 @@ export function buildDayCloseFiles(input: {
       ]);
     }
   }
+  // Additional semicolon-delimited, comma-decimal worksheet for external
+  // accountant review. It is NEVER a vendor-certified import or invoice.
+  const liraWorksheet: CsvField[][] = [[
+    "siparis_no","odeme_tarihi_utc","yazar_kodu","eser","para_birimi",
+    "satis_net_tl","satis_kdv_tl","tahsilat_brut_tl","komisyon_net_ornek_tl",
+    "aracilik_net_ornek_tl","mali_belge_turu","durum",
+  ]];
+  for (const row of preparation.slice(1)) {
+    const net = row[5], vat = row[6], gross = row[7];
+    const commission = row[9], service = row[11];
+    if (typeof net !== "bigint" || typeof vat !== "bigint" ||
+        typeof gross !== "bigint" || typeof commission !== "bigint" ||
+        typeof service !== "bigint") throw new Error("Accounting worksheet missing reviewed money amount");
+    liraWorksheet.push([
+      row[0],row[1],row[2],row[3],row[4],
+      minorToTurkishLira(net),minorToTurkishLira(vat),minorToTurkishLira(gross),
+      minorToTurkishLira(commission),minorToTurkishLira(service),row[12],
+      "ON_INCELEME_FATURA_DEGIL",
+    ]);
+  }
   const authorRows: CsvField[][] = [[
     "yazar_kodu","yazar_mali_belge_turu","para_birimi","siparis_adedi",
     "net_satis_kurus","satis_kdv_kurus","tahsilat_brut_kurus",
@@ -394,6 +426,15 @@ export function buildDayCloseFiles(input: {
     timestamps: "UTC ISO-8601; batch grouped by Europe/Istanbul business day",
     batchReference: "ILK-DAY-" + input.day,
     exportFile: "muhasebe_on_hazirlik.csv",
+    localeWorksheet: {
+      file: "muhasebe_tl_inceleme.csv",
+      delimiter: ";",
+      decimalSeparator: ",",
+      thousandsSeparator: "none",
+      amountUnit: "TRY major units (2 decimal places)",
+      status: "ACCOUNTANT_REVIEW_ONLY_NOT_VENDOR_CERTIFIED",
+      source: "only reviewed rows from muhasebe_on_hazirlik.csv",
+    },
     referenceField: "referans_siparis_no",
     // Canonical export columns; destination account codes and document fields
     // must be mapped by the accountant for the selected vendor/version.
@@ -450,6 +491,7 @@ export function buildDayCloseFiles(input: {
     { name: "gun_sonu_ozet.csv", data: safeCsv(summary) },
     { name: "muhasebe_on_hazirlik.csv", data: safeCsv(preparation) },
     { name: "yazar_hesap_ozeti.csv", data: safeCsv(authorRows) },
+    { name: "muhasebe_tl_inceleme.csv", data: safeCsvDelimited(liraWorksheet,";") },
     { name: "alan_esleme.json", data: JSON.stringify(fieldMap,null,2)+"\n" },
   ];
   const manifest = {
@@ -471,6 +513,7 @@ export function buildDayCloseFiles(input: {
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,
     preparationRows: preparation.length - 1,
+    liraWorksheetRows: liraWorksheet.length - 1,
     reviewedAuthorSummaryGroups: byAuthor.size,
     unmatchedGrossLedgerOrderCount: reconciliation.slice(1).filter(row => row[6] !== "LEDGER_KONTROLU_GECTI").length,
     checkedGrossMinor: grossMinor.toString(),

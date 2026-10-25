@@ -79,7 +79,7 @@ export default async function ReaderPaymentHistoryPage() {
             {orders.map((order) => (
               <article className={styles.paymentHistoryCard} key={order.id}>
                 <div>
-                  <span className={styles.eyebrow}>{order.orderNo}</span>
+                  <span className={styles.eyebrow}>Sipariş No: {order.orderNo}</span>
                   <h2>{order.work.title}</h2>
                   <p>{formatDate(order.paidAt ?? order.createdAt)}</p>
                 </div>

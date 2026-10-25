@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ContentShell } from "@/components/content/ContentShell";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { requireCmsManager } from "@/lib/cms-access";
+import "../admin/admin.css";
 import "./content.css";
 import "./dashboard.css";
 import "./revision.css";
@@ -29,6 +31,16 @@ export default async function ContentLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const access = await requireCmsManager("/icerik");
   const user = access.user!;
+
+  if (access.isAdmin) {
+    return (
+      <AdminShell embeddedWorkspace user={{ email: user.email, fullName: user.displayName || user.fullName }}>
+        <ContentShell embedded isAdmin user={{ email: user.email, fullName: user.displayName || user.fullName }}>
+          {children}
+        </ContentShell>
+      </AdminShell>
+    );
+  }
 
   return (
     <ContentShell

@@ -110,30 +110,30 @@ export default async function ContractTemplateLibraryPage({
         <p>{visibleTemplates.length} kayıt gösteriliyor.</p>
       </section>
 
-      <section className="contract-library-grid" aria-label="Sözleşme şablonları">
-        {visibleTemplates.map((template) => (
-          <article className="contract-library-card" data-status={template.lifecycleStatus} key={template.id}>
-            <div className="contract-library-card__top">
-              <span data-status={template.lifecycleStatus}>{lifecycleLabels[template.lifecycleStatus]}</span>
-              <small>{roleLabels[template.targetRole]} · v{template.version}</small>
-            </div>
-            <div>
-              <h2>{template.title}</h2>
-              <p>{template.description ?? "Açıklama yok"}</p>
-            </div>
-            <dl>
-              <div><dt>Şablon kodu</dt><dd><code>{template.code}</code></dd></div>
-              <div><dt>Kaynak</dt><dd>{template.sourceTemplateCode ?? "Manuel oluşturuldu"}</dd></div>
-              <div><dt>Son güncelleme</dt><dd>{formatDate(template.updatedAt)}</dd></div>
-            </dl>
-            <footer>
-              {template.sourceTemplateId ? (
-                <Link href={`/sozlesme/sablonlar/${template.sourceTemplateId}`}>Soft kaynağı aç</Link>
-              ) : <span />}
-              <Link href={`/sozlesme/sablonlar/${template.id}`}>Çalışma masasını aç →</Link>
-            </footer>
-          </article>
-        ))}
+      <section className="contract-library-table-section" aria-label="Sözleşme şablonları">
+        <div className="contract-table-wrap contract-list-table">
+          <table>
+            <thead><tr><th>Şablon</th><th>Durum</th><th>Hedef rol</th><th>Sürüm</th><th>Kod / Kaynak</th><th>Son güncelleme</th><th>İşlemler</th></tr></thead>
+            <tbody>
+              {visibleTemplates.map((template) => (
+                <tr key={template.id}>
+                  <td><strong>{template.title}</strong><small>{template.description ?? "Açıklama yok"}</small></td>
+                  <td><span className="contract-row-state" data-state={template.lifecycleStatus}>{lifecycleLabels[template.lifecycleStatus]}</span></td>
+                  <td>{roleLabels[template.targetRole]}</td>
+                  <td>v{template.version}</td>
+                  <td><code>{template.code}</code><small>{template.sourceTemplateCode ?? "Manuel oluşturuldu"}</small></td>
+                  <td><time dateTime={template.updatedAt.toISOString()}>{formatDate(template.updatedAt)}</time></td>
+                  <td>
+                    <div className="contract-row-actions">
+                      {template.sourceTemplateId ? <Link href={`/sozlesme/sablonlar/${template.sourceTemplateId}`}>Soft kaynağı</Link> : null}
+                      <Link href={`/sozlesme/sablonlar/${template.id}`}>Çalışma masasını aç →</Link>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {visibleTemplates.length === 0 ? (

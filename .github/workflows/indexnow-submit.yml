@@ -23,6 +23,7 @@ on:
       - "src/lib/public-site-navigation.ts"
       - "src/lib/public-brand.ts"
       - "src/lib/public-page-metadata.ts"
+      - "src/lib/soft-launch-search-policy.ts"
       - "src/lib/site-contact.ts"
       - "public/**"
       - "scripts/prepare-indexnow-payload.mjs"
@@ -64,8 +65,8 @@ jobs:
           fi
 
           if [[ "$EVENT_NAME" == "schedule" ]]; then
-            echo "__BOOK_INDEX__" > /tmp/indexnow-changed-files.txt
-            echo "Scheduled run: refresh currently published Book Index URLs only."
+            echo "__RECENT_PUBLIC__" > /tmp/indexnow-changed-files.txt
+            echo "Scheduled run: refresh recently changed sitemap URLs and published Book Index URLs."
             exit 0
           fi
 
@@ -127,7 +128,7 @@ jobs:
           URL_COUNT="$(node -e 'const fs=require("node:fs"); const payload=JSON.parse(fs.readFileSync("/tmp/indexnow.json","utf8")); process.stdout.write(String(payload.urlList.length));')"
 
           if [[ "$URL_COUNT" == "0" ]]; then
-            echo "PASS: This push did not affect a public URL currently present in the production sitemap."
+            echo "SKIP: No eligible public URLs for this run; no IndexNow POST was sent."
             exit 0
           fi
 

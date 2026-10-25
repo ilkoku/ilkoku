@@ -50,6 +50,8 @@ test("homepage and all writing education routes stay canonical indexable and sit
   assertContains(sitemap, "const writingGenreHrefs = GENRES.map((genre)", "genre sitemap generation");
   assertContains(sitemap, "...writingEducationEntries", "writing education static sitemap inclusion");
   assertContains(sitemap, "...writingGenreHrefs", "writing genre CMS duplicate guard");
+  assertContains(sitemap, "${baseUrl}/yazarlar-icin/cizgi-anlati/webtoon", "Webtoon required sitemap discovery guard");
+  assertContains(sitemap, "dedupeSitemapEntries", "sitemap URL deduplication guard");
   assertContains(sitemap, "...WRITING_CATEGORY_HUBS.map((hub) => hub.href)", "writing category CMS duplicate guard");
 
   assertContains(metadataHelper, "openGraph: {", "shared metadata emits Open Graph");
@@ -146,8 +148,18 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assert.equal(
     (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,
-    2,
-    "writing hubs and writing guides must both expose the truthful internal-link content update",
+    1,
+    "unchanged writing hubs preserve the October 4 content update",
+  );
+  assert.equal(
+    (sitemap.match(/lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/g) ?? []).length,
+    1,
+    "all 85 guide entries reflect their October 18 visible related-link update",
+  );
+  assertContains(
+    sitemap,
+    'WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z")',
+    "writing guides use the truthful PR #1789 release date",
   );
   assertContains(
     searchFreshness,
@@ -176,8 +188,8 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    "const RECENT_ENTRY_LIMIT = 50",
-    "Atom feed bounded recent-entry cap",
+    "const RECENT_ENTRY_LIMIT = 150",
+    "Atom feed bounded recent-entry cap with current 129-URL sitemap coverage",
   );
   assertContains(
     recentUpdatesAtom,
@@ -199,6 +211,17 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     ".slice(0, RECENT_ENTRY_LIMIT)",
     "Atom feed keeps only the bounded most-recent indexable URLs",
   );
+  // The public writing program has 85 genres; the old limit of 50 silently
+  // dropped 50 writing guides from the feed even while sitemap listed them.
+  const guideDefinitions = source("src/lib/genres.ts");
+  const guideCount = [...guideDefinitions.matchAll(/\{ slug: "[^"]+", label: "[^"]+", category: "[^"]+" \}/gu)].length;
+  const atomEntryLimit = Number(recentUpdatesAtom.match(/RECENT_ENTRY_LIMIT = ([0-9]+)/u)?.[1]);
+  assert.equal(guideCount, 85, "public writing guide inventory size");
+  assert.ok(atomEntryLimit >= guideCount, "Atom cap must cover all currently live writing guide URLs");
+  assert.ok(atomEntryLimit >= 129, "Atom window must cover the observed live sitemap size");
+  assertContains(recentUpdatesAtom, ".sort((a, b) => {", "preserve truthful freshness sorting");
+  assertContains(recentUpdatesAtom, "normalizeLastModified(entry.lastModified)", "preserve sitemap-derived lastmod");
+
   assertNotContains(
     recentUpdatesAtom,
     "WHERE namespace = 'education_guide'",
@@ -221,13 +244,23 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assertContains(
     recentUpdatesAtom,
-    'request.headers.get("if-none-match") === etag',
+    'const ifNoneMatch = request.headers.get("if-none-match");',
     "Atom feed If-None-Match conditional response",
   );
   assertContains(
     recentUpdatesAtom,
     'request.headers.get("if-modified-since")',
     "Atom feed If-Modified-Since conditional response",
+  );
+  assertContains(
+    recentUpdatesAtom,
+    "if (!ifNoneMatch && ifModifiedSince)",
+    "Atom must give If-None-Match precedence over If-Modified-Since",
+  );
+  assertNotContains(
+    recentUpdatesAtom,
+    "if (ifModifiedSince) {",
+    "Atom must never emit a stale 304 after a nonmatching ETag",
   );
   assertContains(
     recentUpdatesAtom,
@@ -391,16 +424,25 @@ test("all writing guide renderers expose organization-authored Article structure
   const fiction = source("src/components/content/BatchedFictionGuidePage.tsx");
   const story = source("src/app/yazarlar-icin/kurgu/oyku/page.tsx");
 
+  const layout = source("src/app/layout.tsx");
+  assertContains(layout, '"@id": `${baseUrl}/#organization`', "root defines the complete Organization entity");
+  assertContains(layout, "name: publicBrandName", "root organization retains a declared name");
+
   for (const [label, guide] of [
     ["batched education", education],
     ["batched fiction", fiction],
     ["story", story],
   ]) {
     assertContains(guide, '"@type": "Article"', `${label} Article schema`);
-    assertContains(guide, 'name: "İlkOku"', `${label} organization author name`);
     assertContains(guide, 'author: {', `${label} author relation`);
     assertContains(guide, 'publisher: {', `${label} publisher relation`);
     assertContains(guide, '"@id": "https://ilkoku.com/#organization"', `${label} organization identity`);
+    if (label === "batched fiction") {
+      assertContains(guide, 'name: "İlkOku"', "untouched batched fiction author remains explicit");
+    } else {
+      assertContains(guide, 'author: { "@id": "https://ilkoku.com/#organization" }', `${label} author refers to root entity`);
+      assertContains(guide, 'publisher: { "@id": "https://ilkoku.com/#organization" }', `${label} publisher refers to root entity`);
+    }
   }
 
   assertContains(education, 'mainEntity: { "@id": `${canonicalUrl}#article` }', "education WebPage to Article relation");
@@ -434,4 +476,17 @@ test("Roman guide uses the shared public metadata contract instead of inheriting
   assertContains(helper, "noIndex = false", "shared metadata defaults to indexable");
   assertContains(helper, "index: true", "shared metadata emits index");
   assertContains(helper, "follow: true", "shared metadata emits follow");
+});
+
+
+test("Five bespoke fiction guides use responsive CMS image optimization without visual template changes", () => {
+  const common = source("src/components/content/PublicCmsPageBlocks.tsx");
+  assertContains(common, 'unoptimizedImages = false', "responsive optimizer remains the default");
+  assertContains(common, 'fill sizes="100vw"', "original responsive image area preserved");
+  assertContains(common, 'alt={block.alt}', "CMS image alt text preserved");
+  for (const slug of ["novella", "oyku", "fantastik", "bilim-kurgu", "distopya"]) {
+    const route = source(`src/app/yazarlar-icin/kurgu/${slug}/page.tsx`);
+    assertContains(route, "<PublicCmsPageBlocks", `${slug} reuses existing visual template`);
+    assertNotContains(route, "unoptimizedImages", `${slug} CMS PNGs must use optimized delivery`);
+  }
 });

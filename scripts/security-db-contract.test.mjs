@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { randomUUID } from "node:crypto";
 import mysql from "mysql2/promise";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -234,5 +235,59 @@ test("unique active key permits only one concurrent insert", async () => {
     );
   } finally {
     await dropTable(table);
+  }
+});
+
+test("CMS media Work reference SQL blocks relative, absolute and query-suffixed cover deletion", async () => {
+  const client = await connection();
+  const authorId = randomUUID();
+  const workId = randomUUID();
+  const mediaId = randomUUID();
+  const mediaUrl = `/api/media/${mediaId}`;
+  const variants = [mediaUrl, `https://ilkoku.com${mediaUrl}`, `https://www.ilkoku.com${mediaUrl}`];
+  const referenceQuery = `
+    SELECT COUNT(*) AS total FROM \`Work\`
+    WHERE coverUrl = ? OR coverUrl LIKE CONCAT(?, '?%')
+       OR coverUrl = ? OR coverUrl LIKE CONCAT(?, '?%')
+       OR coverUrl = ? OR coverUrl LIKE CONCAT(?, '?%')
+  `;
+  const referenceParams = variants.flatMap((url) => [url, url]);
+  try {
+    await client.beginTransaction();
+    await client.execute(
+      `INSERT INTO \`User\`
+        (id, publicId, email, passwordHash, fullName, role, status,
+         emailVerified, termsAcceptedAt, lastLoginAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'ci-only', 'Media Cover CI Test', 'writer', 'active',
+               NOW(3), NOW(3), NOW(3), NOW(3), NOW(3))`,
+      [authorId, `CIMEDIAUSER${mediaId.slice(0, 9)}`, `ci-media-${authorId}@example.invalid`],
+    );
+    await client.execute(
+      `INSERT INTO \`Work\`
+        (id, publicId, authorId, title, slug, coverUrl, status, visibility, isActive, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'CI Work Cover Test', ?, ?, 'draft', 'private', true, NOW(3), NOW(3))`,
+      [workId, `CIMEDIAWORK${mediaId.slice(0, 9)}`, authorId, `ci-media-work-${workId}`, mediaUrl],
+    );
+
+    for (const coverUrl of [mediaUrl, `https://ilkoku.com${mediaUrl}?variant=preview`, `https://www.ilkoku.com${mediaUrl}`]) {
+      await client.execute("UPDATE \`Work\` SET coverUrl = ? WHERE id = ?", [coverUrl, workId]);
+      const [countRows] = await client.execute(referenceQuery, referenceParams);
+      assert.equal(Number(countRows[0].total), 1, "draft work cover variant must block archival");
+    }
+
+    const [inventory] = await client.execute(
+      `SELECT coverUrl FROM \`Work\`
+       WHERE coverUrl LIKE '/api/media/%'
+          OR coverUrl LIKE 'https://ilkoku.com/api/media/%'
+          OR coverUrl LIKE 'https://www.ilkoku.com/api/media/%'`,
+    );
+    assert.ok(inventory.some((row) => row.coverUrl === `https://www.ilkoku.com${mediaUrl}`));
+
+    await client.execute("UPDATE \`Work\` SET coverUrl = NULL WHERE id = ?", [workId]);
+    const [unreferenced] = await client.execute(referenceQuery, referenceParams);
+    assert.equal(Number(unreferenced[0].total), 0, "an unreferenced media URL is not a work cover");
+  } finally {
+    await client.rollback();
+    await client.end();
   }
 });

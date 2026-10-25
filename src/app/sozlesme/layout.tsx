@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ContractManagementNavigation } from "@/features/contracts/ContractManagementNavigation";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import "../admin/admin.css";
 import "./sozlesme.css";
 import "./navigation.css";
 import "./template-library.css";
@@ -9,6 +10,7 @@ import "./assignment-workbench.css";
 import "./tracking.css";
 import "./review-readiness.css";
 import "./review-evidence.css";
+import "./operations-table-layout.css";
 
 export const metadata: Metadata = {
   title: "Sözleşme Yönetimi | İlkOku",
@@ -37,9 +39,8 @@ export default async function ContractManagementLayout({
   }
 
   return (
-    <div className="contract-management-shell">
-      <ContractManagementNavigation />
-      <div className="contract-management-content">{children}</div>
-    </div>
+    <AdminShell embeddedWorkspace user={{ email: user.email, fullName: user.displayName || user.fullName }}>
+      {children}
+    </AdminShell>
   );
 }

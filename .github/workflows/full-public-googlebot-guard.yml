@@ -19,7 +19,9 @@ jobs:
   verify:
     name: Verify current public sitemap URLs with diagnostic crawler
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    # Current live sitemap has 129 URLs. Pacing alone costs 129 * 10s = 21.5 minutes.
+    # 12 minutes made every complete diagnostic impossible; allow bounded HTTP overhead.
+    timeout-minutes: 40
 
     steps:
       - name: Validate explicit confirmation
@@ -37,6 +39,7 @@ jobs:
           # IP-based and must be verified from Google crawler ranges in origin logs.
           USER_AGENT="IlkOku-Public-Crawler-Guard/1.0 (+https://ilkoku.com)"
           REQUEST_DELAY_SECONDS=10
+          MAX_DIAGNOSTIC_URLS=150
 
           normalize_url() {
             local value="$1"
@@ -104,6 +107,11 @@ jobs:
           (( ${#sitemap_urls[@]} > 0 )) || { echo "FAIL: sitemap contains no URLs" >&2; exit 1; }
 
           echo "Current public sitemap URLs: ${#sitemap_urls[@]}"
+          # Fail closed if site expansion would make this manually initiated probe too expensive.
+          (( ${#sitemap_urls[@]} <= MAX_DIAGNOSTIC_URLS )) || {
+            echo "FAIL: ${#sitemap_urls[@]} sitemap URLs exceed manual guard budget (${MAX_DIAGNOSTIC_URLS})." >&2
+            exit 1
+          }
 
           for url in "${sitemap_urls[@]}"; do
             [[ "$url" == https://ilkoku.com/* ]] || { echo "FAIL: unexpected sitemap origin: $url" >&2; exit 1; }

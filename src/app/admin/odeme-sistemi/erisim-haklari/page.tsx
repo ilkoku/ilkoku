@@ -214,7 +214,14 @@ export default async function CommerceEntitlementsPage({
                       >
                         {statusLabels[entitlement.status]}
                       </span>
-                      <small>{sourceLabels[entitlement.source]}</small>
+                      <small>
+                        {sourceLabels[
+                          entitlement.source === "purchase" &&
+                          entitlement.order?.couponCodeSnapshot
+                            ? "coupon"
+                            : entitlement.source
+                        ]}
+                      </small>
                     </td>
                     <td>
                       <strong>{entitlement.work.title}</strong>

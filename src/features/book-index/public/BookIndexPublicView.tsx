@@ -15,7 +15,6 @@ import type {
 
 import { BookIndexRankTable } from "./BookIndexRankTable";
 import { BookIndexSectionNav } from "./BookIndexSectionNav";
-import { BookIndexSourceComparison } from "./BookIndexSourceComparison";
 import styles from "./BookIndexPublicView.module.css";
 
 function latestObservedAt(model: BookIndexPublicReadModel) {
@@ -50,11 +49,6 @@ export function BookIndexOverviewView({
   const observedAt = latestObservedAt(model);
   const observedAtLabel = formattedObservedAt(observedAt);
   const currentYear = new Date().getFullYear();
-  const turkeySourceCount = new Set(
-    model.turkey.items.flatMap((row) =>
-      row.sources.map((source) => source.sourceCode),
-    ),
-  ).size;
 
   return (
     <main className={styles.page}>
@@ -77,13 +71,10 @@ export function BookIndexOverviewView({
       </header>
 
       <section className={`${styles.cards} ${styles.scopeCards}`} aria-label="Endeks kapsamı">
-        <Link
-          className={styles.card}
-          href="/en-cok-satanlar/turkiye/karsilastirma"
-        >
+        <Link className={styles.card} href="/en-cok-satanlar/turkiye">
           <span>Türkiye Çok Satan Listeleri</span>
-          <strong>En Çok Satanlar Karşılaştırma</strong>
-          <small>{turkeySourceCount} kitap satış kanalından 2–4 tanesini yan yana karşılaştır.</small>
+          <strong>Türkiye’de en çok satan kitapları incele</strong>
+          <small>Kitap satış kanallarının kendi sıralamalarıyla tam listeyi görüntüle.</small>
         </Link>
         <Link className={styles.card} href="/yeni-cikanlar">
           <span>Yeni Çıkanlar</span>
@@ -202,66 +193,6 @@ export function TurkeyBookIndexView({
           Aynı eser aynı sırada birden fazla kitap satış kanalında görünüyorsa kanal adları aynı
           satırda birlikte yazılır; eser farklı bir kitap satış kanalında farklı sıradaysa
           ayrı bir satır olarak yeniden görünür.
-        </p>
-      </section>
-    </main>
-  );
-}
-
-
-export function TurkeyBookIndexComparisonView({
-  model,
-}: {
-  model: BookIndexPublicReadModel;
-}) {
-  const observedAt = latestObservedAt(model);
-  const observedAtLabel = formattedObservedAt(observedAt);
-
-  return (
-    <main className={styles.page}>
-      <BookIndexSectionNav current="comparison" showAnalysis={false} />
-      <header className={`${styles.hero} ${styles.turkeyHero}`}>
-        <span className={styles.eyebrow}>İlkOku Kitap Endeksi · Türkiye</span>
-        <h1>En Çok Satanlar Karşılaştırma</h1>
-        <p>
-          Türkiye&apos;deki kitap satış kanallarının en çok satanlar listelerini
-          yan yana karşılaştır. İki, üç veya dört kitap satış kanalı seçerek aynı sıra
-          numarasında hangi kitapların yer aldığını görebilirsin.
-        </p>
-        {observedAt && observedAtLabel ? (
-          <p className={styles.freshness}>
-            Son veri güncellemesi:{" "}
-            <time dateTime={observedAt.toISOString()}>{observedAtLabel}</time>
-          </p>
-        ) : null}
-      </header>
-
-      <BookIndexSectionNav current="comparison" showPrimary={false} />
-
-      <section className={styles.section} id="karsilastirma">
-        <div className={styles.sectionHeading}>
-          <div>
-            <span className={styles.eyebrow}>En Çok Satanlar Karşılaştırma</span>
-            <h2>Kitap satış kanallarını yan yana karşılaştır</h2>
-            <p>
-              İki, üç veya dört kitap satış kanalı seç. Her kanalın kendi sıra
-              numarası korunur; İlkOku yeni bir ortak sıra veya puan üretmez.
-            </p>
-          </div>
-        </div>
-        <BookIndexSourceComparison rows={model.turkey.items} />
-      </section>
-
-      <section className={styles.explainer} aria-labelledby="comparison-methodology">
-        <span className={styles.eyebrow}>Nasıl karşılaştırılıyor?</span>
-        <h2 id="comparison-methodology">En çok satanlar karşılaştırması neyi gösterir?</h2>
-        <p>
-          Her sütun seçtiğin kitap satış kanalının kendi çok satan listesini gösterir.
-          Aynı sıra numarasında farklı kitap satış kanallarında farklı kitaplar bulunabilir.
-        </p>
-        <p>
-          Bu görünüm satış adedi açıklamaz ve İlkOku tarafından oluşturulmuş
-          birleşik bir sıralama değildir.
         </p>
       </section>
     </main>

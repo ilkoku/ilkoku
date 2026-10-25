@@ -85,6 +85,7 @@ export function PublisherDashboard({ data }: { data: PublisherWorkspaceData }) {
                 <dl>
                   <div><dt>Durum</dt><dd data-status={submission.status}>{statusLabel[submission.status]}</dd></div>
                   <div><dt>Editör</dt><dd>{submission.editorReviewStatus}</dd></div>
+                  <div><dt>Satış modeli</dt><dd title={submission.work.saleDisclosure.detail}>{submission.work.saleDisclosure.label}</dd></div>
                   <div><dt>Sözleşme</dt><dd>{submission.contractStatus || "Yok"}</dd></div>
                   <div><dt>Yayın planı</dt><dd>{submission.publicationPlanStatus || "Yok"}</dd></div>
                   <div><dt>Başvuru</dt><dd>{formatDate(submission.submittedAt)}</dd></div>

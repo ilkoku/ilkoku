@@ -354,7 +354,6 @@ export default async function NovellaYazarlikRehberiPage() {
           eyebrow="Yazarlar İçin · Kurgu"
           pageTitle={title}
           summary={summary}
-          unoptimizedImages
         />
       </div>
       </WritingGuideShell>

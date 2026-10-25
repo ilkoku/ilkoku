@@ -520,6 +520,13 @@ export async function getWriterFinanceOverview(authorId: string) {
           status: true,
           paidAt: true,
           refundedAt: true,
+          commissionRateSnapshot: {
+            select: {
+              commissionRateBps: true,
+              source: true,
+              calculationVersion: true,
+            },
+          },
           work: {
             select: {
               id: true,
@@ -546,6 +553,7 @@ export async function getWriterFinanceOverview(authorId: string) {
           saleConfiguration: {
             select: {
               priceAmount: true,
+              priceTaxTreatment: true,
               currency: true,
               status: true,
             },
@@ -583,6 +591,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       taxWithholding: bigint;
       adjustments: bigint;
       priceAmount: bigint | null;
+      priceTaxTreatment: string;
       currency: string;
       saleStatus: "draft" | "ready" | "active" | "paused";
       unitsSold: number;
@@ -606,6 +615,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       taxWithholding: BigInt(0),
       adjustments: BigInt(0),
       priceAmount: configuration.priceAmount,
+      priceTaxTreatment: configuration.priceTaxTreatment,
       currency: configuration.currency,
       saleStatus: configuration.status,
       unitsSold: work._count.commerceOrders,
@@ -658,4 +668,107 @@ export async function getWriterFinanceOverview(authorId: string) {
     ),
     recentOrders: orders,
   };
+}
+
+
+/**
+ * Admin-only UI consumers are guarded by the /admin layout.
+ * This query has no mutation, no tax-status inference and no payment action.
+ */
+export async function getOrderAccountingReviewSource(orderNo: string) {
+  if (!/^ILK-[A-Z0-9-]{4,36}$/u.test(orderNo)) return null;
+  const order = await prisma.order.findUnique({
+    where: { orderNo },
+    select: {
+      id: true,
+      orderNo: true,
+      authorId: true,
+      status: true,
+      createdAt: true,
+      paidAt: true,
+      refundedAt: true,
+      currency: true,
+      originalAmount: true,
+      discountAmount: true,
+      finalAmount: true,
+      couponCodeSnapshot: true,
+      work: { select: { title: true } },
+      author: {
+        select: {
+          displayName: true,
+          fullName: true,
+          publicId: true,
+          taxReviewsAsWriter: {
+            orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+            take: 1,
+            select: {
+              documentKind: true,
+              decision: true,
+              reviewedAt: true,
+              validUntil: true,
+            },
+          },
+        },
+      },
+      legalSnapshot: { select: { sellerMode: true, sellerName: true } },
+      commissionRateSnapshot: {
+        select: {
+          commissionRateBps: true,
+          serviceFeeRateBps: true,
+          source: true,
+          sourceEventId: true,
+          calculationVersion: true,
+        },
+      },
+      priceQuoteSnapshot: {
+        select: {
+          calculationVersion: true,
+          taxTreatment: true,
+          vatRateBasisPoints: true,
+          listNetAmount: true,
+          listVatAmount: true,
+          listGrossAmount: true,
+          discountGrossAmount: true,
+          payableGrossAmount: true,
+        },
+      },
+      payments: {
+        select: { status: true, amount: true, currency: true },
+      },
+      // A partial refund can leave Order.status=paid and refundedAt=null.
+      // Any active refund workflow must block a full author payout preview.
+      refunds: {
+        where: { status: { in: ["requested", "approved", "processing", "processed"] } },
+        take: 1,
+        select: { status: true },
+      },
+      financialLedgerEntries: {
+        select: { entryType: true, amount: true, idempotencyKey: true },
+      },
+    },
+  });
+  if (!order) return null;
+  // Reproduce day-close's tax status at payment, not latest staff entry today.
+  const taxReviewAtPayment = order.paidAt ? await prisma.authorTaxReviewEvent.findFirst({
+    where: { authorId: order.authorId, reviewedAt: { lte: order.paidAt } },
+    orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
+    select: { documentKind: true, decision: true, reviewedAt: true, validUntil: true },
+  }) : null;
+  return { ...order, taxReviewAtPayment };
+}
+
+export async function listRecentOrderAccountingReviews() {
+  return prisma.order.findMany({
+    where: { status: { in: ["paid", "refunded"] } },
+    take: 25,
+    orderBy: { createdAt: "desc" },
+    select: {
+      orderNo: true,
+      status: true,
+      finalAmount: true,
+      currency: true,
+      work: { select: { title: true } },
+      priceQuoteSnapshot: { select: { taxTreatment: true } },
+    },
+  });
 }

@@ -1,0 +1,579 @@
+/* Shared communications / contracts layout: page-scoped only.
+   Keep legal text, mail dispatch and approval behavior intact. */
+@media screen {
+  .contract-admin-page,
+  .contract-template-library-page,
+  .contract-soft-page,
+  .contract-review-page,
+  .contract-legal-pack-page {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 0;
+    padding: 1.1rem clamp(.8rem, 2vw, 1.6rem) 2.2rem;
+    display: grid;
+    align-content: start;
+    gap: .8rem;
+  }
+
+  .contract-admin-hero,
+  .contract-subpage-header,
+  .contract-library-hero,
+  .contract-soft-page__header,
+  .contract-legal-pack-header {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 1.15rem 1.3rem;
+    border-radius: 14px;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: none;
+  }
+
+  .contract-admin-hero h1,
+  .contract-subpage-header h1,
+  .contract-library-hero h1,
+  .contract-soft-page__header h1,
+  .contract-legal-pack-header h1 {
+    font-size: clamp(1.35rem, 2.1vw, 1.8rem);
+    line-height: 1.2;
+    letter-spacing: -.02em;
+  }
+
+  .contract-admin-hero > div > p:last-child,
+  .contract-subpage-header > div > p:last-child,
+  .contract-library-hero > div > p:last-child,
+  .contract-soft-page__header > div > p:last-child,
+  .contract-legal-pack-header > div > p:last-child {
+    max-width: 78ch;
+    margin: .45rem 0 0;
+    font-size: .74rem;
+    line-height: 1.5;
+  }
+
+  .contract-admin-hero nav a,
+  .contract-subpage-header > a,
+  .contract-library-hero > a,
+  .contract-soft-page__header > a,
+  .contract-legal-pack-actions > a {
+    min-height: 2.25rem;
+    padding: .4rem .7rem;
+    font-size: .69rem;
+    border-radius: .6rem;
+  }
+
+  .contract-metrics,
+  .contract-library-summary,
+  .contract-soft-summary,
+  .contract-review-summary,
+  .contract-legal-pack-summary {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 0;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid #d8d0c4;
+    border-radius: .8rem;
+    background: #fffdf9;
+  }
+
+  .contract-metrics article,
+  .contract-library-summary article,
+  .contract-soft-summary article,
+  .contract-review-summary article,
+  .contract-legal-pack-summary article {
+    box-sizing: border-box;
+    min-width: 0;
+    margin: 0;
+    padding: .7rem .85rem;
+    border: 0;
+    border-right: 1px solid #e7e0d7;
+    border-bottom: 1px solid #e7e0d7;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .contract-metrics article strong,
+  .contract-library-summary article strong,
+  .contract-soft-summary article strong,
+  .contract-review-summary article strong,
+  .contract-legal-pack-summary article strong {
+    display: block;
+    margin: 0;
+    font-size: clamp(1.12rem, 1.8vw, 1.5rem);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .contract-metrics article span,
+  .contract-library-summary article span,
+  .contract-soft-summary article span,
+  .contract-review-summary article span,
+  .contract-legal-pack-summary article span {
+    display: block;
+    margin-top: .3rem;
+    font-size: .64rem;
+    line-height: 1.35;
+  }
+
+  .contract-admin-section,
+  .contract-send-card,
+  .contract-library-controls,
+  .contract-review-owner-decisions,
+  .contract-review-warning,
+  .contract-legal-pack-boundary,
+  .contract-soft-legal-note {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: .9rem 1rem;
+    border-radius: .8rem;
+    box-shadow: none;
+  }
+
+  .contract-card-heading {
+    margin-bottom: .65rem;
+    gap: .75rem;
+  }
+
+  .contract-card-heading h2,
+  .contract-review-owner-decisions h2 {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .contract-section-copy {
+    margin: 0 0 .65rem;
+    max-width: 115ch;
+    font-size: .71rem;
+    line-height: 1.5;
+  }
+
+  .contract-list-table {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid #e5ded3;
+    border-radius: .65rem;
+    background: #fffdf9;
+    scrollbar-width: thin;
+  }
+
+  .contract-list-table table {
+    width: 100%;
+    min-width: 960px;
+    border-collapse: collapse;
+  }
+
+  .contract-list-table th,
+  .contract-list-table td,
+  .contract-admin-page .contract-table-wrap th,
+  .contract-admin-page .contract-table-wrap td {
+    padding: .58rem .65rem;
+    border-bottom: 1px solid #e9e2d9;
+    text-align: left;
+    vertical-align: top;
+    font-size: .7rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .contract-list-table th {
+    background: #eeeae3;
+    color: #62584d;
+    font-size: .63rem;
+    font-weight: 800;
+    letter-spacing: .015em;
+    white-space: nowrap;
+    text-transform: none;
+  }
+
+  .contract-list-table tbody tr:hover {
+    background: #faf6ec;
+  }
+
+  .contract-list-table td > strong,
+  .contract-list-table td > small,
+  .contract-list-table td > code {
+    display: block;
+  }
+
+  .contract-list-table td > small {
+    margin-top: .23rem;
+    color: #756d63;
+    font-size: .64rem;
+  }
+
+  .contract-list-table td > code {
+    color: #604a7c;
+    font-size: .67rem;
+  }
+
+  .contract-list-table td a {
+    display: inline-flex;
+    gap: .25rem;
+    color: #5541a3;
+    font-size: .7rem;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .contract-list-table td a:hover,
+  .contract-list-table td a:focus-visible {
+    color: #38277a;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .contract-row-actions {
+    display: grid;
+    justify-items: start;
+    gap: .4rem;
+  }
+
+  .contract-row-state {
+    display: inline-block;
+    padding: .22rem .45rem;
+    border: 1px solid #d6cec2;
+    border-radius: 999px;
+    background: #f4f0e9;
+    color: #564a3f;
+    font-size: .64rem;
+    font-weight: 700;
+  }
+
+  .contract-row-state[data-state="active"] {
+    background: #e4f3e7;
+    border-color: #b6d9bf;
+    color: #396747;
+  }
+
+  .contract-row-state[data-state="review"],
+  .contract-row-state[data-state="draft"] {
+    background: #fff0d6;
+    border-color: #e9d09c;
+    color: #82591c;
+  }
+
+  .contract-row-details > summary {
+    cursor: pointer;
+    color: #5541a3;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+
+  .contract-row-details > div {
+    width: min(21rem, 60vw);
+    margin-top: .55rem;
+    padding: .65rem;
+    border: 1px solid #e5ded3;
+    border-radius: .55rem;
+    background: #fff;
+  }
+
+  .contract-row-details strong {
+    display: block;
+    margin-top: .4rem;
+  }
+
+  .contract-row-details ul {
+    margin: .4rem 0;
+    padding-left: 1.1rem;
+  }
+
+  .contract-row-details li {
+    margin: .3rem 0;
+  }
+
+  .contract-library-table-section,
+  .contract-soft-table-section,
+  .contract-review-table-section,
+  .contract-legal-pack-index {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .contract-legal-pack-index h2 {
+    margin: 0 0 .5rem;
+    color: #27221c;
+    font-size: 1rem;
+  }
+
+  .contract-legal-pack-document {
+    scroll-margin-top: 14rem;
+  }
+
+  .contract-legal-pack-document > header dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .4rem;
+  }
+
+  .contract-send-workbench .contract-send-steps {
+    gap: 0;
+    margin: 0 0 .75rem;
+  }
+
+  .contract-send-workbench .contract-send-steps span {
+    border-radius: 0;
+  }
+
+  .contract-send-workbench .contract-assignment-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    gap: .85rem;
+  }
+
+  .contract-send-workbench .contract-form-grid {
+    gap: .7rem;
+  }
+
+  .contract-send-workbench .contract-send-preview {
+    top: 1rem;
+  }
+
+  .contract-notification-table-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+    padding: .55rem .85rem;
+    border: 1px solid #e5ded3;
+    border-radius: .6rem .6rem 0 0;
+    background: #eeeae3;
+    color: #62584d;
+    font-size: .67rem;
+    font-weight: 800;
+  }
+
+  .contract-notification-rows {
+    display: grid;
+    gap: 0;
+    border: 1px solid #e5ded3;
+    border-top: 0;
+    border-radius: 0 0 .6rem .6rem;
+    overflow: hidden;
+  }
+
+  .contract-notification-rows > article {
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid #e5ded3;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .contract-notification-rows > article:last-child {
+    border-bottom: 0;
+  }
+
+  .contract-notification-rows > article > div:first-child {
+    box-sizing: border-box;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+    align-items: center;
+  }
+
+  .contract-notification-rows > article > div:first-child > button:first-child {
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .contract-notification-rows > article > div:first-child > button:last-child {
+    justify-self: center;
+  }
+
+  /* E-postalar and E-posta Operasyonları: preserve SMTP / retry workflows. */
+  .admin-email-page,
+  .admin-email-operations-page {
+    min-width: 0;
+    gap: .85rem;
+  }
+
+  .admin-email-page .admin-page-heading,
+  .admin-email-operations-page .admin-page-heading {
+    margin-bottom: 0;
+  }
+
+  .admin-email-summary,
+  .admin-email-operations-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, .24);
+    border-radius: .8rem;
+    background: rgba(255,255,255,.025);
+  }
+
+  .admin-email-summary article,
+  .admin-email-operations-summary article {
+    box-sizing: border-box;
+    margin: 0;
+    padding: .8rem;
+    border: 0;
+    border-right: 1px solid rgba(148,163,184,.17);
+    border-bottom: 1px solid rgba(148,163,184,.12);
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+  }
+
+  .admin-email-summary strong,
+  .admin-email-operations-summary strong {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .admin-email-top-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .admin-email-address-list,
+  .admin-email-smtp-list {
+    gap: 0;
+    border-top: 1px solid rgba(148,163,184,.16);
+  }
+
+  .admin-email-address-list > div,
+  .admin-email-smtp-list > div {
+    border: 0;
+    border-bottom: 1px solid rgba(148,163,184,.16);
+    border-radius: 0;
+    grid-template-columns: minmax(5rem, .7fr) minmax(0, 2fr) auto;
+    padding: .65rem .4rem;
+    background: transparent;
+  }
+
+  .admin-email-smtp-list > div {
+    grid-template-columns: minmax(0, 2fr) auto;
+  }
+
+  .admin-email-page .admin-data-table th,
+  .admin-email-page .admin-data-table td,
+  .admin-email-operations-page .admin-data-table th,
+  .admin-email-operations-page .admin-data-table td {
+    padding: .65rem .65rem;
+    font-size: .72rem;
+    vertical-align: top;
+  }
+
+  .admin-email-operations-rule-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid rgba(148,163,184,.16);
+    border-left: 1px solid rgba(148,163,184,.16);
+  }
+
+  .admin-email-operations-rule-grid article {
+    border: 0;
+    border-right: 1px solid rgba(148,163,184,.16);
+    border-bottom: 1px solid rgba(148,163,184,.16);
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media screen and (max-width: 980px) {
+  .contract-send-workbench .contract-assignment-grid,
+  .admin-email-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 660px) {
+  .contract-admin-hero,
+  .contract-subpage-header,
+  .contract-library-hero,
+  .contract-soft-page__header,
+  .contract-legal-pack-header {
+    align-items: flex-start;
+    padding: .95rem;
+  }
+
+  .contract-metrics,
+  .contract-library-summary,
+  .contract-soft-summary,
+  .contract-review-summary,
+  .contract-legal-pack-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-email-operations-rule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-email-address-list > div {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-legal-pack-document > header dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Mobile email history: override the late desktop seven-column filter rule.
+   Scroll the data table itself, never the entire administrator viewport. */
+@media screen and (max-width: 700px) {
+  .admin-email-page .admin-email-history {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .admin-email-page .admin-email-filters {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .55rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-email-page .admin-email-filters > *,
+  .admin-email-page .admin-email-filters label {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    grid-column: auto;
+  }
+
+  .admin-email-page .admin-email-filters input,
+  .admin-email-page .admin-email-filters select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .admin-email-page .admin-email-history .admin-table-wrap {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}

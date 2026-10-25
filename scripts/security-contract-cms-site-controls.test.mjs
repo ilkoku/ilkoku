@@ -171,3 +171,27 @@ test("revision center is a comparison workbench and restore remains on the canon
   assertContains(actions, "prisma.$transaction", "revision restore transaction boundary");
   assertContains(actions, "isCmsLocaleEnabled(locale)", "revision restore locale publish boundary");
 });
+
+test("book cover media is not falsely marked unused and cannot be archived from CMS", () => {
+  const references = source("src/lib/cms-media-references.ts");
+  const actions = source("src/features/cms/media-actions.ts");
+  const workbench = source("src/components/content/MediaLibraryWorkbench.tsx");
+
+  assertContains(references, "const workRows = await prisma.$queryRaw<WorkCoverReferenceRow[]>", "CMS inventory scans work cover references");
+  assertContains(references, "const siteRows = await prisma.$queryRaw", "media SiteContent scan serialized");
+  assertContains(references, "const pageRows = await prisma.$queryRaw", "media ContentPage scan serialized");
+  assertContains(references, "const workRows = await prisma.$queryRaw", "media Work cover scan serialized");
+  assertContains(references, "const workCounts = await prisma.$queryRaw", "media deletion Work cover scan serialized");
+  assert.equal(references.includes("Promise.all(["), false, "reference query scans must not contend for the single MariaDB connection");
+  assertContains(references, "const workCounts = await prisma.$queryRaw", "CMS archive action blocks referenced work covers");
+  assertContains(references, 'source: "work"', "work references appear in media inventory");
+  assertContains(references, "coverUrl LIKE '/api/media/%'", "relative first-party work cover references");
+  assertContains(references, "coverUrl LIKE 'https://ilkoku.com/api/media/%'", "absolute first-party work cover references");
+  assertContains(references, "coverUrl LIKE 'https://www.ilkoku.com/api/media/%'", "www first-party work cover references");
+  assertContains(references, "FROM \\`Work\\`", "source-of-truth Work table queried through safe SQL");
+  assertContains(references, "workCoverVariants[0]", "protect relative and absolute variant cover URLs");
+  assertContains(references, "Number(workCounts[0]?.total ?? 0) > 0", "never archive cover assets referenced by works, including drafts");
+  assertContains(workbench, '"site" | "page" | "work"', "media UI accepts work references");
+  assertContains(actions, "isMediaReferencedByPublishedContent(asset.url)", "server-side archive reference guard retained");
+});
+

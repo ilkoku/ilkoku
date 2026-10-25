@@ -1,3 +1,4 @@
-redeploy_requested_at=2026-09-30T18:55:00+03:00
-source_main=cfbe7cfff77621f0a1f1d71faa6b6e1197995c71
-reason=deploy_final_public_author_fallbacks
+redeploy_requested_at=2026-10-20T17:35:00+03:00
+source_main=13cf5b66ce8512e81037b4b5279d5b5c33096856
+reason=retry_hostinger_deploy_after_service_recovery
+include_merged_prs=1805,1806,1807

@@ -51,9 +51,9 @@ jobs:
 
       - name: Validate Search Console OAuth secrets
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
         run: |
           test -n "$GSC_OAUTH_CLIENT_ID" || { echo "Missing GSC_OAUTH_CLIENT_ID" >&2; exit 1; }
           test -n "$GSC_OAUTH_CLIENT_SECRET" || { echo "Missing GSC_OAUTH_CLIENT_SECRET" >&2; exit 1; }
@@ -61,9 +61,9 @@ jobs:
 
       - name: Inspect representative URLs
         env:
-          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
-          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
-          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_REFRESH_TOKEN }}
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
           GSC_SITE_URL: "sc-domain:ilkoku.com"
           GSC_INSPECTION_URLS: ${{ inputs.urls }}
         run: node scripts/gsc-url-inspection.mjs

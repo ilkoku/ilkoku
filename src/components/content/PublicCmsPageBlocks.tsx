@@ -8,8 +8,8 @@ function ActionLink({ href, label, secondary = false }: { href: string; label: s
   const className = secondary
     ? "inline-flex items-center justify-center rounded-full border border-[#6847e8]/20 bg-white px-5 py-3 text-sm font-extrabold text-[#4b2dbf] no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-[#6847e8]/35"
     : "inline-flex items-center justify-center rounded-full bg-[#5b35dd] px-5 py-3 text-sm font-extrabold text-white no-underline shadow-[0_12px_28px_rgba(91,53,221,.24)] transition hover:-translate-y-0.5 hover:bg-[#4b2dbf]";
-  if (href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return <a className={className} href={href}>{label}</a>;
-  return <Link className={className} href={href}>{label}</Link>;
+  if (href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return <a className={className} data-site-analytics-cta="cms" href={href}>{label}</a>;
+  return <Link className={className} data-site-analytics-cta="cms" href={href}>{label}</Link>;
 }
 
 function SectionHeading({ heading, intro }: { heading?: string; intro?: string }) {

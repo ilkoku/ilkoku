@@ -19,7 +19,9 @@ const description =
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const context = await getBookIndexSoftLaunchPageContext(100);
+  // Share the exact same request-scoped context with the page render;
+  // a separate 100-row metadata request would repeat costly SQL work.
+  const context = await getBookIndexSoftLaunchPageContext(1200);
 
   return createPublicPageMetadata({
     title: pageTitle(),

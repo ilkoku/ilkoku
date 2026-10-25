@@ -1,0 +1,126 @@
+name: SEO LCP edge origin timing evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/seo-lcp-edge-origin-timing.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-lcp-edge-origin-timing
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Observe homepage and hero TLS, first byte, cache headers
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Collect three paced paired requests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          printf '' > /tmp/ilkoku-lcp-timing.ndjson
+          probe() {
+            local kind="$1" seq="$2" url="$3" hdr status result
+            hdr="$(mktemp)"
+            result="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-LCP-Attribution/1.0' \
+              --dump-header "$hdr" --output /dev/null \
+              --write-out '%{json}' "$url" || true)"
+            if [[ -z "$result" ]]; then
+              echo "::error::No curl data ($kind sample $seq)"; rm -f "$hdr"; exit 1
+            fi
+            KIND="$kind" SEQ="$seq" CURL_RESULT="$result" HEADERS_FILE="$hdr" node <<'NODE' | tee -a /tmp/ilkoku-lcp-timing.ndjson
+          const fs = require('node:fs');
+          const cur = JSON.parse(process.env.CURL_RESULT);
+          const raw = fs.readFileSync(process.env.HEADERS_FILE, 'utf8');
+          const last = raw.trim().split(/\r?\n\r?\n/).at(-1) || '';
+          const headers = {};
+          for (const line of last.split(/\r?\n/)) {
+            const i = line.indexOf(':');
+            if (i > 0) {
+              const key = line.slice(0, i).toLowerCase();
+              if (['cf-ray','cf-cache-status','x-nextjs-cache','cache-control','age','content-type','server','server-timing'].includes(key)) headers[key] = line.slice(i+1).trim();
+            }
+          }
+          const ms = (n) => typeof n === 'number' ? Math.round(n * 1000) : null;
+          const result = {
+            kind:process.env.KIND, seq:Number(process.env.SEQ),
+            status:cur.http_code, httpVersion:cur.http_version,
+            curlError:cur.errormsg || null,
+            dnsMs:ms(cur.time_namelookup), tcpMs:ms(cur.time_connect),
+            tlsMs:ms(cur.time_appconnect), pretransferMs:ms(cur.time_pretransfer),
+            firstByteMs:ms(cur.time_starttransfer), totalMs:ms(cur.time_total),
+            postTlsWaitMs: typeof cur.time_starttransfer==='number' && typeof cur.time_pretransfer==='number' ? ms(cur.time_starttransfer-cur.time_pretransfer) : null,
+            bytes:cur.size_download, headers
+          };
+          console.log(JSON.stringify(result));
+          NODE
+            rm -f "$hdr"
+            status="$(RESULT="$result" node -p 'JSON.parse(process.env.RESULT).http_code')"
+            if [[ "$status" == "403" || "$status" == "429" ]]; then
+              echo "::error::WAF circuit breaker HTTP $status"; exit 1
+            fi
+            if [[ "$status" != "200" ]]; then
+              echo "::error::Probe $kind $seq HTTP=$status; no retries"; exit 1
+            fi
+          }
+          for i in 1 2 3; do
+            probe document "$i" 'https://ilkoku.com/'
+            sleep 3
+            probe hero "$i" 'https://ilkoku.com/_next/image?url=%2Flanding%2Filkoku-hero-user-final.webp&w=750&q=60'
+            if [[ "$i" != "3" ]]; then sleep 12; fi
+          done
+
+      - name: Summarize timing samples
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const source='/tmp/ilkoku-lcp-timing.ndjson';
+          if (!fs.existsSync(source)) process.exit(0);
+          const rows=fs.readFileSync(source,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+          const med = (xs) => {
+            const n=xs.filter(x=>typeof x==='number'&&Number.isFinite(x)).sort((a,b)=>a-b);
+            return n.length ? n[Math.floor(n.length/2)] : 'n/a';
+          };
+          const metric = (k,t)=>med(rows.filter(x=>x.kind===t).map(x=>x[k]));
+          const good=rows.filter(x=>x.status===200);
+          const md=[
+            '## İlkOku — three paired HTTP timing samples',
+            '',
+            'GitHub runner measurements; not CrUX. Post-TLS wait includes edge-to-origin/network/application and cannot isolate Node, DB or Cloudflare.',
+            '',
+            '| Request | # | HTTP | DNS ms | TCP ms | TLS ms | First byte ms | Total ms | Post-TLS wait ms | CF-cache | Next cache | CF Ray |',
+            '|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|',
+            ...rows.map(r=>'| '+[r.kind,r.seq,r.status,r.dnsMs,r.tcpMs,r.tlsMs,r.firstByteMs,r.totalMs,r.postTlsWaitMs,r.headers['cf-cache-status']||'n/a',r.headers['x-nextjs-cache']||'n/a',r.headers['cf-ray']||'n/a'].join(' | ')+' |'),
+            '',
+            'Healthy sample count: '+good.length+' / 6.',
+            'Document median first byte: '+metric('firstByteMs','document')+' ms; post-TLS: '+metric('postTlsWaitMs','document')+' ms.',
+            'Hero median first byte: '+metric('firstByteMs','hero')+' ms; post-TLS: '+metric('postTlsWaitMs','hero')+' ms.',
+            '',
+            'Observation only. No claim of SEO, LCP or production improvement.',
+            ''
+          ].join('\n');
+          fs.writeFileSync('/tmp/ilkoku-lcp-timing-report.md',md);
+          if(process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,md);
+          console.log(md);
+          NODE
+
+      - name: Save evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-lcp-edge-origin-timing
+          path: |
+            /tmp/ilkoku-lcp-timing.ndjson
+            /tmp/ilkoku-lcp-timing-report.md
+          retention-days: 14
+          if-no-files-found: warn

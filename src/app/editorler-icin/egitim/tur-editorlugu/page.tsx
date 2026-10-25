@@ -3,11 +3,12 @@ import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import Link from "next/link";
 
 import { EditorEducationShell } from "@/components/content/EditorEducationShell";
+import { EditorEducationStructuredData } from "@/components/content/EditorEducationStructuredData";
 import { getEditorEducationCategory } from "@/lib/editor-education";
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Tür Editörlüğü | İlkOku Editörlük Okulu",
-  description: "Bir eseri kendi türünün okur vaadi, anlatı mantığı, alt türü, tür konvansiyonları ve hedef okur beklentileri içinde değerlendirmeyi; tür beklentisini klişeye dönüştürmeden editörlük yapmayı öğren.",
+  description: "Tür editörlüğü eğitiminde okur vaadini, anlatı mantığını, alt tür ve tür beklentilerini değerlendirmeyi; klişeye düşmeden editörlük yapmayı öğren.",
   canonical: "/editorler-icin/egitim/tur-editorlugu",
 });
 
@@ -128,7 +129,13 @@ export default function TurEditorluguPage() {
   if (!category) return null;
 
   return (
-    <EditorEducationShell activeCategory={category}>
+    <>
+      <EditorEducationStructuredData
+        title="Tür Editörlüğü"
+        description="Tür editörlüğü eğitiminde okur vaadini, anlatı mantığını, alt tür ve tür beklentilerini değerlendirmeyi; klişeye düşmeden editörlük yapmayı öğren."
+        canonical="/editorler-icin/egitim/tur-editorlugu"
+      />
+      <EditorEducationShell activeCategory={category}>
       <article className="mx-auto max-w-5xl text-[#211746]">
         <header className="overflow-hidden rounded-[2.5rem] bg-[#17122f] px-7 py-10 text-white shadow-[0_24px_70px_rgba(23,18,47,0.22)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#b7a8ff]">İlkOku · Editörlük Okulu</span>
@@ -268,6 +275,7 @@ export default function TurEditorluguPage() {
           </div>
         </section>
       </article>
-    </EditorEducationShell>
+      </EditorEducationShell>
+    </>
   );
 }

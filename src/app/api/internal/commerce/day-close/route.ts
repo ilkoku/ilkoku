@@ -33,7 +33,8 @@ async function privateArchiveDirectory() {
   const [dir, appRoot] = await Promise.all([realpath(configured),realpath(process.cwd())]);
   // The archive must be provisioned in a non-public, non-application directory.
   const relation = relative(appRoot,dir);
-  if (!relation || (!relation.startsWith("..") && !isAbsolute(relation))) {
+  if (!relation || (!relation.startsWith("..") && !isAbsolute(relation)) ||
+      /(?:^|[/\\])(?:public_html|wwwroot|htdocs)(?:[/\\]|$)/iu.test(dir)) {
     throw new Error("ARCHIVE_DIRECTORY_UNSAFE");
   }
   const stats = await lstat(configured);
@@ -70,16 +71,16 @@ export async function POST(request: Request) {
     const digest = sha256(result.zip);
     // Finish a durable temporary write before publishing with an atomic link.
     // A failed/disconnected write must never leave a partial final ZIP.
-    const handle = await open(temp,
-      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
-      0o600);
     try {
-      await handle.writeFile(result.zip);
-      await handle.sync();
-    } finally {
-      await handle.close();
-    }
-    try {
+      const handle = await open(temp,
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+        0o600);
+      try {
+        await handle.writeFile(result.zip);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
       try {
         await link(temp,path);
         return Response.json({

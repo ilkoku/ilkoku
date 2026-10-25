@@ -70,6 +70,11 @@ export default async function DayCloseAccountingTransferPage() {
             sipariş ve para birimi bazında karşılaştırır. Eksik hareket,
             yanlış toplam veya farklı muhasebeleştirme günü incelemeye ayrılır;
             bir hareketin eksikliği paranın iade edilmediğini kanıtlamaz.</p>
+          <p><code>gunluk_satis_iade_koprusu.csv</code> — Aynı Türkiye iş
+            gününün satış tahsilat adayları ile işlenmiş iade tutarlarını,
+            para birimi ve kontrol sonucuna göre ayrı karşılaştırır.
+            Fark yalnız aritmetiktir; kâr, kesin gelir, banka bakiyesi
+            veya vergi tutarı değildir.</p>
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
             mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,

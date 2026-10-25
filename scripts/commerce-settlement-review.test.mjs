@@ -44,6 +44,7 @@ const valid = () => ({
   refundedAt: null,
   sellerMode: "platform_direct",
   priceQuote: {
+    calculationVersion: "quote-v1",
     taxTreatment: "net_plus_vat",
     vatRateBasisPoints: 2000,
     listNetAmount: 10000n,
@@ -154,6 +155,14 @@ test("mathematically inconsistent quote VAT is blocked even when gross total mat
   const result = review.reviewCommerceOrderSettlement(source);
   assert.equal(result.scenarios, null);
   assert.ok(result.blockers.some(s => s.includes("snapshot")));
+});
+
+test("unknown frozen price quote calculation version is never interpreted as quote-v1", () => {
+  const source = valid();
+  source.priceQuote.calculationVersion = "quote-v9";
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.equal(result.scenarios, null);
+  assert.ok(result.blockers.some(s => s.includes("KDV hariç fiyat")));
 });
 
 test("mismatched VAT and order amounts cannot create an illustrative settlement", () => {

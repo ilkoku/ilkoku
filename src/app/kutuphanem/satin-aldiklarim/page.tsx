@@ -104,6 +104,14 @@ export default async function PurchasedLibraryPage({
                 >
                   Okumaya devam et
                 </Link>
+                {entitlement.order?.orderNo ? (
+                  <Link
+                    className={styles.quietAction}
+                    href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(entitlement.order.orderNo)}
+                  >
+                    Sipariş ve onay kayıtları
+                  </Link>
+                ) : null}
               </article>
             ))}
           </section>

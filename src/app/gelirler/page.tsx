@@ -122,8 +122,9 @@ export default async function WriterIncomePage() {
         </section>
 
         <div className={styles.notice}>
-          Komisyon (%15), uygun faturasız telifte ayrı aracılık hizmeti (%5),
-          stopaj ve KDV varsayımlarını satış öncesinde karşılaştırmak için{" "}
+          Genel komisyon %15’tir; yazara veya esere özel oran varsa o uygulanır.
+          Uygun faturasız telifte ayrıca %5 aracılık hizmeti, stopaj ve KDV
+          varsayımlarını satış öncesinde karşılaştırmak için{" "}
           <Link href="/satis-erisim/kazanc-hesaplama">kazanç hesaplama örneğini</Link>{" "}
           inceleyebilirsin. Bu önizleme gerçek muhasebe hareketi oluşturmaz.
         </div>
@@ -283,6 +284,23 @@ export default async function WriterIncomePage() {
                           order.authorEarningBaseAmount,
                           order.currency,
                         )}
+                      </strong>
+                    </span>
+                    <span>
+                      Sipariş anındaki komisyon
+                      <strong>
+                        {order.commissionRateSnapshot?.calculationVersion === "rate-v1"
+                          ? (order.commissionRateSnapshot.commissionRateBps / 100).toLocaleString("tr-TR") + "%"
+                          : "Oran kaydı eksik"}
+                      </strong>
+                    </span>
+                    <span>
+                      Komisyon kaynağı
+                      <strong>
+                        {order.commissionRateSnapshot?.calculationVersion === "rate-v1"
+                          ? order.commissionRateSnapshot.source === "work" ? "Eser"
+                            : order.commissionRateSnapshot.source === "author" ? "Yazar" : "Genel"
+                          : "Mali inceleme gerekli"}
                       </strong>
                     </span>
                   </div>

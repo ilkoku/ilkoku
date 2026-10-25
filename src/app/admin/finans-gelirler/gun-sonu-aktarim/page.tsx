@@ -85,10 +85,15 @@ export default async function DayCloseAccountingTransferPage() {
           <h2>Aktarım ve muhasebe kontrolü</h2>
           <p>Dosyalarda tutarlar <strong>kuruş</strong> olarak, tarihler
             UTC ISO 8601 biçiminde saklanır; iş günü Türkiye saatidir.</p>
-          <p>Genel komisyon %15, varsa sipariş anındaki yazar/eser oranı
-            kullanılır. %5 aracılık yalnız uygun faturasız telif işleminde
-            ayrı gelir kalemidir; belge uygunluğu doğrulanmadan tutarı
-            otomatik fatura satırına çevrilmez.</p>
+          <p>Genel komisyon %15, varsa siparişe sabitlenmiş yazar/eser
+            oranı kullanılır. Sipariş tarihinde geçerli yönetici incelemesi
+            bulunan ticari fatura veya serbest meslek makbuzu düzenleyen
+            yazarda aracılık oranı %0; doğrulanmış GVK 18 kapsamında
+            koşullu aracılık oranı %5 olarak ayrı hesaplanır.</p>
+          <p>Yazarın mali belge incelemesi yoksa, tarihi geçmişse,
+            geri alınmışsa veya siparişten sonraysa işlem uyarıya ayrılır.
+            Bu oranlar yalnız muhasebe aktarımında inceleme amaçlıdır:
+            İlkOku hizmet faturası veya vergi belgesi düzenlemez.</p>
           <p>Alıcı fatura bilgileri, resmî belge numarası ve mali müşavir
             onayı burada üretilmez. <code>muhasebe_on_hazirlik.csv</code>
             dosyasındaki satırlar bile fatura düzenleme onayı değildir.

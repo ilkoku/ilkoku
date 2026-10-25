@@ -34,6 +34,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           activatedAt: true,
@@ -45,6 +46,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           publicationModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           accessPlanSnapshot: true,
         },

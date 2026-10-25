@@ -192,10 +192,7 @@ export default async function HomepageExperience() {
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>
 
-      {/* History reads its own CMS data; do not make the above-fold hero wait for it. */}
-      <Suspense fallback={null}>
-        <History670 />
-      </Suspense>
+      <History670 />
 
       <Suspense fallback={null}>
         <HomepageRoleSection roleSection={roleSection} />

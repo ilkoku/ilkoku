@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 import {
   evaluateBookIndexSeoGate,
@@ -13,6 +14,7 @@ import {
   type BookIndexPublicReadModel,
 } from "./public-read-model";
 import { getBookIndexReadinessSnapshot } from "./readiness";
+import { timeBookIndexOperation } from "./performance-trace";
 
 export type BookIndexPublicPageContext = {
   gate: BookIndexSeoGateSnapshot;
@@ -36,21 +38,35 @@ function policyConfigured() {
   };
 }
 
+// Only the four numeric readiness signals are cached across public requests.
+// The public book list is deliberately fetched fresh on every request.
+// The SEO publishing gate itself is unchanged; at most 30s of evidence lag.
+const getCachedPublicBookIndexSeoEvidence = unstable_cache(
+  async () => {
+    const readiness = await getBookIndexReadinessSnapshot();
+    return {
+      observedCompositeSources: readiness.observedCompositeSources,
+      observedIndependentCompositeSources:
+        readiness.observedCompositeIndependenceGroups,
+      matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
+      historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
+    };
+  },
+  ["ilkoku-book-index-public-seo-evidence-v1"],
+  { revalidate: 30 },
+);
+
 async function buildBookIndexPageContext(
   limit: number,
   policy = getBookIndexSeoGatePolicy(),
 ): Promise<BookIndexPublicPageContext> {
-  const [readiness, model] = await Promise.all([
-    getBookIndexReadinessSnapshot(),
-    getBookIndexPublicReadModel(limit),
+  const [evidence, model] = await Promise.all([
+    timeBookIndexOperation("publicContext.readinessEvidence", () => getCachedPublicBookIndexSeoEvidence()),
+    timeBookIndexOperation("publicContext.readModel", () => getBookIndexPublicReadModel(limit)),
   ]);
 
   const gate = evaluateBookIndexSeoGate(policy, {
-    observedCompositeSources: readiness.observedCompositeSources,
-    observedIndependentCompositeSources:
-      readiness.observedCompositeIndependenceGroups,
-    matchCoveragePercent: readiness.latestCompositeMatchCoveragePercent,
-    historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
+    ...evidence,
     turkeyItemCount: model.turkey.items.length,
   });
 

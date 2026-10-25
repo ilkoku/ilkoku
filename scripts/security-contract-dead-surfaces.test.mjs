@@ -128,10 +128,12 @@ test("legacy first-editor review actions only delegate to the canonical locked s
 
 test("admin and content management provide explicit two-way navigation", () => {
   const admin = source("src/components/admin/AdminShell.tsx");
+  const navigation = source("src/lib/admin-navigation.ts");
   const content = source("src/components/content/ContentShell.tsx");
 
-  assertContains(admin, 'href="/icerik"', "admin to content navigation");
-  assertContains(admin, "İçerik Yönetimi", "admin to content label");
+  assertContains(navigation, 'href: "/icerik", label: "İçerik Yönetimi"', "unified admin to content navigation");
+  assertContains(admin, "selectedGroup.items.map", "unified right panel renders content navigation");
+  assertContains(admin, "<Link href={item.href}", "unified right panel links to content center");
   assertContains(content, "isAdmin &&", "content admin-only return gate");
   assertContains(
     content,

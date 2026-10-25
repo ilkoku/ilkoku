@@ -16,7 +16,7 @@ test("education surfaces expose visible editorial methodology without removing l
   assert.match(note, /Hazırlayan: İlkOku/u);
   assert.match(note, /Editoryal standartlar/u);
   assert.match(note, /İlkOku hakkında/u);
-  assert.match(note, /Son sayfa güncellemesi: 6 Ekim 2026/u);
+  assert.doesNotMatch(note, /Son sayfa güncellemesi:/u);
   assert.match(note, /İçerik yöntemi/u);
   assert.match(note, /Editoryal kontrol/u);
   assert.match(note, /Kaynak yaklaşımı/u);

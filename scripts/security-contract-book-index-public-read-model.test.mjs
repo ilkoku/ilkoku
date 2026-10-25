@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import ts from "typescript";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -173,52 +174,29 @@ test("Turkey public page keeps operational source status out of the visitor UI",
   );
 });
 
-test("Bestseller comparison has a dedicated gated SEO route", () => {
-  const page = source("src/app/en-cok-satanlar/turkiye/karsilastirma/page.tsx");
+test("retired comparison is permanently redirected with no exposed navigation or sitemap", () => {
+  const redirects = source("next.config.ts");
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
-  const comparison = source("src/features/book-index/public/BookIndexSourceComparison.tsx");
+  const navigation = source("src/features/book-index/public/BookIndexSectionNav.tsx");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const catalog = source("src/lib/cms-header-navigation.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const fs = source("src/lib/soft-launch-search-policy.ts");
 
-  contains(
-    page,
-    'canonical = "/en-cok-satanlar/turkiye/karsilastirma"',
-    "stable bestseller comparison canonical",
-  );
-  contains(
-    page,
-    'title = "En Çok Satanlar Karşılaştırma | İlkOku"',
-    "comparison SEO title keeps the approved phrase",
-  );
-  contains(
-    page,
-    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
-    "comparison route stays noindex until Book Index publication is approved",
-  );
-  contains(
-    view,
-    "<h1>En Çok Satanlar Karşılaştırma</h1>",
-    "comparison H1 keeps the approved phrase",
-  );
-  contains(
-    view,
-    'href="/en-cok-satanlar/turkiye/karsilastirma"',
-    "overview and Turkey list link to the dedicated comparison route",
-  );
-  notContains(
-    comparison,
-    "Kaynak seç",
-    "public comparison controls avoid technical source wording",
-  );
-  contains(
-    comparison,
-    "Kitap satış kanalı seç",
-    "public comparison controls use book sales channel wording",
-  );
-  contains(
-    sitemap,
-    "/en-cok-satanlar/turkiye/karsilastirma",
-    "comparison route joins the already-gated Book Index sitemap set",
-  );
+  contains(redirects, 'source: "/en-cok-satanlar/turkiye/karsilastirma"', "legacy comparison redirect source");
+  contains(redirects, 'destination: "/en-cok-satanlar/turkiye"', "legacy comparison redirect destination");
+  notContains(view, 'href="/en-cok-satanlar/turkiye/karsilastirma"', "no dead overview comparison card");
+  contains(view, 'href="/en-cok-satanlar/turkiye"', "overview Turkey card uses live page");
+  for (const [content, name] of [
+    [navigation, "section navigation"],
+    [header, "shared header navigation"],
+    [catalog, "CMS menu catalog"],
+    [sitemap, "XML sitemap"],
+  ]) {
+    notContains(content, '"/en-cok-satanlar/turkiye/karsilastirma"', name);
+  }
+  notContains(fs, '"\u002fen-cok-satanlar/turkiye"', "no change to Book Index soft launch gate");
+  contains(fs, '"/en-cok-satanlar"', "Book Index remains noindex until editorial publication gate");
 });
 
 test("New-release read model stays source-native and isolated from generic list publication", () => {
@@ -570,45 +548,17 @@ test("Book Index secondary analysis nav stays inside bestseller routes", () => {
 });
 
 
-test("bestseller full list and comparison use the shared Book Index navigation", () => {
+test("Turkey list keeps primary and analysis navigation without retired comparison", () => {
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
   const nav = source("src/features/book-index/public/BookIndexSectionNav.tsx");
-
-  contains(
-    view,
-    '<BookIndexSectionNav current="turkey" showAnalysis={false} />',
-    "Turkey full list keeps primary navigation above the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="turkey" showPrimary={false} />',
-    "Turkey full list uses shared analysis navigation below the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showAnalysis={false} />',
-    "comparison keeps primary navigation above the hero",
-  );
-  contains(
-    view,
-    '<BookIndexSectionNav current="comparison" showPrimary={false} />',
-    "comparison uses shared analysis navigation below the hero",
-  );
+  contains(view, '<BookIndexSectionNav current="turkey" showAnalysis={false} />', "Turkey primary navigation");
+  contains(view, '<BookIndexSectionNav current="turkey" showPrimary={false} />', "Turkey analysis navigation");
   contains(nav, 'href: "/en-cok-satanlar/turkiye"', "Turkey dedicated route");
-  contains(
-    nav,
-    'href: "/en-cok-satanlar/turkiye/karsilastirma"',
-    "comparison dedicated route",
-  );
   contains(nav, 'label: "Türkiye"', "Turkey navigation label");
-  contains(nav, 'label: "Karşılaştırma"', "comparison navigation label");
-  notContains(
-    view,
-    "BookIndexViewModeNav",
-    "obsolete two-item view-mode navigation remains removed",
-  );
+  notContains(nav, 'label: "Karşılaştırma"', "retired comparison removed from analysis menu");
+  notContains(view, 'TurkeyBookIndexComparisonView', "retired comparison renderer deleted");
+  notContains(view, "BookIndexViewModeNav", "obsolete two-item view-mode navigation remains removed");
 });
-
 
 test("Kitap Ambari is displayable without gaining a Turkey composite vote", () => {
   const lists = source("src/lib/book-index/lists.ts");
@@ -627,4 +577,162 @@ test("Kitap Ambari is displayable without gaining a Turkey composite vote", () =
   contains(sourceRankTable, "includeInTurkeyDisplay === true", "source-rank table honors display-only sources");
   contains(readModel, "includeInComposite: true", "composite scoring still uses the independent voting gate");
   notContains(readModel, "includeInTurkeyDisplay", "display-only flag cannot affect composite scoring");
+});
+
+test("batched public source snapshots reproduce the original single-list reader across lifecycle states and bounds", async () => {
+  const sourceCode = source("src/lib/book-index/public-read-model.ts");
+
+  // Compile the actual production module to JS, then run both actual exported
+  // readers against the same deterministic mock data. No production DB access.
+  const compiled = ts.transpileModule(sourceCode, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true,
+    },
+  }).outputText;
+
+  const sources = [
+    { code: "amazon-tr", name: "Amazon TR", market: "TR", collectionState: "ready" },
+    { code: "amazon-us", name: "Amazon US", market: "US", collectionState: "ready" },
+    { code: "bookshop-one", name: "Birinci Kaynak", market: "TR", collectionState: "ready" },
+    { code: "bookshop-two", name: "İkinci Kaynak", market: "TR", collectionState: "blocked" },
+    { code: "bookshop-three", name: "Üçüncü Kaynak", market: "TR", collectionState: "paused" },
+    { code: "bookshop-four", name: "Dördüncü Kaynak", market: "TR", collectionState: "researching" },
+  ];
+  const sourceByCode = new Map(sources.map(item => [item.code, item]));
+  const definitions = [
+    ["one", "bookshop-one"],
+    ["two", "bookshop-one"],
+    ["inactive", "bookshop-one"],
+    ["blocked", "bookshop-two"],
+    ["paused", "bookshop-three"],
+    ["no-success", "bookshop-four"],
+    ["missing-row", "bookshop-one"],
+  ].map(([code, src]) => ({
+    code, sourceCode: src, title: "Kaynak " + code,
+    categoryKey: "general", period: "weekly",
+    sourceUrl: "https://example.com/" + code,
+    publiclyVisible: true, enabled: true,
+  }));
+  const definitionByCode = new Map(definitions.map(item => [item.code, item]));
+  const book = (i, sourceId) => ({
+    rank: i + 1,
+    priceAmount: i === 0 ? 123n : null,
+    currency: "TRY",
+    externalBook: {
+      title: "Eser " + sourceId + " " + i,
+      authorName: i % 2 ? null : "Yazar",
+      publisherName: "Yayıncı",
+      isbn13: null,
+      isbn10: null,
+      productUrl: "https://example.com/book/" + i,
+      imageUrl: null,
+      masterBookId: "master-" + sourceId + "-" + i,
+    },
+  });
+  const rows = [
+    { code: "one", sourceCode: "bookshop-one", active: true, status: "active",
+      runs: [
+        { startedAt: new Date("2026-10-21T12:00:00Z"), status: "success",
+          observations: Array.from({ length: 120 }, (_, i) => book(i, "one")) },
+        { startedAt: new Date("2026-10-20T12:00:00Z"), status: "success",
+          observations: Array.from({ length: 4 }, (_, i) => book(i, "old")) },
+      ],
+    },
+    { code: "two", sourceCode: "bookshop-one", active: true, status: "active",
+      runs: [{ startedAt: new Date("2026-10-22T12:00:00Z"), status: "no_change",
+        observations: Array.from({ length: 2 }, (_, i) => book(i, "two")) }] },
+    { code: "inactive", sourceCode: "bookshop-one", active: false, status: "active",
+      runs: [{ startedAt: new Date("2026-10-22T12:00:00Z"), status: "success", observations: [book(0, "inactive")] }] },
+    { code: "blocked", sourceCode: "bookshop-two", active: true, status: "blocked",
+      runs: [{ startedAt: new Date("2026-10-22T12:00:00Z"), status: "success", observations: [book(0, "blocked")] }] },
+    { code: "paused", sourceCode: "bookshop-three", active: true, status: "paused",
+      runs: [{ startedAt: new Date("2026-10-22T12:00:00Z"), status: "success", observations: [book(0, "paused")] }] },
+    { code: "no-success", sourceCode: "bookshop-four", active: true, status: "active",
+      runs: [{ startedAt: new Date("2026-10-22T12:00:00Z"), status: "failed", observations: [book(0, "failed")] }] },
+  ];
+  let singleListQueries = 0;
+  let latestRunQueries = 0;
+  let batchCalls = 0;
+  const runs = row => row.runs
+    .filter(x => x.status === "success" || x.status === "no_change")
+    .sort((a, b) => b.startedAt - a.startedAt);
+
+  const prisma = {
+    bookIndexList: {
+      findFirst: async ({ where }) => {
+        singleListQueries++;
+        const match = rows.find(x => x.code === where.code && x.sourceCode === where.source.code);
+        return match ? { id: match.code, active: match.active, source: { status: match.status } } : null;
+      },
+      findMany: async ({ where, select }) => {
+        batchCalls++;
+        assert.ok(select.fetchRuns && select.fetchRuns.take === 1, "latest successful run is bounded");
+        assert.equal(select.fetchRuns.observations, undefined);
+        assert.equal(select.fetchRuns.select.observations.take <= 100, true, "per-run item limit remains capped");
+        return rows.filter(x => where.code.in.includes(x.code)).map(x => ({
+          code: x.code, active: x.active,
+          source: { code: x.sourceCode, status: x.status },
+          fetchRuns: runs(x).slice(0, select.fetchRuns.take).map(run => ({
+            startedAt: run.startedAt,
+            observations: run.observations
+              .slice().sort((a, b) => a.rank - b.rank)
+              .slice(0, select.fetchRuns.select.observations.take),
+          })),
+        }));
+      },
+    },
+    bookIndexFetchRun: {
+      findFirst: async ({ where, select }) => {
+        latestRunQueries++;
+        const row = rows.find(x => x.code === where.listId);
+        const run = row && runs(row)[0];
+        return run ? {
+          startedAt: run.startedAt,
+          observations: run.observations
+            .slice().sort((a, b) => a.rank - b.rank)
+            .slice(0, select.observations.take),
+        } : null;
+      },
+    },
+  };
+
+  const mockModule = { exports: {} };
+  const deps = {
+    "server-only": {},
+    "@/lib/prisma": { prisma },
+    "./lists": {
+      BOOK_INDEX_LISTS: definitions,
+      getBookIndexList: code => definitionByCode.get(code) ?? null,
+    },
+    "./performance-trace": { timeBookIndexOperation: async (_, fn) => fn() },
+    "./source-rank-table": { getTurkeySourceRankRows: async () => [] },
+    "./sources": {
+      BOOK_INDEX_SOURCES: sources,
+      getBookIndexSource: code => sourceByCode.get(code) ?? null,
+    },
+  };
+  const evaluate = new Function("require", "module", "exports", compiled);
+  evaluate(name => {
+    assert.ok(Object.hasOwn(deps, name), "unknown source dependency: " + name);
+    return deps[name];
+  }, mockModule, mockModule.exports);
+
+  const { getBookIndexPublicReadModel, getBookIndexSourceListSnapshot } = mockModule.exports;
+  for (const limit of [1, 100, 1200]) {
+    const prior = await Promise.all(definitions.map(x => getBookIndexSourceListSnapshot(x.code, limit)));
+    const before = { singleListQueries, latestRunQueries, batchCalls };
+    const current = (await getBookIndexPublicReadModel(limit)).sourceLists;
+    assert.deepEqual(current, prior, "snapshot outputs must be exactly equivalent for limit " + limit);
+    assert.equal(batchCalls - before.batchCalls, 1, "one bounded batched source-list read");
+    assert.equal(singleListQueries, before.singleListQueries, "new page reader must not invoke per-list lookups");
+    assert.equal(latestRunQueries, before.latestRunQueries, "new page reader must not invoke per-list latest-run lookups");
+    assert.ok(current[0].items.length <= 100, "public snapshot item count is capped at 100");
+    assert.equal(current[0].items[0].priceAmount, "123", "BigInt price serialization preserved");
+    assert.equal(current[3].availability, "blocked");
+    assert.equal(current[4].availability, "paused");
+    assert.equal(current[5].availability, "researching");
+    assert.equal(current[6].availability, "no_snapshot");
+  }
 });

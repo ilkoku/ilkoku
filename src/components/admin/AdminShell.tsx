@@ -1,10 +1,12 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- Power-SEO query-only tabs require full navigation to reload their server-rendered workflow. */
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
+import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { logoutAction } from "@/features/auth/actions";
 import {
   adminNavigationGroups,
@@ -14,6 +16,7 @@ import {
 
 type AdminShellProps = {
   children: ReactNode;
+  embeddedWorkspace?: boolean;
   user: {
     email: string;
     fullName: string;
@@ -114,6 +117,40 @@ function Icon({ name }: { name: AdminNavItem["icon"] }) {
   );
 }
 
+// Query-based destinations (such as Power-SEO tabs) need a distinct active state.
+function isActiveSubItem(
+  href: string,
+  siblings: readonly { href: string }[],
+  pathname: string,
+  currentSearch: { get(key: string): string | null },
+) {
+  const [targetPath, targetSearch = ""] = href.split("?");
+  if (targetPath !== pathname) return false;
+
+  // Match the active Power-SEO section, not a specific nested scan mode.
+  // The page keeps "tarama" active for sitemap, links and redirects modes.
+  if (targetPath === `${SYSTEM_MANAGEMENT_PATH}/power-seo`) {
+    const requestedTab = currentSearch.get("sekme");
+    const activeTab = requestedTab && ["genel", "tarama", "sayfa", "servisler", "teknik"].includes(requestedTab)
+      ? requestedTab
+      : currentSearch.get("mod") ? "tarama" : currentSearch.get("yol") ? "sayfa" : "genel";
+    const targetTab = new URLSearchParams(targetSearch).get("sekme") ?? "genel";
+    return activeTab === targetTab;
+  }
+
+  const matchesQueryLink = (link: string) => {
+    const [path, query = ""] = link.split("?");
+    if (path !== pathname || !query) return false;
+    return Array.from(new URLSearchParams(query).entries()).every(
+      ([key, value]) => currentSearch.get(key) === value,
+    );
+  };
+
+  return targetSearch
+    ? matchesQueryLink(href)
+    : !siblings.some((sibling) => matchesQueryLink(sibling.href));
+}
+
 function getInitials(fullName: string) {
   const initials = fullName
     .trim()
@@ -127,15 +164,51 @@ function getInitials(fullName: string) {
 
 export function AdminShell({
   children,
+  embeddedWorkspace = false,
   user,
 }: AdminShellProps) {
-  const pathname = usePathname();
-  const navigationPathname = pathname.replace(
-    /^\/admin(?=\/|$)/,
-    SYSTEM_MANAGEMENT_PATH,
-  );
+  const rawPathname = usePathname();
+  const [clientPathname, setClientPathname] = useState<string | null>(null);
+  // Stable server/client first render across the /admin -> /sistem-yonetimi rewrite.
+  useEffect(() => {
+    setClientPathname(rawPathname.replace(/^\/admin(?=\/|$)/u, SYSTEM_MANAGEMENT_PATH));
+  }, [rawPathname]);
+  const pathname = clientPathname ?? SYSTEM_MANAGEMENT_PATH;
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
+  const [menuSelection, setMenuSelection] = useState<{ path: string; groupId: string | null } | null>(null);
+  const [expandedSubmenus, setExpandedSubmenus] = useState<Record<string, boolean>>({});
+  const routeGroup = adminNavigationGroups.find((group) =>
+    group.items.some((item) =>
+      item.href === pathname ||
+      (item.href !== SYSTEM_MANAGEMENT_PATH && pathname.startsWith(item.href + "/")) ||
+      item.children?.some((child) => child.href.split("?")[0] === pathname),
+    ),
+  );
+  const selectedGroupId =
+    menuSelection?.path === pathname
+      ? menuSelection.groupId
+      : pathname === SYSTEM_MANAGEMENT_PATH
+        ? null
+        : routeGroup?.id ?? null;
+  const selectedGroup = adminNavigationGroups.find((group) => group.id === selectedGroupId);
   const initials = getInitials(user.fullName);
+
+  // Reuse the same open state for the parent toggle and the actual
+  // horizontal submenu row. No duplicate nav is rendered.
+  function isSubmenuExpanded(item: AdminNavItem) {
+    const activeParent = item.href === SYSTEM_MANAGEMENT_PATH
+      ? pathname === item.href
+      : pathname === item.href || pathname.startsWith(item.href + "/");
+    const nestedRouteActive = item.children?.some((child) => {
+      const childPath = child.href.split("?")[0];
+      return pathname === childPath || pathname.startsWith(childPath + "/");
+    }) ?? false;
+    const expansionKey = `${pathname}::${item.href}`;
+    return expandedSubmenus[expansionKey] ?? (activeParent || nestedRouteActive);
+  }
+
+
 
   return (
     <div className="admin-shell">
@@ -154,53 +227,32 @@ export function AdminShell({
           <span>Sistem Yönetimi</span>
         </div>
 
-        <nav aria-label="Sistem yönetimi menüsü">
+        <nav aria-label="Sistem yönetimi ana menüsü">
           {adminNavigationGroups.map((group) => {
-            const groupActive = group.items.some((item) =>
-              item.href === SYSTEM_MANAGEMENT_PATH
-                ? navigationPathname === item.href
-                : navigationPathname.startsWith(item.href),
-            );
-
+            const isSelected = selectedGroupId === group.id;
             return (
-              <details
-                className="admin-nav-group"
-                key={group.id}
-                open={group.id === "overview" || groupActive}
-              >
-                <summary>
-                  <span className="admin-nav-group__icon">
-                    <Icon name={group.icon} />
-                  </span>
-                  <span className="admin-nav-group__copy">
-                    <strong>{group.label}</strong>
-                    <small>{group.description}</small>
-                  </span>
-                  <span className="admin-nav-group__chevron" aria-hidden="true">⌄</span>
-                </summary>
-
-                <div className="admin-nav-group__items">
-                  {group.items.map((item) => {
-                    const active =
-                      item.href === SYSTEM_MANAGEMENT_PATH
-                        ? navigationPathname === item.href
-                        : navigationPathname.startsWith(item.href);
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={active ? "is-active" : ""}
-                        onClick={() => setOpen(false)}
-                      >
-                        <Icon name={item.icon} />
-                        <span>{item.label}</span>
-                        {item.badge && <b>{item.badge}</b>}
-                      </Link>
-                    );
-                  })}
+              <section className={`admin-nav-group ${isSelected ? "is-active" : ""}`} key={group.id}>
+                <div className="admin-nav-group__header">
+                  <button
+                    type="button"
+                    className="admin-nav-group__landing"
+                    aria-label={group.label}
+                    aria-expanded={isSelected}
+                    aria-controls="admin-secondary-panel"
+                    onClick={() => {
+                      setMenuSelection({ path: pathname, groupId: isSelected ? null : group.id });
+                      setExpandedSubmenus({});
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="admin-nav-group__icon"><Icon name={group.icon} /></span>
+                    <span className="admin-nav-group__copy">
+                      <strong>{group.label}</strong>
+                      <small>{group.description}</small>
+                    </span>
+                  </button>
                 </div>
-              </details>
+              </section>
             );
           })}
         </nav>
@@ -256,10 +308,6 @@ export function AdminShell({
               <small>{user.email}</small>
             </div>
 
-            <Link className="admin-profile__logout" href="/icerik">
-              İçerik Yönetimi
-            </Link>
-
             <Link className="admin-profile__logout" href="/hesabim">Hesabım</Link>
 
             <form action={logoutAction}>
@@ -275,7 +323,95 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="admin-content">{children}</main>
+        <div className={`admin-workspace ${selectedGroup ? "has-menu" : ""}`}>
+          {selectedGroup ? (
+            <aside
+              id="admin-secondary-panel"
+              className="admin-secondary-panel"
+              aria-label={`${selectedGroup.label} alt menüleri`}
+            >
+              <div className="admin-secondary-panel__heading">
+                <div>
+                  <strong>{selectedGroup.label}</strong>
+                  <small>{selectedGroup.description}</small>
+                </div>
+                <button
+                  type="button"
+                  className="admin-nav-group__toggle"
+                  aria-label={`${selectedGroup.label} alt menüsünü kapat`}
+                  onClick={() => setMenuSelection({ path: pathname, groupId: null })}
+                >×</button>
+              </div>
+              <nav className="admin-secondary-panel__items" aria-label="Seçili yönetim grubunun alt menüleri">
+                {selectedGroup.items.map((item, index) => {
+                  const isActive =
+                    item.href === SYSTEM_MANAGEMENT_PATH
+                      ? pathname === item.href
+                      : pathname === item.href || pathname.startsWith(item.href + "/");
+                  const hasChildren = Boolean(item.children?.length);
+                  const expansionKey = `${pathname}::${item.href}`;
+                  const subExpanded = isSubmenuExpanded(item);
+                  return (
+                    <div className="admin-nav-child" key={item.href}>
+                      <div className="admin-nav-child__header">
+                        <Link href={item.href} className={isActive ? "is-active" : ""}>
+                          <Icon name={item.icon} />
+                          <span>{item.label}</span>
+                          {item.badge && <b>{item.badge}</b>}
+                        </Link>
+                        {hasChildren ? (
+                          <button
+                            type="button"
+                            className="admin-nav-group__toggle admin-nav-child__toggle"
+                            aria-label={`${item.label} alt menüsünü ${subExpanded ? "kapat" : "aç"}`}
+                            aria-expanded={subExpanded}
+                            aria-controls={`admin-submenu-${selectedGroup.id}-${index}`}
+                            onClick={() => setExpandedSubmenus((current) => ({
+                              ...current,
+                              [expansionKey]: !subExpanded,
+                            }))}
+                          >
+                            <span className={`admin-nav-group__chevron ${subExpanded ? "is-open" : ""}`} aria-hidden="true">⌄</span>
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </nav>
+              {selectedGroup.items.map((item, index) =>
+                item.children?.length && isSubmenuExpanded(item) ? (
+                  <nav
+                    key={item.href}
+                    id={`admin-submenu-${selectedGroup.id}-${index}`}
+                    className="admin-tertiary-row admin-nav-child__items"
+                    aria-label={`${item.label} alt bağlantıları`}
+                  >
+                    {item.children.map((child) => (
+                      item.href === `${SYSTEM_MANAGEMENT_PATH}/power-seo` ? (
+                        <a key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </a>
+                      ) : (
+                        <Link key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                          <span>{child.label}</span>
+                        </Link>
+                      )
+                    ))}
+                  </nav>
+                ) : null,
+              )}
+            </aside>
+          ) : null}
+        <main className={`admin-content ${embeddedWorkspace ? "admin-content--embedded" : ""}`}>
+          {!embeddedWorkspace && pathname !== SYSTEM_MANAGEMENT_PATH ? (
+            <div className="admin-return-row">
+              <AdminReturnLink />
+            </div>
+          ) : null}
+          {children}
+        </main>
+        </div>
       </section>
     </div>
   );

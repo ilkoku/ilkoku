@@ -1,0 +1,53 @@
+name: Live Google Tag Gateway and consent audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/live-gtm-consent-audit.yml
+      - scripts/seo-live-consent-network-audit.mjs
+      - scripts/seo-consent-audit-rules.mjs
+      - workers/ilkoku-gtm-gateway/index.mjs
+      - scripts/security-contract-manual-gtm-worker.test.mjs
+      - src/components/privacy/SiteAnalyticsLoader.tsx
+      - src/components/privacy/SiteConsentBanner.tsx
+      - src/app/layout.tsx
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-gtm-consent-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Two isolated fresh-browser consent scenarios
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Validate script syntax
+        run: node --check scripts/seo-live-consent-network-audit.mjs
+      - name: Install browser QA dependencies
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify virgin-browser deny and accept without changing public settings
+        env:
+          CONSENT_AUDIT_REPORT: /tmp/ilkoku-live-consent-network.json
+        run: node scripts/seo-live-consent-network-audit.mjs
+      - name: Preserve consent and initiator evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-live-consent-network
+          path: /tmp/ilkoku-live-consent-network.json
+          if-no-files-found: warn
+          retention-days: 14

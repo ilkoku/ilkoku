@@ -168,3 +168,14 @@ test("runtime infrastructure UI stays server-rendered while specialist pages sha
   notContains(panel, '"use client"', "runtime panel server rendering");
   notContains(panel, "fetch(", "runtime panel must not create browser data source");
 });
+
+
+test("Next.js-owned runtime indicator is not mistaken for missing deployment configuration", () => {
+  const contracts = JSON.parse(source("src/features/system-map/runtime-contracts.json"));
+  const runtimeProbe = source("src/instrumentation.ts");
+  assert.ok(contracts.runtimeManagedEnvKeys.includes("NEXT_RUNTIME"), "NEXT_RUNTIME is owned by Next.js runtime");
+  assert.ok(contracts.runtimeManagedEnvKeys.includes("NODE_ENV"), "NODE_ENV remains runtime-managed");
+  contains(runtimeProbe, 'process.env.NEXT_RUNTIME !== "nodejs"', "Next.js runtime check");
+  const infrastructure = source("src/features/system-map/runtime-infrastructure.ts");
+  contains(infrastructure, 'runtimeManagedEnvKeys.has(item.key)', "runtime-managed key contract is applied");
+});

@@ -5,6 +5,7 @@ import ops from "../PublishingOperationsWorkbench.module.css";
 import growth from "../GrowthOperationsWorkbench.module.css";
 import styles from "./SeoDashboard.module.css";
 import { SeoRoleCardsAudit } from "./SeoRoleCardsAudit";
+import { PowerSeoContentAudit } from "./PowerSeoContentAudit";
 
 export const dynamic = "force-dynamic";
 
@@ -269,6 +270,22 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
   const selectedTitleLength = selected?.seoTitle?.trim().length ?? 0;
   const selectedDescriptionLength = selected?.seoDescription?.trim().length ?? 0;
 
+  // Fetch only the selected published body; do not load up to 500 full CMS
+  // documents into the SEO overview or misrepresent missing content as a score.
+  let selectedBodyJson: string | null = null;
+  if (selected) {
+    try {
+      const rows = await prisma.$queryRaw<Array<{ bodyJson: string }>>`
+        SELECT bodyJson FROM ContentPage
+        WHERE id = ${selected.id} AND status = 'published'
+        LIMIT 1
+      `;
+      selectedBodyJson = rows[0]?.bodyJson ?? null;
+    } catch {
+      selectedBodyJson = null;
+    }
+  }
+
   return (
     <section className="content-editor-page">
       <div className="content-page-heading">
@@ -515,6 +532,18 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
                           <small>{selectedCanonical || `https://ilkoku.com${selected.slug}`}</small>
                           <strong>{selected.seoTitle?.trim() || selected.title}</strong>
                           <p>{selected.seoDescription?.trim() || "Meta açıklaması henüz tanımlanmadı."}</p>
+                        </div>
+
+                        <div className={ops.infoBox}>
+                          <PowerSeoContentAudit
+                            title={selected.title}
+                            seoTitle={selected.seoTitle}
+                            seoDescription={selected.seoDescription}
+                            canonicalUrl={selected.canonicalUrl}
+                            slug={selected.slug}
+                            bodyJson={selectedBodyJson}
+                            noIndex={selected.noIndex}
+                          />
                         </div>
 
                         <div className={ops.actionRow}>

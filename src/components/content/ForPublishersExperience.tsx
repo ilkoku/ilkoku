@@ -86,7 +86,7 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">Yeni yazarları daha erken keşfet</span>
-            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
+            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{index > 0 ? " " : null}{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=publisher">Yayınevi olarak başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="#yayinevi-kesfi">Keşif akışını gör</Link></div>
             <div className="how-hero__proof"><span><strong>Yeni</strong> eserler</span><span><strong>Gerçek</strong> okur sinyalleri</span><span><strong>Gelişim</strong> bağlamı</span></div>

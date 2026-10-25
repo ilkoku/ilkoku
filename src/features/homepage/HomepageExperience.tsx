@@ -105,6 +105,7 @@ async function HomepageRoleSection({
         <div className="nx-role-grid">
           {visibleRoles.map((role) => (
             <Link
+              prefetch={false}
               href={role.href}
               className={`nx-role nx-role--${role.key}`}
               key={role.key}
@@ -182,11 +183,11 @@ export default async function HomepageExperience() {
         <div className="nx-shell nx-hero__layout">
           <div className="nx-hero__copy">
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazardan yayınevine tek bir yazar ekosistemi</p>
-            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>) : <span>{heroTitle}</span>}</h1>
+            <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{index > 0 ? " " : null}{line}</span>) : <span>{heroTitle}</span>}</h1>
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
-            <div className="nx-hero__actions"><Link href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
+            <div className="nx-hero__actions"><Link prefetch={false} href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link prefetch={false} href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
-          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={60} sizes="(max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
+          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={45} sizes="(max-width: 480px) 82vw, (max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>
@@ -212,16 +213,7 @@ export default async function HomepageExperience() {
         <div className="nx-shell"><header className="nx-section-heading"><p className="nx-eyebrow nx-eyebrow--violet">{why?.eyebrow || "Güven, kayıt ve keşif"}</p><h2>{why?.title || "Neden İlkOku?"}</h2></header><div className="nx-benefit-grid">{benefits.map((benefit, index) => <article className={`nx-benefit nx-benefit--${index + 1}`} key={benefit.title}><span className="nx-benefit__icon" aria-hidden="true" /><h3>{benefit.title}</h3><p>{benefit.description}</p></article>)}</div>{stats.length > 0 ? <div className="nx-stats" aria-label="İlkOku platform istatistikleri">{stats.map((stat, index) => <div className={`nx-stat nx-stat--${index + 1}`} key={`${stat.label}-${stat.icon}`}><span className="nx-stat__icon" aria-hidden="true" /><strong>{stat.value}</strong><small>{stat.label}</small></div>)}</div> : null}</div>
       </section>
 
-      <Suspense
-        fallback={
-          <LiveHomepageFooter
-            signedIn={false}
-            bookIndexPublished={false}
-            slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
-            copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
-          />
-        }
-      >
+      <Suspense fallback={null}>
         <HomepageFooterSection
           slogan={footer?.slogan || "İlk cümle, ilk okurun, ilk adımın."}
           copyright={footer?.copyright || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}

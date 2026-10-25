@@ -29,10 +29,7 @@ export async function loadPublishedCmsSiteMapPages(): Promise<SiteMapPage[]> {
   }
 }
 
-export async function getPublishedHeaderNavigation(): Promise<{ payload: HeaderNavigationPayload; pages: SiteMapPage[] }> {
-  const cmsPages = await loadPublishedCmsSiteMapPages();
-  const pages = [...SITE_MAP_PAGES, ...cmsPages];
-
+async function loadPublishedHeaderRow(): Promise<HeaderRow | null> {
   try {
     const rows = await prisma.$queryRaw<HeaderRow[]>`
       SELECT valueJson, status
@@ -41,8 +38,23 @@ export async function getPublishedHeaderNavigation(): Promise<{ payload: HeaderN
         AND contentKey = ${HEADER_NAV_LIVE_KEY}
       LIMIT 1
     `;
-    const row = rows[0];
-    if (!row || row.status !== "published") return { payload: defaultHeaderNavigation, pages };
+    return rows[0] ?? null;
+  } catch {
+    // The navigation must keep its safe default if CMS settings are unavailable.
+    return null;
+  }
+}
+
+export async function getPublishedHeaderNavigation(): Promise<{ payload: HeaderNavigationPayload; pages: SiteMapPage[] }> {
+  // Independent reads must not add serial database round trips to the public header's TTFB.
+  const [cmsPages, row] = await Promise.all([
+    loadPublishedCmsSiteMapPages(),
+    loadPublishedHeaderRow(),
+  ]);
+  const pages = [...SITE_MAP_PAGES, ...cmsPages];
+
+  if (!row || row.status !== "published") return { payload: defaultHeaderNavigation, pages };
+  try {
     return { payload: parseHeaderNavigation(row.valueJson, pages) ?? defaultHeaderNavigation, pages };
   } catch {
     return { payload: defaultHeaderNavigation, pages };

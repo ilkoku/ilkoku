@@ -8,7 +8,7 @@ export const revalidate = 300;
 const definition = getFictionGuideDefinition("hiciv");
 export const metadata: Metadata = createPublicPageMetadata({
   title: `${definition.title} | İlkOku`,
-  description: definition.description,
+  description: "Hiciv nasıl yazılır? Eleştiri hedefini belirlemeyi, ironi ve abartıyı kullanmayı, karakter ve olay örgüsüyle etkili hiciv sahneleri kurmayı öğrenin.",
   canonical: "/yazarlar-icin/kurgu/hiciv",
 });
 export default async function FictionGenrePage() { return <BatchedFictionGuidePage definition={definition} />; }

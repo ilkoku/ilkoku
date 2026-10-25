@@ -2,6 +2,14 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter, Rate, Trend } from "k6/metrics";
 
+// Origin-direct tests bypass Cloudflare and are never safe as an accidental
+// diagnostic. Require independent explicit approval for even the smoke profile.
+if ((__ENV.ILKOKU_ORIGIN_DIRECT_APPROVAL || "").trim() !== "APPROVE-ORIGIN-DIRECT-PROBE") {
+  throw new Error(
+    "ORIGIN_DIRECT_BLOCKED: explicit ILKOKU_ORIGIN_DIRECT_APPROVAL is required.",
+  );
+}
+
 const BASE_URL = (__ENV.BASE_URL || "").replace(/\/$/, "");
 const ORIGIN_IP = (__ENV.ORIGIN_IP || "").trim();
 const PROFILE = (__ENV.PROFILE || "smoke").toLowerCase();

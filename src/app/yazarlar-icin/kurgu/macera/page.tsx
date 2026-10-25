@@ -8,7 +8,7 @@ export const revalidate = 300;
 const definition = getFictionGuideDefinition("macera");
 export const metadata: Metadata = createPublicPageMetadata({
   title: `${definition.title} | İlkOku`,
-  description: definition.description,
+  description: "Macera hikâyesi nasıl yazılır? Kahramanın hedefini, yolculuktaki engelleri, keşifleri ve dönüşümünü planlayarak sürükleyici bir anlatı oluşturmayı öğrenin.",
   canonical: "/yazarlar-icin/kurgu/macera",
 });
 export default async function FictionGenrePage() { return <BatchedFictionGuidePage definition={definition} />; }

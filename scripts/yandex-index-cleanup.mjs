@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const SITE_ORIGIN = "https://ilkoku.com";
 const YANDEX_INDEXNOW_ENDPOINT = "https://yandex.com/indexnow";
+const GLOBAL_INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 
 export const YANDEX_DELETED_URLS = [
   `${SITE_ORIGIN}/puan-durumu`,
@@ -10,35 +11,16 @@ export const YANDEX_DELETED_URLS = [
   `${SITE_ORIGIN}/page`,
 ];
 
+// Candidate routes only; re-validate live robots before Yandex submission.
 export const YANDEX_NOINDEX_URLS = [
   `${SITE_ORIGIN}/editorler`,
-  `${SITE_ORIGIN}/editorler-icin/egitim/tur-editorlugu`,
-  `${SITE_ORIGIN}/editorler-icin/egitim/yazarla-calismak`,
+  `${SITE_ORIGIN}/en-cok-satanlar`,
   `${SITE_ORIGIN}/en-cok-satanlar/birden-fazla-listede-cok-satanlar`,
   `${SITE_ORIGIN}/en-cok-satanlar/cok-satanlara-yeni-girenler`,
   `${SITE_ORIGIN}/en-cok-satanlar/cok-satanlarda-yukselenler`,
   `${SITE_ORIGIN}/en-cok-satanlar/turkiye`,
   `${SITE_ORIGIN}/en-cok-satanlar/turkiye/karsilastirma`,
   `${SITE_ORIGIN}/en-cok-satanlar/uzun-suredir-cok-satanlar`,
-  `${SITE_ORIGIN}/yasal/cerez-politikasi`,
-  `${SITE_ORIGIN}/yasal/gizlilik-politikasi`,
-  `${SITE_ORIGIN}/yasal/kullanim-sartlari`,
-  `${SITE_ORIGIN}/yasal/telif-hakki-politikasi`,
-  `${SITE_ORIGIN}/yardim`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/alternatif-tarih`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/casusluk`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/dram`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/gerilim`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/gotik`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/hiciv`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/korku`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/mitoloji`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/mizah`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/paranormal`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/polisiye`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/post-apokaliptik`,
-  `${SITE_ORIGIN}/yazarlar-icin/kurgu/romantik`,
-  `${SITE_ORIGIN}/yazarlar-icin/senaryo-ve-sahne/tiyatro`,
   `${SITE_ORIGIN}/yeni-cikanlar`,
 ];
 
@@ -104,29 +86,27 @@ async function validateDeletedUrls() {
 }
 
 async function validateNoindexUrls() {
+  const validated = [];
   for (const url of YANDEX_NOINDEX_URLS) {
     const response = await fetchLive(url);
-    const html = await response.text();
-    const headerNoindex = (response.headers.get("x-robots-tag") || "")
-      .toLowerCase()
-      .includes("noindex");
-
+    if ([404, 410].includes(response.status)) {
+      console.log(`SKIP GONE: ${url} -> HTTP ${response.status}; not an explicit deletion target`);
+      continue;
+    }
     if (response.status !== 200) {
-      throw new Error(
-        `Noindex cleanup URL must stay live: ${url} -> HTTP ${response.status}`,
-      );
+      throw new Error(`Noindex candidate fetch failed: ${url} -> HTTP ${response.status}`);
     }
-
+    const html = await response.text();
+    const headerNoindex = (response.headers.get('x-robots-tag') || '').toLowerCase().includes('noindex');
     if (!headerNoindex && !hasRobotsNoindex(html)) {
-      throw new Error(
-        `Noindex cleanup URL is missing a noindex directive: ${url}`,
-      );
+      console.log(`SKIP INDEXABLE: ${url} -> HTTP 200 without noindex`);
+      continue;
     }
-
     console.log(`NOINDEX READY: ${url} -> HTTP 200 + noindex`);
+    validated.push(url);
   }
+  return validated;
 }
-
 async function validateRefreshUrls() {
   for (const url of YANDEX_REFRESH_URLS) {
     const response = await fetchLive(url);
@@ -154,33 +134,48 @@ async function validateRefreshUrls() {
   }
 }
 
-async function submitToYandex(key, keyLocation) {
+async function submitToYandex(key, keyLocation, validatedNoindexUrls) {
+  const submittedUrls = [...YANDEX_DELETED_URLS, ...validatedNoindexUrls, ...YANDEX_REFRESH_URLS];
   const payload = {
     host: "ilkoku.com",
     key,
     keyLocation,
-    urlList: YANDEX_CLEANUP_URLS,
+    urlList: submittedUrls,
   };
 
-  const response = await fetch(YANDEX_INDEXNOW_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "user-agent": "IlkOku-Yandex-Index-Cleanup/1.0",
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(60_000),
-  });
+  let response;
+  let acceptedEndpoint = YANDEX_INDEXNOW_ENDPOINT;
+  for (const endpoint of [YANDEX_INDEXNOW_ENDPOINT, GLOBAL_INDEXNOW_ENDPOINT]) {
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "user-agent": "IlkOku-Yandex-Index-Cleanup/1.0",
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(60_000),
+      });
+      acceptedEndpoint = endpoint;
+      break;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      if (endpoint === GLOBAL_INDEXNOW_ENDPOINT) {
+        throw new Error(`IndexNow POST network failure at ${endpoint}: ${reason}`);
+      }
+      console.warn(`WARN: ${endpoint} network failure (${reason}); retrying via global IndexNow endpoint`);
+    }
+  }
 
   const body = await response.text();
 
   console.log(
     JSON.stringify({
       yandexIndexNowCleanup: {
-        endpoint: YANDEX_INDEXNOW_ENDPOINT,
+        endpoint: acceptedEndpoint,
         status: response.status,
         deleted: YANDEX_DELETED_URLS,
-        noindex: YANDEX_NOINDEX_URLS,
+        noindex: validatedNoindexUrls,
         refresh: YANDEX_REFRESH_URLS,
       },
     }),
@@ -188,12 +183,12 @@ async function submitToYandex(key, keyLocation) {
 
   if (![200, 202].includes(response.status)) {
     throw new Error(
-      `Yandex IndexNow cleanup failed: HTTP ${response.status} ${body.trim()}`,
+      `IndexNow cleanup failed at ${acceptedEndpoint}: HTTP ${response.status} ${body.trim()}`,
     );
   }
 
   console.log(
-    `PASS: Yandex accepted ${YANDEX_CLEANUP_URLS.length} cleanup/refresh URLs via IndexNow.`,
+    `PASS: ${acceptedEndpoint} accepted ${submittedUrls.length} validated cleanup/refresh URLs via IndexNow.`,
   );
 }
 
@@ -203,9 +198,9 @@ export async function runYandexCleanup() {
 
   const keyLocation = await validateKey(key);
   await validateDeletedUrls();
-  await validateNoindexUrls();
+  const validatedNoindexUrls = await validateNoindexUrls();
   await validateRefreshUrls();
-  await submitToYandex(key, keyLocation);
+  await submitToYandex(key, keyLocation, validatedNoindexUrls);
 }
 
 const invokedPath = process.argv[1] ? resolve(process.argv[1]) : "";

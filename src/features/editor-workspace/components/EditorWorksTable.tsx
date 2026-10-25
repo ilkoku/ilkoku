@@ -218,7 +218,7 @@ export function EditorWorksTable({
             genre: work.genre,
             href: `/kitap/${work.slug}?from=${encodeURIComponent(returnPath)}`,
             id: work.id,
-            meta: `Yayın ${formatDate(work.publishedAt)}`,
+            meta: `Yayın ${formatDate(work.publishedAt)}${work.saleDisclosure ? ` · ${work.saleDisclosure.label}` : ""}`,
             readerCount: work.readerCount,
             statusLabel: status.label,
             statusMeta: work.editorReviewStatus === "completed" ? "Editör süreci tamamlandı" : "Ortak Eser Havuzu",

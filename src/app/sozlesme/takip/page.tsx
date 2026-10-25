@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { listAdminUserContracts } from "@/features/contracts/repository";
+import {
+  getAdminUserContractsPage,
+  getAdminContractSummary,
+  type AdminContractFlow,
+} from "@/features/contracts/repository";
+import { ContractHistoryPagination, parseContractPage } from "@/features/contracts/ContractHistoryPagination";
 import { MANDATORY_REGISTRATION_CONTRACT_CODE } from "@/features/contracts/registration-agreement";
-import { listContractReminderActivity } from "@/features/contracts/tracking-activity";
+import { listContractReminderActivityForIds } from "@/features/contracts/tracking-activity";
 import type { UserContractStatus } from "@/features/contracts/types";
 
 const statusLabels: Record<UserContractStatus, string> = {
@@ -34,41 +39,31 @@ function waitingAge(sentAt: Date | null, status: UserContractStatus, now: Date) 
 export default async function ContractTrackingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ akis?: string; q?: string }>;
+  searchParams: Promise<{ akis?: string; q?: string; sayfa?: string }>;
 }) {
   const params = await searchParams;
-  const [contracts, reminderActivity] = await Promise.all([
-    listAdminUserContracts(500),
-    listContractReminderActivity(500),
+  const allowedFlows: readonly AdminContractFlow[] = [
+    "manual", "registration", "waiting", "accepted", "rejected", "cancelled",
+  ];
+  const flow: AdminContractFlow = allowedFlows.includes(params.akis as AdminContractFlow)
+    ? params.akis as AdminContractFlow
+    : "manual";
+  const query = (params.q ?? "").trim().slice(0, 120);
+  const [contractsPage, summary] = await Promise.all([
+    getAdminUserContractsPage({
+      page: parseContractPage(params.sayfa),
+      pageSize: 25,
+      flow,
+      query,
+    }),
+    getAdminContractSummary(),
   ]);
+  const filtered = contractsPage.rows;
+  const reminderActivity = await listContractReminderActivityForIds(
+    filtered.map((contract) => contract.id),
+  );
   const reminderByContract = new Map(reminderActivity.map((row) => [row.contractId, row]));
   const now = new Date();
-
-  const registration = contracts.filter((contract) => contract.templateCode === MANDATORY_REGISTRATION_CONTRACT_CODE);
-  const manual = contracts.filter((contract) => contract.templateCode !== MANDATORY_REGISTRATION_CONTRACT_CODE);
-  const waiting = manual.filter((contract) => contract.status === "sent" || contract.status === "viewed");
-  const accepted = manual.filter((contract) => contract.status === "accepted");
-  const rejected = manual.filter((contract) => contract.status === "rejected");
-  const cancelled = manual.filter((contract) => contract.status === "cancelled");
-  const unopened = waiting.filter((contract) => !contract.viewedAt);
-  const reminded = waiting.filter((contract) => reminderByContract.has(contract.id));
-
-  const flow = params.akis ?? "manual";
-  const source = flow === "registration"
-    ? registration
-    : flow === "waiting"
-      ? waiting
-      : flow === "accepted"
-        ? accepted
-        : flow === "rejected"
-          ? rejected
-          : flow === "cancelled"
-            ? cancelled
-            : manual;
-  const query = (params.q ?? "").trim().toLocaleLowerCase("tr-TR");
-  const filtered = query
-    ? source.filter((contract) => `${contract.titleSnapshot} ${contract.templateCode} ${contract.recipientFullName} ${contract.recipientEmail} ${contract.relatedWorkTitle ?? ""}`.toLocaleLowerCase("tr-TR").includes(query))
-    : source;
 
   return (
     <main className="contract-admin-page">
@@ -82,20 +77,20 @@ export default async function ContractTrackingPage({
       </header>
 
       <section className="contract-metrics" aria-label="Takip özeti">
-        <article><strong>{manual.length}</strong><span>Manuel operasyon</span></article>
-        <article><strong>{waiting.length}</strong><span>Yanıt bekliyor</span></article>
-        <article><strong>{unopened.length}</strong><span>Henüz açılmadı</span></article>
-        <article><strong>{reminded.length}</strong><span>Hatırlatma yapıldı</span></article>
-        <article><strong>{accepted.length}</strong><span>Manuel kabul</span></article>
-        <article><strong>{rejected.length}</strong><span>Manuel ret</span></article>
-        <article><strong>{cancelled.length}</strong><span>İptal</span></article>
-        <article><strong>{registration.length}</strong><span>Kayıt kabulü</span></article>
+        <article><strong>{summary.manual}</strong><span>Manuel operasyon</span></article>
+        <article><strong>{summary.waiting}</strong><span>Yanıt bekliyor</span></article>
+        <article><strong>{summary.unopened}</strong><span>Henüz açılmadı</span></article>
+        <article><strong>{summary.reminded}</strong><span>Hatırlatma yapıldı</span></article>
+        <article><strong>{summary.accepted}</strong><span>Manuel kabul</span></article>
+        <article><strong>{summary.rejected}</strong><span>Manuel ret</span></article>
+        <article><strong>{summary.cancelled}</strong><span>İptal</span></article>
+        <article><strong>{summary.registration}</strong><span>Kayıt kabulü</span></article>
       </section>
 
       <section className="contract-admin-section">
         <div className="contract-card-heading">
           <div><p>FİLTRE</p><h2>İşlem kuyruğu</h2></div>
-          <span>{filtered.length} kayıt</span>
+          <span>{contractsPage.total} kayıt</span>
         </div>
         <form className="contract-tracking-filters" method="get">
           <label><span>Akış</span><select name="akis" defaultValue={flow}>
@@ -106,7 +101,7 @@ export default async function ContractTrackingPage({
             <option value="cancelled">İptal edilenler</option>
             <option value="registration">Kayıt sözleşmesi kabulleri</option>
           </select></label>
-          <label><span>Ara</span><input name="q" type="search" defaultValue={params.q ?? ""} placeholder="Kullanıcı, e-posta, eser veya şablon" /></label>
+          <label><span>Ara</span><input name="q" type="search" defaultValue={query} placeholder="Kullanıcı, e-posta, eser veya şablon" /></label>
           <button type="submit">Filtrele</button>
           <Link href="/sozlesme/takip">Temizle</Link>
         </form>
@@ -131,6 +126,15 @@ export default async function ContractTrackingPage({
           </table>
           {filtered.length === 0 ? <div className="contract-empty">Bu filtrede sözleşme kaydı yok.</div> : null}
         </div>
+        <ContractHistoryPagination
+          label="Takip merkezi sözleşme sayfaları"
+          path="/sozlesme/takip"
+          page={contractsPage.page}
+          pageSize={contractsPage.pageSize}
+          total={contractsPage.total}
+          totalPages={contractsPage.totalPages}
+          preservedParams={{ akis: flow, q: query }}
+        />
       </section>
     </main>
   );

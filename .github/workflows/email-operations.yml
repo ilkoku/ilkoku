@@ -1,8 +1,8 @@
 name: Email operations
 
 on:
-  schedule:
-    - cron: "35 * * * *"
+  # Hostinger is the sole automatic heartbeat source.
+  # Keep a manual emergency check; it does not create a second scheduler.
   workflow_dispatch:
 
 permissions:
@@ -30,4 +30,5 @@ jobs:
             --retry-all-errors \
             --request POST \
             --header "Authorization: Bearer $SUMMARY_SECRET" \
+            --header "X-IlkOku-Scheduler: github" \
             https://ilkoku.com/api/internal/email-operations

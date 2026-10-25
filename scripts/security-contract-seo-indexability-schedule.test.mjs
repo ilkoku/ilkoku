@@ -49,3 +49,12 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
     "Book Index stays excluded from sitemap during soft launch",
   );
 });
+
+
+test("Cloudflare infrastructure is excluded from crawler inventory while public pages stay allowed", () => {
+  const robots = source("src/app/robots.ts");
+  contains(robots, '"/cdn-cgi/"', "Cloudflare managed paths excluded");
+  contains(robots, '"/api/media/"', "published media remain discoverable");
+  contains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap untouched");
+  contains(robots, '"/",', "public pages remain crawlable");
+});

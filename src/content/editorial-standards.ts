@@ -2,7 +2,7 @@ export const editorialStandardsPageContent = {
   title: "Editoryal Standartlar",
   summary: "Bir eserin güçlü ve geliştirmeye açık yönlerini iki bağımsız profesyonel bakışla görünür kılan İlkOku editör modelini; ölçütleri, rapor standardını ve yazarın yaratıcı kararını nasıl koruduğunu keşfedin.",
   seoTitle: "Editoryal Standartlar | İlkOku Editör İncelemesi",
-  seoDescription: "İlkOku editör incelemelerinde kullanılan değerlendirme ölçütlerini, iki bağımsız görüşü, gerekçeli rapor standardını, gizlilik ve yaratıcı karar ilkelerini inceleyin.",
+  seoDescription: "İlkOku editör incelemelerindeki değerlendirme ölçütlerini, iki bağımsız görüşü, gerekçeli raporu, gizlilik ve yaratıcı karar ilkelerini inceleyin.",
   canonical: "/editoryal-standartlar",
   updatedAt: "2026-08-26T00:00:00.000Z",
   body: `İyi bir editör raporu, yazara yalnızca "iyi" ya da "zayıf" demek yerine metnini başka bir gözle yeniden görme imkânı verir. İlkOku'da editoryal değerlendirme; eserin güçlü yönlerini, geliştirmeye açık noktalarını ve okur deneyimine etkilerini metinden izlenebilen örneklerle görünür kılmayı amaçlar.

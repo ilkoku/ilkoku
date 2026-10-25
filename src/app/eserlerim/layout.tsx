@@ -1,3 +1,4 @@
+import "@/features/works/works-workspace.css";
 import { WriterBookStructureRefreshBoundary } from "@/features/writer/components/WriterBookStructureRefreshBoundary";
 import { WriterBookTrashEnhancer } from "@/features/writer/components/WriterBookTrashEnhancer";
 import { WriterClassificationStatsEnhancer } from "@/features/writer/components/WriterClassificationStatsEnhancer";

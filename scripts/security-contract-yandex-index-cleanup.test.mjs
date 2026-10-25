@@ -78,7 +78,6 @@ test("Yandex cleanup remains a narrow IndexNow notification workflow", () => {
     "src/lib/public-page-metadata.ts",
     "src/app/robots.ts",
     "src/app/editorler/**",
-    "src/app/en-cok-satanlar/turkiye/karsilastirma/**",
     "src/app/yardim/**",
     "next.config.ts",
   ]) {

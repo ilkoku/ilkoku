@@ -90,9 +90,6 @@ export function EditorialTrustNote({
           İlkOku hakkında
         </Link>
       </div>
-      <p className="mt-4 text-xs leading-6 text-[#81798a]">
-        Son sayfa güncellemesi: 6 Ekim 2026
-      </p>
     </aside>
   );
 }

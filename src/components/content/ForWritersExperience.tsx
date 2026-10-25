@@ -8,6 +8,14 @@ import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 type Section = { body: string; title: string };
 
+const priorityWritingGuideLinks = [
+  { href: "/yazarlar-icin/kurgu/oyku", label: "Öykü yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/distopya", label: "Distopya yazarlığı" },
+  { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir yazarlığı" },
+] as const;
+
 type WriterHistoryMilestone = {
   body: string;
   first: string;
@@ -145,7 +153,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">
             <span className="how-eyebrow">Fikrini görünür bir eser yolculuğuna dönüştür</span>
-            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{word}</span>)}</h1>
+            <h1>{title.split(/\s+/).map((word, index) => <span key={`${word}-${index}`}>{index > 0 ? " " : null}{word}</span>)}</h1>
             <p>{summary}</p>
             <div className="how-hero__actions">
               <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla <span aria-hidden="true">→</span></Link>
@@ -262,6 +270,16 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
             </Link>
           ))}
         </div>
+        <nav className="writers-education__shortcuts" aria-label="Doğrudan yazarlık rehberleri">
+          <p>İlk rehberini seç</p>
+          <div className="writers-education__shortcuts-links">
+            {priorityWritingGuideLinks.map((guide) => (
+              <Link href={guide.href} key={guide.href}>
+                {guide.label} <span aria-hidden="true">→</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
       </aside>
 
       <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/topluluk-kurallari">Topluluk</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link></nav></div></footer>

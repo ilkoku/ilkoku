@@ -8,7 +8,7 @@ import { archiveMediaAssetAction, createMediaAssetAction } from "@/features/cms/
 import styles from "./MediaLibraryWorkbench.module.css";
 
 export type MediaWorkbenchReference = {
-  source: "site" | "page";
+  source: "site" | "page" | "work";
   label: string;
   detail: string;
   editHref: string;

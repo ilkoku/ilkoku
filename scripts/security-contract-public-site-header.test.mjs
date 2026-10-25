@@ -134,7 +134,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     "/site-haritasi",
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -164,7 +163,6 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   for (const href of [
     "/en-cok-satanlar",
     "/en-cok-satanlar/turkiye",
-    "/en-cok-satanlar/turkiye/karsilastirma",
     "/yeni-cikanlar",
     "/en-cok-satanlar/dunya",
     "/en-cok-satanlar/cok-satanlara-yeni-girenler",
@@ -175,7 +173,7 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
     assert.ok(header.includes(`href: "${href}"`), `${href} must remain in the injected Book Index menu`);
   }
   assert.match(header, /title: "Ana Listeler"/);
-  assert.match(header, /title: "Karşılaştır"/);
+  assert.doesNotMatch(header, /title: "Karşılaştır"/, "retired comparison header group must not reappear");
   assert.match(header, /title: "Çok Satan Analizleri"/);
   assert.doesNotMatch(header, /directHref: "\/en-cok-satanlar"/);
   assert.match(header, /menu\.id === "support"/);
@@ -210,6 +208,17 @@ test("public header exposes one canonical CMS-backed single-active mega navigati
   assert.doesNotMatch(headerAccountRoute, /userId:/);
   assert.match(megaCss, /\.homepage-live \.nx-header\s*\{[\s\S]*display:\s*none\s*!important/);
   assert.doesNotMatch(header, /getCurrentProfile|getRoleNavigation|navigation\.workspaceHref|logoutAction/);
+});
+
+test("public header loads independent CMS reads concurrently without losing safe fallback", () => {
+  const server = read(headerServerPath);
+  assert.match(server, /const \[cmsPages, row\] = await Promise\.all\(\[/u, "CMS page and menu queries must begin together");
+  assert.match(server, /loadPublishedCmsSiteMapPages\(\)/u, "Published CMS page set must be preserved");
+  assert.match(server, /loadPublishedHeaderRow\(\)/u, "Published menu settings must be preserved");
+  assert.match(server, /return rows\[0\] \?\? null/u, "Missing menu settings safely fall back");
+  assert.match(server, /if \(!row \|\| row\.status !== "published"\)/u, "Draft navigation never leaks");
+  assert.match(server, /parseHeaderNavigation\(row\.valueJson, pages\) \?\? defaultHeaderNavigation/u, "Invalid menus still fall back to safe default");
+  assert.match(server, /catch \{[\s\S]*payload: defaultHeaderNavigation/u, "Parse errors retain public default");
 });
 
 test("CMS menu management stores page ids in a safe draft before publishing to the shared header", () => {

@@ -13,9 +13,12 @@ test("contract center uses one persistent admin-only navigation shell", () => {
   const layout = source("src/app/sozlesme/layout.tsx");
   const navigation = source("src/features/contracts/ContractManagementNavigation.tsx");
 
-  contains(layout, "ContractManagementNavigation", "contract layout navigation");
+  const unifiedNavigation = source("src/lib/admin-navigation.ts");
+  contains(layout, "AdminShell", "one unified admin shell across centers");
+  contains(layout, "embeddedWorkspace", "keep original contract workbench content");
+  notContains(layout, "<ContractManagementNavigation />", "do not mount separate contract sidebar");
   contains(layout, 'user.role !== "admin"', "contract admin guard");
-  contains(layout, "contract-management-shell", "contract shell");
+  contains(unifiedNavigation, 'children: contractSubNavigation', "contract workspaces must be discoverable in unified menu");
   contains(navigation, 'href: "/sozlesme/taslaklar"', "soft draft navigation");
   contains(navigation, 'href: "/sozlesme/sablonlar"', "template library navigation");
   contains(navigation, 'href: "/harita"', "system map navigation");

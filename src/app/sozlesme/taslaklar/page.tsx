@@ -40,30 +40,32 @@ export default async function ContractSoftDraftsPage() {
         <article><strong>{activated}</strong><span>Admin tarafından aktif edilmiş</span></article>
       </section>
 
-      <section className="contract-soft-grid" aria-label="Önerilen sözleşme taslakları">
-        {softContractDraftCatalog.map((item) => {
-          const template = templateByCode.get(item.code) ?? null;
-          return (
-            <article className="contract-soft-card" key={item.code}>
-              <div className="contract-soft-card__top">
-                <span>{item.area}</span>
-                <small>{roleLabels[item.targetRole] ?? item.targetRole}</small>
-              </div>
-              <h2>{item.title}</h2>
-              <p>{item.reason}</p>
-              <dl>
-                <div><dt>Ne zaman?</dt><dd>{item.trigger}</dd></div>
-                <div><dt>Şablon kodu</dt><dd><code>{item.code}</code></dd></div>
-              </dl>
-              <footer>
-                <span data-ready={template ? "true" : "false"}>
-                  {template ? (template.active ? "Aktif — gönderimde kullanılabilir" : "Pasif soft taslak") : "Migration bekleniyor"}
-                </span>
-                {template ? <Link href={`/sozlesme/sablonlar/${template.id}`}>Taslağı aç →</Link> : null}
-              </footer>
-            </article>
-          );
-        })}
+      <section className="contract-soft-table-section" aria-label="Önerilen sözleşme taslakları">
+        <div className="contract-table-wrap contract-list-table">
+          <table>
+            <thead><tr><th>Taslak / Kod</th><th>Alan</th><th>Hedef rol</th><th>İşlem zamanı</th><th>Kapsam / Gerekçe</th><th>Hazırlık durumu</th><th>İşlem</th></tr></thead>
+            <tbody>
+              {softContractDraftCatalog.map((item) => {
+                const template = templateByCode.get(item.code) ?? null;
+                return (
+                  <tr key={item.code}>
+                    <td><strong>{item.title}</strong><small>{item.code}</small></td>
+                    <td>{item.area}</td>
+                    <td>{roleLabels[item.targetRole] ?? item.targetRole}</td>
+                    <td>{item.trigger}</td>
+                    <td>{item.reason}</td>
+                    <td>
+                      <span className="contract-row-state" data-state={template?.active ? "active" : "draft"}>
+                        {template ? (template.active ? "Aktif / gönderilebilir" : "Pasif soft taslak") : "Migration bekleniyor"}
+                      </span>
+                    </td>
+                    <td>{template ? <Link href={`/sozlesme/sablonlar/${template.id}`}>Taslağı aç →</Link> : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   );

@@ -9,7 +9,7 @@ if (!hub) throw new Error("Senaryo ve Sahne category hub definition missing");
 
 export const metadata: Metadata = createPublicPageMetadata({
   title: "Senaryo ve Sahne Yazarlığı Eğitimleri | İlkOku",
-  description: "Film, dizi, tiyatro, podcast ve diğer senaryo-sahne türlerinin farklı yazarlık mantıklarını keşfet.",
+  description: "Film, dizi, tiyatro ve podcast gibi türler için senaryo ve sahne yazarlığı eğitimlerini keşfedin. Anlatı kurma ve türlere göre yazma yollarını inceleyin.",
   canonical: "/yazarlar-icin/senaryo-ve-sahne",
 });
 

@@ -3,6 +3,7 @@ import {
   transitionContractTemplateAction,
 } from "./actions";
 import type { ContractTemplateWorkbenchRecord } from "./template-lifecycle";
+import { isReaderPurchaseTermsPlaceholder, READER_DIGITAL_CONTENT_TERMS_CODE } from "@/features/commerce/checkout-terms";
 
 const lifecycleLabels = {
   soft: "Soft Taslak",
@@ -70,6 +71,9 @@ export function ContractTemplateLifecyclePanel({
   }
 
   const approvalEvidenceLabel = hasCurrentAdminApproval ? "Admin Onayı" : "Bekleniyor";
+  const purchaseTermsPlaceholder =
+    template.code === READER_DIGITAL_CONTENT_TERMS_CODE &&
+    isReaderPurchaseTermsPlaceholder(template.body);
 
   return (
     <section className="contract-lifecycle-panel" data-status={template.lifecycleStatus}>
@@ -106,6 +110,14 @@ export function ContractTemplateLifecyclePanel({
         <div><dt>Kaynak</dt><dd>{template.sourceTemplateCode ?? "Manuel oluşturuldu"}</dd></div>
       </dl>
 
+      {purchaseTermsPlaceholder ? (
+        <p role="status" className="contract-lifecycle-footnote">
+          Okur satın alma sözleşmesi henüz çalışma taslağıdır. Nihai koşullar
+          hazırlanıp onaylanmadığı sürece bu şablon onaylanamaz veya aktif
+          edilemez; 0 TL edinim de kapalı kalır.
+        </p>
+      ) : null}
+
       <div className="contract-lifecycle-actions">
         {template.lifecycleStatus === "draft" ? (
           <LifecycleButton label="İncelemeye gönder" templateId={template.id} transition="submit_review" tone="primary" />
@@ -113,7 +125,7 @@ export function ContractTemplateLifecyclePanel({
         {template.lifecycleStatus === "review" ? (
           <>
             <LifecycleButton label="Taslağa geri al" templateId={template.id} transition="return_draft" />
-            {hasCurrentAdminApproval ? (
+            {hasCurrentAdminApproval && !purchaseTermsPlaceholder ? (
               <LifecycleButton label="Şablonu onayla" templateId={template.id} transition="approve" tone="primary" />
             ) : (
               <span className="contract-lifecycle-evidence-lock">
@@ -125,7 +137,7 @@ export function ContractTemplateLifecyclePanel({
         {template.lifecycleStatus === "approved" ? (
           <>
             <LifecycleButton label="Taslağa geri al" templateId={template.id} transition="return_draft" />
-            <LifecycleButton label="Gönderime aç / Aktif et" templateId={template.id} transition="activate" tone="primary" />
+            {!purchaseTermsPlaceholder ? <LifecycleButton label="Gönderime aç / Aktif et" templateId={template.id} transition="activate" tone="primary" /> : null}
           </>
         ) : null}
         {template.lifecycleStatus === "active" ? (

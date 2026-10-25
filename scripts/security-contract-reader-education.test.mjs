@@ -104,10 +104,21 @@ test("reader education keeps eight live categories while search indexability fol
 });
 
 
-test("reader education exposes Article and breadcrumb structured data", () => {
+test("reader education exposes Article and one shared breadcrumb structured data", () => {
   const publicRoute = source("src/app/okurlar-icin/[slug]/page.tsx");
+  const readerShell = source("src/components/content/ReaderEducationShell.tsx");
   assertContains(publicRoute, '"@type": "Article"', "reader Article schema");
-  assertContains(publicRoute, '"@type": "BreadcrumbList"', "reader breadcrumb schema");
+  assert.equal(publicRoute.includes('"@type": "BreadcrumbList"'), false, "reader route must not duplicate shell breadcrumbs");
+  assertContains(readerShell, '"@type": "BreadcrumbList"', "reader breadcrumb schema is preserved in shell");
   assertContains(publicRoute, 'mainEntityOfPage: canonical', "reader canonical schema binding");
   assertContains(publicRoute, 'publisher: { "@type": "Organization", name: "İlkOku"', "reader publisher schema");
+});
+
+
+test("reader genre comparison CTA never links to the intentionally gated /turler 404", () => {
+  const inventory = source("src/lib/reader-education.ts");
+  const routing = source("src/lib/public-site-navigation.ts");
+  assertContains(routing, "export const publicDiscoveryEnabled = false", "retired /turler remains gated");
+  assertContains(inventory, 'href: "/yazarlar-icin/kurgu", label: "Kurgu türlerini incele"', "reader genre CTA points to the live category hub");
+  assert.ok(!inventory.includes('href: "/turler"'), "no reader education CTA links to the retired 404");
 });

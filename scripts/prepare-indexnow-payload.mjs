@@ -29,6 +29,7 @@ const globalImpactFiles = new Set([
   "src/content/navigation.ts",
   "src/lib/public-brand.ts",
   "src/lib/public-page-metadata.ts",
+  "src/lib/soft-launch-search-policy.ts",
   "src/lib/public-site-navigation.ts",
   "src/lib/site-contact.ts",
 ]);
@@ -85,6 +86,44 @@ function normalizePathname(pathname) {
 
 function urlPath(url) {
   return normalizePathname(new URL(url).pathname);
+}
+
+// Use only the current, public, indexable sitemap as the notification source.
+// A bounded lastmod window catches CMS-only publications without announcing
+// every historical URL on every scheduled run. No missing/future/invalid
+// lastmod date is treated as fresh.
+export function recentPublishedSitemapUrls(xml, now = new Date(), lookbackHours = 36) {
+  const nowMs = new Date(now).getTime();
+  if (!Number.isFinite(nowMs) || !Number.isFinite(lookbackHours) || lookbackHours <= 0) {
+    throw new Error("Invalid IndexNow recency window");
+  }
+  const cutoff = nowMs - lookbackHours * 60 * 60 * 1000;
+  const selected = [];
+  const seen = new Set();
+
+  for (const match of xml.matchAll(/<url>\s*([\s\S]*?)\s*<\/url>/gu)) {
+    const block = match[1];
+    const loc = block.match(/<loc>\s*([^<]+?)\s*<\/loc>/u);
+    const lastmod = block.match(/<lastmod>\s*([^<]+?)\s*<\/lastmod>/u);
+    if (!loc || !lastmod) continue;
+
+    const modified = Date.parse(lastmod[1].trim());
+    if (!Number.isFinite(modified) || modified < cutoff || modified > nowMs) continue;
+
+    let parsed;
+    try {
+      parsed = new URL(decodeXmlText(loc[1].trim()));
+    } catch {
+      continue;
+    }
+    if (parsed.origin !== SITE_ORIGIN) continue;
+    const canonical = SITE_ORIGIN + normalizePathname(parsed.pathname);
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    selected.push(canonical);
+  }
+
+  return selected;
 }
 
 export function parseSitemapUrls(xml) {
@@ -194,6 +233,7 @@ function matchesImpact(pathname, impact) {
 export function selectIndexNowUrls({
   sitemapUrls,
   changedFiles,
+  recentPublicUrls = [],
   repoRoot = process.cwd(),
   forceFull = false,
 }) {
@@ -213,6 +253,20 @@ export function selectIndexNowUrls({
       mode: "full",
       reason: forceFull ? "forced full batch" : "workflow requested full batch",
       urls,
+    };
+  }
+
+  if (changedFiles.includes("__RECENT_PUBLIC__")) {
+    const recent = new Set(recentPublicUrls);
+    return {
+      mode: "recent-public",
+      reason: "scheduled recent sitemap lastmod plus published Book Index URLs",
+      urls: urls.filter((url) => {
+        const pathname = urlPath(url);
+        return recent.has(url)
+          || pathname === "/en-cok-satanlar"
+          || pathname.startsWith("/en-cok-satanlar/");
+      }),
     };
   }
 
@@ -316,7 +370,8 @@ function main() {
   const outputFile = requiredArg("--output");
   const key = requiredArg("--key");
 
-  const sitemapUrls = parseSitemapUrls(readFileSync(sitemapFile, "utf8"));
+  const sitemapXml = readFileSync(sitemapFile, "utf8");
+  const sitemapUrls = parseSitemapUrls(sitemapXml);
   const changedFiles = readFileSync(changedFilesFile, "utf8")
     .split(/\r?\n/u)
     .map((value) => value.trim())
@@ -325,6 +380,9 @@ function main() {
   const selection = selectIndexNowUrls({
     sitemapUrls,
     changedFiles,
+    recentPublicUrls: changedFiles.includes("__RECENT_PUBLIC__")
+      ? recentPublishedSitemapUrls(sitemapXml)
+      : [],
     repoRoot: process.cwd(),
   });
 

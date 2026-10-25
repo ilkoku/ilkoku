@@ -148,8 +148,8 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
   );
   assert.equal(
     (sitemap.match(/lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/g) ?? []).length,
-    1,
-    "unchanged writing hubs preserve the October 4 content update",
+    2,
+    "writing hubs and explicit Webtoon fallback share the approved internal-link update date",
   );
   assert.equal(
     (sitemap.match(/lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/g) ?? []).length,

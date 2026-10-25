@@ -252,6 +252,7 @@ export function BookShowcase({
 
             {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
               <p className="showcase-commerce-notice">
+                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur.
                 Kilitli bölümler erişim hakkı gerektirir. Satın alma koşulları
                 tamamlanana kadar yeni sipariş verilemez; ön izleme açıktır.
               </p>

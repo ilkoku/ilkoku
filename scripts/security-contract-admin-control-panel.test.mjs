@@ -532,9 +532,9 @@ test("existing horizontal third-level navigation remains open on every nested ad
 test("rewrite-safe admin navigation uses one stable hydration path while keeping account and logout", () => {
   const shell = read("src/components/admin/AdminShell.tsx");
   assert.match(shell, /const rawPathname = usePathname\(\)/);
-  assert.match(shell, /const \[clientPathname, setClientPathname\] = useState/);
-  assert.match(shell, /useEffect\(\(\) =>/);
-  assert.match(shell, /const pathname = clientPathname \?\? SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /const clientPathname = useSyncExternalStore\(/);
+  assert.match(shell, /\(\) => SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /const pathname = clientPathname\.replace/);
   assert.match(shell, /href="\/hesabim">Hesabım/);
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });
@@ -549,4 +549,11 @@ test("admin compact top bar does not remove account or logout actions", () => {
   assert.match(shell, /href="\/hesabim">Hesabım/);
   assert.match(shell, /<form action=\{logoutAction\}>/);
   assert.doesNotMatch(dashboard, /Sistem hareketlerini aç/u);
+});
+
+
+test("compact admin topbar and sticky secondary navigation share the same vertical offset", () => {
+  const css = read("src/app/admin/admin.css");
+  assert.match(css, /\.admin-secondary-panel\s*\{\s*position:\s*sticky;[\s\S]*?top:\s*4\.5rem;/u);
+  assert.match(css, /\.admin-shell \.admin-topbar \{min-height:4\.5rem;/u);
 });

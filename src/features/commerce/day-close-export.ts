@@ -4,6 +4,13 @@ export const DAY_CLOSE_TIME_ZONE = "Europe/Istanbul";
 export const DAY_CLOSE_VERSION = "day-close-v1";
 export const DAY_CLOSE_MAX_ROWS = 5000;
 
+export class DayCloseDataIntegrityError extends Error {
+  constructor(public readonly recordType: string, public readonly issue: "EMPTY" | "DUPLICATE") {
+    super("DAY_CLOSE_" + issue + "_" + recordType + "_REFERENCE");
+    this.name = "DayCloseDataIntegrityError";
+  }
+}
+
 /** A closed Istanbul business day. Türkiye uses UTC+03:00 throughout 2026. */
 export function istanbulBusinessDate(now: Date): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -189,8 +196,8 @@ export function buildDayCloseFiles(input: {
   const assertUnique = (kind: string, refs: readonly string[]) => {
     const seen = new Set<string>();
     for (const ref of refs) {
-      if (!ref || !ref.trim()) throw new Error("DAY_CLOSE_EMPTY_" + kind + "_REFERENCE");
-      if (seen.has(ref)) throw new Error("DAY_CLOSE_DUPLICATE_" + kind + "_REFERENCE: " + ref);
+      if (!ref || !ref.trim()) throw new DayCloseDataIntegrityError(kind, "EMPTY");
+      if (seen.has(ref)) throw new DayCloseDataIntegrityError(kind, "DUPLICATE");
       seen.add(ref);
     }
   };

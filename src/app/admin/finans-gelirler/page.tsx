@@ -113,6 +113,18 @@ export default async function FinanceIncomePage() {
 
       <section className="admin-detail-grid">
         <article className="admin-panel">
+          <h2>Sipariş Mali İnceleme</h2>
+          <p>Sipariş No ile KDV fiyat kaydını, tahsilatı, mevcut ledger
+            hareketlerini ve faturalı / faturasız örnek yazar gelirlerini
+            salt okunur olarak çapraz sorgulayın.</p>
+          <Link
+            className="admin-button admin-button--primary"
+            href="/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme"
+          >
+            Sipariş mali incelemeyi aç
+          </Link>
+        </article>
+        <article className="admin-panel">
           <h2>Mutabakat</h2>
           <p>
             Paid sipariş, sale_gross ledger hareketi, aktif entitlement ve

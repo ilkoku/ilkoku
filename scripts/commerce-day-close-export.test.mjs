@@ -74,10 +74,11 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.equal(result.manifest.checkedVatMinor,"2000");
   assert.equal(result.manifest.preparationRows,1);
   assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
-  assert.equal(result.files.length,8);
+  assert.equal(result.manifest.ledgerSummaryGroups,1);
+  assert.equal(result.files.length,9);
   assert.deepEqual([...result.files.map(f=>f.name)],[
     "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv",
-    "mutabakat.csv","muhasebe_on_hazirlik.csv","alan_esleme.json","manifest.json",
+    "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv","alan_esleme.json","manifest.json",
   ]);
   for (const f of result.files.filter(x=>x.name.endsWith(".csv"))) {
     assert.equal(result.manifest.fileHashes[f.name],createHash("sha256").update(f.data).digest("hex"));
@@ -202,4 +203,51 @@ test("coupon and uncertain seller are excluded from accountant preparation, neve
   const flagged=make([order]);
   assert.equal(flagged.manifest.preparationRows,0);
   assert.equal(flagged.files.find(f=>f.name==="muhasebe_on_hazirlik.csv").data.split("\r\n").filter(Boolean).length,1);
+});
+
+test("late post-midnight ledger reconciles prior paid day without polluting its daily ledger summary", () => {
+  const crossDayLedger = {
+    id:"late01",entryType:"sale_gross",amount:12000n,currency:"TRY",
+    createdAt:new Date("2026-10-26T00:02:00+03:00"),
+    orderNo:"ILK-ABCDE1234",authorPublicId:"writer001",
+  };
+  const result = exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[validOrder()],ledger:[],refunds:[],
+    reconciliationLedger:[crossDayLedger],
+  });
+  assert.equal(result.manifest.readySalesCount,1);
+  assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
+  assert.equal(result.manifest.ledgerCount,0);
+  assert.equal(result.manifest.ledgerSummaryGroups,0);
+  const dayLedger=result.files.find(f=>f.name==="finans_hareketleri.csv").data;
+  assert.ok(!dayLedger.includes("late01"),"Ledger posted next day must not appear in prior day's movement CSV");
+  assert.ok(result.files.find(f=>f.name==="mutabakat.csv").data.includes("LEDGER_KONTROLU_GECTI"));
+  assert.equal(result.manifest.preparationRows,1);
+});
+
+test("daily financial movements summarize signed minor units by type/currency without double counting", () => {
+  const when=new Date("2026-10-25T13:00:00+03:00");
+  const ledger=[
+    {id:"a",entryType:"sale_gross",amount:12000n,currency:"TRY",createdAt:when,orderNo:"ILK-ABCDE1234",authorPublicId:"writer001"},
+    {id:"b",entryType:"sale_gross",amount:4500n,currency:"TRY",createdAt:when,orderNo:"ILK-B",authorPublicId:"writer002"},
+    {id:"c",entryType:"platform_commission",amount:600n,currency:"TRY",createdAt:when,orderNo:"ILK-B",authorPublicId:"writer002"},
+    {id:"d",entryType:"refund",amount:-200n,currency:"TRY",createdAt:when,orderNo:"ILK-B",authorPublicId:"writer002"},
+  ];
+  const result=exportModule.buildDayCloseFiles({day:"2026-10-25",orders:[],ledger,refunds:[]});
+  const sum=result.files.find(f=>f.name==="gun_sonu_ozet.csv").data;
+  assert.equal(result.manifest.ledgerSummaryGroups,3);
+  assert.ok(sum.includes('"sale_gross","TRY",2,16500'),"Gross entry count and amounts");
+  assert.ok(sum.includes('"refund","TRY",1,-200'),"Preserve signed refund amounts");
+  assert.ok(sum.includes('LEDGER_TURU_TOPLAMI_MUHASEBE_GELIRI_DEGIL'));
+  assert.equal(result.manifest.readySalesCount,0);
+});
+
+test("repository loads sales' own ledger records independent of ledger day and keeps day ledger date-bounded", () => {
+  const repo=source("src/features/commerce/day-close-repository.ts");
+  assert.ok(repo.includes('financialLedgerEntries: {'));
+  assert.ok(repo.includes('where: { entryType: "sale_gross" }'));
+  assert.ok(repo.includes('reconciliationLedger: orders.flatMap'));
+  assert.ok(repo.includes('prisma.financialLedger.findMany({'));
+  assert.ok(repo.includes('where: { createdAt: { gte: period.start, lt: period.end } }'));
+  assert.ok(repo.includes('order.refundedAt >= period.end'));
 });

@@ -2513,17 +2513,20 @@ test("authenticated admin dashboard safe-link matrix navigates current internal 
   await expect(page.locator(".admin-main")).toBeVisible();
   const hrefs = await page.locator(".admin-content a[href]").evaluateAll(links=>
     [...new Set(links.map(a=>a.getAttribute("href")).filter(x=>
-      typeof x==="string" && x.startsWith("/") && !x.includes("?") &&
+      typeof x==="string" && /^\/[a-zA-Z0-9/_-]+$/.test(x) &&
       !x.startsWith("/giris") && !x.startsWith("/hesabim")
     ))].slice(0,8)
   );
   expect(hrefs.length).toBeGreaterThan(0);
   for(const href of hrefs) {
     await page.goto("/sistem-yonetimi", {waitUntil:"domcontentloaded"});
-    // Visit source-documented destination without invoking any mutation.
-    const response=await page.goto(href, {waitUntil:"domcontentloaded"});
-    expect(response?.status(), href).toBeLessThan(400);
+    // Exercise the real anchor, not only an HTTP GET for its destination.
+    const link=page.locator('.admin-content a[href="' + href + '"]').first();
+    await expect(link).toBeVisible();
+    await link.click();
+    await page.waitForURL(url => url.pathname === href, {timeout:10000});
     await expect(page).not.toHaveURL(/\/giris(?:\?|$)|\/erisim-reddedildi(?:\?|$)/);
+    await expect(page.locator("body")).not.toContainText("Sayfa bulunamadı.");
   }
 });
 

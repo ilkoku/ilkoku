@@ -42,9 +42,14 @@ export default async function PurchasedLibraryPage({
     listReaderPurchasedWorks(profile.id),
     searchParams,
   ]);
+  // Never trust a URL-provided order number without confirming it belongs
+  // to the current reader's active entitlement.
+  const completedOrderNo = query.durum === "eklendi"
+    ? entitlements.find((item) => item.order?.orderNo === query.siparis)?.order?.orderNo ?? null
+    : null;
   const flash =
     query.durum === "eklendi"
-      ? `Satın alma başarılı. Eser kütüphanene eklendi${query.siparis ? ` · Sipariş ${query.siparis}` : ""}.`
+      ? "Satın alma başarılı. Eser kütüphanene eklendi."
       : query.durum === "zaten-erisim-var"
         ? "Bu eser zaten kütüphanende."
         : null;
@@ -65,7 +70,22 @@ export default async function PurchasedLibraryPage({
           </Link>
         </header>
 
-        {flash ? <div className={styles.successNotice}>{flash}</div> : null}
+        {flash ? (
+          <div className={styles.successNotice} role="status">
+            <strong>{flash}</strong>
+            {completedOrderNo ? (
+              <div>
+                <p>Sipariş numarası: <strong>{completedOrderNo}</strong></p>
+                <Link
+                  className={styles.secondaryAction}
+                  href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(completedOrderNo)}
+                >
+                  Sipariş ayrıntısını görüntüle
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {entitlements.length === 0 ? (
           <div className={styles.empty}>
@@ -93,7 +113,7 @@ export default async function PurchasedLibraryPage({
                   {entitlement.order?.orderNo ? (
                     <>
                       <span>•</span>
-                      <span>{entitlement.order.orderNo}</span>
+                      <span>Sipariş No: {entitlement.order.orderNo}</span>
                     </>
                   ) : null}
                 </div>

@@ -43,7 +43,7 @@ export async function getDayClosePackage(day: string, now = new Date()) {
           },
         },
         payments: {
-          select: { status: true, amount: true, currency: true },
+          select: { status: true, amount: true, currency: true, completedAt: true },
         },
         // A paid order can have its ledger posted just after midnight.
         // Reconcile against the order's OWN records, not only day ledger.

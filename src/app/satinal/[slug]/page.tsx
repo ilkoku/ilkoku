@@ -245,6 +245,12 @@ export default async function CheckoutPreparationPage({
           </Link>
         </header>
 
+        <nav className={styles.checkoutStages} aria-label="Satın alma adımları">
+          <div><span>1</span><strong>Eser ve fiyat</strong><small>Eser ve indirimleri kontrol et</small></div>
+          <div><span>2</span><strong>Sözleşme ve işlem</strong><small>Onay ve uygun ödeme yöntemi</small></div>
+          <div><span>3</span><strong>Kütüphane ve sipariş</strong><small>Erişim ve sipariş dökümü</small></div>
+        </nav>
+
         {flash ? <div role="alert" className={styles.flash}>{flash}</div> : null}
         {!checkoutConfigurationActive ? (
           <div role="status" className={styles.notice}>

@@ -703,7 +703,8 @@ test("writer work income detail matches the frozen finance fields", () => {
   contains(repository, 'entry.entryType === "adjustment"', "other adjustment rollup");
   contains(repository, 'entry.entryType === "author_earning"', "net writer earning rollup");
 
-  contains(page, "Güncel fiyat", "writer work price field");
+  contains(page, 'work.priceTaxTreatment === "net_plus_vat"', "writer work price treatment");
+  contains(page, "Kayıtlı fiyat (KDV hariç)", "writer confirmed net price field");
   contains(page, "Satış adedi", "writer work units sold field");
   contains(page, "Ödeme hizmeti ücreti", "writer provider fee field");
   contains(page, "İlkOku hizmet payı", "writer platform share field");

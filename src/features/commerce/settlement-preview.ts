@@ -7,18 +7,27 @@ export type IllustrativeDocumentMode = "invoice" | "expense_receipt";
 
 const percent = (amount: bigint, rate: bigint) =>
   (amount * rate + BigInt(50)) / BigInt(100);
+const percentBps = (amount: bigint, basisPoints: number) =>
+  (amount * BigInt(basisPoints) + BigInt(5000)) / BigInt(10000);
 
 export function calculateIllustrativeSettlement(
   saleNetAmount: bigint,
   mode: IllustrativeDocumentMode,
+  commissionRateBps = 1500,
+  serviceFeeRateBps = 500,
 ) {
+  if (!Number.isSafeInteger(commissionRateBps) ||
+      commissionRateBps < 0 || commissionRateBps > 9000 ||
+      serviceFeeRateBps !== 500) {
+    throw new Error("Unsupported financial rate: accountant review required.");
+  }
   if (saleNetAmount < BigInt(0)) {
     throw new Error("Sale amount must not be negative.");
   }
 
   const saleVat = percent(saleNetAmount, BigInt(20));
   const readerTotal = saleNetAmount + saleVat;
-  const commissionNet = percent(saleNetAmount, BigInt(15));
+  const commissionNet = percentBps(saleNetAmount, commissionRateBps);
 
   if (mode === "invoice") {
     // Assumes a VAT-registered commercial invoice from the author and a
@@ -50,7 +59,7 @@ export function calculateIllustrativeSettlement(
   // service (VAT excluded). 2 No VAT is paid and fully deducted in 1 No.
   const authorGross = saleNetAmount - commissionNet;
   const withholding = percent(authorGross, BigInt(17));
-  const platformServiceNet = percent(saleNetAmount, BigInt(5));
+  const platformServiceNet = percentBps(saleNetAmount, serviceFeeRateBps);
   const platformServiceVat = percent(platformServiceNet, BigInt(20));
   const authorInvoiceVat = BigInt(0);
   const commissionVat = BigInt(0);

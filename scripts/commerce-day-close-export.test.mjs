@@ -109,6 +109,8 @@ test("official vendor handoff gates distinguish verified internal columns from u
   const mapping=JSON.parse(result.files.find(f=>f.name==="alan_esleme.json").data);
   const audit=mapping.sourceColumnAudit;
   assert.equal(audit.verificationScope,"ILKOKU_INTERNAL_COLUMN_NAMES_ONLY");
+  assert.match(mapping.fields.satis_tarihi_utc.meaning,/not bank settlement/);
+  assert.match(mapping.fields.satis_brut_kurus.meaning,/independent bank clearing not verified/);
   assert.equal(audit.internalSourceColumnsMatchDeclarations,true);
   assert.equal(audit.vendorImportReady,false);
   assert.equal(audit.fiscalApproval,false);

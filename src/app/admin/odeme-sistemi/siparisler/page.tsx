@@ -162,6 +162,11 @@ export default async function CommerceOrdersPage({
                   <tr key={order.id}>
                     <td>
                       <strong>{order.orderNo}</strong>
+                      <Link
+                        href={"/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme?siparis=" + encodeURIComponent(order.orderNo)}
+                      >
+                        Mali inceleme
+                      </Link>
                       <span
                         className="admin-table-badge"
                         data-status={order.status}

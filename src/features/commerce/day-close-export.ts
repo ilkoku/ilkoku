@@ -133,14 +133,14 @@ export function buildDayCloseFiles(input: {
   ]];
   const issues: CsvField[][] = [["kaynak","referans","uyari","islem"]];
   const details = { ready: 0, review: 0, zero: 0 };
-  let grossMinor = 0n, vatMinor = 0n;
+  let grossMinor = BigInt(0), vatMinor = BigInt(0);
 
   for (const order of input.orders) {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
     if (order.sellerMode !== "platform_direct") warnings.push("SATICI_ILKOKU_DOGRULANMADI");
-    if (order.finalAmount < 0n || order.originalAmount - order.discountAmount !== order.finalAmount) {
+    if (order.finalAmount < BigInt(0) || order.originalAmount - order.discountAmount !== order.finalAmount) {
       warnings.push("TUTAR_MUTABAKATSIZ");
     }
     if (!rate || rate.calculationVersion !== "rate-v1" ||
@@ -151,21 +151,21 @@ export function buildDayCloseFiles(input: {
         (rate.source !== "global" && !rate.sourceEventId)) warnings.push("KOMISYON_SNAPSHOT_EKSIK_GECERSIZ");
     if (!quote || quote.calculationVersion !== "quote-v1" || quote.taxTreatment !== "net_plus_vat" ||
         quote.vatRateBasisPoints !== 2000 ||
-        quote.listNetAmount < 0n ||
-        quote.listVatAmount !== (quote.listNetAmount * 2000n + 5000n) / 10000n ||
+        quote.listNetAmount < BigInt(0) ||
+        quote.listVatAmount !== (quote.listNetAmount * BigInt(2000) + BigInt(5000)) / BigInt(10000) ||
         quote.listNetAmount + quote.listVatAmount !== quote.listGrossAmount ||
         quote.listGrossAmount !== order.originalAmount ||
         quote.discountGrossAmount !== order.discountAmount ||
         quote.payableGrossAmount !== order.finalAmount) {
       warnings.push("FIYAT_KDV_SNAPSHOT_EKSIK_GECERSIZ");
     }
-    if (order.couponCode || order.discountAmount !== 0n) warnings.push("KUPON_VERGI_MATRAHI_INCELEME");
+    if (order.couponCode || order.discountAmount !== BigInt(0)) warnings.push("KUPON_VERGI_MATRAHI_INCELEME");
     if (order.status === "refunded") warnings.push("IADE_SONRASI_SIPARIS");
     const captures = order.payments.filter((payment) => payment.status === "succeeded");
-    if (order.finalAmount > 0n &&
+    if (order.finalAmount > BigInt(0) &&
         (captures.length !== 1 || captures[0].amount !== order.finalAmount ||
          captures[0].currency !== order.currency)) warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
-    if (order.finalAmount === 0n) {
+    if (order.finalAmount === BigInt(0)) {
       details.zero++;
       warnings.push("SIFIR_TL_MALI_BELGE_DEGIL");
     }

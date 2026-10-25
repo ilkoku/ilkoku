@@ -95,6 +95,13 @@ operatör tarafından ayrıca onaylanmalıdır.
 - Origin-direct betiğinin onayı: `ILKOKU_ORIGIN_DIRECT_APPROVAL`;
   beklenen metin `APPROVE-ORIGIN-DIRECT-PROBE`.
 
+Aynı şekilde `tests/load/public-baseline.js` içindeki
+`capacity100`, `capacity200`, `diagnostic150` ve
+`distributedprobe100` profilleri doğrudan k6 ile çalıştırıldığında
+`ILKOKU_HIGH_LOAD_APPROVAL=RUN-PUBLIC-LOAD-TEST` onayını zorunlu kılar.
+Mevcut manuel GitHub workflow'u bu onayı doğruladıktan sonra k6
+konteynerine iletir. `smoke` ve `baseline` profilleri değişmemiştir.
+
 Mevcut GitHub `Public Load Test` iş akışı zaten yalnızca
 `workflow_dispatch` ile ve `RUN-PUBLIC-LOAD-TEST` onayıyla çalışır;
 bu değişiklik onun çalışma seçeneklerini veya otomatik izlemeyi

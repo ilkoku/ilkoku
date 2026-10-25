@@ -657,7 +657,7 @@ test("ledger without same-day processed refund, missing order binding, and sign 
     ]});
   assert.equal(result.manifest.refundLedgerReviewGroups,2);
   const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
-  assert.ok(issues.includes("DONEMDE_REFUND_LEDGER_KARSILIGI_YOK"));
+  assert.ok(issues.includes("DONEMDE_ISLENMIS_IADE_KAYDI_YOK"));
   assert.ok(issues.includes("IADE_LEDGER_SIPARIS_BAGI_YOK"));
 
   const base={id:"r3",orderNo:"ILK-MIXED",amount:1000n,currency:"TRY",

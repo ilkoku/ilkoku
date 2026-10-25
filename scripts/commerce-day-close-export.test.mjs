@@ -64,7 +64,7 @@ test("Excel formula injection is neutralized in every source text column",() => 
   assert.ok(csv.includes("1200"));
 });
 
-test("day close ZIP has four UTF-8 CSV files, JSON manifest and content hashes",() => {
+test("day close ZIP has CSV, generic field map and JSON manifest with content hashes",() => {
   const result = make([validOrder()]);
   assert.equal(result.manifest.version,"day-close-v1");
   assert.equal(result.manifest.batchKey,"ILK-DAY-2026-10-25");
@@ -72,9 +72,12 @@ test("day close ZIP has four UTF-8 CSV files, JSON manifest and content hashes",
   assert.equal(result.manifest.readySalesCount,1);
   assert.equal(result.manifest.checkedGrossMinor,"12000");
   assert.equal(result.manifest.checkedVatMinor,"2000");
-  assert.equal(result.files.length,5);
+  assert.equal(result.manifest.preparationRows,1);
+  assert.equal(result.manifest.unmatchedGrossLedgerOrderCount,0);
+  assert.equal(result.files.length,8);
   assert.deepEqual([...result.files.map(f=>f.name)],[
-    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv","manifest.json",
+    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","uyarilar.csv",
+    "mutabakat.csv","muhasebe_on_hazirlik.csv","alan_esleme.json","manifest.json",
   ]);
   for (const f of result.files.filter(x=>x.name.endsWith(".csv"))) {
     assert.equal(result.manifest.fileHashes[f.name],createHash("sha256").update(f.data).digest("hex"));
@@ -145,4 +148,58 @@ test("day close route is admin-only, ZIP-only, non-mutating and excludes custome
       "payout.create(", "order.update(", "invoice.create(",
     ]) assert.ok(!code.includes(forbidden),"Never mutate financial data or issue invoices: "+forbidden);
   }
+});
+
+test("generic mapping is explicitly unverified and cannot serve as an invoice payload",() => {
+  const result=make([validOrder()]);
+  const map=JSON.parse(result.files.find(f=>f.name==="alan_esleme.json").data);
+  assert.equal(map.status,"UNVERIFIED_VENDOR_MAPPING");
+  for (const vendor of ["logo","mikro","parasut"]) {
+    assert.equal(map.vendors[vendor].schemaVerified,false);
+    assert.equal(map.vendors[vendor].automaticImportReady,false);
+  }
+  assert.equal(map.documentType,"NOT_DETERMINED");
+  assert.equal(map.customerLegalIdentity,"NOT_EXPORTED_MUST_BE_VERIFIED_EXTERNALLY");
+  const preparation=result.files.find(f=>f.name==="muhasebe_on_hazirlik.csv").data;
+  assert.ok(preparation.includes("komisyon_net_ornek_kurus"));
+  assert.ok(preparation.includes("2000"));
+  assert.ok(preparation.includes("DIS_MUHASEBE_BELGE_KONTROLU_GEREKLI"));
+  assert.equal(result.manifest.preparationRows,1);
+});
+
+test("missing, duplicate and wrong gross ledger entries block the accounting preparation",() => {
+  const input={
+    day:"2026-10-25",orders:[validOrder()],ledger:[],refunds:[],
+  };
+  const noLedger=exportModule.buildDayCloseFiles(input);
+  assert.equal(noLedger.manifest.readySalesCount,0);
+  assert.equal(noLedger.manifest.preparationRows,0);
+  assert.equal(noLedger.manifest.unmatchedGrossLedgerOrderCount,1);
+  assert.ok(noLedger.files.find(f=>f.name==="uyarilar.csv").data.includes("LEDGER_BRUT_SATIS_MUTABAKATSIZ"));
+  const base={
+    id:"entry01",entryType:"sale_gross",orderNo:"ILK-ABCDE1234",
+    authorPublicId:"writer001",createdAt:new Date("2026-10-25T18:00:00+03:00"),
+    currency:"TRY",amount:12000n,
+  };
+  const duplicate=exportModule.buildDayCloseFiles({
+    ...input,ledger:[base,{...base,id:"entry02"}],
+  });
+  assert.equal(duplicate.manifest.readySalesCount,0);
+  assert.equal(duplicate.manifest.preparationRows,0);
+  const wrong=exportModule.buildDayCloseFiles({
+    ...input,ledger:[{...base,amount:11900n}],
+  });
+  assert.equal(wrong.manifest.readySalesCount,0);
+  const matched=exportModule.buildDayCloseFiles({...input,ledger:[base]});
+  assert.equal(matched.manifest.readySalesCount,1);
+  assert.equal(matched.manifest.preparationRows,1);
+  assert.ok(matched.files.find(f=>f.name==="mutabakat.csv").data.includes("LEDGER_KONTROLU_GECTI"));
+});
+
+test("coupon and uncertain seller are excluded from accountant preparation, never silently invoiced",() => {
+  const order=validOrder();
+  order.couponCode="TANITIM";
+  const flagged=make([order]);
+  assert.equal(flagged.manifest.preparationRows,0);
+  assert.equal(flagged.files.find(f=>f.name==="muhasebe_on_hazirlik.csv").data.split("\r\n").filter(Boolean).length,1);
 });

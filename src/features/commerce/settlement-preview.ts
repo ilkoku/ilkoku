@@ -28,11 +28,14 @@ export function calculateIllustrativeSettlement(
   const saleVat = percent(saleNetAmount, BigInt(20));
   const readerTotal = saleNetAmount + saleVat;
   const commissionNet = percentBps(saleNetAmount, commissionRateBps);
+  // The accounting-export VAT preview is deliberately separate from the
+  // unapproved cash/withholding settlement assumptions below.
+  const commissionVatIllustration = percent(commissionNet, BigInt(20));
 
   if (mode === "invoice") {
     // Assumes a VAT-registered commercial invoice from the author and a
     // legally distinct commission service invoice from İlkOku.
-    const commissionVat = percent(commissionNet, BigInt(20));
+    const commissionVat = commissionVatIllustration;
     const authorInvoiceVat = saleVat;
     const authorGross = saleNetAmount;
     const authorBankPayment =
@@ -47,7 +50,7 @@ export function calculateIllustrativeSettlement(
     const profitAfterTax = profitBeforeCorporateTax - corporateTaxIllustration;
     return {
       mode, saleNetAmount, saleVat, readerTotal, commissionNet,
-      commissionVat, platformServiceNet, platformServiceVat, authorGross,
+      commissionVat, commissionVatIllustration, platformServiceNet, platformServiceVat, authorGross,
       authorInvoiceVat, withholding, authorBankPayment, vat1Payment,
       vat2Payment, profitBeforeCorporateTax, corporateTaxIllustration,
       profitAfterTax,
@@ -74,7 +77,7 @@ export function calculateIllustrativeSettlement(
 
   return {
     mode, saleNetAmount, saleVat, readerTotal, commissionNet,
-    commissionVat, platformServiceNet, platformServiceVat, authorGross,
+    commissionVat, commissionVatIllustration, platformServiceNet, platformServiceVat, authorGross,
     authorInvoiceVat, withholding, authorBankPayment, vat1Payment,
     vat2Payment, profitBeforeCorporateTax, corporateTaxIllustration,
     profitAfterTax,

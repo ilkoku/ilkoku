@@ -106,6 +106,7 @@ test("verified commercial invoice shows only the matching example, never an auto
   assert.equal(expenseReceipt, null);
   assert.equal(invoiced.commissionNet, 1500n);
   assert.equal(invoiced.commissionVat, 300n);
+  assert.equal(invoiced.commissionVatIllustration, 300n);
   assert.equal(invoiced.platformServiceNet, 0n);
   assert.equal(invoiced.authorBankPayment, 10200n);
   assert.equal(invoiced.vat1Payment, 300n);
@@ -123,6 +124,8 @@ test("verified GVK18 expense receipt shows distinct 5 percent plus VAT service f
   assert.equal(p.commissionNet, 1500n);
   assert.equal(p.platformServiceNet, 500n);
   assert.equal(p.platformServiceVat, 100n);
+  assert.equal(p.commissionVatIllustration, 300n);
+  assert.equal(p.commissionVat, 0n); // historical GVK18 cash model stays unchanged
   assert.equal(p.authorGross, 8500n);
   assert.equal(p.withholding, 1445n);
   assert.equal(p.authorBankPayment, 6455n);
@@ -283,6 +286,7 @@ test("author-specific frozen commission rate changes illustrations but never aut
   assert.equal(gvk.scenarios.expenseReceipt.commissionNet, 2000n);
   assert.equal(gvk.scenarios.expenseReceipt.platformServiceNet, 500n);
   assert.equal(gvk.scenarios.expenseReceipt.platformServiceVat, 100n);
+  assert.equal(gvk.scenarios.expenseReceipt.commissionVatIllustration, 400n);
   assert.equal(gvk.scenarios.expenseReceipt.authorBankPayment, 6040n);
   assert.equal(gvk.scenarios.expenseReceipt.profitAfterTax, 1875n);
 });

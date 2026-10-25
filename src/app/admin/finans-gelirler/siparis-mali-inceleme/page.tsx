@@ -179,7 +179,7 @@ export default async function OrderAccountingReviewPage({
                     {([
                       ["Okur tahsilatı", "readerTotal"],
                       ["İlkOku komisyon geliri", "commissionNet"],
-                      ["Komisyon KDV'si", "commissionVat"],
+                      ["Komisyon hizmet KDV'si (ön hesap)", "commissionVatIllustration"],
                       ["Ayrı aracılık hizmet geliri", "platformServiceNet"],
                       ["Aracılık hizmet KDV'si", "platformServiceVat"],
                       ["Yazar brüt telifi / alış matrahı", "authorGross"],
@@ -200,6 +200,7 @@ export default async function OrderAccountingReviewPage({
                 </table>
               </div>
               {cases.map((c) => <p key={c.title}><strong>{c.title}:</strong> {c.subtitle}</p>)}
+              <p>Komisyon KDV ön hesabı, gün sonu aktarımındaki örnek tutarla aynı bazda gösterilir. Gider pusulası senaryosunda bu tutar mevcut banka ödemesi ve KDV nakit varsayımına eklenmemiştir; gerçek uygulama mali müşavir kararı gerektirir.</p>
               <p>Bu hesap yalnız KDV indiriminin uygulanabildiği, başka işletme gideri
                 olmayan ve hukuken uygun belge düzenlenen varsayımsal işlemi anlatır.
                 Kupon, iadeler veya farklı vergi statüsü

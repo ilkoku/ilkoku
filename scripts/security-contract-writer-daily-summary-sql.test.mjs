@@ -47,3 +47,21 @@ test("preparation errors cannot strand daily deliveries in pending state", () =>
   assert.match(service, /if \(row\.status === "failed"\)/u);
   assert.doesNotMatch(process, /UPDATE WriterDailySummaryDelivery/iu);
 });
+
+test("cron detects partial failure without repeated SMTP delivery attempts", () => {
+  const route = readFileSync(
+    new URL("../src/app/api/internal/writer-daily-summary/route.ts", import.meta.url),
+    "utf8",
+  );
+  const workflow = readFileSync(
+    new URL("../.github/workflows/writer-daily-summary.yml", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(route, /const ok = result\.failed === 0;/u);
+  assert.match(route, /WRITER_DAILY_SUMMARY_PARTIAL_FAILURE/u);
+  assert.match(workflow, /'\\.ok == true and \\(\\.failed \| type == "number"\\) and \\.failed == 0'/u);
+  assert.match(workflow, /if ! printf '%s\\n' "\$response" \| jq -e/u);
+  assert.match(workflow, /exit 1/u);
+  assert.match(workflow, /Authorization: Bearer \$SUMMARY_SECRET/u);
+});

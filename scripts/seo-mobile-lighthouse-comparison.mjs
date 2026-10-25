@@ -67,7 +67,7 @@ export function diagnoseLcpEvidence(audits) {
   const renderBlockingRows = renderBlocking?.details?.items;
   const blockingStyles = Array.isArray(renderBlockingRows)
     ? renderBlockingRows.filter((entry) => typeof entry.url === "string" &&
-        /\\.css(?:[?#]|$)/u.test(entry.url))
+        /\.css(?:[?#]|$)/u.test(entry.url))
     : [];
   const lcpTables = audits["largest-contentful-paint-element"]?.details?.items || [];
   const lcpNode = lcpTables.flatMap((entry) => Array.isArray(entry.items) ? entry.items : [])

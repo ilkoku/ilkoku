@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { readFileSync, mkdtempSync, writeFileSync, rmSync, truncateSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -1141,4 +1141,63 @@ test("offline comparison identifies ZIP-container bytes changed while checked co
   assert.equal(result.changedFiles.length,0);
   assert.equal(result.manifestChanged,false);
   assert.equal(result.archiveChanged,true);
+});
+
+
+test("offline archive checker refuses incomplete self-consistent v1 ZIP", () => {
+  const original=make([validOrder()]);
+  const content="siparis_no\r\n";
+  const minimal=exportModule.zipFiles([
+    {name:"siparisler.csv",data:content},
+    {name:"manifest.json",data:JSON.stringify({
+      version:"day-close-v1",day:"2026-10-25",
+      batchKey:"ILK-DAY-2026-10-25",
+      fileHashes:{ "siparisler.csv":createHash("sha256")
+        .update(content).digest("hex") },
+    })},
+  ]);
+  assert.ok(original.zip.length > minimal.length);
+  assert.throws(()=>inspectDayCloseArchive(minimal),
+    /DAY_CLOSE_COMPARE_INVALID_REQUIRED_FILES/);
+});
+
+test("offline archive checker rejects contradictory central compression method", () => {
+  const file=Buffer.from(make([validOrder()]).zip);
+  const directory=file.readUInt32LE(file.length-22+16);
+  file.writeUInt16LE(8,directory+10); // central says DEFLATE; local says STORE
+  assert.throws(()=>inspectDayCloseArchive(file),
+    /DAY_CLOSE_COMPARE_INVALID_CENTRAL_FORMAT/);
+});
+
+test("offline archive checker rejects inconsistent central uncompressed length", () => {
+  const file=Buffer.from(make([validOrder()]).zip);
+  const directory=file.readUInt32LE(file.length-22+16);
+  file.writeUInt32LE(file.readUInt32LE(directory+24)+1,directory+24);
+  assert.throws(()=>inspectDayCloseArchive(file),
+    /DAY_CLOSE_COMPARE_INVALID_CENTRAL_FORMAT/);
+});
+
+test("offline archive checker rejects multi-volume ZIP flags", () => {
+  const file=Buffer.from(make([validOrder()]).zip);
+  file.writeUInt16LE(1,file.length-22+4);
+  assert.throws(()=>inspectDayCloseArchive(file),
+    /DAY_CLOSE_COMPARE_INVALID_MULTI_DISK_ARCHIVE/);
+});
+
+test("offline CLI rejects oversized ZIP before loading archive into memory", () => {
+  const temp=mkdtempSync(join(tmpdir(),"ilkoku-archive-size-"));
+  try {
+    const giant=join(temp,"too-large.zip");
+    writeFileSync(giant,Buffer.alloc(1));
+    // Allocate a sparse file; only metadata grows, not the payload in memory.
+    truncateSync(giant,96*1024*1024+1);
+    const cli=join(root,"scripts/commerce-day-close-compare.mjs");
+    const r=spawnSync(process.execPath,[cli,giant,giant],{
+      encoding:"utf8",timeout:10000,
+    });
+    assert.equal(r.status,1);
+    assert.match(r.stderr,/DAY_CLOSE_COMPARE_INVALID_ARCHIVE_SIZE/);
+  } finally {
+    rmSync(temp,{recursive:true,force:true});
+  }
 });

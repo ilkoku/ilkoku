@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const round = (value, places = 0) => Number(value.toFixed(places));
 const median = (values) => {
@@ -48,6 +50,49 @@ function fingerprint(buildInfoFile, expectedCommitSha) {
   process.stdout.write("DEPLOYMENT_FINGERPRINT=" + JSON.stringify(result) + "\n");
 }
 
+
+/**
+ * Distinguish Lighthouse's simulated mobile LCP phase estimates from actual
+ * unthrottled Chrome request timings. Never infer a slow network request
+ * solely from simulated phase numbers.
+ */
+export function diagnoseLcpEvidence(audits) {
+  const requests = audits["network-requests"]?.details?.items;
+  const traffic = Array.isArray(requests) ? requests : [];
+  const documentRequest = traffic.find((entry) => entry.resourceType === "Document");
+  const imageRequest = traffic.find((entry) =>
+    entry.resourceType === "Image" && typeof entry.url === "string" &&
+    entry.url.includes("ilkoku-hero-user-final.webp"));
+  const renderBlocking = audits["render-blocking-resources"];
+  const renderBlockingRows = renderBlocking?.details?.items;
+  const blockingStyles = Array.isArray(renderBlockingRows)
+    ? renderBlockingRows.filter((entry) => typeof entry.url === "string" &&
+        /\.css(?:[?#]|$)/u.test(entry.url))
+    : [];
+  const lcpTables = audits["largest-contentful-paint-element"]?.details?.items || [];
+  const lcpNode = lcpTables.flatMap((entry) => Array.isArray(entry.items) ? entry.items : [])
+    .find((entry) => typeof entry.node?.selector === "string")?.node;
+  const discovered = audits["lcp-discovery-insight"]?.details?.items
+    ?.find((entry) => entry.type === "checklist")?.items;
+  const timed = (first, second) =>
+    Number.isFinite(first) && Number.isFinite(second) ? Math.max(0, round(second - first)) : null;
+  const transferByUrl = new Map(traffic.map((entry) => [entry.url, entry.transferSize || 0]));
+  return {
+    elementSelector: lcpNode?.selector ?? null,
+    priorityHinted: discovered?.priorityHinted?.value === true,
+    initiallyDiscoverable: discovered?.requestDiscoverable?.value === true,
+    eagerlyLoaded: discovered?.eagerlyLoaded?.value === true,
+    blockingCssCount: Array.isArray(renderBlockingRows) ? blockingStyles.length : null,
+    blockingCssTransferBytes: Array.isArray(renderBlockingRows)
+      ? Math.round(blockingStyles.reduce((sum, entry) => sum + (transferByUrl.get(entry.url) || 0), 0))
+      : null,
+    blockingCssEstimatedSavingsMs: Number.isFinite(renderBlocking?.numericValue)
+      ? round(renderBlocking.numericValue) : null,
+    heroRequestAfterDocumentEndMs: timed(documentRequest?.networkEndTime, imageRequest?.networkRequestTime),
+    heroObservedNetworkMs: timed(imageRequest?.networkRequestTime, imageRequest?.networkEndTime),
+  };
+}
+
 function parseLhr(file) {
   const doc = JSON.parse(fs.readFileSync(file, "utf8"));
   assert.equal(new URL(doc.finalDisplayedUrl || doc.finalUrl).origin, "https://ilkoku.com", "unexpected Lighthouse origin");
@@ -88,6 +133,7 @@ function parseLhr(file) {
       loadTime: phaseMs("Load Time"), renderDelay: phaseMs("Render Delay"),
     },
     heroImageTransferBytes: Number.isFinite(heroImage?.transferSize) ? Math.round(heroImage.transferSize) : null,
+    lcpDiagnosis: diagnoseLcpEvidence(doc.audits),
     gatewayScriptTransferBytes: gatewayScripts.reduce((total, item) => total + (item.transferSize || 0), 0),
     fcpMs: round(metric("first-contentful-paint")),
     cls: round(metric("cumulative-layout-shift"), 4),
@@ -110,6 +156,11 @@ function report(files) {
   const runs = files.map(parseLhr);
   const fields = ["score", "tbtMs", "lcpMs", "fcpMs", "cls", "jsTransferBytes", "jsRequests", "cssTransferBytes", "cssResourceBytes", "cssRequests", "rscRequests", "scriptExecutionMs", "mainThreadMs"];
   const medians = Object.fromEntries(fields.map((name) => [name, median(runs.map((run) => run[name]))]));
+  const phaseNames = ["ttfb", "loadDelay", "loadTime", "renderDelay"];
+  const modelPhaseMediansMs = Object.fromEntries(phaseNames.map((part) => {
+    const values = runs.map((run) => run.lcpSimulatedPhasesMs[part]);
+    return [part, values.every(Number.isFinite) ? median(values) : null];
+  }));
   const markdown = [
     "## İlkOku — current three-run mobile Lighthouse measurement",
     "",
@@ -132,23 +183,45 @@ function report(files) {
       run.lcpSimulatedPhasesMs.loadTime ?? "n/a", run.lcpSimulatedPhasesMs.renderDelay ?? "n/a",
       run.heroImageTransferBytes ?? "n/a", run.gatewayScriptTransferBytes].join(" | ") + " |"),
     "",
+    "## Evidence of the actual LCP request and blocking CSS",
+    "",
+    "The image network timings use Chrome's OBSERVED request waterfall and are not the simulated mobile phases above.",
+    "",
+    "| Run | LCP element | Hero high / eager / initial | Blocking CSS files | Blocking CSS transfer bytes | CSS estimated savings ms | Hero request after document finished ms | Observed hero request duration ms |",
+    "|---|---|---|---:|---:|---:|---:|---:|",
+    ...runs.map((run, i) => {
+      const d = run.lcpDiagnosis;
+      return "| " + (i + 1) + " | " + (d.elementSelector || "unknown") + " | " +
+        [d.priorityHinted, d.eagerlyLoaded, d.initiallyDiscoverable].map(Boolean).join(" / ") + " | " +
+        [d.blockingCssCount ?? "n/a", d.blockingCssTransferBytes ?? "n/a",
+          d.blockingCssEstimatedSavingsMs ?? "n/a", d.heroRequestAfterDocumentEndMs ?? "n/a",
+          d.heroObservedNetworkMs ?? "n/a"].join(" | ") + " |";
+    }),
+    "",
+    "Median model phase estimates (ms), computed independently: " +
+      phaseNames.map((part) => part + "=" + (modelPhaseMediansMs[part] ?? "n/a")).join(", ") + ".",
+    "These phase medians do not add up to the median LCP because each median can come from a different run.",
+    "",
     "An observed-versus-simulated difference is NOT proof of a production rendering defect. Identify repeatable causes before changing images, shared CSS, footer, or analytics.",
     "",
     "Interpretation: three independent simulated mobile lab runs on the verified currently deployed commit. Compare with historical single runs cautiously; results cannot establish causal performance changes or Google index status.",
     "",
   ].join("\n");
-  const result = { source: "simulated-mobile-lab", fingerprint, runs, medians };
+  const result = { source: "simulated-mobile-lab", fingerprint, runs, medians, modelPhaseMediansMs };
   fs.writeFileSync("/tmp/ilkoku-mobile-current-three-run-comparison.json", JSON.stringify(result, null, 2));
   fs.writeFileSync("/tmp/ilkoku-mobile-current-three-run-comparison.md", markdown);
   if(process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,markdown);
   process.stdout.write(markdown + "\n");
 }
 
-try {
-  if (process.argv[2] === "fingerprint") fingerprint(process.argv[3], process.argv[4]);
-  else if (process.argv[2] === "report") report(process.argv.slice(3));
-  else throw new Error("Usage: ... fingerprint <build-info.json> <commit-sha> | report <run1.json> <run2.json> <run3.json>");
-} catch(err) {
-  console.error("TAMAMLANMADI: " + (err?.message || String(err)));
-  process.exitCode=1;
+// Unit tests can import diagnoseLcpEvidence without executing the CLI.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    if (process.argv[2] === "fingerprint") fingerprint(process.argv[3], process.argv[4]);
+    else if (process.argv[2] === "report") report(process.argv.slice(3));
+    else throw new Error("Usage: ... fingerprint <build-info.json> <commit-sha> | report <run1.json> <run2.json> <run3.json>");
+  } catch (err) {
+    console.error("TAMAMLANMADI: " + (err?.message || String(err)));
+    process.exitCode = 1;
+  }
 }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { makePerformanceSummary } from "./seo-mobile-lighthouse-report.mjs";
+import { diagnoseLcpEvidence } from "./seo-mobile-lighthouse-comparison.mjs";
 
 const workflow = fs.readFileSync(".github/workflows/seo-mobile-lighthouse-baseline.yml", "utf8");
 const src = fs.readFileSync("scripts/seo-mobile-lighthouse-report.mjs", "utf8");
@@ -363,4 +364,50 @@ test("three-run LCP report distinguishes simulated model from observed browser t
     assert.ok(comparison.includes(token), "Required mobile LCP diagnostic: " + token);
   }
   assert.ok(comparison.includes("run.observedLcpMs"), "Evidence must be printed in the Actions report");
+});
+
+
+test("LCP reporter distinguishes observed image requests from simulated load-delay phases", () => {
+  const audits = {
+    "largest-contentful-paint-element": {
+      details: { items: [{ type: "table", items: [
+        { node: { selector: "section#hakkimizda .nx-hero__art img" } },
+      ] }] },
+    },
+    "lcp-discovery-insight": { details: { items: [{
+      type: "checklist",
+      items: {
+        priorityHinted: { value: true },
+        requestDiscoverable: { value: true },
+        eagerlyLoaded: { value: true },
+      },
+    }] } },
+    "render-blocking-resources": {
+      numericValue: 150,
+      details: { items: [
+        { url: "https://ilkoku.com/_next/static/css/a.css" },
+        { url: "https://ilkoku.com/_next/static/css/b.css" },
+      ] },
+    },
+    "network-requests": { details: { items: [
+      { resourceType: "Document", url: "https://ilkoku.com/", networkRequestTime: 10, networkEndTime: 450 },
+      { resourceType: "Image", url: "https://ilkoku.com/_next/image?url=ilkoku-hero-user-final.webp", networkRequestTime: 459, networkEndTime: 710, transferSize: 35000 },
+      { resourceType: "Stylesheet", url: "https://ilkoku.com/_next/static/css/a.css", transferSize: 9000 },
+      { resourceType: "Stylesheet", url: "https://ilkoku.com/_next/static/css/b.css", transferSize: 5000 },
+    ] } },
+  };
+  const evidence = diagnoseLcpEvidence(audits);
+  assert.equal(evidence.elementSelector, "section#hakkimizda .nx-hero__art img");
+  assert.equal(evidence.priorityHinted, true);
+  assert.equal(evidence.initiallyDiscoverable, true);
+  assert.equal(evidence.eagerlyLoaded, true);
+  assert.equal(evidence.blockingCssCount, 2);
+  assert.equal(evidence.blockingCssTransferBytes, 14000);
+  assert.equal(evidence.blockingCssEstimatedSavingsMs, 150);
+  assert.equal(evidence.heroRequestAfterDocumentEndMs, 9);
+  assert.equal(evidence.heroObservedNetworkMs, 251);
+  const absent = diagnoseLcpEvidence({});
+  assert.equal(absent.elementSelector, null);
+  assert.equal(absent.blockingCssCount, null);
+  assert.equal(absent.heroObservedNetworkMs, null);
 });

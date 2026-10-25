@@ -1060,3 +1060,85 @@ test("offline day-close CLI returns status 0 same, 2 changed, 1 invalid without 
     rmSync(temp,{recursive:true,force:true});
   }
 });
+
+
+test("offline comparison reports frozen commission amount changes in financial metrics", () => {
+  const previous=make([validOrder()]);
+  const changed=validOrder();
+  changed.commission={...changed.commission,commissionRateBps:1500};
+  const updated=make([changed]);
+  const result=compareDayCloseArchives(previous.zip,updated.zip);
+  assert.equal(result.changeAssessment,"FINANCIAL_TOTALS_CHANGED");
+  assert.ok(result.changedFinancialMetrics.some(item =>
+    item.field==="reviewedCommissionIllustrationMinor" &&
+    item.previous==="2000" && item.current==="1500"));
+  assert.equal(result.changedFinancialMetrics.find(item=>
+    item.field==="reviewedCommissionIllustrationMinor").category,"financial");
+  assert.ok(result.changedMetrics.some(item =>
+    item.field==="reviewedCommissionIllustrationMinor"));
+  assert.equal(result.noWritesPerformed,true);
+});
+
+test("offline comparison detects review and order count changes without treating them as money changes", () => {
+  const previous=make([validOrder()]);
+  const additional=validOrder();
+  additional.orderNo="ILK-ZERO-SECOND";
+  additional.originalAmount=0n;
+  additional.discountAmount=0n;
+  additional.finalAmount=0n;
+  additional.quote={
+    ...additional.quote,listNetAmount:0n,listVatAmount:0n,
+    listGrossAmount:0n,payableGrossAmount:0n,
+  };
+  additional.payments=[];
+  const updated=make([validOrder(),additional]);
+  const result=compareDayCloseArchives(previous.zip,updated.zip);
+  assert.equal(result.changeAssessment,"RECORD_COUNTS_CHANGED");
+  assert.ok(result.changedCountMetrics.some(item =>
+    item.field==="salesCount" && item.previous===1 && item.current===2));
+  assert.ok(result.changedCountMetrics.some(item =>
+    item.field==="zeroAmountCount" && item.previous===0 && item.current===1));
+  assert.equal(result.changedFinancialMetrics.length,0);
+});
+
+test("offline comparison does not label equal financial totals as description-only", () => {
+  const previous=make([validOrder()]);
+  const changed=validOrder();
+  changed.authorPublicId="writer002";
+  changed.workTitle="Writer allocation changed but sales totals match";
+  const updated=make([changed]);
+  const result=compareDayCloseArchives(previous.zip,updated.zip);
+  assert.equal(result.changeAssessment,"FILES_CHANGED_AGGREGATES_UNCHANGED");
+  assert.equal(result.changedFinancialMetrics.length,0);
+  assert.equal(result.changedCountMetrics.length,0);
+  assert.ok(result.changedFiles.includes("yazar_hesap_ozeti.csv"));
+  assert.match(result.warning,/Allocation, writer, order/);
+});
+
+test("offline comparison distinguishes changed manifest-only metadata from unchanged data files", () => {
+  const old=make([validOrder()]);
+  const entries=old.files.map(item => ({
+    name:item.name,
+    data:item.name==="manifest.json"
+      ? JSON.stringify({...old.manifest,note:"Additional review note"})+"\\n"
+      :item.data,
+  }));
+  const newer=exportModule.zipFiles(entries);
+  const result=compareDayCloseArchives(old.zip,newer);
+  assert.equal(result.changeAssessment,"MANIFEST_METADATA_CHANGED");
+  assert.equal(result.changedFiles.length,0);
+  assert.equal(result.changedMetrics.length,0);
+  assert.equal(result.manifestChanged,true);
+  assert.equal(result.archiveChanged,true);
+});
+
+test("offline comparison identifies ZIP-container bytes changed while checked contents match", () => {
+  const old=make([validOrder()]);
+  const changed=Buffer.from(old.zip);
+  changed.writeUInt16LE(1,10); // local ZIP timestamp only
+  const result=compareDayCloseArchives(old.zip,changed);
+  assert.equal(result.changeAssessment,"ZIP_CONTAINER_BYTES_CHANGED");
+  assert.equal(result.changedFiles.length,0);
+  assert.equal(result.manifestChanged,false);
+  assert.equal(result.archiveChanged,true);
+});

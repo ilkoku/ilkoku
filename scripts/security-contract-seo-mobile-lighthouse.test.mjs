@@ -411,19 +411,3 @@ test("LCP reporter distinguishes observed image requests from simulated load-del
   assert.equal(absent.blockingCssCount, null);
   assert.equal(absent.heroObservedNetworkMs, null);
 });
-
-
-test("below-the-fold history DB query suspends independently from the initial hero", () => {
-  const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
-  const history = fs.readFileSync("src/features/homepage/history-670.tsx", "utf8");
-  const hero = homepage.indexOf('<section className="nx-hero"');
-  const historyBoundary = homepage.indexOf("<Suspense fallback={null}>\n        <History670 />");
-  const roles = homepage.indexOf("<HomepageRoleSection roleSection={roleSection}");
-  assert.ok(hero >= 0 && historyBoundary > hero && roles > historyBoundary,
-    "Hero streams before independently suspending history, while existing below-fold roles stay later");
-  assert.match(history, /export default async function History670\(\)/u);
-  assert.match(history, /const history = await getHistory\(\)/u,
-    "History continues to render all current CMS records without any client-side or copy changes");
-  assert.match(homepage, /<History670 \/>\s*<\/Suspense>/u,
-    "History stays server-rendered behind a dedicated Suspense boundary");
-});

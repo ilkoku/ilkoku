@@ -389,6 +389,39 @@ test("0TL order unexpectedly carrying a successful capture is always flagged", (
 });
 
 
+test("same-day partial refund on paid order blocks full commission and service previews without dropping source records", () => {
+  const sale=validOrder();
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",
+    orders:[sale],
+    ledger:[{
+      id:"sale-ledger",entryType:"sale_gross",amount:12000n,currency:"TRY",
+      createdAt:new Date("2026-10-25T18:00:00+03:00"),
+      orderNo:sale.orderNo,authorPublicId:sale.authorPublicId,
+    }],
+    refunds:[{
+      id:"partial-same-day",orderNo:sale.orderNo,amount:2500n,currency:"TRY",
+      status:"processed",processedAt:new Date("2026-10-25T20:00:00+03:00"),
+      orderCurrency:"TRY",orderFinalAmount:12000n,orderPaidAt:sale.paidAt,
+      cumulativeProcessedAmount:2500n,historicalCurrencyMismatch:false,
+    }],
+  });
+  assert.equal(result.manifest.salesCount,1);
+  assert.equal(result.manifest.refundsCount,1);
+  assert.equal(result.manifest.flaggedSalesCount,1);
+  assert.equal(result.manifest.preparationRows,0);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedCommissionVatIllustrationMinor,"0");
+  assert.equal(result.manifest.reviewedServiceFeeVatIllustrationMinor,"0");
+  assert.ok(result.files.find(x=>x.name==="uyarilar.csv").data
+    .includes("SATIS_GUNU_IADE_MALI_INCELEME"));
+  assert.ok(result.files.find(x=>x.name==="siparisler.csv").data.includes("12000"));
+  assert.ok(result.files.find(x=>x.name==="iadeler.csv").data.includes("2500"));
+  assert.ok(result.files.find(x=>x.name==="gunluk_satis_iade_koprusu.csv").data
+    .includes('"TRY",1,0,1,12000,0,1,1,0,2500,2500,9500'));
+});
+
 test("processed refunds reconcile to paid order and cumulative historical balance", () => {
   const common={
     orderNo: "ILK-PAID-2026", status: "processed",

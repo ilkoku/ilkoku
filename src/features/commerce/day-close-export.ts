@@ -230,6 +230,12 @@ export function buildDayCloseFiles(input: {
     "komisyon_kdv_ornek_kurus","komisyon_brut_ornek_kurus",
     "aracilik_kdv_ornek_kurus","aracilik_brut_ornek_kurus",
   ]];
+  // A partial or full refund processed on the sale's own business day must
+  // never let the original full sale enter commission/service preparation.
+  // Preserve both source records and flag for accountant review instead.
+  const refundedOrderNosOnClosingDay = new Set(input.refunds
+    .filter((refund) => refund.status === "processed" && isOnBusinessDay(refund.processedAt))
+    .map((refund) => refund.orderNo));
   const grossLedger = new Map<string, DayCloseLedger[]>();
   for (const entry of input.reconciliationLedger ?? input.ledger) {
     if (entry.entryType !== "sale_gross" || entry.orderNo === null) continue;
@@ -305,6 +311,8 @@ export function buildDayCloseFiles(input: {
     }
     if (order.couponCode || order.discountAmount !== BigInt(0)) warnings.push("KUPON_VERGI_MATRAHI_INCELEME");
     if (order.status === "refunded") warnings.push("IADE_SONRASI_SIPARIS");
+    if (refundedOrderNosOnClosingDay.has(order.orderNo))
+      warnings.push("SATIS_GUNU_IADE_MALI_INCELEME");
     // A captured payment may later become "refunded". Its original
     // completedAt is the historical capture evidence; the CURRENT status
     // alone must not erase a valid payment from an earlier day's sale.

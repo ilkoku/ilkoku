@@ -503,6 +503,84 @@
   color: #736c79;
 }
 
+/* Admin coupons are rendered inside the dark system-management shell.
+   Scope all overrides to this screen: reader/writer commerce panels
+   intentionally keep their existing light theme. */
+.adminCouponPanel {
+  color-scheme: dark;
+  border-color: #303650;
+  background: #111624;
+  color: #eff2fc;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.adminCouponPanel .panelHeader h2,
+.adminCouponPanel .couponCard h3 {
+  color: #f5f6ff;
+}
+
+.adminCouponPanel .panelHeader p,
+.adminCouponPanel .couponCard p,
+.adminCouponPanel .couponCard small {
+  color: #b6bfd2;
+}
+
+.adminCouponPanel .eyebrow {
+  color: #b794ff;
+}
+
+.adminCouponPanel .badge {
+  border: 1px solid #503875;
+  background: #2c2045;
+  color: #e2d3ff;
+}
+
+.adminCouponPanel .field span {
+  color: #d6dbea;
+}
+
+.adminCouponPanel .field input,
+.adminCouponPanel .field select {
+  border-color: #3b465d;
+  background: #0d1220;
+  color: #f4f6fd;
+  color-scheme: dark;
+}
+
+.adminCouponPanel .field input::placeholder {
+  color: #a7b0c5;
+  opacity: 1;
+}
+
+.adminCouponPanel .field input:focus-visible,
+.adminCouponPanel .field select:focus-visible {
+  border-color: #ad91ff;
+  outline: 2px solid #a98bff;
+  outline-offset: 1px;
+}
+
+.adminCouponPanel .field select option {
+  background: #0d1220;
+  color: #f4f6fd;
+}
+
+.adminCouponPanel .empty {
+  border-color: #42445e;
+  background: #171b2b;
+  color: #cbd2e1;
+}
+
+.adminCouponPanel .couponCard {
+  border-color: #343c54;
+  background: #181e30;
+}
+
+.adminCouponPanel .secondaryAction {
+  border-color: #62498d;
+  background: #2b2042;
+  color: #e2d3ff;
+}
+
 @media (max-width: 720px) {
   .formGrid {
     grid-template-columns: 1fr;
@@ -1574,4 +1652,398 @@
   .readerCheckoutForm,
   .readerCheckoutSummary { padding: 1rem; }
   .readerCheckoutNotReady .action { width: 100%; white-space: normal; }
+}
+
+
+/* Reader checkout visual parity with the dark reader workspace.
+   Scope everything to this route; do not restyle shared commerce or shell. */
+.readerCheckoutPage {
+  --checkout-surface: #1b1f27;
+  --checkout-surface-raised: #252a34;
+  --checkout-border: #4b4535;
+  --checkout-text: #f5f4f7;
+  --checkout-muted: #c1c4d0;
+  --checkout-gold: #e4bc42;
+}
+
+.readerCheckoutPage .readerCheckoutHero {
+  background: linear-gradient(110deg, #211c30 0%, #1a1e26 64%, #25232a 100%);
+  border: 1px solid #63512f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.readerCheckoutPage .readerCheckoutHero h1,
+.readerCheckoutPage .readerCheckoutForm h2,
+.readerCheckoutPage .readerCheckoutSummary h2,
+.readerCheckoutPage .readerCheckoutPaymentOptions h3 {
+  color: var(--checkout-text);
+}
+
+.readerCheckoutPage .readerCheckoutHero p,
+.readerCheckoutPage .readerCheckoutForm .helper,
+.readerCheckoutPage .readerCheckoutForm > p,
+.readerCheckoutPage .readerCheckoutSummary .helper {
+  color: var(--checkout-muted);
+}
+
+.readerCheckoutPage .eyebrow {
+  color: var(--checkout-gold);
+}
+
+.readerCheckoutPage .readerCheckoutForm,
+.readerCheckoutPage .readerCheckoutSummary {
+  color: var(--checkout-text);
+  background: var(--checkout-surface);
+  border: 1px solid var(--checkout-border);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+}
+
+.readerCheckoutPage .readerCheckoutHero .secondaryAction,
+.readerCheckoutPage .secondaryAction {
+  background: #30283c;
+  border: 1px solid #7d6996;
+  color: #f5ecff;
+}
+
+.readerCheckoutPage .secondaryAction:hover {
+  background: #403150;
+}
+
+.readerCheckoutPage .quietAction {
+  color: #e1c3ff;
+}
+
+.readerCheckoutPage .notice {
+  color: #ffe6ac;
+  background: #302717;
+  border: 1px solid #786032;
+}
+
+.readerCheckoutPage .flash {
+  background: #342646;
+  color: #f5eaff;
+  border: 1px solid #6e558a;
+}
+
+.readerCheckoutPage .successNotice {
+  background: #193b30;
+  color: #d7f8e7;
+  border: 1px solid #39715c;
+}
+
+.readerCheckoutPage .readerCheckoutWorkMeta {
+  margin-top: 0;
+  border-bottom-color: #454853;
+  padding-top: 0.4rem;
+}
+
+.readerCheckoutPage .readerCheckoutWorkMeta strong {
+  color: var(--checkout-text);
+}
+
+.readerCheckoutPage .readerCheckoutWorkMeta span {
+  color: var(--checkout-muted);
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid {
+  gap: 0;
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #625131;
+  border-radius: 14px;
+  background: #242630;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid > div {
+  background: transparent;
+  border-bottom-color: #45464d;
+  padding: 0.55rem 0;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid span {
+  color: #d0ced7;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid > div:last-child {
+  border-top: 1px solid #806632;
+  margin-top: 0.2rem;
+  border-bottom: 0;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid > div:last-child span,
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid > div:last-child strong {
+  color: var(--checkout-gold);
+  font-weight: 800;
+}
+
+.readerCheckoutPage .readerCheckoutSummary .summaryGrid > div:last-child strong {
+  font-size: clamp(1.3rem, 2.5vw, 1.65rem);
+}
+
+.readerCheckoutPage .readerCheckoutPaymentChoice {
+  color: var(--checkout-text);
+  background: var(--checkout-surface-raised);
+  border: 1px solid #4d505d;
+}
+
+.readerCheckoutPage .readerCheckoutPaymentChoice input {
+  accent-color: var(--checkout-gold);
+}
+
+.readerCheckoutPage .readerCheckoutPaymentChoiceDisabled {
+  color: #b4b5c0;
+  background: #22262e;
+  border-color: #444954;
+}
+
+.readerCheckoutPage .readerCheckoutPaymentChoiceSelected {
+  color: #faf5ff;
+  background: #342944;
+  border-color: #bd9843;
+  box-shadow: 0 0 0 1px #bd9843;
+}
+
+.readerCheckoutPage .readerCheckoutPaymentAmount {
+  color: var(--checkout-gold);
+}
+
+.readerCheckoutPage .contractBox {
+  background: #22262f;
+  border: 1px solid #595164;
+}
+
+.readerCheckoutPage .contractHeading {
+  color: var(--checkout-text);
+  background: #292b35;
+  border-bottom-color: #595164;
+}
+
+.readerCheckoutPage .contractHeading span,
+.readerCheckoutPage .contractText {
+  color: var(--checkout-muted);
+}
+
+.readerCheckoutPage .confirmation {
+  color: var(--checkout-text);
+  background: #242932;
+  border-color: #555a66;
+}
+
+.readerCheckoutPage .confirmation input {
+  accent-color: var(--checkout-gold);
+}
+
+.readerCheckoutPage .readerCheckoutNotReady {
+  background: #29252e;
+  border: 1px solid #66532d;
+}
+
+.readerCheckoutPage .readerCheckoutNotReady > strong {
+  color: var(--checkout-gold);
+}
+
+.readerCheckoutPage .readerCheckoutNotReady p {
+  color: var(--checkout-muted);
+}
+
+.readerCheckoutPage .action {
+  background: var(--checkout-gold);
+  color: #1a1a1e;
+}
+
+.readerCheckoutPage .action:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPage .field > span {
+  color: var(--checkout-text);
+}
+
+.readerCheckoutPage .field input {
+  color: var(--checkout-text);
+  background: #262a33;
+  border: 1px solid #656070;
+}
+
+.readerCheckoutPage .action:focus-visible,
+.readerCheckoutPage .secondaryAction:focus-visible,
+.readerCheckoutPage .quietAction:focus-visible,
+.readerCheckoutPage input:focus-visible {
+  outline: 3px solid #e7c55a;
+  outline-offset: 3px;
+}
+
+@media (max-width: 440px) {
+  .readerCheckoutPage .readerCheckoutSummary .summaryGrid {
+    padding: 0.35rem 0.7rem;
+  }
+
+  .readerCheckoutPage .readerCheckoutPaymentCopy strong {
+    font-size: 0.92rem;
+  }
+}
+
+
+/* Both coupon sources share the existing backend code, but stay visibly distinct
+   within reader checkout; staging a zero-priced work cannot apply discounts. */
+.readerCheckoutPage .readerCheckoutCoupons {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 0.95rem;
+  border: 1px solid #675334;
+  border-radius: 14px;
+  background: #242730;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading h3 {
+  margin: 0;
+  color: #f8f5fc;
+  font-size: 1.02rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponHeading p {
+  margin: 0;
+  color: #c8c5d0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm .field {
+  min-width: 0;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm .field > span {
+  color: #f1e4c6;
+  font-size: 0.85rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm input[name="kupon"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm input[name="kupon"]:disabled {
+  color: #abb0bf;
+  background: #22242b;
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm button {
+  min-height: 42px;
+  padding: 0.5rem 0.7rem;
+}
+
+.readerCheckoutPage .readerCheckoutCouponForm button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.readerCheckoutPage .readerCheckoutCouponUnavailable,
+.readerCheckoutPage .readerCheckoutCouponError {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.readerCheckoutPage .readerCheckoutCouponUnavailable {
+  color: #f6dc9f;
+  background: #312918;
+  border: 1px solid #735c30;
+}
+
+.readerCheckoutPage .readerCheckoutCouponError {
+  color: #ffd7d7;
+  background: #432828;
+  border: 1px solid #936060;
+}
+
+.readerCheckoutPage .readerCheckoutCoupons .successNotice {
+  margin: 0;
+}
+
+@media (max-width: 440px) {
+  .readerCheckoutPage .readerCheckoutCoupons {
+    padding: 0.7rem;
+  }
+
+  .readerCheckoutPage .readerCheckoutCouponForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .readerCheckoutPage .readerCheckoutCouponForm button {
+    justify-self: stretch;
+  }
+}
+
+
+/* Purchase stages are scoped to checkout to preserve the fixed sidebar,
+   shared shell, reader dark mode and global footer. */
+.readerCheckoutPage .checkoutStages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.readerCheckoutPage .checkoutStages > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  column-gap: 0.75rem;
+  row-gap: 0.2rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #655434;
+  border-radius: 12px;
+  background: #23232b;
+  color: #f5f4f7;
+}
+.readerCheckoutPage .checkoutStages span {
+  grid-row: span 2;
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e4bc42;
+  color: #1b1f27;
+  font-weight: 800;
+}
+.readerCheckoutPage .checkoutStages strong { font-size: 0.88rem; }
+.readerCheckoutPage .checkoutStages small {
+  color: #c1c4d0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .readerCheckoutPage .checkoutStages {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .readerCheckoutPage .checkoutStages > div { padding: 0.65rem 0.8rem; }
 }

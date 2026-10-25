@@ -527,3 +527,26 @@ test("existing horizontal third-level navigation remains open on every nested ad
   assert.match(groups, /children: contentSubNavigation/);
   assert.match(groups, /children: powerSeoSubNavigation/);
 });
+
+
+test("rewrite-safe admin navigation uses one stable hydration path while keeping account and logout", () => {
+  const shell = read("src/components/admin/AdminShell.tsx");
+  assert.match(shell, /const rawPathname = usePathname\(\)/);
+  assert.match(shell, /const \[clientPathname, setClientPathname\] = useState/);
+  assert.match(shell, /useEffect\(\(\) =>/);
+  assert.match(shell, /const pathname = clientPathname \?\? SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+});
+
+
+test("admin compact top bar does not remove account or logout actions", () => {
+  const shell = read("src/components/admin/AdminShell.tsx");
+  const css = read("src/app/admin/admin.css");
+  const dashboard = read("src/components/admin/AdminDashboard.tsx");
+  assert.match(css, /COMPACT ADMIN TOPBAR/);
+  assert.match(css, /\.admin-shell \.admin-profile__logout/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+  assert.doesNotMatch(dashboard, /Sistem hareketlerini aç/u);
+});

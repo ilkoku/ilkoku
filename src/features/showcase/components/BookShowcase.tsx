@@ -228,7 +228,7 @@ export function BookShowcase({
             {commerce?.configured && commerce.saleModel === "paid" && !commerce.enforcementActive ? (
               <p className="showcase-commerce-notice">
                 Ücretli eser · Hazırlıkta. Eserin ücretli modeli kayıtlıdır ancak
-                şu anda satın alma etkin değildir. Mevcut okuma erişimi korunur.
+                şu anda satın alma etkin değildir. Ön izleme açık; kilitli bölümler yalnız erişim hakkıyla okunabilir.
               </p>
             ) : null}
             {commerce?.configured && commerce.saleModel === "free" ? (
@@ -252,8 +252,8 @@ export function BookShowcase({
 
             {paidAccessActive && !hasPaidAccess && !purchaseAvailable ? (
               <p className="showcase-commerce-notice">
-                Satış geçici olarak kullanılamıyor. Mevcut erişim hakları korunur;
-                yeni satın alma işlemi ödeme yolu yeniden açıldığında yapılabilir.
+                Kilitli bölümler erişim hakkı gerektirir. Satın alma koşulları
+                tamamlanana kadar yeni sipariş verilemez; ön izleme açıktır.
               </p>
             ) : null}
 
@@ -476,7 +476,7 @@ export function BookShowcase({
                             ? zeroPricePurchase
                               ? "Kilitli · Eser erişimi 0 TL"
                               : "Kilitli · Ücretli erişime dahildir"
-                            : "Kilitli · Satış geçici olarak kullanılamıyor"
+                            : "Kilitli · Erişim koşulları hazırlanıyor"
                         : hasPaidAccess && paidAccessActive
                           ? "Satın alındı · Okunabilir"
                           : commerce?.configured && commerce.saleModel === "paid"

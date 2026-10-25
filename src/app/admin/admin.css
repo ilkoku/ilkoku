@@ -476,3 +476,16 @@
   }
   .admin-shell .admin-profile__logout { white-space: nowrap; }
 }
+
+
+/* COMPACT ADMIN TOPBAR — preserve existing account/logout elements and routes. */
+.admin-shell .admin-topbar {min-height:4.5rem;height:auto;gap:.75rem;padding:.6rem 1.25rem}
+.admin-shell .admin-search {flex:1 1 18rem;max-width:30rem;width:auto;margin-left:auto}
+.admin-shell .admin-profile {gap:.5rem;min-width:0;flex-shrink:0}
+.admin-shell .admin-profile>span {width:2.25rem;height:2.25rem}
+.admin-shell .admin-profile__logout {font-size:.7rem;white-space:nowrap}
+@media(max-width:680px) {
+  .admin-shell .admin-topbar {min-height:4rem;padding:.5rem .75rem}
+  .admin-shell .admin-profile {gap:.3rem}
+  .admin-shell .admin-profile__logout {padding:0 .5rem}
+}

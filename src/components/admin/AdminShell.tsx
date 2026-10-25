@@ -4,7 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { logoutAction } from "@/features/auth/actions";
@@ -167,7 +167,13 @@ export function AdminShell({
   embeddedWorkspace = false,
   user,
 }: AdminShellProps) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const [clientPathname, setClientPathname] = useState<string | null>(null);
+  // Stable server/client first render across the /admin -> /sistem-yonetimi rewrite.
+  useEffect(() => {
+    setClientPathname(rawPathname.replace(/^\/admin(?=\/|$)/u, SYSTEM_MANAGEMENT_PATH));
+  }, [rawPathname]);
+  const pathname = clientPathname ?? SYSTEM_MANAGEMENT_PATH;
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [menuSelection, setMenuSelection] = useState<{ path: string; groupId: string | null } | null>(null);
@@ -383,11 +389,11 @@ export function AdminShell({
                   >
                     {item.children.map((child) => (
                       item.href === `${SYSTEM_MANAGEMENT_PATH}/power-seo` ? (
-                        <a key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                        <a key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                           <span>{child.label}</span>
                         </a>
                       ) : (
-                        <Link key={child.href} href={child.href} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
+                        <Link key={child.href} href={child.href} aria-current={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "page" : undefined} className={isActiveSubItem(child.href, item.children ?? [], pathname, searchParams) ? "is-active" : ""}>
                           <span>{child.label}</span>
                         </Link>
                       )

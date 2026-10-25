@@ -43,3 +43,40 @@ test("P0 schema addition does not activate production payments", () => {
   assert.ok(runtime.includes('process.env.COMMERCE_CHECKOUT_ENABLED === "true"'));
   assert.ok(providers.includes("const adapters: PaymentProviderAdapter[] = [];"));
 });
+
+test("P0 seller authorization expiry cannot normalize a nonexistent calendar day", () => {
+  const actions = source("src/features/commerce/seller-admin-actions.ts");
+  assert.ok(actions.includes('rawValidUntil && !/^\\d{4}-\\d{2}-\\d{2}$/.test(rawValidUntil)'), "seller rights expiry must use strict YYYY-MM-DD");
+  assert.ok(actions.includes("calendarDate.setUTCFullYear(year, month - 1, day)"), "calendar day must be reconstructed explicitly");
+  assert.ok(actions.includes("calendarDate.getUTCDate() !== day"), "invalid day must not roll over");
+  assert.ok(actions.includes('go("yetki-gecerlilik-tarihi-hatali")'), "invalid date must keep existing error path");
+  assert.ok(actions.includes("validUntil <= new Date()"), "expired sales rights must remain invalid");
+  const strictValidation = actions.indexOf("calendarDate.getUTCDate() !== day");
+  const expiryParsing = actions.indexOf('new Date(`${rawValidUntil}T23:59:59+03:00`)');
+  assert.ok(strictValidation >= 0 && expiryParsing > strictValidation, "calendar validation must precede expiry conversion");
+});
+
+test("P0 seller workbench requires admin identity, independent evidence review and auditable transitions", () => {
+  const actions = source("src/features/commerce/seller-admin-actions.ts");
+  const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const settings = source("src/app/admin/odeme-sistemi/ayarlar/page.tsx");
+  const navigation = source("src/lib/admin-navigation.ts");
+
+  assert.ok(actions.includes('user.role !== "admin"'), "all seller mutations must be admin-only");
+  assert.ok(actions.includes('verificationStatus: "pending"'), "new seller starts unverified");
+  assert.ok(actions.includes("reviewedOriginalEvidence"), "identity evidence must be reviewed explicitly");
+  assert.ok(actions.includes("reviewedSalesRightsEvidence"), "rights evidence must be reviewed explicitly");
+  assert.ok(actions.includes('status: "pending"'), "new rights begin unverified");
+  assert.ok(actions.includes('status: "approved"'), "only explicit review can approve assignment");
+  assert.ok(actions.includes("currentKey: rights.workId"), "only one current seller per work");
+  assert.ok(actions.includes('status: "revoked"'), "allow explicit future seller revocation");
+  assert.ok(actions.includes("tx.auditLog.create"), "all transitions need audit evidence");
+  assert.ok(actions.includes("createHash(\"sha256\")"), "rights evidence must be hashed");
+  assert.ok(page.includes("Satıcı ve Satış Yetkisi"), "admin review UI exists");
+  assert.ok(page.includes("registerLegalSellerDraftAction"), "seller identity form wired");
+  assert.ok(page.includes("verifyLegalSellerAction"), "seller review form wired");
+  assert.ok(page.includes("registerWorkSalesRightsDraftAction"), "rights draft form wired");
+  assert.ok(page.includes("approveWorkSellerRightsAction"), "rights approval wired");
+  assert.ok(settings.includes("/sistem-yonetimi/odeme-sistemi/satici-yetkileri"), "activation diagnostics link to admin workbench");
+  assert.ok(navigation.includes("Satıcı & Satış Yetkisi"), "seller workbench appears in payment submenu");
+});

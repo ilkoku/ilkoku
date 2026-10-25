@@ -3,7 +3,7 @@
 // strings before being written to a report. Two fresh browser contexts.
 import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
-import { classifyGa4Request, summarizeHits } from "./seo-ga4-live-hit-rules.mjs";
+import { classifyGa4Request, summarizeHits, assessCtaHitDelivery } from "./seo-ga4-live-hit-rules.mjs";
 
 const output = process.env.GA4_HIT_AUDIT_REPORT || "/tmp/ilkoku-ga4-live-hit-audit.json";
 const homepage = "https://ilkoku.com/";
@@ -99,7 +99,7 @@ async function auditCase(browser, choice) {
 
     // A real browser click on a public, internal CTA. Prevent navigation only
     // for this QA session; never submit forms, open an external site or inject
-    // gtag/dataLayer events. Observe dataLayer AND actual GA4 network hits.
+    // gtag/dataLayer events. Inspect both shapes; the actual GA4 network hit is authoritative.
     let ctaSnapshot = null;
     if (choice === "accept") {
       const safeCta = page.locator(".how-hero__actions a").first();
@@ -121,11 +121,21 @@ async function auditCase(browser, choice) {
     const afterHits = summarizeHits(requests.filter(item => item.phase === "after-accept")).count;
     const navigationHits = summarizeHits(requests.filter(item => item.phase === "internal-navigation")).count;
     const pageViewCount = requests.filter(item => item.event === "page_view").length;
+    const ctaHits = requests.filter(item =>
+      item.phase === "safe-cta-click" && item.type === "ga4-hit" &&
+      item.event === "site_cta_click");
+    const ctaDelivery = choice === "accept"
+      ? assessCtaHitDelivery(Boolean(ctaSnapshot), ctaHits)
+      : null;
     const ctaEvidence = choice === "accept" ? {
       clickPerformed: Boolean(ctaSnapshot),
+      // Both are diagnostics: the live site now emits an explicit gtag event,
+      // not the previous GTM custom-event object. Neither must be required
+      // when the network proves exactly one successful hit after the click.
       dataLayerEventPresent: Boolean(ctaSnapshot?.dataLayerEvents.includes("site_cta_click")),
-      ga4HitCount: requests.filter(item =>
-        item.phase === "safe-cta-click" && item.event === "site_cta_click").length,
+      gtagEventPresent: Boolean(ctaSnapshot?.gtagEventNames.includes("site_cta_click")),
+      ga4HitCount: ctaHits.length,
+      ga4SuccessfulHitCount: ctaDelivery.successfulHitCount,
     } : null;
 
     const violations = [];
@@ -137,9 +147,7 @@ async function auditCase(browser, choice) {
       if (after.consent !== "granted" || after.gtm !== "loaded") violations.push("ACCEPT_GTM_NOT_READY");
       if (afterHits + navigationHits === 0) violations.push("NO_GA4_HITS_AFTER_ACCEPT");
       if (pageViewCount === 0) violations.push("NO_PAGE_VIEW_HIT");
-      if (!ctaEvidence?.clickPerformed) violations.push("CTA_NOT_CLICKED");
-      if (!ctaEvidence?.dataLayerEventPresent) violations.push("CTA_DATALAYER_EVENT_MISSING");
-      if (ctaEvidence?.ga4HitCount !== 1) violations.push("CTA_GA4_HIT_NOT_EXACTLY_ONE");
+      violations.push(...ctaDelivery.violations);
     }
     return {
       choice, passed: violations.length === 0, violations,

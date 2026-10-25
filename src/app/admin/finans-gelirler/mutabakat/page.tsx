@@ -22,9 +22,14 @@ export default async function FinanceReconciliationPage() {
             tam veritabanı toplamıdır.
           </p>
         </div>
-        <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler">
-          Finans & Gelirlere dön
-        </Link>
+        <div>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme">
+            Sipariş Mali İnceleme
+          </Link>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler">
+            Finans &amp; Gelirlere dön
+          </Link>
+        </div>
       </header>
 
       <section className="admin-settings-grid admin-commerce-summary">

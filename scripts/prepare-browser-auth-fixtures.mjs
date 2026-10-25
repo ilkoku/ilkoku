@@ -23,12 +23,13 @@ const client = await mysql.createConnection({
   user: decodeURIComponent(parsed.username),
 });
 
-const roles = ["reader", "writer", "editor", "publisher", "admin"];
+const roles = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"];
 const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 const now = new Date();
 const sessions = {};
 const userIds = {};
 let writerCommerceWorkId = null;
+let commerceWorkId = null;
 
 function hashToken(token) {
   return createHash("sha256").update(token).digest("hex");
@@ -123,7 +124,58 @@ try {
   sessions.cmsManager = cmsManagerToken;
   userIds.cmsManager = cmsManagerId;
 
-  for (const role of ["reader", "writer", "publisher"]) {
+  // Two independent real reader sessions test a single last coupon use racing
+  // across DIFFERENT users (the existing same-reader mutex is insufficient).
+  for (const suffix of ["A", "B"]) {
+    const id = randomUUID();
+    const token = randomBytes(32).toString("base64url");
+    await client.execute(
+      `INSERT INTO \`User\`
+        (id, publicId, email, passwordHash, fullName, role, status,
+         emailVerified, termsAcceptedAt, lastLoginAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, 'reader', 'active', ?, ?, ?, ?, ?)`,
+      [
+        id,
+        "CI26RACE" + suffix,
+        "ci-browser-reader-race-" + suffix.toLowerCase() + "@example.invalid",
+        "ci-browser-session-only",
+        "CI Reader Race " + suffix,
+        now, now, now, now, now,
+      ],
+    );
+    await client.execute(
+      `INSERT INTO \`Session\`
+        (id, tokenHash, userId, expiresAt, createdAt)
+       VALUES (?, ?, ?, ?, ?)`,
+      [randomUUID(), hashToken(token), id, expiresAt, now],
+    );
+    await client.execute(
+      `INSERT INTO \`Profile\`
+        (id, userId, birthYear, createdAt, updatedAt)
+       VALUES (?, ?, 1990, ?, ?)`,
+      [randomUUID(), id, now, now],
+    );
+    await client.execute(
+      `INSERT INTO \`AuditLog\`
+        (id, actorId, action, entityType, entityId, metadata, createdAt)
+       VALUES (?, ?, 'profile_updated', 'AgeVerification', ?, ?, ?)`,
+      [
+        randomUUID(),
+        id,
+        id,
+        JSON.stringify({
+          adultEligibleAt: "2008-01-01T00:00:00.000Z",
+          birthYear: 1990,
+          source: "ci_browser_fixture",
+        }),
+        now,
+      ],
+    );
+    sessions["readerRace" + suffix] = token;
+    userIds["readerRace" + suffix] = id;
+  }
+
+  for (const role of ["reader", "writer", "editor_pending", "editor", "publisher"]) {
     await client.execute(
       `INSERT INTO \`Profile\`
         (id, userId, birthYear, createdAt, updatedAt)
@@ -240,7 +292,7 @@ try {
     [randomUUID(), publisherId, publisherMemberUserId, now, now],
   );
 
-  const commerceWorkId = randomUUID();
+  commerceWorkId = randomUUID();
   const commerceChapterId = randomUUID();
   writerCommerceWorkId = randomUUID();
   const writerCommerceChapterId = randomUUID();
@@ -504,7 +556,38 @@ try {
       (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
     [randomUUID(), couponId, couponWorkId, now],
   );
+  // Negative-path coupon: a 50% reduction still leaves a positive balance.
+  // This must NEVER create an order or unlock the chapter without a provider.
+  const partialCouponId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Coupon\`
+      (id, code, owner, creatorId, discountType, discountValue, scope,
+       status, perUserUsageLimit, usageCount, createdAt, updatedAt)
+     VALUES (?, 'CIBROWSER50', 'platform', ?, 'percent', 50,
+       'selected_works', 'active', 1, 0, ?, ?)`,
+    [partialCouponId, userIds.admin, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`CouponWorkScope\`
+      (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
+    [randomUUID(), partialCouponId, couponWorkId, now],
+  );
 
+  // Distinct author-owned coupon for browser QA of the two checkout sources.
+  const authorCouponId = randomUUID();
+  await client.execute(
+    `INSERT INTO \`Coupon\`
+      (id, code, owner, creatorId, authorId, discountType, discountValue,
+       scope, status, perUserUsageLimit, usageCount, createdAt, updatedAt)
+     VALUES (?, 'CIBROWSERAUTHOR', 'author', ?, ?, 'percent', 100,
+       'selected_works', 'active', 1, 0, ?, ?)`,
+    [authorCouponId, userIds.writer, userIds.writer, now, now],
+  );
+  await client.execute(
+    `INSERT INTO \`CouponWorkScope\`
+      (id, couponId, workId, createdAt) VALUES (?, ?, ?, ?)`,
+    [randomUUID(), authorCouponId, couponWorkId, now],
+  );
   await client.commit();
 } catch (error) {
   await client.rollback();
@@ -520,6 +603,7 @@ await writeFile(
     sessions,
     workIds: {
       writerCommerceConfiguration: writerCommerceWorkId,
+      zeroTotalCommerceWork: commerceWorkId,
     },
   }),
   { mode: 0o600 },

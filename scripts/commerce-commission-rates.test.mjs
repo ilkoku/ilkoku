@@ -86,7 +86,7 @@ test("writer preview never reinterprets legacy VAT-inclusive prices or creates a
   assert.ok(repo.includes("resolveEffectiveCommerceState({"));
   assert.ok(repo.includes("latestConsent: selectedWork.publicationConsents[0] ?? null"));
   assert.ok(repo.includes('configuration.currency === "TRY"'));
-  assert.ok(repo.includes("savedNetPrice:"));
+  assert.ok(repo.includes("savedNetPrice,"));
   assert.ok(page.includes("preview.savedNetPrice ?? parseTryNetPrice(query.fiyat)"));
   assert.ok(page.includes("Bu eserin kayıtlı fiyatı KDV hariç olarak doğrulanmış değil"));
   for (const forbidden of ["invoice.create(", "financialLedger.create(", "payout.create(", "payment.create(", "authorBalance.update("]) {

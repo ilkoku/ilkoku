@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         await link(temp,path);
         return Response.json({
           ok: true, day, archive: "written",
-          sha256: digest, warnings: result.manifest.flaggedSalesCount,
+          sha256: digest, warnings: result.manifest.flaggedSalesCount + result.manifest.flaggedRefundCount,
         }, { headers: HEADERS });
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
@@ -95,8 +95,10 @@ export async function POST(request: Request) {
             ok: false, day, reason: "archived_day_changed_manual_review_required",
           }, { status: 409, headers: HEADERS });
         }
-        return Response.json({ ok: true, day, archive: "already_exists", sha256: digest },
-          { headers: HEADERS });
+        return Response.json({
+          ok: true, day, archive: "already_exists", sha256: digest,
+          warnings: result.manifest.flaggedSalesCount + result.manifest.flaggedRefundCount,
+        }, { headers: HEADERS });
       }
     } finally {
       await unlink(temp).catch(() => {});

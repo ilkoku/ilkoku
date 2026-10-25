@@ -20,7 +20,10 @@
 - Muhasebe ön hazırlık satırına yalnız temel veri kontrollerini geçen pozitif satışlar alınır. Komisyonun örnek net tutarı siparişe sabitlenen oran ile KDV hariç fiyat üzerinden gösterilir. Bu sayı onaylı hizmet bedeli/fatura veya vergi kaydı değildir.
 - alan_esleme.json, Logo/Mikro/Paraşüt şemalarını açıkça UNVERIFIED olarak işaretler. Program uyumluluğu, cari kod, hesap planı ve resmî belge tipi yalnız dış muhasebe onayıyla belirlenir.
 - Geçmiş sipariş oranı yalnız siparişe sabitlenmiş oran snapshotundan okunur.
-- %15 genel komisyon ve uygun faturasız telif için ayrı %5 oranı saklanır; %5 tutarı otomatik resmî hizmet faturası satırına dönüştürülmez.
+- Siparişe sabitlenmiş %15 genel komisyon veya yazar/eser özel oranı değişmez; diğer tutarlardan ayrı hesaplanır.
+- Yazarın siparişin ödendiği anda geçerli **son yönetici mali belge inceleme kaydı** esas alınır (`AuthorTaxReviewEvent`). `commercial_invoice` ve `self_employed_receipt` doğrulanmışsa **%0 aracılık**; `gvk18_expense_receipt` doğrulanmışsa **%5 koşullu aracılık** hesaplama örneği oluşturulur.
+- Mali belge incelemesi eksik, `needs_revision`/`revoked`, süresi geçmiş ya da sipariş tarihinden sonra yapılmışsa ilgili satış aktarım ön hazırlığına alınmaz ve uyarı kaydedilir. Böylece her yazara körlemesine %5 uygulanmaz.
+- `muhasebe_on_hazirlik.csv` ve `manifest.json` yalnız hesaplama örnekleri ve inceleme toplamlarını taşır: yazarın vergi mükellefiyetini devlet sisteminden doğrulamaz; İlkOku komisyon/hizmet faturası, gider pusulası, muhasebe fişi veya vergi beyanı düzenlemez.
 - Alıcı vergi/kimlik bilgileri, hukuki belge uygunluğu, KDV indirimi, stopaj ve mali müşavir onayı bu aktarımda doğrulanmaz.
 - Uyarısız kayıt bile otomatik fatura kesme onayı değildir; muhasebe sisteminde gerekli belge bilgileri ayrıca tamamlanır.
 - CSV formatı genel amaçlıdır. Logo/Mikro/Paraşüt gibi programların kendi import şemalarına doğrudan uyum henüz doğrulanmamıştır.

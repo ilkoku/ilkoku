@@ -61,3 +61,44 @@ test("checkout orders freeze rates in the same database transaction for paid and
   assert.ok(order.includes("commissionRateSnapshot:"));
   assert.ok(order.includes("sourceEventId: input.commissionRate.sourceEventId"));
 });
+
+test("writer preview selects only owned works and resolves their commission through the shared rate engine", () => {
+  const repo = readFileSync(join(root, "src/features/commerce/commission-rates-repository.ts"), "utf8");
+  const page = readFileSync(join(root, "src/app/satis-erisim/kazanc-hesaplama/page.tsx"), "utf8");
+  assert.ok(repo.includes("getWriterCommissionPreviewContext(authorId: string, requestedWorkId?: string)"));
+  assert.ok(repo.includes("where: { authorId, workId: null }"));
+  assert.ok(repo.includes('saleConfiguration: { is: { saleModel: "paid" } }'));
+  assert.ok(repo.includes("works.find((work) => work.id === requestedWorkId)"));
+  assert.ok(repo.includes("resolveCommissionRate({"));
+  assert.ok(repo.includes("workEvent: selectedWork?.commissionRateEvents[0] ?? null"));
+  assert.ok(page.includes("getWriterCommissionPreviewContext(profile.id, query.eser)"));
+  assert.ok(page.includes('name="eser"'));
+  assert.ok(page.includes("commissionRateBps, serviceFeeRateBps"));
+  assert.ok(page.includes('calculateIllustrativeSettlement(price, "invoice", commissionRateBps, serviceFeeRateBps)'));
+  assert.ok(page.includes('calculateIllustrativeSettlement(price, "expense_receipt", commissionRateBps, serviceFeeRateBps)'));
+  assert.ok(page.includes("Seçilen eser bu yazar hesabına ait değil"));
+});
+
+test("writer preview never reinterprets legacy VAT-inclusive prices or creates a fiscal document", () => {
+  const repo = readFileSync(join(root, "src/features/commerce/commission-rates-repository.ts"), "utf8");
+  const page = readFileSync(join(root, "src/app/satis-erisim/kazanc-hesaplama/page.tsx"), "utf8");
+  assert.ok(repo.includes('configuration?.priceTaxTreatment === "net_plus_vat"'));
+  assert.ok(repo.includes('configuration.currency === "TRY"'));
+  assert.ok(repo.includes("savedNetPrice:"));
+  assert.ok(page.includes("preview.savedNetPrice ?? parseTryNetPrice(query.fiyat)"));
+  assert.ok(page.includes("Bu eserin kayıtlı fiyatı KDV hariç olarak doğrulanmış değil"));
+  for (const forbidden of ["invoice.create(", "financialLedger.create(", "payout.create(", "payment.create(", "authorBalance.update("]) {
+    assert.ok(!page.includes(forbidden), "Preview is read-only: " + forbidden);
+  }
+});
+
+test("writer income reads historical commission snapshots instead of recomputing the current percent", () => {
+  const finance = readFileSync(join(root, "src/features/commerce/finance-repository.ts"), "utf8");
+  const income = readFileSync(join(root, "src/app/gelirler/page.tsx"), "utf8");
+  assert.ok(finance.includes("commissionRateSnapshot: {"));
+  assert.ok(finance.includes("commissionRateBps: true"));
+  assert.ok(income.includes("order.commissionRateSnapshot.commissionRateBps"));
+  assert.ok(income.includes("Oran kaydı eksik"));
+  assert.ok(income.includes("Sipariş anındaki komisyon"));
+  assert.ok(!income.includes("commissionRateBps: 1500"));
+});

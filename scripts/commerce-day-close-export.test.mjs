@@ -87,9 +87,11 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.equal(result.manifest.ledgerSummaryGroups,1);
   assert.equal(result.manifest.refundLedgerMatchedGroups,0);
   assert.equal(result.manifest.refundLedgerReviewGroups,0);
-  assert.equal(result.files.length,12);
+  assert.equal(result.manifest.periodBridgeCurrencyGroups,1);
+  assert.equal(result.files.length,13);
   assert.deepEqual([...result.files.map(f=>f.name)],[
-    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","iade_ledger_mutabakat.csv","uyarilar.csv",
+    "siparisler.csv","finans_hareketleri.csv","iadeler.csv","iade_ledger_mutabakat.csv",
+    "gunluk_satis_iade_koprusu.csv","uyarilar.csv",
     "mutabakat.csv","gun_sonu_ozet.csv","muhasebe_on_hazirlik.csv",
     "yazar_hesap_ozeti.csv","muhasebe_tl_inceleme.csv","alan_esleme.json","manifest.json",
   ]);
@@ -691,4 +693,68 @@ test("cross-period refund ledger entries cannot pass same-day refund reconciliat
   assert.equal(result.manifest.refundLedgerReviewGroups,1);
   assert.ok(result.files.find(f=>f.name==="uyarilar.csv")
     .data.includes("HAREKET_TARIHI_IS_GUNU_DISINDA"));
+});
+
+
+test("daily sales-refund period bridge does not conflate different order cohorts with profit", () => {
+  const sale=validOrder();
+  const refund={
+    id:"r1",orderNo:"ILK-EARLIER-ORDER",amount:4200n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T12:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:12000n,
+    orderPaidAt:new Date("2026-10-20T12:00:00+03:00"),
+    cumulativeProcessedAmount:4200n,historicalCurrencyMismatch:false,
+  };
+  const ledger={id:"sale",entryType:"sale_gross",orderNo:sale.orderNo,
+    amount:12000n,currency:"TRY",authorPublicId:"writer001",
+    createdAt:new Date("2026-10-25T18:00:00+03:00")};
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[sale],ledger:[ledger],refunds:[refund],
+  });
+  const csv=result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data;
+  assert.ok(csv.includes('"TRY",1,1,0,12000,12000,1,1,0,4200,4200,7800'));
+  assert.ok(csv.includes("net gelir, nakit, kar veya vergi degildir"));
+  assert.equal(result.manifest.periodBridgeCurrencyGroups,1);
+});
+
+test("refund on an older purchase alone creates negative arithmetic period bridge, not booked loss", () => {
+  const refund={
+    id:"r2",orderNo:"ILK-PAST",amount:1200n,currency:"TRY",
+    status:"processed",processedAt:new Date("2026-10-25T11:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:3000n,
+    orderPaidAt:new Date("2026-10-20T11:00:00+03:00"),
+    cumulativeProcessedAmount:1200n,historicalCurrencyMismatch:false,
+  };
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[],ledger:[],refunds:[refund],
+  });
+  assert.ok(result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data
+    .includes('"TRY",0,0,0,0,0,1,1,0,1200,1200,-1200'));
+  assert.equal(result.manifest.preparationRows,0);
+});
+
+test("daily bridge separates invalid sales and refunds from technical-review totals", () => {
+  const bad=validOrder();bad.sellerMode=null;
+  const result=make([bad]);
+  assert.equal(result.manifest.readySalesCount,0);
+  assert.ok(result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data
+    .includes('"TRY",1,0,1,12000,0,0,0,0,0,0,12000'));
+});
+
+test("daily bridge never mixes currencies or includes a sale outside selected business day", () => {
+  const bad=validOrder();bad.paidAt=new Date("2026-10-26T00:01:00+03:00");
+  const refund={
+    id:"eur",orderNo:"ILK-OTHER",amount:1000n,currency:"EUR",
+    status:"processed",processedAt:new Date("2026-10-25T11:00:00+03:00"),
+    orderCurrency:"TRY",orderFinalAmount:5000n,
+    orderPaidAt:new Date("2026-10-20T11:00:00+03:00"),
+    cumulativeProcessedAmount:1000n,historicalCurrencyMismatch:true,
+  };
+  const result=exportModule.buildDayCloseFiles({
+    day:"2026-10-25",orders:[bad],ledger:[],refunds:[refund],
+  });
+  const csv=result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data;
+  assert.equal(result.manifest.periodBridgeCurrencyGroups,1);
+  assert.ok(csv.includes('"EUR",0,0,0,0,0,1,0,1,1000,0,-1000'));
+  assert.ok(!csv.includes('"TRY"'));
 });

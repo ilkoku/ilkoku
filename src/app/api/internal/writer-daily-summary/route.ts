@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runWriterDailySummaries(summaryDate);
-    return NextResponse.json({ ok: true, ...result });
+    const ok = result.failed === 0;
+    return NextResponse.json({
+      ok,
+      ...(ok ? {} : { error: "WRITER_DAILY_SUMMARY_PARTIAL_FAILURE" }),
+      ...result,
+    });
   } catch (error) {
     const message = error instanceof Error
       ? error.message

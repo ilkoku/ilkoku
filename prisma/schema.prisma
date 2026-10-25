@@ -75,6 +75,8 @@ model User {
   workEntitlements             WorkEntitlement[]            @relation("WorkEntitlementReader")
   financialLedgerEntries       FinancialLedger[]            @relation("FinancialLedgerAuthor")
   authorBalances               AuthorBalance[]              @relation("AuthorBalanceAuthor")
+  taxReviewsAsWriter            AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewWriter")
+  taxReviewsAsReviewer          AuthorTaxReviewEvent[]       @relation("AuthorTaxReviewReviewer")
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
   orderConsents                OrderConsent[]               @relation("OrderConsentReader")
@@ -1169,6 +1171,36 @@ model WorkEntitlement {
   @@unique([readerId, workId])
   @@index([workId, status])
   @@index([readerId, status])
+}
+
+// Append-only internal tax-document examination records. These do not
+// verify tax status with the government and NEVER authorize payouts.
+model AuthorTaxReviewEvent {
+  id                String                   @id @default(uuid()) @db.Char(36)
+  authorId          String                   @db.Char(36)
+  reviewerId        String                   @db.Char(36)
+  documentKind      AuthorTaxDocumentKind
+  decision          AuthorTaxReviewDecision
+  evidenceReference String?                  @db.VarChar(64)
+  validUntil        DateTime?
+  reviewedAt        DateTime                 @default(now())
+  author            User                     @relation("AuthorTaxReviewWriter", fields: [authorId], references: [id], onDelete: Restrict)
+  reviewer          User                     @relation("AuthorTaxReviewReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([authorId, reviewedAt])
+  @@index([reviewerId, reviewedAt])
+}
+
+enum AuthorTaxDocumentKind {
+  commercial_invoice
+  self_employed_receipt
+  gvk18_expense_receipt
+}
+
+enum AuthorTaxReviewDecision {
+  verified
+  needs_revision
+  revoked
 }
 
 model FinancialLedger {

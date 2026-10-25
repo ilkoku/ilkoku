@@ -538,3 +538,15 @@ test("rewrite-safe admin navigation uses one stable hydration path while keeping
   assert.match(shell, /href="\/hesabim">Hesabım/);
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });
+
+
+test("admin compact top bar does not remove account or logout actions", () => {
+  const shell = read("src/components/admin/AdminShell.tsx");
+  const css = read("src/app/admin/admin.css");
+  const dashboard = read("src/components/admin/AdminDashboard.tsx");
+  assert.match(css, /COMPACT ADMIN TOPBAR/);
+  assert.match(css, /\.admin-shell \.admin-profile__logout/);
+  assert.match(shell, /href="\/hesabim">Hesabım/);
+  assert.match(shell, /<form action=\{logoutAction\}>/);
+  assert.doesNotMatch(dashboard, /Sistem hareketlerini aç/u);
+});

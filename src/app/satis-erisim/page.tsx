@@ -7,6 +7,7 @@ import { getCurrentProfile } from "@/features/auth/profile";
 import { getAuthorCommerceWorks } from "@/features/commerce/repository";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -92,14 +93,20 @@ export default async function WriterCommercePage() {
           <section className={styles.grid} aria-label="Eserler">
             {works.map((work) => {
               const configuration = work.saleConfiguration;
+              const previewQuote = configuration?.saleModel === "paid" && configuration.priceAmount !== null
+                ? quoteCommercePrice({
+                    configuredPriceAmount: configuration.priceAmount,
+                    taxTreatment: configuration.priceTaxTreatment,
+                  })
+                : null;
               const modelLabel =
                 configuration?.saleModel === "paid"
                   ? configuration.priceAmount === BigInt(0)
                     ? "Ücretli · 0 TL"
                     : `Ücretli · ${formatMinorUnits(
-                        configuration.priceAmount ?? BigInt(0),
+                        previewQuote?.pricing.originalAmount ?? configuration.priceAmount,
                         configuration.currency,
-                      )}`
+                      )}${configuration.priceTaxTreatment === "net_plus_vat" ? " (KDV dâhil)" : " (eski fiyat kaydı)"}`
                   : configuration?.saleModel === "free"
                     ? "Ücretsiz"
                     : "Ayarlanmadı";

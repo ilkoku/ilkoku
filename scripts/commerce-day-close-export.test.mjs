@@ -38,6 +38,11 @@ const validOrder = () => ({
     discountGrossAmount: 0n,payableGrossAmount: 12000n,
   },
   payments: [{ status: "succeeded",amount: 12000n,currency: "TRY" }],
+  taxReview: {
+    documentKind: "gvk18_expense_receipt", decision: "verified",
+    reviewedAt: new Date("2026-10-20T12:00:00+03:00"),
+    validUntil: new Date("2026-11-30T23:59:00+03:00"),
+  },
 });
 const make = (orders) => exportModule.buildDayCloseFiles({
   day: "2026-10-25",orders,ledger: [{
@@ -333,4 +338,64 @@ test("refund repository aggregates all processed refunds only up to closing date
   assert.ok(repository.includes('processedAt: { lt: period.end }'));
   assert.ok(repository.includes('cumulativeProcessedAmount: refundTotals.get(refund.orderId)'));
   assert.ok(!repository.includes("refund.create("));
+});
+
+
+test("verified invoice authors have zero intermediary service, verified GVK18 has a distinct 5% illustration", () => {
+  const gvk=make([validOrder()]);
+  const gvkLine=gvk.files.find(f=>f.name==="muhasebe_on_hazirlik.csv").data;
+  assert.ok(gvkLine.includes('"gvk18_expense_receipt"'));
+  assert.ok(gvkLine.includes(",2000,2000,500,500,"));
+  assert.equal(gvk.manifest.reviewedCommissionIllustrationMinor,"2000");
+  assert.equal(gvk.manifest.reviewedServiceFeeIllustrationMinor,"500");
+  assert.equal(gvk.manifest.reviewedGvk18DocumentSales,1);
+  const invoiced=validOrder();
+  invoiced.taxReview={...invoiced.taxReview,documentKind:"commercial_invoice"};
+  const standard=make([invoiced]);
+  const standardLine=standard.files.find(f=>f.name==="muhasebe_on_hazirlik.csv").data;
+  assert.ok(standardLine.includes('"commercial_invoice"'));
+  assert.ok(standardLine.includes(",2000,2000,0,0,"));
+  assert.equal(standard.manifest.reviewedServiceFeeIllustrationMinor,"0");
+  assert.equal(standard.manifest.reviewedInvoiceDocumentSales,1);
+  const selfEmployed=validOrder();
+  selfEmployed.taxReview={...selfEmployed.taxReview,documentKind:"self_employed_receipt"};
+  assert.equal(make([selfEmployed]).manifest.reviewedServiceFeeIllustrationMinor,"0");
+});
+
+test("default 15% frozen order commission stays separate from document-specific 5% fee", () => {
+  const writer=validOrder();
+  writer.commission={...writer.commission,commissionRateBps:1500,source:"global",sourceEventId:null};
+  const result=make([writer]);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor,"1500");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"500");
+});
+
+test("missing, later, revoked and expired tax reviews fail closed for accountant export", () => {
+  const variants=[
+    null,
+    {documentKind:"gvk18_expense_receipt",decision:"verified",
+      reviewedAt:new Date("2026-10-26T12:00:00+03:00"),validUntil:null},
+    {documentKind:"gvk18_expense_receipt",decision:"revoked",
+      reviewedAt:new Date("2026-10-20T12:00:00+03:00"),validUntil:null},
+    {documentKind:"gvk18_expense_receipt",decision:"verified",
+      reviewedAt:new Date("2026-10-20T12:00:00+03:00"),
+      validUntil:new Date("2026-10-21T00:00:00+03:00")},
+  ];
+  for (const review of variants) {
+    const order=validOrder();
+    order.taxReview=review;
+    const result=make([order]);
+    assert.equal(result.manifest.readySalesCount,0);
+    assert.equal(result.manifest.preparationRows,0);
+    assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor,"0");
+    assert.ok(result.files.find(f=>f.name==="uyarilar.csv").data.includes("YAZAR_MALI_BELGE_DOGRULANAMADI"));
+  }
+});
+
+test("daily export retrieves document reviews as of paidAt, never asks later live status", () => {
+  const repo=source("src/features/commerce/day-close-repository.ts");
+  assert.ok(repo.includes("prisma.authorTaxReviewEvent.findMany({"));
+  assert.ok(repo.includes('reviewedAt: { lt: period.end }'));
+  assert.ok(repo.includes("event.reviewedAt <= order.paidAt"));
+  assert.ok(repo.includes("reviewEvents.length > DAY_CLOSE_MAX_ROWS"));
 });

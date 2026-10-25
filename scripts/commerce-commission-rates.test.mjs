@@ -82,7 +82,9 @@ test("writer preview selects only owned works and resolves their commission thro
 test("writer preview never reinterprets legacy VAT-inclusive prices or creates a fiscal document", () => {
   const repo = readFileSync(join(root, "src/features/commerce/commission-rates-repository.ts"), "utf8");
   const page = readFileSync(join(root, "src/app/satis-erisim/kazanc-hesaplama/page.tsx"), "utf8");
-  assert.ok(repo.includes('configuration?.priceTaxTreatment === "net_plus_vat"'));
+  assert.ok(repo.includes('effective.priceTaxTreatment === "net_plus_vat"'));
+  assert.ok(repo.includes("resolveEffectiveCommerceState({"));
+  assert.ok(repo.includes("latestConsent: selectedWork.publicationConsents[0] ?? null"));
   assert.ok(repo.includes('configuration.currency === "TRY"'));
   assert.ok(repo.includes("savedNetPrice:"));
   assert.ok(page.includes("preview.savedNetPrice ?? parseTryNetPrice(query.fiyat)"));
@@ -100,5 +102,7 @@ test("writer income reads historical commission snapshots instead of recomputing
   assert.ok(income.includes("order.commissionRateSnapshot.commissionRateBps"));
   assert.ok(income.includes("Oran kaydı eksik"));
   assert.ok(income.includes("Sipariş anındaki komisyon"));
+  const works = readFileSync(join(root, "src/app/satis-erisim/page.tsx"), "utf8");
+  assert.ok(works.includes("/satis-erisim/kazanc-hesaplama?eser="));
   assert.ok(!income.includes("commissionRateBps: 1500"));
 });

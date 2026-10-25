@@ -194,7 +194,10 @@ test("missing, duplicate and wrong gross ledger entries block the accounting pre
   const matched=exportModule.buildDayCloseFiles({...input,ledger:[base]});
   assert.equal(matched.manifest.readySalesCount,1);
   assert.equal(matched.manifest.preparationRows,1);
-  assert.ok(matched.files.find(f=>f.name==="mutabakat.csv").data.includes("LEDGER_KONTROLU_GECTI"));
+  const reconciliation=matched.files.find(f=>f.name==="mutabakat.csv").data;
+  assert.ok(reconciliation.includes("LEDGER_KONTROLU_GECTI"));
+  assert.ok(reconciliation.includes("TAHSILAT_KONTROLU_GECTI"));
+  assert.ok(reconciliation.includes("TEMEL_MUTABAKAT_GECTI"));
 });
 
 test("coupon and uncertain seller are excluded from accountant preparation, never silently invoiced",() => {
@@ -250,4 +253,27 @@ test("repository loads sales' own ledger records independent of ledger day and k
   assert.ok(repo.includes('prisma.financialLedger.findMany({'));
   assert.ok(repo.includes('where: { createdAt: { gte: period.start, lt: period.end } }'));
   assert.ok(repo.includes('order.refundedAt >= period.end'));
+});
+
+test("reconciliation CSV does not certify a mismatched or duplicate capture", () => {
+  const order=validOrder();
+  order.payments.push({status:"succeeded",amount:12000n,currency:"TRY"});
+  const result=make([order]);
+  const ledgerResult=result.files.find(f=>f.name==="mutabakat.csv").data;
+  assert.ok(ledgerResult.includes("LEDGER_KONTROLU_GECTI"));
+  assert.ok(ledgerResult.includes("INCELEME_GEREKLI"));
+  assert.ok(!ledgerResult.includes("TEMEL_MUTABAKAT_GECTI"));
+  assert.equal(result.manifest.preparationRows,0);
+});
+
+test("0TL order unexpectedly carrying a successful capture is always flagged", () => {
+  const order=validOrder();
+  order.originalAmount=0n;
+  order.finalAmount=0n;
+  order.quote=null;
+  order.payments=[{status:"succeeded",amount:1n,currency:"TRY"}];
+  const result=make([order]);
+  const issues=result.files.find(f=>f.name==="uyarilar.csv").data;
+  assert.ok(issues.includes("SIFIR_TL_GEREKSIZ_TAHSILAT"));
+  assert.equal(result.manifest.preparationRows,0);
 });

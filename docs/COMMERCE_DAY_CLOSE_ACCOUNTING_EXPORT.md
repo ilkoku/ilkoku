@@ -15,6 +15,7 @@
 ## Kontroller
 - Eksik komisyon oranı veya KDV snapshot, kupon, 0 TL, iade, doğrulanmamış satıcı, yanlış para birimi, tahsilat uyuşmazlığı, siparişe ait eksik/çift sale_gross ledger veya mükerrer başarılı ödeme ayrı uyarı satırı doğurur.
 - Mutabakat, siparişe ait kaydedilmiş brüt liste fiyatını (originalAmount) ilgili sale_gross ledger tutarıyla karşılaştırır; bu tutar indirim sonrası finalAmount ile karıştırılmaz.
+- iadeler.csv, tamamlanmış iadelerin sipariş tahsilatını ve ilgili iş gününün sonuna kadar tamamlanmış bütün iadelerin toplamını ayrı alanlarda gösterir. Para birimi uyuşmazlığı, orijinal ödemesi bulunmayan sipariş, sıfır veya geçersiz tutar ve toplam iadenin tahsilatı aşması uyarıya ayrılır. Sonraki günlerin iadeleri önceki günün kümülatif kontrolüne girmez.
 - gun_sonu_ozet.csv, gün içi ledger hareketlerini tür ve para birimi bazında, imzalı kuruş tutarıyla özetler. Brüt satış, platform komisyonu, yazar kazancı ve iadeler otomatik kâr/zarar hesaplaması sayılmaz.
 - Muhasebe ön hazırlık satırına yalnız temel veri kontrollerini geçen pozitif satışlar alınır. Komisyonun örnek net tutarı siparişe sabitlenen oran ile KDV hariç fiyat üzerinden gösterilir. Bu sayı onaylı hizmet bedeli/fatura veya vergi kaydı değildir.
 - alan_esleme.json, Logo/Mikro/Paraşüt şemalarını açıkça UNVERIFIED olarak işaretler. Program uyumluluğu, cari kod, hesap planı ve resmî belge tipi yalnız dış muhasebe onayıyla belirlenir.

@@ -157,6 +157,9 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
         <div className="admin-heading-actions">
           <Link className="admin-button admin-button--ghost" href="/admin/roller">Rol talepleri</Link>
           <Link className="admin-button admin-button--primary" href="/admin/eserler">Eserleri incele</Link>
+          <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme">
+            Vergi / belge incelemesi
+          </Link>
         </div>
       </header>
 

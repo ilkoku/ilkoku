@@ -31,7 +31,7 @@ type MetricRow = {
 };
 
 type HighlightRow = {
-  reads: bigint | number | string | null;
+  readCount: bigint | number | string | null;
   title: string;
 };
 
@@ -247,7 +247,7 @@ async function loadTopWork(
   end: Date,
 ): Promise<WriterDailySummaryHighlight> {
   const rows = await prisma.$queryRaw<HighlightRow[]>`
-    SELECT w.title, COALESCE(SUM(ra.viewCount), 0) AS reads
+    SELECT w.title, COALESCE(SUM(ra.viewCount), 0) AS readCount
     FROM ReadingAccess ra
     INNER JOIN Work w ON w.id = ra.workId
     WHERE w.authorId = ${authorId}
@@ -255,13 +255,13 @@ async function loadTopWork(
       AND ra.openedAt < ${end}
       AND ra.riskLevel IN ('normal', 'watch')
     GROUP BY w.id, w.title
-    ORDER BY reads DESC, w.title ASC
+    ORDER BY readCount DESC, w.title ASC
     LIMIT 1
   `;
   const row = rows[0];
 
   return row
-    ? { reads: toNumber(row.reads), title: row.title }
+    ? { reads: toNumber(row.readCount), title: row.title }
     : null;
 }
 
@@ -272,7 +272,7 @@ async function loadTopChapter(
 ): Promise<WriterDailySummaryHighlight> {
   const rows = await prisma.$queryRaw<HighlightRow[]>`
     SELECT CONCAT(w.title, ' — ', c.title) AS title,
-      COALESCE(SUM(ra.viewCount), 0) AS reads
+      COALESCE(SUM(ra.viewCount), 0) AS readCount
     FROM ReadingAccess ra
     INNER JOIN Work w ON w.id = ra.workId
     INNER JOIN Chapter c ON c.id = ra.chapterId
@@ -281,13 +281,13 @@ async function loadTopChapter(
       AND ra.openedAt < ${end}
       AND ra.riskLevel IN ('normal', 'watch')
     GROUP BY c.id, w.title, c.title
-    ORDER BY reads DESC, c.position ASC
+    ORDER BY readCount DESC, c.position ASC
     LIMIT 1
   `;
   const row = rows[0];
 
   return row
-    ? { reads: toNumber(row.reads), title: row.title }
+    ? { reads: toNumber(row.readCount), title: row.title }
     : null;
 }
 

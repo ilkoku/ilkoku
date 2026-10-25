@@ -388,23 +388,40 @@ async function processWriter(
 
   if (!deliveryId) return "duplicate" as const;
 
-  const metrics = await loadMetrics(writer.id, window.start, window.end);
-
-  if (!hasMeaningfulActivity(metrics)) {
-    await updateDelivery({
-      deliveryId,
-      metrics,
-      status: "skipped",
-    });
-    return "skipped" as const;
-  }
-
-  const [topWork, topChapter] = await Promise.all([
-    loadTopWork(writer.id, window.start, window.end),
-    loadTopChapter(writer.id, window.start, window.end),
-  ]);
+  // A failed metrics/highlight query must not leave a permanently pending
+  // delivery. Only "failed" deliveries are eligible for a later retry.
+  let metrics: WriterDailySummaryMetrics = {
+    comments: 0,
+    completions: 0,
+    editorFavorites: 0,
+    favorites: 0,
+    publisherFavorites: 0,
+    publisherFollows: 0,
+    publisherLikes: 0,
+    publisherShares: 0,
+    totalReads: 0,
+    uniqueReaders: 0,
+  };
+  let phase: "prepare" | "send" = "prepare";
 
   try {
+    metrics = await loadMetrics(writer.id, window.start, window.end);
+
+    if (!hasMeaningfulActivity(metrics)) {
+      await updateDelivery({
+        deliveryId,
+        metrics,
+        status: "skipped",
+      });
+      return "skipped" as const;
+    }
+
+    const [topWork, topChapter] = await Promise.all([
+      loadTopWork(writer.id, window.start, window.end),
+      loadTopChapter(writer.id, window.start, window.end),
+    ]);
+
+    phase = "send";
     const result = await sendWriterDailySummaryEmail({
       email: writer.email,
       fullName: writer.fullName,
@@ -441,11 +458,16 @@ async function processWriter(
       metrics,
       status: "failed",
     });
-    console.error("WRITER_DAILY_SUMMARY_SEND_FAILED", {
-      authorId: writer.id,
-      error: message,
-      summaryDate: window.summaryDate,
-    });
+    console.error(
+      phase === "prepare"
+        ? "WRITER_DAILY_SUMMARY_PREPARE_FAILED"
+        : "WRITER_DAILY_SUMMARY_SEND_FAILED",
+      {
+        authorId: writer.id,
+        error: message,
+        summaryDate: window.summaryDate,
+      },
+    );
     return "failed" as const;
   }
 }

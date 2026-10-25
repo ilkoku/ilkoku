@@ -94,7 +94,14 @@ export default async function ReaderOrderDetailPage({
           <span className={styles.eyebrow}>2. Tahsilat özeti</span>
           <h2>Satın alma tutarları</h2>
           <div className={styles.summaryGrid}>
-            <div><span>Eser fiyatı (sipariş anı kaydı)</span><strong>{money(order.originalAmount, order.currency)}</strong></div>
+            {order.priceQuoteSnapshot?.taxTreatment === "net_plus_vat" ? (
+              <>
+                <div><span>Eser fiyatı (KDV hariç)</span><strong>{money(order.priceQuoteSnapshot.listNetAmount, order.currency)}</strong></div>
+                <div><span>Satış KDV&apos;si (sipariş fiyat teklifi)</span><strong>{money(order.priceQuoteSnapshot.listVatAmount, order.currency)}</strong></div>
+              </>
+            ) : (
+              <div><span>Eser fiyatı (önceki sipariş fiyat kaydı)</span><strong>{money(order.originalAmount, order.currency)}</strong></div>
+            )}
             <div><span>İlkOku kupon indirimi</span><strong>−{money(
               order.couponOwnerSnapshot === "platform" ? order.discountAmount : BigInt(0),
               order.currency,
@@ -109,11 +116,11 @@ export default async function ReaderOrderDetailPage({
             <p className={styles.helper}>Uygulanan indirim kodu: {order.couponCodeSnapshot}</p>
           ) : null}
           <p className={styles.notice}>
-            Bu ekran siparişte kaydedilmiş tahsilat tutarlarını gösterir; resmî
-            e-fatura veya e-arşiv faturası değildir. Sipariş verisinde ayrı
-            satış KDV matrahı ve vergi oranı kayıtlı olmadığından KDV kalemi
-            tahmin edilerek gösterilmez. Yazar komisyonu, stopaj ve aracılık
-            hizmet bedeli okurdan ikinci kez tahsil edilmez.
+            {order.priceQuoteSnapshot?.taxTreatment === "net_plus_vat"
+              ? "Bu kayıt, sipariş anında saklanan KDV hariç liste fiyatı ile satış KDV fiyat teklifini gösterir. Kupon sonrası kesin vergisel matrah ve platform tarafından finanse edilen kampanya işlemleri ayrıca muhasebede belirlenir."
+              : "Bu eski sipariş fiyatında KDV hariç matrah ve KDV oranı ayrı kaydedilmemiştir. KDV tutarı sonradan tahmin edilmez."}
+            {" "}Bu ekran resmî e-fatura veya e-arşiv faturası değildir. Yazar komisyonu,
+            stopaj ve aracılık hizmet bedeli okurdan ikinci kez tahsil edilmez.
           </p>
         </section>
         <section className={styles.panel}>

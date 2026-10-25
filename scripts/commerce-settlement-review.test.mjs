@@ -54,6 +54,13 @@ const valid = () => ({
   },
   payments: [{ status: "succeeded", amount: 12000n, currency: "TRY" }],
   bookedEntryTypes: ["sale_gross"],
+  commissionRateSnapshot: {
+    commissionRateBps: 1500,
+    serviceFeeRateBps: 500,
+    source: "global",
+    sourceEventId: null,
+    calculationVersion: "rate-v1",
+  },
   taxReview: {
     documentKind: "commercial_invoice",
     decision: "verified",
@@ -187,5 +194,66 @@ test("tax review recording cannot mutate payments or accepted legal documents", 
     "payment.create(", "authorAgreement.update(", "order.update(",
   ]) {
     assert.ok(!actions.includes(forbidden), "Review must not post finance or legal documents: " + forbidden);
+  }
+});
+
+test("author-specific frozen commission rate changes illustrations but never authorizes payout", () => {
+  const source = valid();
+  source.commissionRateSnapshot = {
+    commissionRateBps: 2000, serviceFeeRateBps: 500,
+    source: "author", sourceEventId: "rate-author-01", calculationVersion: "rate-v1",
+  };
+  const result = review.reviewCommerceOrderSettlement(source);
+  assert.deepEqual([...result.blockers], []);
+  assert.equal(result.approvalStatus, "accounting_verification_required");
+  assert.equal(result.scenarios.invoiced.commissionNet, 2000n);
+  assert.equal(result.scenarios.invoiced.authorBankPayment, 9600n);
+  assert.equal(result.scenarios.invoiced.profitAfterTax, 1500n);
+  source.taxReview.documentKind = "gvk18_expense_receipt";
+  const gvk = review.reviewCommerceOrderSettlement(source);
+  assert.equal(gvk.scenarios.expenseReceipt.commissionNet, 2000n);
+  assert.equal(gvk.scenarios.expenseReceipt.platformServiceNet, 500n);
+  assert.equal(gvk.scenarios.expenseReceipt.platformServiceVat, 100n);
+  assert.equal(gvk.scenarios.expenseReceipt.authorBankPayment, 6040n);
+  assert.equal(gvk.scenarios.expenseReceipt.profitAfterTax, 1875n);
+});
+
+for (const [label, commissionRateSnapshot] of [
+  ["missing on historic order", null],
+  ["unexpected general override", {
+    commissionRateBps: 2000, serviceFeeRateBps: 500,
+    source: "global", sourceEventId: null, calculationVersion: "rate-v1",
+  }],
+  ["unknown service fee", {
+    commissionRateBps: 1500, serviceFeeRateBps: 700,
+    source: "work", sourceEventId: "ev-1", calculationVersion: "rate-v1",
+  }],
+  ["unknown rate version", {
+    commissionRateBps: 1500, serviceFeeRateBps: 500,
+    source: "work", sourceEventId: "ev-1", calculationVersion: "rate-v9",
+  }],
+]) {
+  test("accounting review blocks rate snapshot " + label, () => {
+    const result = review.reviewCommerceOrderSettlement({ ...valid(), commissionRateSnapshot });
+    assert.equal(result.scenarios, null);
+    assert.ok(result.blockers.length > 0);
+  });
+}
+
+test("new orders freeze rate before checkout, never mutate old balances", () => {
+  const zero = readFileSync(join(ROOT, "src/features/commerce/zero-total-checkout.ts"), "utf8");
+  const paid = readFileSync(join(ROOT, "src/features/commerce/paid-checkout.ts"), "utf8");
+  const builder = readFileSync(join(ROOT, "src/features/commerce/order-snapshot.ts"), "utf8");
+  const admin = readFileSync(join(ROOT, "src/features/commerce/commission-rate-actions.ts"), "utf8");
+  for (const checkout of [zero, paid]) {
+    assert.ok(checkout.includes("resolveOrderCommissionRate(transaction, work.authorId, work.id)"));
+    assert.ok(checkout.includes("commissionRate,"));
+  }
+  assert.ok(builder.includes("commissionRateSnapshot:"));
+  assert.ok(admin.includes('actor.role !== "admin"'));
+  assert.ok(admin.includes('where: { id: workId, authorId }'));
+  assert.ok(admin.includes("authorCommissionRateEvent.create("));
+  for (const forbidden of ["financialLedger.create(", "authorBalance.update(", "payout.create("]) {
+    assert.ok(!admin.includes(forbidden), "No economic side effects on rate change");
   }
 });

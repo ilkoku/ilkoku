@@ -636,13 +636,13 @@ export function buildDayCloseFiles(input: {
     // must be mapped by the accountant for the selected vendor/version.
     fields: {
       referans_siparis_no: { source: "Order.orderNo", meaning: "external reconciliation key", required: true },
-      satis_tarihi_utc: { source: "Order.paidAt", meaning: "sale settlement date in UTC", required: true },
+      satis_tarihi_utc: { source: "Order.paidAt", meaning: "recorded payment completion date in UTC, not bank settlement", required: true },
       yazar_kodu: { source: "Order.author.publicId", meaning: "writer reference, not buyer tax number", required: true },
       eser: { source: "Order.work.title", meaning: "sale item description", required: true },
       para_birimi: { source: "Order.currency", meaning: "TRY for this profile", required: true },
       satis_net_kurus: { source: "OrderPriceQuoteSnapshot.listNetAmount", meaning: "net list amount", required: true },
       satis_kdv_kurus: { source: "OrderPriceQuoteSnapshot.listVatAmount", meaning: "20% VAT illustration, not declaration", required: true },
-      satis_brut_kurus: { source: "Order.finalAmount", meaning: "customer collected gross", required: true },
+      satis_brut_kurus: { source: "Order.finalAmount", meaning: "recorded order payable gross; independent bank clearing not verified", required: true },
       komisyon_bps: { source: "OrderCommissionRateSnapshot.commissionRateBps", meaning: "frozen commission rate", required: true },
       komisyon_net_ornek_kurus: { source: "calculated from frozen net price and commission rate", meaning: "estimate, not posted income", required: false },
       aracilik_bps_uygulanan: { source: "Frozen OrderCommissionRateSnapshot plus AuthorTaxReviewEvent as-of paidAt", meaning: "0 for verified invoice/receipt, 500 for verified eligible GVK18; never auto-bill", required: false },

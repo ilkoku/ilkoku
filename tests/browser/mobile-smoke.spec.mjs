@@ -2501,3 +2501,45 @@ test("admin commission rules page remains mobile safe and excludes reader access
   await page.goto(route, { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
+
+
+test("authenticated admin dashboard safe-link matrix navigates current internal pages", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.admin;
+  expect(token, "Missing isolated admin session").toBeTruthy();
+  await page.context().addCookies([{name:authFixture.cookieName,value:token,url:authCookieUrl}]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {waitUntil:"domcontentloaded"});
+  await expect(page.locator(".admin-main")).toBeVisible();
+  const hrefs = await page.locator(".admin-content a[href]").evaluateAll(links=>
+    [...new Set(links.map(a=>a.getAttribute("href")).filter(x=>
+      typeof x==="string" && /^\/[a-zA-Z0-9/_-]+$/.test(x) &&
+      !x.startsWith("/giris") && !x.startsWith("/hesabim")
+    ))].slice(0,8)
+  );
+  expect(hrefs.length).toBeGreaterThan(0);
+  for(const href of hrefs) {
+    await page.goto("/sistem-yonetimi", {waitUntil:"domcontentloaded"});
+    // Exercise the real anchor, not only an HTTP GET for its destination.
+    const link=page.locator('.admin-content a[href="' + href + '"]').first();
+    await expect(link).toBeVisible();
+    await link.click();
+    await page.waitForURL(url => url.pathname === href, {timeout:10000});
+    await expect(page).not.toHaveURL(/\/giris(?:\?|$)|\/erisim-reddedildi(?:\?|$)/);
+    await expect(page.locator("body")).not.toContainText("Sayfa bulunamadı.");
+  }
+});
+
+test("authenticated admin global search stays on works search route", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token=authFixture.sessions?.admin;
+  expect(token).toBeTruthy();
+  await page.context().addCookies([{name:authFixture.cookieName,value:token,url:authCookieUrl}]);
+  await page.setViewportSize(viewports.desktop);
+  await page.goto("/sistem-yonetimi", {waitUntil:"domcontentloaded"});
+  const search=page.getByRole("searchbox",{name:"Sistem yönetiminde eser ara"});
+  await expect(search).toBeVisible();
+  await search.fill("CI Browser");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/sistem-yonetimi\/eserler\?q=CI(?:\+|%20)Browser/u);
+});

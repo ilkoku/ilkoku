@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runWriterDailySummaries(summaryDate);
-    const ok = result.failed === 0;
+    const ok = result.failed === 0 && result.review === 0;
     return NextResponse.json({
       ok,
       ...(ok ? {} : { error: "WRITER_DAILY_SUMMARY_PARTIAL_FAILURE" }),

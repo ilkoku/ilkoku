@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
+import { recentPublishedSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -64,7 +64,7 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
   contains(workflow, 'cron: "37 4 * * *"', "daily search refresh schedule");
   contains(workflow, '"src/features/book-index/**"', "Book Index feature trigger");
   contains(workflow, '"src/lib/book-index/**"', "Book Index data/SEO trigger");
-  contains(workflow, "__BOOK_INDEX__", "scheduled Book Index sentinel");
+  contains(workflow, "__RECENT_PUBLIC__", "scheduled recent public sitemap sentinel");
 
   const result = selectIndexNowUrls({
     sitemapUrls: [
@@ -81,6 +81,43 @@ test("scheduled IndexNow refresh targets only published Book Index URLs", () => 
     "https://ilkoku.com/en-cok-satanlar",
     "https://ilkoku.com/en-cok-satanlar/turkiye",
   ]);
+});
+
+test("daily IndexNow selects recent published sitemap updates and gated Book Index only", () => {
+  const xml = [
+    "<urlset>",
+    "<url><loc>https://ilkoku.com/hakkimizda</loc><lastmod>2026-10-21T18:00:00Z</lastmod></url>",
+    "<url><loc>https://ilkoku.com/yardim</loc><lastmod>2026-10-17T10:00:00Z</lastmod></url>",
+    "<url><loc>https://ilkoku.com/nasil-calisir</loc></url>",
+    "<url><loc>https://ilkoku.com/topluluk-kurallari</loc><lastmod>2026-10-25T10:00:00Z</lastmod></url>",
+    "<url><loc>https://elsewhere.example/not-ours</loc><lastmod>2026-10-22T00:00:00Z</lastmod></url>",
+    "<url><loc>https://ilkoku.com/en-cok-satanlar</loc></url>",
+    "</urlset>",
+  ].join("");
+  const recent = recentPublishedSitemapUrls(xml, new Date("2026-10-22T04:37:00Z"), 36);
+  assert.deepEqual(recent, ["https://ilkoku.com/hakkimizda"]);
+  const result = selectIndexNowUrls({
+    sitemapUrls: [
+      "https://ilkoku.com/hakkimizda",
+      "https://ilkoku.com/yardim",
+      "https://ilkoku.com/nasil-calisir",
+      "https://ilkoku.com/topluluk-kurallari",
+      "https://ilkoku.com/en-cok-satanlar",
+    ],
+    changedFiles: ["__RECENT_PUBLIC__"],
+    recentPublicUrls: recent,
+  });
+  assert.equal(result.mode, "recent-public");
+  assert.deepEqual(result.urls, [
+    "https://ilkoku.com/hakkimizda",
+    "https://ilkoku.com/en-cok-satanlar",
+  ]);
+  const gated = selectIndexNowUrls({
+    sitemapUrls: ["https://ilkoku.com/hakkimizda", "https://ilkoku.com/yardim"],
+    changedFiles: ["__RECENT_PUBLIC__"],
+    recentPublicUrls: recent,
+  });
+  assert.deepEqual(gated.urls, ["https://ilkoku.com/hakkimizda"]);
 });
 
 test("scheduled IndexNow refresh remains fail-closed while Book Index is absent from sitemap", () => {

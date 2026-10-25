@@ -104,6 +104,46 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   assert.deepEqual(result.zip,second.zip,"unchanged source rows yield same bytes/batch hash");
 });
 
+test("official vendor handoff gates distinguish verified internal columns from unverified external formats", () => {
+  const result=make([validOrder()]);
+  const mapping=JSON.parse(result.files.find(f=>f.name==="alan_esleme.json").data);
+  const audit=mapping.sourceColumnAudit;
+  assert.equal(audit.verificationScope,"ILKOKU_INTERNAL_COLUMN_NAMES_ONLY");
+  assert.equal(audit.internalSourceColumnsMatchDeclarations,true);
+  assert.equal(audit.vendorImportReady,false);
+  assert.equal(audit.fiscalApproval,false);
+  assert.equal(audit.dataRows,1);
+  assert.deepEqual([...audit.internalSourceColumns].sort(),
+    Object.keys(mapping.fields).sort());
+  assert.equal(audit.declaredColumnCount,15);
+  assert.equal(result.manifest.sourceMappingVerified,true);
+  assert.equal(result.manifest.vendorImportReady,false);
+  for(const vendor of ["logo","mikro","parasut"]){
+    assert.equal(audit.vendors[vendor].destinationSchemaVerified,false);
+    assert.equal(audit.vendors[vendor].automaticImportReady,false);
+    assert.equal(audit.vendors[vendor].postToVendorAllowed,false);
+    assert.equal(audit.vendors[vendor].readiness,
+      "BLOCKED_REQUIRES_EXTERNAL_ACCOUNTANT_REVIEW");
+    assert.ok(audit.vendors[vendor].sourceUrl.startsWith("https://"));
+    assert.equal(Object.values(audit.vendors[vendor].requirements)
+      .filter(Boolean).length,0);
+  }
+});
+
+test("Paraşüt Excel, Mikro mutating APIs and Logo product modules remain distinct unverified tracks", () => {
+  const mapping=JSON.parse(make([validOrder()])
+    .files.find(f=>f.name==="alan_esleme.json").data);
+  assert.equal(mapping.sourceColumnAudit.vendors.parasut.track,
+    "ACCOUNT_DOWNLOADED_EXCEL_TEMPLATE_REQUIRED");
+  assert.equal(mapping.sourceColumnAudit.vendors.mikro.track,
+    "MUTATING_API_EXISTS_BUT_NOT_USED_NO_FILE_SCHEMA_VERIFIED");
+  assert.equal(mapping.sourceColumnAudit.vendors.logo.track,
+    "PRODUCT_SPECIFIC_FILE_OR_PARTNER_IMPORT_UNCONFIRMED");
+  assert.equal(mapping.customerLegalIdentity,
+    "NOT_EXPORTED_MUST_BE_VERIFIED_EXTERNALLY");
+  assert.equal(mapping.documentType,"NOT_DETERMINED");
+});
+
 test("missing snapshot, coupon, duplicate payments and 0TL produce review lines, not invoices",() => {
   const unknownSeller = validOrder();
   unknownSeller.orderNo = "ILK-SELLER-UNKNOWN";

@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import { inspectDayCloseArchive, compareDayCloseArchives } from "./commerce-day-close-compare.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (path) => readFileSync(join(root,path),"utf8");
@@ -946,4 +947,82 @@ test("distinct orders and partial refunds remain independent in same-day totals"
   assert.equal(result.manifest.reviewedAuthorSummaryGroups,2);
   const bridge=result.files.find(f=>f.name==="gunluk_satis_iade_koprusu.csv").data;
   assert.ok(bridge.includes('"TRY",2,2,0,24000,24000,2,2,0,3000,3000,21000'));
+});
+
+
+test("offline archive comparison: unchanged business day is byte-for-byte identical", () => {
+  const first=make([validOrder()]);
+  const same=make([validOrder()]);
+  const parsed=inspectDayCloseArchive(first.zip);
+  assert.equal(parsed.verifiedFileCount,13);
+  assert.equal(parsed.manifest.day,"2026-10-25");
+  assert.equal(parsed.manifest.fileHashes["siparisler.csv"],
+    createHash("sha256").update(first.files.find(f=>f.name==="siparisler.csv").data).digest("hex"));
+  const compare=compareDayCloseArchives(first.zip,same.zip);
+  assert.equal(compare.day,"2026-10-25");
+  assert.equal(compare.result,"IDENTICAL");
+  assert.equal(compare.archiveChanged,false);
+  assert.equal(compare.noWritesPerformed,true);
+  assert.deepEqual(compare.changedFiles,[]);
+  assert.deepEqual(compare.changedMetrics,[]);
+});
+
+test("offline archive comparison: a later modification to the same day's work is flagged", () => {
+  const old=make([validOrder()]);
+  const changedOrder=validOrder();
+  changedOrder.workTitle="Updated after first close";
+  const newer=make([changedOrder]);
+  const report=compareDayCloseArchives(old.zip,newer.zip);
+  assert.equal(report.day,"2026-10-25");
+  assert.equal(report.result,"CHANGED_REVIEW_REQUIRED");
+  assert.equal(report.archiveChanged,true);
+  assert.equal(report.manifestChanged,true);
+  assert.ok(report.changedFiles.includes("siparisler.csv"));
+  assert.ok(report.changedFiles.includes("muhasebe_on_hazirlik.csv"));
+  assert.ok(report.changedFiles.includes("muhasebe_tl_inceleme.csv"));
+  assert.notEqual(report.previousSha256,report.currentSha256);
+  assert.equal(report.noWritesPerformed,true);
+});
+
+test("offline archive comparison rejects corrupt or modified CSV even if manifest still exists", () => {
+  const original=make([validOrder()]);
+  const tampered=Buffer.from(original.zip);
+  const i=tampered.indexOf("Kitap 1");
+  assert.ok(i>0,"source archive contains the work name");
+  tampered[i]="x".charCodeAt(0);
+  assert.throws(()=>inspectDayCloseArchive(tampered),
+    /DAY_CLOSE_COMPARE_INVALID_ENTRY_CRC/);
+});
+
+test("offline archive comparison rejects a missing or changed manifest checksum", () => {
+  const original=make([validOrder()]);
+  const tampered=Buffer.from(original.zip);
+  const i=tampered.indexOf("ILK-DAY-2026-10-25");
+  assert.ok(i>0);
+  tampered[i]="X".charCodeAt(0);
+  assert.throws(()=>inspectDayCloseArchive(tampered),
+    /DAY_CLOSE_COMPARE_INVALID_ENTRY_CRC/);
+});
+
+test("offline archive comparison refuses to compare two different closing days", () => {
+  const first=make([validOrder()]);
+  const previousDay=exportModule.buildDayCloseFiles({
+    day:"2026-10-24",orders:[],ledger:[],refunds:[],
+  });
+  assert.throws(()=>compareDayCloseArchives(first.zip,previousDay.zip),
+    /DAY_CLOSE_COMPARE_INVALID_DIFFERENT_DAYS/);
+});
+
+test("offline archive comparison refuses duplicate ZIP entries and unsupported compression", () => {
+  const data=make([validOrder()]);
+  const duplicate=exportModule.zipFiles([
+    {name:"manifest.json",data:JSON.stringify(data.manifest)},
+    {name:"manifest.json",data:JSON.stringify(data.manifest)},
+  ]);
+  assert.throws(()=>inspectDayCloseArchive(duplicate),
+    /DAY_CLOSE_COMPARE_INVALID_ENTRY_NAME/);
+  const unsupported=Buffer.from(data.zip);
+  unsupported.writeUInt16LE(8,8); // deflate method, not day-close STORE
+  assert.throws(()=>inspectDayCloseArchive(unsupported),
+    /DAY_CLOSE_COMPARE_INVALID_UNSUPPORTED_ZIP_METHOD/);
 });

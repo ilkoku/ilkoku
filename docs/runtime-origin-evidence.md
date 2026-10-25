@@ -1,7 +1,7 @@
 # İlkOku — runtime/origin evidence
 
 ## What it records
-- Passive Node.js STARTED, EXIT and UNCAUGHT_EXCEPTION_MONITOR event records in the hosting stderr stream, with timestamp and PID, without changing default Node process lifecycle.
+- Passive Node.js lifecycle event records with timestamps and PIDs, without changing default process lifecycle. `STARTED`, exit code `0` and SIGTERM-style exit code `143` use **stdout** (informational); `UNCAUGHT_EXCEPTION_MONITOR` and other nonzero `EXIT` records use **stderr** (errors).
 - Private runtime endpoint requires GitHub OIDC with an exact repository and workflow identity. It exposes boot time estimate, uptime and RSS only to that authorized job.
 - Hourly read-only GitHub Actions job records process snapshot, HTTP status and CF-Ray for /iletisim and /sitemap.xml.
 - The endpoint touches no database, files or cache; anonymous calls return 401 without process details.
@@ -40,3 +40,11 @@ analysis must map the old fields to the new `client_edge_*` fields rather
 than merge them into an origin-TLS dataset. The probe cadence, paths, request
 volume, circuit breakers, credential handling and network targets are
 unchanged by this documentation/labeling correction.
+
+## Hostinger severity calibration (26 October 2026)
+
+Hostinger runtime logs for the deployment at **2026-10-25 21:44 UTC / 26 October 00:44 Türkiye time** displayed five `STARTED` and one `EXIT` record with exit code 143, and a dashboard counter of six errors. The original hook wrote **all six** lifecycle JSON records to `stderr`; these informational records may have inflated the displayed error counter. Routing ordinary lifecycle records to `stdout` and genuine exceptions to `stderr` avoids this known stream misclassification. Verify the provider counter on a later deployment before claiming it is proven to be the complete cause.
+
+Exit 143 is commonly the Unix SIGTERM convention (128+15). Coincidence with the recorded Hostinger deployment minute does not establish which controller sent the signal; multiple startups alone do not prove an app crash or a process cap. Cloudflare Requests for **21:43–21:47 UTC** showed **38 edge requests, 0 5xx**; Origin showed **37 reached, 0 failed connections, 0 origin HTTP 5xx**. These observations do not explain earlier scanner-coincident 503/520/525 incidents.
+
+This is a logging-only quality fix: no runtime signal handlers, process count, host settings, external probes, DNS/WAF/SSL, routes, or payments are changed. Keep origin incident #1856 open pending Hostinger 443/proxy logs and longer-window error evidence.

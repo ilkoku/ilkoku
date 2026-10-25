@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
-import { calculateCommercePricing } from "./pricing";
+import { resolveOrderCommissionRate } from "./commission-rates-repository";
+import { quoteCommercePrice } from "./price-quote";
 import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type ZeroTotalCheckoutResult =
@@ -73,6 +74,7 @@ export async function completeZeroTotalCheckout(input: {
           select: {
             currency: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             saleModel: true,
             status: true,
             activatedAt: true,
@@ -84,6 +86,7 @@ export async function completeZeroTotalCheckout(input: {
           select: {
             publicationModel: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             currency: true,
             accessPlanSnapshot: true,
           },
@@ -135,11 +138,14 @@ export async function completeZeroTotalCheckout(input: {
     }
 
     if (stagedZeroPurchase) {
-      const pricing = calculateCommercePricing(
-        effectiveCommerce.priceAmount ?? BigInt(0),
-        null,
-      );
+      const priceQuote = quoteCommercePrice({
+        configuredPriceAmount: effectiveCommerce.priceAmount ?? BigInt(0),
+        taxTreatment: effectiveCommerce.priceTaxTreatment,
+        coupon: null,
+      });
+      const { pricing } = priceQuote;
       const now = new Date();
+      const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
       const order = await transaction.order.create({
         data: {
           ...buildCommerceOrderSnapshot({
@@ -147,6 +153,9 @@ export async function completeZeroTotalCheckout(input: {
             coupon: null,
             currency: effectiveCommerce.currency,
             pricing,
+            priceQuote,
+            commissionRate,
+
             readerId: input.readerId,
             workId: work.id,
           }),
@@ -330,17 +339,23 @@ export async function completeZeroTotalCheckout(input: {
       return { ok: false, reason: "coupon_invalid" } as const;
     }
 
-    const pricing = calculateCommercePricing(couponBaseAmount, {
-      discountType: coupon.discountType,
-      discountValue: coupon.discountValue,
-      owner: coupon.owner,
+    const priceQuote = quoteCommercePrice({
+      configuredPriceAmount: couponBaseAmount,
+      taxTreatment: effectiveCommerce.priceTaxTreatment,
+      coupon: {
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        owner: coupon.owner,
+      },
     });
+    const { pricing } = priceQuote;
 
     if (pricing.finalAmount !== BigInt(0)) {
       return { ok: false, reason: "not_zero_total" } as const;
     }
 
     const now = new Date();
+    const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
     const order = await transaction.order.create({
       data: {
         ...buildCommerceOrderSnapshot({
@@ -354,6 +369,8 @@ export async function completeZeroTotalCheckout(input: {
           },
           currency: effectiveCommerce.currency,
           pricing,
+          priceQuote,
+          commissionRate,
           readerId: input.readerId,
           workId: work.id,
         }),

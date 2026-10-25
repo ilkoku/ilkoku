@@ -12,6 +12,7 @@ import {
 } from "./publication-snapshots";
 import { prisma } from "@/lib/prisma";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import { resolveEffectiveCommerceState, shouldEnforcePaidChapterAccess } from "@/features/commerce/effective-state";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
@@ -122,6 +123,7 @@ export async function getMemberPublicWorkBySlug(
         select: {
           saleModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           status: true,
           activatedAt: true,
@@ -133,6 +135,7 @@ export async function getMemberPublicWorkBySlug(
         select: {
           publicationModel: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           currency: true,
           accessPlanSnapshot: true,
         },
@@ -349,7 +352,12 @@ export async function getMemberPublicWorkBySlug(
       currency: effectiveCommerce.currency,
       enforcementActive: commerceEnforcementActive,
       hasEntitlement,
-      priceAmount: effectiveCommerce.priceAmount,
+      priceAmount: effectiveCommerce.priceAmount === null
+        ? null
+        : quoteCommercePrice({
+            configuredPriceAmount: effectiveCommerce.priceAmount,
+            taxTreatment: effectiveCommerce.priceTaxTreatment,
+          }).listGrossAmount,
       purchaseAvailable,
       saleModel: effectiveCommerce.saleModel,
       saleStatus: saleConfiguration?.status ?? "draft",

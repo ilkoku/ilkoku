@@ -13,11 +13,12 @@ import {
 import {
   getApplicableCheckoutCoupon,
   getCheckoutWorkBySlug,
+  getReaderPendingCheckoutOrderNo,
 } from "@/features/commerce/checkout-repository";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
 import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
-import { calculateCommercePricing } from "@/features/commerce/pricing";
+import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import { getVerifiedWorkSeller } from "@/features/commerce/verified-seller";
 import styles from "@/features/commerce/commerce.module.css";
@@ -117,12 +118,25 @@ export default async function CheckoutPreparationPage({
               <span className={styles.eyebrow}>Satın alındı</span>
               <h1>{work.title}</h1>
               <p>Bu eser için aktif erişim hakkın zaten bulunuyor.</p>
+              {entitlement.order?.orderNo ? (
+                <p>Sipariş numarası: <strong>{entitlement.order.orderNo}</strong></p>
+              ) : null}
             </div>
           </header>
 
-          <Link className={styles.action} href={returnTo}>
-            Okumaya dön
-          </Link>
+          <div className={styles.heroActions}>
+            <Link className={styles.action} href={returnTo}>
+              Okumaya dön
+            </Link>
+            {entitlement.order?.orderNo ? (
+              <Link
+                className={styles.secondaryAction}
+                href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(entitlement.order.orderNo)}
+              >
+                Sipariş ayrıntısını görüntüle
+              </Link>
+            ) : null}
+          </div>
         </div>
       </AppShell>
     );
@@ -180,22 +194,32 @@ export default async function CheckoutPreparationPage({
     ? candidateCoupon
     : null;
 
+  const verifiedPendingOrderNo =
+    query.durum === "siparis-bekliyor" && query.siparis
+      ? await getReaderPendingCheckoutOrderNo({
+          orderNo: query.siparis,
+          readerId: profile.id,
+          workId: work.id,
+        })
+      : null;
   const flash = query.durum
-    ? `${checkoutMessages[query.durum] ?? query.durum}${
-        query.siparis ? ` · Sipariş ${query.siparis}` : ""
+    ? `${checkoutMessages[query.durum] ?? "Satın alma işleminde bir durum oluştu."}${
+        verifiedPendingOrderNo ? ` · Sipariş No: ${verifiedPendingOrderNo}` : ""
       }`
     : null;
 
-  const pricing = calculateCommercePricing(
-    originalAmount,
-    coupon
+  const priceQuote = quoteCommercePrice({
+    configuredPriceAmount: originalAmount,
+    taxTreatment: effectiveCommerce.priceTaxTreatment,
+    coupon: coupon
       ? {
           discountType: coupon.discountType,
           discountValue: coupon.discountValue,
           owner: coupon.owner,
         }
       : null,
-  );
+  });
+  const { pricing } = priceQuote;
   const couponZeroPurchaseReady =
     Boolean(purchaseTerms) &&
     Boolean(verifiedSeller) &&
@@ -244,6 +268,12 @@ export default async function CheckoutPreparationPage({
             Eser sayfasına dön
           </Link>
         </header>
+
+        <nav className={styles.checkoutStages} aria-label="Satın alma adımları">
+          <div><span>1</span><strong>Eser ve fiyat</strong><small>Eser ve indirimleri kontrol et</small></div>
+          <div><span>2</span><strong>Sözleşme ve işlem</strong><small>Onay ve uygun ödeme yöntemi</small></div>
+          <div><span>3</span><strong>Kütüphane ve sipariş</strong><small>Erişim ve sipariş dökümü</small></div>
+        </nav>
 
         {flash ? <div role="alert" className={styles.flash}>{flash}</div> : null}
         {!checkoutConfigurationActive ? (
@@ -427,11 +457,19 @@ export default async function CheckoutPreparationPage({
           <h2>Sipariş özeti</h2>
           <div className={styles.summaryGrid}>
             <div>
-              <span>Eser fiyatı</span>
+              <span>{priceQuote.taxTreatment === "net_plus_vat"
+                ? "Eser fiyatı (KDV hariç)"
+                : "Eser fiyatı"}</span>
               <strong>
                 {formatMoney(originalAmount, effectiveCommerce.currency)}
               </strong>
             </div>
+            {priceQuote.listVatAmount !== null ? (
+              <div>
+                <span>Satış KDV&apos;si (%20)</span>
+                <strong>{formatMoney(priceQuote.listVatAmount, effectiveCommerce.currency)}</strong>
+              </div>
+            ) : null}
             <div>
               <span>İlkOku kupon indirimi</span>
               <strong>

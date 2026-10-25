@@ -386,3 +386,109 @@ test("checkout maintains normal İlkOku overview while preparation is not purcha
   has(css, ".readerCheckoutSummary", "dedicated order summary UI styles");
   has(css, "@media (max-width: 800px)", "checkout responsive layout");
 });
+
+
+test("UAT: reader order detail is scoped to the authenticated buyer and immutable sale snapshots", () => {
+  const repo = source("src/features/commerce/reader-repository.ts");
+  const page = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  has(repo, "where: { readerId, orderNo }", "buyer-bound order read");
+  has(repo, "legalSnapshot:", "historical seller snapshot");
+  has(repo, "consent:", "purchase terms consent snapshot");
+  has(page, "getReaderOrderDetail(profile.id, orderNo)", "buyer authentication");
+  has(page, 'order.status === "paid"', "entitlement requires paid order");
+  has(page, 'order.entitlement?.status === "active"', "entitlement requires active access");
+  has(page, "resmî", "do not claim an invoice");
+  has(history, "/hesabim/odeme-gecmisi/", "order-detail navigation");
+});
+
+test("UAT: writer fee example is read-only and preserves invoice vs GVK18 assumptions", () => {
+  const preview = source("src/features/commerce/settlement-preview.ts");
+  const page = source("src/app/satis-erisim/kazanc-hesaplama/page.tsx");
+  const writer = source("src/app/satis-erisim/page.tsx");
+  for (const fragment of [
+    'mode === "invoice"',
+    'commissionRateBps = 1500',
+    'serviceFeeRateBps = 500',
+    'percentBps(saleNetAmount, commissionRateBps)',
+    'percentBps(saleNetAmount, serviceFeeRateBps)',
+    'BigInt(17)',
+    'BigInt(20)',
+    'BigInt(25)',
+    "authorBankPayment",
+    "vat1Payment",
+    "vat2Payment",
+  ]) has(preview, fragment, "illustrative financial breakdown");
+  has(page, 'profile.role !== "writer"', "writer-only preview");
+  has(page, 'method="get"', "read-only GET form");
+  has(page, "gerçek hakediş", "illustrative label");
+  has(writer, "/satis-erisim/kazanc-hesaplama", "writer preview navigation");
+  const tax = source("src/app/satis-erisim/odeme-vergi-bilgileri/page.tsx");
+  has(tax, 'profile.role !== "writer"', "tax info role gate");
+  has(tax, "bu sürümde alınmıyor", "no unsafe tax PII input");
+  has(writer, "/satis-erisim/odeme-vergi-bilgileri", "tax overview navigation");
+  lacks(preview, "prisma.", "illustrative calculator never writes records");
+});
+
+test("UAT: checkout steps and library receipts do not open a paid provider or change 0 TL guards", () => {
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+  has(checkout, "checkoutStages", "checkout-before navigation");
+  has(checkout, "completeZeroTotalCheckoutAction", "existing 0 TL checkout path");
+  has(checkout, "beginPaidCheckoutAction", "existing paid checkout gate");
+  has(library, "Sipariş ve onay kayıtları", "postpurchase detail link");
+  has(css, ".readerCheckoutPage .checkoutStages", "scoped mobile styles");
+  has(css, "@media (max-width: 640px)", "small viewport layout");
+});
+
+test("UAT: purchase order number is shown only from reader-owned persisted order snapshots", () => {
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const action = source("src/features/commerce/checkout-actions.ts");
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const paymentHistory = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  const orderDetail = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const readerRepo = source("src/features/commerce/reader-repository.ts");
+
+  has(zero, 'orderNo: orderNumber()', "persistent order identifier generation");
+  has(action, "encodeURIComponent(result.orderNo)", "purchase redirect includes saved order number");
+  has(repository, "orderNo: true", "checkout existing entitlement reads persisted number");
+  has(checkout, "Sipariş numarası:", "existing entitlement shows verified number");
+  has(library, "completedOrderNo", "success notice selects confirmed order number");
+  has(library, "entitlements.find((item) => item.order?.orderNo === query.siparis)", "query order number cross-checked against buyer entitlement");
+  has(library, "Sipariş No:", "library item displays order number");
+  has(paymentHistory, "Sipariş No:", "history displays order number");
+  has(orderDetail, "Sipariş numarası:", "receipt displays order number");
+  has(readerRepo, "where: { readerId, orderNo }", "order detail access remains buyer-scoped");
+});
+
+
+test("UAT: VAT-exclusive new prices are frozen per order without retroactive legacy migration", () => {
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20261025143000_commerce_price_tax_quote/migration.sql");
+  const quote = source("src/features/commerce/price-quote.ts");
+  const state = source("src/features/commerce/effective-state.ts");
+  const actions = source("src/features/commerce/actions.ts");
+  const zero = source("src/features/commerce/zero-total-checkout.ts");
+  const paid = source("src/features/commerce/paid-checkout.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const publicQuery = source("src/features/works/member-public-queries.ts");
+  const reader = source("src/features/commerce/reader-repository.ts");
+  const details = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+
+  has(schema, "model OrderPriceQuoteSnapshot", "per-order immutable quote relation");
+  has(migration, "DEFAULT 'legacy_inclusive'", "non-retroactive schema migration");
+  has(quote, 'input.taxTreatment === "net_plus_vat"', "explicit opt-in for price plus VAT");
+  has(quote, "calculateCommercePricing(listGrossAmount", "coupons apply to VAT-inclusive total");
+  has(state, "priceTaxTreatment: input.latestConsent.priceTaxTreatment", "confirmed writer price-tax basis");
+  has(actions, '"net_plus_vat"', "new work explicitly records net VAT-plus basis");
+  has(actions, "priceTaxTreatment: work.saleConfiguration!.priceTaxTreatment", "writer final approval freezes price treatment");
+  has(zero, "priceQuote,", "0 TL and coupon orders preserve quote source");
+  has(paid, "priceQuote,", "paid orders preserve quote source");
+  has(checkout, "priceQuote.listVatAmount", "reader sees VAT separately when supported");
+  has(publicQuery, ".listGrossAmount", "work reader metadata shows VAT-inclusive price");
+  has(reader, "priceQuoteSnapshot:", "order reader retrieves frozen quote");
+  has(details, "order.priceQuoteSnapshot", "order receipt shows frozen net price and VAT");
+});

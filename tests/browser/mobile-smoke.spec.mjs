@@ -932,6 +932,15 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     );
   }
   await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
+  await expect(
+    page.getByText("Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Sipariş ayrıntısını görüntüle" }),
+  ).toHaveAttribute(
+    "href",
+    "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+  );
 
   const purchasedCard = page
     .locator("article")
@@ -941,6 +950,30 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
   ).toBeVisible();
+  await expect(purchasedCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+
+  // Already-owned checkout is not a new order: show the same persisted number.
+  await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+
+  // A tampered URL must not fabricate a successful checkout or a receipt link.
+  await page.goto(
+    "/kutuphanem/satin-aldiklarim?durum=eklendi&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş doğrulanamadı/u)).toBeVisible();
+  await expect(page.getByRole("link", {
+    name: "Sipariş ayrıntısını görüntüle",
+  })).toHaveCount(0);
+  await page.goto(
+    "/satinal/ci-browser-zero-total-work?durum=siparis-bekliyor&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş No: ILK-FAKE-ORDER-NUMBER/u)).toHaveCount(0);
 
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
@@ -964,6 +997,35 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(historyCard.getByText("CI Browser 0 TL Eser")).toBeVisible();
   await expect(historyCard.getByText("0 TL edinildi · Tahsilat yok", { exact: true })).toBeVisible();
   await expect(historyCard.getByText(/₺\s?0,00/u).last()).toBeVisible();
+  await expect(historyCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await historyCard.getByRole("link", { name: "Sipariş ayrıntısı" }).click();
+  await expect(page).toHaveURL(
+    /\/hesabim\/odeme-gecmisi\/ILK-/u,
+  );
+  await expect(page.getByRole("heading", { name: "Sipariş ayrıntısı" })).toBeVisible();
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  // Another authenticated reader must not be able to open this buyer's receipt.
+  const otherReaderToken = authFixture.sessions?.readerRaceB;
+  if (otherReaderToken) {
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: otherReaderToken, url: authCookieUrl },
+    ]);
+    const denied = await page.goto(
+      "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(denied?.status(), "Unowned order receipt is private").toBe(404);
+    await page.context().addCookies([
+      { name: authFixture.cookieName, value: token, url: authCookieUrl },
+    ]);
+  }
 
   if (process.env.DATABASE_URL) {
     const databaseUrl = new URL(process.env.DATABASE_URL);
@@ -2259,4 +2321,92 @@ test("deletion center category cards open the selected row-column screen on desk
     await expect(page.locator('.admin-topbar button[aria-label="Çıkış yap"]')).toHaveCount(1);
     await expectResponsiveDocument(page);
   }
+});
+
+
+test("finance order review is admin-only, read-only, and rejects unknown order numbers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const route = "/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme";
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Sipariş Mali İnceleme" })).toBeVisible();
+  await expect(page.getByText("Muhasebe doğrulaması bekleniyor")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mali inceleme yap" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?siparis=ILK-UNOWNED-TEST-0000", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/eşleşen kayıt bulunamadı/u)).toBeVisible();
+  await expect(page.getByText(/Yazara örnek banka ödemesi/u)).toHaveCount(0);
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});
+
+
+test("author tax-document review is admin-only and mobile safe without collecting identifiers", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Yazar Vergi / Belge İncelemesi" })).toBeVisible();
+  await expect(page.getByText("Haricî doğrulama gerekir")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazarı incele" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=NO_SUCH_WRITER", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText("Bu ID ile yazar bulunamadı.")).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});
+
+
+test("admin commission rules page remains mobile safe and excludes reader access", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  const readerToken = authFixture.sessions?.reader;
+  expect(adminToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  const route = "/sistem-yonetimi/finans-gelirler/komisyon-yonetimi";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto(route, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Komisyon Yönetimi" })).toBeVisible();
+  await expect(page.getByText("Temel oranlar ve öncelik")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yazar oranlarını görüntüle" })).toBeVisible();
+  await expectResponsiveDocument(page);
+
+  await page.goto(route + "?yazar=UNKNOWN_WRITER_ID", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(/bulunamadı/u)).toBeVisible();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });

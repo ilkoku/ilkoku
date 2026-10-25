@@ -184,6 +184,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
       saleConfiguration: {
         select: {
           priceAmount: true,
+          priceTaxTreatment: true,
           saleModel: true,
           activatedAt: true,
         },
@@ -214,12 +215,26 @@ export async function saveWorkSaleModelAction(formData: FormData) {
     commerceStatusRedirect(parsedWorkId.data, "fiyat-gerekli");
   }
 
+  // New priced works start VAT-exclusive; existing nonzero legacy list prices
+  // retain their original meaning, even if edited or republished.
+  const previousPrice = work.saleConfiguration?.priceAmount ?? null;
+  const priceTaxTreatment =
+    parsedModel.data === "paid" &&
+    priceAmount !== null &&
+    priceAmount > BigInt(0) &&
+    (previousPrice === null || previousPrice === BigInt(0))
+      ? "net_plus_vat"
+      : work.saleConfiguration?.priceTaxTreatment ?? "legacy_inclusive";
+
   const auditContext = await requestAuditContext();
 
   await prisma.$transaction(async (transaction) => {
     const oldPrice = work.saleConfiguration?.priceAmount ?? null;
     const oldModel = work.saleConfiguration?.saleModel ?? null;
-    const modelChanged = oldPrice !== priceAmount || oldModel !== parsedModel.data;
+    const modelChanged =
+      oldPrice !== priceAmount ||
+      oldModel !== parsedModel.data ||
+      (work.saleConfiguration?.priceTaxTreatment ?? "legacy_inclusive") !== priceTaxTreatment;
 
     const nextActivatedAt = work.saleConfiguration?.activatedAt ?? null;
 
@@ -230,12 +245,14 @@ export async function saveWorkSaleModelAction(formData: FormData) {
         authorId: writer.id,
         saleModel: parsedModel.data,
         priceAmount,
+        priceTaxTreatment,
         currency: "TRY",
         status: "draft",
       },
       update: {
         saleModel: parsedModel.data,
         priceAmount,
+        priceTaxTreatment,
         currency: "TRY",
         status: "draft",
         activatedAt: nextActivatedAt,
@@ -265,6 +282,7 @@ export async function saveWorkSaleModelAction(formData: FormData) {
             previousSaleModel: oldModel,
             saleModel: parsedModel.data,
             previousPriceAmount: oldPrice?.toString() ?? null,
+            priceTaxTreatment,
             priceAmount: priceAmount?.toString() ?? null,
             currency: "TRY",
             status: "draft",
@@ -403,6 +421,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         select: {
           currency: true,
           priceAmount: true,
+          priceTaxTreatment: true,
           saleModel: true,
           activatedAt: true,
         },
@@ -474,6 +493,7 @@ export async function confirmWorkPublicationCommerceAction(formData: FormData) {
         authorId: writer.id,
         publicationModel: work.saleConfiguration!.saleModel,
         priceAmount: work.saleConfiguration!.priceAmount,
+        priceTaxTreatment: work.saleConfiguration!.priceTaxTreatment,
         currency: work.saleConfiguration!.currency,
         accessPlanSnapshot,
         agreementVersion: agreement.version,

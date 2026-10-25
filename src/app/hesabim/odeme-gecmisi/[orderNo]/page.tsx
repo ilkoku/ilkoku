@@ -62,7 +62,8 @@ export default async function ReaderOrderDetailPage({
           <div>
             <span className={styles.eyebrow}>Satın alma sonrası · Sipariş kaydı</span>
             <h1>Sipariş ayrıntısı</h1>
-            <p>{order.orderNo} · {order.work.title}</p>
+            <p>{order.work.title}</p>
+            <p>Sipariş numarası: <strong>{order.orderNo}</strong></p>
           </div>
           <Link className={styles.secondaryAction} href="/hesabim/odeme-gecmisi">
             Ödeme geçmişine dön
@@ -72,6 +73,7 @@ export default async function ReaderOrderDetailPage({
           <span className={styles.eyebrow}>1. Sipariş durumu</span>
           <h2>{statusNames[order.status] ?? order.status}</h2>
           <div className={styles.summaryGrid}>
+            <div><span>Sipariş No</span><strong>{order.orderNo}</strong></div>
             <div><span>Sipariş tarihi</span><strong>{dateText(order.createdAt)}</strong></div>
             <div><span>Tamamlanma tarihi</span><strong>{dateText(order.paidAt)}</strong></div>
             <div><span>Erişim hakkı</span><strong>{hasAccess ? "Aktif" : "Etkin değil"}</strong></div>

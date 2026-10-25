@@ -23,12 +23,13 @@ const client = await mysql.createConnection({
   user: decodeURIComponent(parsed.username),
 });
 
-const roles = ["reader", "writer", "editor", "publisher", "admin"];
+const roles = ["reader", "writer", "editor_pending", "editor", "publisher", "admin"];
 const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 const now = new Date();
 const sessions = {};
 const userIds = {};
 let writerCommerceWorkId = null;
+let commerceWorkId = null;
 
 function hashToken(token) {
   return createHash("sha256").update(token).digest("hex");
@@ -174,7 +175,7 @@ try {
     userIds["readerRace" + suffix] = id;
   }
 
-  for (const role of ["reader", "writer", "publisher"]) {
+  for (const role of ["reader", "writer", "editor_pending", "editor", "publisher"]) {
     await client.execute(
       `INSERT INTO \`Profile\`
         (id, userId, birthYear, createdAt, updatedAt)
@@ -291,7 +292,7 @@ try {
     [randomUUID(), publisherId, publisherMemberUserId, now, now],
   );
 
-  const commerceWorkId = randomUUID();
+  commerceWorkId = randomUUID();
   const commerceChapterId = randomUUID();
   writerCommerceWorkId = randomUUID();
   const writerCommerceChapterId = randomUUID();
@@ -602,6 +603,7 @@ await writeFile(
     sessions,
     workIds: {
       writerCommerceConfiguration: writerCommerceWorkId,
+      zeroTotalCommerceWork: commerceWorkId,
     },
   }),
   { mode: 0o600 },

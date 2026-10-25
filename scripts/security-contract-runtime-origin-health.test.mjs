@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 import test from "node:test";
 
 const lifecycle = readFileSync("src/instrumentation.ts", "utf8");
@@ -57,6 +59,47 @@ test("Lifecycle hook is passive and retains default crash/shutdown semantics", (
   assert.match(lifecycle, /process\.once\("exit"/u);
   assert.match(lifecycle, /uncaughtExceptionMonitor/u);
   assert.doesNotMatch(lifecycle, /process\.on\("SIGTERM"|process\.on\("uncaughtException"|process\.on\("unhandledRejection"/u);
+});
+
+test("Lifecycle severity sends ordinary start/exit to stdout and failures to stderr", async () => {
+  const js = ts.transpileModule(lifecycle, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const stdout = [];
+  const stderr = [];
+  const handlers = new Map();
+  const stub = {
+    env: { NEXT_RUNTIME: "nodejs" },
+    pid: 314443,
+    uptime: () => 6,
+    stdout: { write: (line) => stdout.push(JSON.parse(line)) },
+    stderr: { write: (line) => stderr.push(JSON.parse(line)) },
+    once: (event, fn) => handlers.set(event, fn),
+    on: (event, fn) => handlers.set(event, fn),
+  };
+  const sandbox = { process: stub, exports: {}, Date, Error };
+  runInNewContext(js, sandbox);
+  await sandbox.exports.register();
+  assert.equal(stdout.length, 1);
+  assert.equal(stdout[0].phase, "STARTED");
+  assert.equal(stderr.length, 0);
+  assert.ok(handlers.has("exit"));
+  assert.ok(handlers.has("uncaughtExceptionMonitor"));
+
+  handlers.get("exit")(143);
+  assert.equal(stdout.length, 2);
+  assert.equal(stdout[1].phase, "EXIT");
+  assert.equal(stdout[1].exitCode, 143);
+  assert.equal(stderr.length, 0, "Deployment SIGTERM-style exit must not become a false error");
+
+  handlers.get("uncaughtExceptionMonitor")(new Error("test"), "uncaughtException");
+  assert.equal(stderr.length, 1);
+  assert.equal(stderr[0].phase, "UNCAUGHT_EXCEPTION_MONITOR");
+  assert.equal(stderr[0].errorName, "Error");
+
+  handlers.get("exit")(1);
+  assert.equal(stderr.length, 2);
+  assert.equal(stderr[1].exitCode, 1, "Unexpected exit must still be visible as an error");
 });
 
 test("Health endpoint requires exact GitHub OIDC authorization before PID disclosure", () => {

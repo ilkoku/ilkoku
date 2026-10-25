@@ -126,9 +126,16 @@ test("day close route is admin-only, ZIP-only, non-mutating and excludes custome
   assert.ok(repo.includes("closedDayRange(day, now)"));
   assert.ok(repo.includes("DAY_CLOSE_MAX_ROWS + 1"));
   assert.ok(repo.includes("status: { in: [\"paid\", \"refunded\"] }"));
+  const cron = source("src/app/api/internal/commerce/day-close/route.ts");
+  assert.ok(cron.includes("ILKOKU_DAY_CLOSE_CRON_SECRET"));
+  assert.ok(cron.includes("ILKOKU_DAY_CLOSE_ARCHIVE_DIR"));
+  assert.ok(cron.includes("timingSafeEqual("));
+  assert.ok(cron.includes("constants.O_EXCL"));
+  assert.ok(cron.includes('reason: "archived_day_changed_manual_review_required"'));
+  assert.ok(cron.includes("previousIstanbulDay(now)"));
   assert.ok(page.includes("İlkOku fatura düzenlemez."));
   assert.ok(overview.includes("gun-sonu-aktarim"));
-  for (const code of [route,repo]) {
+  for (const code of [route,repo,cron]) {
     for (const forbidden of [
       "financialLedger.create(", "authorBalance.update(", "payment.create(",
       "payout.create(", "order.update(", "invoice.create(",

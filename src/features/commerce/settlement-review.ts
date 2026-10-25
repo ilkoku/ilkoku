@@ -31,6 +31,13 @@ export type OrderReviewInput = {
   } | null;
   payments: { status: string; amount: bigint; currency: string }[];
   bookedEntryTypes: string[];
+  commissionRateSnapshot?: {
+    commissionRateBps: number;
+    serviceFeeRateBps: number;
+    source: string;
+    sourceEventId: string | null;
+    calculationVersion: string;
+  } | null;
   taxReview?: {
     documentKind: string;
     decision: string;
@@ -42,6 +49,16 @@ export type OrderReviewInput = {
 export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   const blockers: string[] = [];
   const tax = resolveLatestAuthorTaxReview(input.taxReview ?? null);
+  const rate = input.commissionRateSnapshot;
+  if (!rate || rate.calculationVersion !== "rate-v1" ||
+      !["global", "author", "work"].includes(rate.source) ||
+      !Number.isSafeInteger(rate.commissionRateBps) ||
+      rate.commissionRateBps < 0 || rate.commissionRateBps > 9000 ||
+      rate.serviceFeeRateBps !== 500 ||
+      (rate.source === "global" && (rate.sourceEventId !== null || rate.commissionRateBps !== 1500)) ||
+      (rate.source !== "global" && !rate.sourceEventId)) {
+    blockers.push("Sipariş anına ait değişmez komisyon oranı kayıtlı değil veya tutarsız.");
+  }
   if (tax.state !== "verified") {
     blockers.push("Yazarın güncel vergi/belge incelemesi eksik, süresi dolmuş veya geri çekilmiş.");
   } else if (tax.documentKind === "self_employed_receipt") {
@@ -97,8 +114,8 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
 
   // Neither scenario authorizes payment. Author tax category (commercial
   // invoice versus verified GVK18 expense receipt) must be checked manually.
-  const invoiced = calculateIllustrativeSettlement(quote.listNetAmount, "invoice");
-  const expenseReceipt = calculateIllustrativeSettlement(quote.listNetAmount, "expense_receipt");
+  const invoiced = calculateIllustrativeSettlement(quote.listNetAmount, "invoice", rate!.commissionRateBps, rate!.serviceFeeRateBps);
+  const expenseReceipt = calculateIllustrativeSettlement(quote.listNetAmount, "expense_receipt", rate!.commissionRateBps, rate!.serviceFeeRateBps);
 
   const reconcile = (p: typeof invoiced) =>
     p.readerTotal - p.authorBankPayment - p.withholding -

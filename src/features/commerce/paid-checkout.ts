@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
-import { calculateCommercePricing } from "./pricing";
+import { quoteCommercePrice } from "./price-quote";
 import { getPaymentProviderAdapter, type CommercePaymentMethod } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
 import { getVerifiedWorkSeller } from "./verified-seller";
@@ -126,6 +126,7 @@ export async function startPaidCheckout(input: {
           select: {
             currency: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             saleModel: true,
             status: true,
             activatedAt: true,
@@ -137,6 +138,7 @@ export async function startPaidCheckout(input: {
           select: {
             publicationModel: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             currency: true,
             accessPlanSnapshot: true,
           },
@@ -301,16 +303,18 @@ export async function startPaidCheckout(input: {
       };
     }
 
-    const pricing = calculateCommercePricing(
-      effectiveCommerce.priceAmount,
-      coupon
+    const priceQuote = quoteCommercePrice({
+      configuredPriceAmount: effectiveCommerce.priceAmount,
+      taxTreatment: effectiveCommerce.priceTaxTreatment,
+      coupon: coupon
         ? {
             discountType: coupon.discountType,
             discountValue: coupon.discountValue,
             owner: coupon.owner,
           }
         : null,
-    );
+    });
+    const { pricing } = priceQuote;
 
     if (pricing.finalAmount === BigInt(0)) {
       return { ok: false, reason: "zero_total_required" } as const;
@@ -324,6 +328,7 @@ export async function startPaidCheckout(input: {
           coupon,
           currency: effectiveCommerce.currency,
           pricing,
+          priceQuote,
           readerId: input.readerId,
           workId: work.id,
         }),

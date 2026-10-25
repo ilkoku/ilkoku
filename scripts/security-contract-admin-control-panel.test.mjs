@@ -532,9 +532,9 @@ test("existing horizontal third-level navigation remains open on every nested ad
 test("rewrite-safe admin navigation uses one stable hydration path while keeping account and logout", () => {
   const shell = read("src/components/admin/AdminShell.tsx");
   assert.match(shell, /const rawPathname = usePathname\(\)/);
-  assert.match(shell, /const \[clientPathname, setClientPathname\] = useState/);
-  assert.match(shell, /useEffect\(\(\) =>/);
-  assert.match(shell, /const pathname = clientPathname \?\? SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /const clientPathname = useSyncExternalStore\(/);
+  assert.match(shell, /\(\) => SYSTEM_MANAGEMENT_PATH/);
+  assert.match(shell, /const pathname = clientPathname\.replace/);
   assert.match(shell, /href="\/hesabim">Hesabım/);
   assert.match(shell, /<form action=\{logoutAction\}>/);
 });

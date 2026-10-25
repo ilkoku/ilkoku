@@ -282,7 +282,7 @@ test("system map routes share the horizontal submenu and expose an active access
   contains(shell, "function isSubmenuExpanded(item: AdminNavItem)", "shared submenu expansion");
   contains(shell, "admin-tertiary-row admin-nav-child__items", "existing horizontal row");
   contains(shell, 'aria-current={isActiveSubItem(child.href', "active route marked for accessibility");
-  const paths = [...navigation.matchAll(/\\{ key: "[^"]+", href: "(\\/harita(?:\\/[^"]*)?)"/g)];
+  const paths = [...navigation.matchAll(/href: "(\/harita(?:\/[^"]*)?)"/g)];
   assert.equal(paths.length, 19, "all harita tabs share the canonical navigation list");
   assert.equal(new Set(paths.map((match) => match[1])).size, 19, "no duplicate harita links");
 });

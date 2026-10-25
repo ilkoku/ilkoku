@@ -4,7 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { AdminReturnLink } from "@/components/admin/AdminReturnLink";
 import { logoutAction } from "@/features/auth/actions";
@@ -168,12 +168,14 @@ export function AdminShell({
   user,
 }: AdminShellProps) {
   const rawPathname = usePathname();
-  const [clientPathname, setClientPathname] = useState<string | null>(null);
-  // Stable server/client first render across the /admin -> /sistem-yonetimi rewrite.
-  useEffect(() => {
-    setClientPathname(rawPathname.replace(/^\/admin(?=\/|$)/u, SYSTEM_MANAGEMENT_PATH));
-  }, [rawPathname]);
-  const pathname = clientPathname ?? SYSTEM_MANAGEMENT_PATH;
+  // Keep hydration aligned for /admin rewrites without setting state in an effect.
+  // React uses the server snapshot for SSR/hydration, then reads the client path.
+  const clientPathname = useSyncExternalStore(
+    () => () => {},
+    () => rawPathname,
+    () => SYSTEM_MANAGEMENT_PATH,
+  );
+  const pathname = clientPathname.replace(/^\/admin(?=\/|$)/u, SYSTEM_MANAGEMENT_PATH);
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [menuSelection, setMenuSelection] = useState<{ path: string; groupId: string | null } | null>(null);

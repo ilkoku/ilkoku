@@ -13,6 +13,7 @@ const priorityWritingGuideLinks = [
   { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik yazarlığı" },
   { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu yazarlığı" },
   { href: "/yazarlar-icin/kurgu/distopya", label: "Distopya yazarlığı" },
+  { href: "/yazarlar-icin/kurgu/dedektif", label: "Dedektif yazarlığı" },
   { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir yazarlığı" },
 ] as const;
 

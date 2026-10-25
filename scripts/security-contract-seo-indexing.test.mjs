@@ -495,7 +495,7 @@ test("full public sitemap policy indexes education and trust but preserves priva
   assertContains(prefixBlock, '"/en-cok-satanlar"', "Book Index remains gate protected");
   assertContains(noindexBlock, '"/yeni-cikanlar"', "new releases stays gated");
   assertContains(policy, "filterSoftLaunchSitemapEntries", "same central policy filters XML");
-  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([", "DB-backed sitemap still filtered and freshness-aware");
+  assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([", "DB-backed sitemap still filtered and freshness-aware");
   assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap stays safe");
   assertContains(sitemap, 'url: `${baseUrl}/uyelik-sozlesmesi`', "active public registration agreement included");
   assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "metadata and XML use same policy");
@@ -797,7 +797,7 @@ test("significant Oct 6 search updates propagate truthful freshness to sitemap a
   assertContains(sitemap, "currentLastModified >= codeFreshness", "newer CMS/content freshness wins");
   assertContains(
     sitemap,
-    "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries([",
+    "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([",
     "database sitemap applies freshness after indexability filtering",
   );
   assertContains(

@@ -124,6 +124,7 @@ export type DayCloseRefund = {
 
 export function buildDayCloseFiles(input: {
   day: string; orders: DayCloseOrder[]; ledger: DayCloseLedger[]; refunds: DayCloseRefund[];
+  reconciliationLedger?: DayCloseLedger[];
 }) {
   const sales: CsvField[][] = [[
     "siparis_no","odeme_tarihi_utc","durum","yazar_kodu","eser",
@@ -146,7 +147,7 @@ export function buildDayCloseFiles(input: {
     "kayit_durumu","mali_belge_durumu",
   ]];
   const grossLedger = new Map<string, DayCloseLedger[]>();
-  for (const entry of input.ledger) {
+  for (const entry of input.reconciliationLedger ?? input.ledger) {
     if (entry.entryType !== "sale_gross" || entry.orderNo === null) continue;
     const entries = grossLedger.get(entry.orderNo) ?? [];
     entries.push(entry);
@@ -237,6 +238,28 @@ export function buildDayCloseFiles(input: {
     entry.id,entry.createdAt.toISOString(),entry.entryType,entry.orderNo,
     entry.authorPublicId,entry.currency,entry.amount,
   ]);
+  // Ledger entryType is not an income/expense determination. Reconcile
+  // daily movement totals by their exact source type and currency only.
+  const byMovement = new Map<string,{ type: string; currency: string; count: number; total: bigint }>();
+  for (const entry of input.ledger) {
+    const key = entry.entryType + ":" + entry.currency;
+    const group = byMovement.get(key) ?? {
+      type: entry.entryType, currency: entry.currency, count: 0, total: BigInt(0),
+    };
+    group.count += 1;
+    group.total += entry.amount;
+    byMovement.set(key,group);
+  }
+  const summary: CsvField[][] = [[
+    "hareket_turu","para_birimi","hareket_adedi","kayitli_tutar_toplami_kurus","siniflandirma",
+  ]];
+  for (const group of [...byMovement.values()].sort((a,b) =>
+    a.type.localeCompare(b.type) || a.currency.localeCompare(b.currency))) {
+    summary.push([
+      group.type,group.currency,group.count,group.total,
+      "LEDGER_TURU_TOPLAMI_MUHASEBE_GELIRI_DEGIL",
+    ]);
+  }
   const refundRows: CsvField[][] = [[
     "iade_id","islem_tarihi_utc","siparis_no","durum","para_birimi","tutar_kurus",
   ]];
@@ -288,6 +311,7 @@ export function buildDayCloseFiles(input: {
     { name: "iadeler.csv", data: safeCsv(refundRows) },
     { name: "uyarilar.csv", data: safeCsv(issues) },
     { name: "mutabakat.csv", data: safeCsv(reconciliation) },
+    { name: "gun_sonu_ozet.csv", data: safeCsv(summary) },
     { name: "muhasebe_on_hazirlik.csv", data: safeCsv(preparation) },
     { name: "alan_esleme.json", data: JSON.stringify(fieldMap,null,2)+"\n" },
   ];
@@ -299,13 +323,14 @@ export function buildDayCloseFiles(input: {
     batchKey: "ILK-DAY-" + input.day,
     classification: "ON_INCELEME_FATURA_DEGIL",
     note: "Fatura veya fis olusturmaz; genel CSV inceleme paketidir. Vergi belge uygunlugu ve alici verileri bu paketle dogrulanmaz. Dis sisteme aktarim muhasebe onayina baglidir.",
-    counting: "Siparisler paidAt, iadeler processedAt, ledger createdAt tarihine gore gruplanir. Gece sonrasi degisiklikler yeni indirmede fark yaratabilir.",
+    counting: "Siparisler paidAt, iadeler processedAt, gunluk ledger createdAt tarihine gore gruplanir. Siparis mutabakati tum bagli sale_gross ledger kayitlarini kontrol eder; tarih farki dogal olabilir. Sonradan gelen duzeltmeler yeni indirmede fark yaratabilir.",
     salesCount: input.orders.length,
     readySalesCount: details.ready,
     flaggedSalesCount: details.review,
     zeroAmountCount: details.zero,
     refundsCount: input.refunds.length,
     ledgerCount: input.ledger.length,
+    ledgerSummaryGroups: byMovement.size,
     preparationRows: preparation.length - 1,
     unmatchedGrossLedgerOrderCount: reconciliation.slice(1).filter(row => row[6] !== "LEDGER_KONTROLU_GECTI").length,
     checkedGrossMinor: grossMinor.toString(),

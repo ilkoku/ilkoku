@@ -270,6 +270,11 @@ export function buildDayCloseFiles(input: {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
     const tax = taxDocumentFeePreview(order);
+    // Columns being present does not prove their required VALUES exist.
+    // Fail closed for accounting review rather than exporting anonymous
+    // writer lines or empty item descriptions as verified sale rows.
+    if (!order.authorPublicId.trim()) warnings.push("YAZAR_KODU_EKSIK");
+    if (!order.workTitle.trim()) warnings.push("ESER_ADI_EKSIK");
     if (!isOnBusinessDay(order.paidAt)) warnings.push("ODEME_TARIHI_IS_GUNU_DISINDA");
     if (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
         tax.appliedServiceFeeBps === null) warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
@@ -472,6 +477,7 @@ export function buildDayCloseFiles(input: {
   let reviewedRefundMinor = BigInt(0);
   for (const refund of input.refunds) {
     const warnings: string[] = [];
+    if (!refund.orderNo.trim()) warnings.push("IADE_SIPARIS_BAGI_EKSIK");
     if (refund.status !== "processed" || !refund.orderPaidAt)
       warnings.push("IADE_ORIJINAL_ODEME_DURUMU_DOGRULANAMADI");
     if (!isOnBusinessDay(refund.processedAt))
@@ -678,6 +684,29 @@ export function buildDayCloseFiles(input: {
       },
     },
   };
+  // Reconcile the independently assembled per-author group summaries back
+  // to the reviewed sales in the generic accounting preparation. A future
+  // change that accidentally drops or duplicates an author summary must
+  // refuse to produce a misleading accounting archive.
+  const authorTotals = [...byAuthor.values()].reduce((sum, group) => ({
+    count: sum.count + group.count,
+    gross: sum.gross + group.gross,
+    vat: sum.vat + group.vat,
+    commission: sum.commission + group.commission,
+    service: sum.service + group.service,
+  }), {
+    count: 0, gross: BigInt(0), vat: BigInt(0),
+    commission: BigInt(0), service: BigInt(0),
+  });
+  if (authorTotals.count !== preparation.length - 1 ||
+      authorTotals.count !== details.ready ||
+      authorTotals.gross !== grossMinor ||
+      authorTotals.vat !== vatMinor ||
+      authorTotals.commission !== commissionPreviewMinor ||
+      authorTotals.service !== serviceFeePreviewMinor ||
+      authorTotals.count !== invoiceDocumentSales + gvk18DocumentSales) {
+    throw new Error("DAY_CLOSE_INTERNAL_AUTHOR_TOTALS_MISMATCH");
+  }
   // Internal source-column coverage is verifiable without a vendor account.
   // It must never be confused with approval of any vendor's import template.
   const sourceColumns = preparation[0].map((column) => String(column));
@@ -713,6 +742,10 @@ export function buildDayCloseFiles(input: {
     internalSourceColumns: sourceColumns,
     declaredColumnCount: declaredColumns.length,
     dataRows: preparation.length - 1,
+    validatedAuthorSummaryRows: authorTotals.count,
+    authorTotalsReconciled: true,
+    writerAndWorkReferencesRequired: true,
+    refundOrderReferenceRequired: true,
     vendorImportReady: false,
     fiscalApproval: false,
     gate: "BLOCKED_UNTIL_VENDOR_ACCOUNTANT_TEMPLATE_VERIFICATION",
@@ -773,6 +806,7 @@ export function buildDayCloseFiles(input: {
     refundLedgerReviewGroups,
     periodBridgeCurrencyGroups: dayBridge.size,
     sourceMappingVerified: mappingAudit.internalSourceColumnsMatchDeclarations,
+    authorTotalsReconciled: mappingAudit.authorTotalsReconciled,
     vendorImportReady: false,
     reviewedRefundMinor: reviewedRefundMinor.toString(),
     ledgerCount: input.ledger.length,

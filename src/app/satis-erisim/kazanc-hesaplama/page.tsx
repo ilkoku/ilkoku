@@ -137,7 +137,10 @@ export default async function WriterEarningIllustrationPage({
           statüsü, hizmet faturaları, KDV indirimi ve stopaj koşulları doğrulanmalıdır.
           0 TL siparişlerde gerçek para tahsilatı veya telif ödemesi oluşturulmaz.
         </div>
-        <Link className={styles.secondaryAction} href="/gelirler">Gerçek kayıtları Gelirler'de görüntüle</Link>
+        <div className={styles.heroActions}>
+          <Link className={styles.secondaryAction} href="/satis-erisim/odeme-vergi-bilgileri">Belge ve vergi açıklamaları</Link>
+          <Link className={styles.secondaryAction} href="/gelirler">Gerçek kayıtları Gelirler'de görüntüle</Link>
+        </div>
       </div>
     </AppShell>
   );

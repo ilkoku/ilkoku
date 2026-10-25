@@ -1,6 +1,7 @@
 import {
   calculateIllustrativeSettlement,
 } from "./settlement-preview";
+import { resolveLatestAuthorTaxReview } from "./tax-review-policy";
 
 /**
  * Order-linked accounting review, not a ledger posting.
@@ -30,10 +31,22 @@ export type OrderReviewInput = {
   } | null;
   payments: { status: string; amount: bigint; currency: string }[];
   bookedEntryTypes: string[];
+  taxReview?: {
+    documentKind: string;
+    decision: string;
+    reviewedAt: Date;
+    validUntil: Date | null;
+  } | null;
 };
 
 export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   const blockers: string[] = [];
+  const tax = resolveLatestAuthorTaxReview(input.taxReview ?? null);
+  if (tax.state !== "verified") {
+    blockers.push("Yazarın güncel vergi/belge incelemesi eksik, süresi dolmuş veya geri çekilmiş.");
+  } else if (tax.documentKind === "self_employed_receipt") {
+    blockers.push("e-Serbest meslek makbuzu için ayrı stopaj ve KDV kuralları hesaplanmalı.");
+  }
 
   if (input.status !== "paid") blockers.push("Sipariş kesinleşmiş paid durumda değil.");
   if (input.currency !== "TRY") blockers.push("Örnek hesap yalnız TRY siparişlerine uygundur.");
@@ -104,7 +117,10 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
 
   return {
     blockers: [],
-    scenarios: { invoiced, expenseReceipt },
+    scenarios: {
+      invoiced: tax.documentKind === "commercial_invoice" ? invoiced : null,
+      expenseReceipt: tax.documentKind === "gvk18_expense_receipt" ? expenseReceipt : null,
+    },
     approvalStatus: "accounting_verification_required" as const,
   };
 }

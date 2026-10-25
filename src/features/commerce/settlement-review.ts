@@ -21,6 +21,7 @@ export type OrderReviewInput = {
   refundedAt: Date | null;
   sellerMode: string | null;
   priceQuote: {
+    calculationVersion: string;
     taxTreatment: string;
     vatRateBasisPoints: number;
     listNetAmount: bigint;
@@ -72,7 +73,8 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   if (input.sellerMode !== "platform_direct") {
     blockers.push("Satıcının İlkOku olduğu hukukî kayıt doğrulanmalı.");
   }
-  if (!input.priceQuote || input.priceQuote.taxTreatment !== "net_plus_vat") {
+  if (!input.priceQuote || input.priceQuote.calculationVersion !== "quote-v1" ||
+      input.priceQuote.taxTreatment !== "net_plus_vat") {
     blockers.push("Sipariş anına ait doğrulanabilir KDV hariç fiyat kaydı yok.");
   }
   if (input.couponCodeSnapshot || input.discountAmount !== BigInt(0)) {

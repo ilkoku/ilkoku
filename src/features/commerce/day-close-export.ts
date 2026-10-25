@@ -120,6 +120,13 @@ export type DayCloseLedger = {
 export type DayCloseRefund = {
   id: string; orderNo: string; amount: bigint; currency: string;
   processedAt: Date; status: string;
+  orderCurrency?: string;
+  orderFinalAmount?: bigint;
+  orderPaidAt?: Date | null;
+  /** Sum of processed refunds for this order on/before business-day end. */
+  cumulativeProcessedAmount?: bigint;
+  /** Currency disagreement in any processed refund through closing time. */
+  historicalCurrencyMismatch?: boolean;
 };
 
 export function buildDayCloseFiles(input: {
@@ -270,11 +277,40 @@ export function buildDayCloseFiles(input: {
   }
   const refundRows: CsvField[][] = [[
     "iade_id","islem_tarihi_utc","siparis_no","durum","para_birimi","tutar_kurus",
+    "siparis_tahsilati_kurus","gun_sonuna_kadar_toplam_iade_kurus","mali_kontrol",
   ]];
-  for (const refund of input.refunds) refundRows.push([
-    refund.id,refund.processedAt.toISOString(),refund.orderNo,refund.status,
-    refund.currency,refund.amount,
-  ]);
+  let flaggedRefundCount = 0;
+  let reviewedRefundMinor = BigInt(0);
+  for (const refund of input.refunds) {
+    const warnings: string[] = [];
+    if (refund.status !== "processed" || !refund.orderPaidAt)
+      warnings.push("IADE_ORIJINAL_ODEME_DURUMU_DOGRULANAMADI");
+    if (!refund.orderCurrency || refund.currency !== refund.orderCurrency ||
+        refund.historicalCurrencyMismatch)
+      warnings.push("IADE_PARA_BIRIMI_UYUSMAZLIGI");
+    if (refund.amount <= BigInt(0) || refund.orderFinalAmount === undefined ||
+        refund.orderFinalAmount <= BigInt(0))
+      warnings.push("IADE_TUTARI_GECERSIZ");
+    if (refund.cumulativeProcessedAmount === undefined ||
+        refund.cumulativeProcessedAmount < refund.amount ||
+        (refund.orderFinalAmount !== undefined &&
+          refund.cumulativeProcessedAmount > refund.orderFinalAmount))
+      warnings.push("KUMULATIF_IADE_TAHSILATI_ASIYOR");
+    const state = warnings.length ? "INCELEME_GEREKLI" : "TEMEL_KONTROL_GECTI";
+    if (warnings.length) {
+      flaggedRefundCount++;
+      for (const warning of warnings) {
+        issues.push(["iade",refund.id,warning,"Harici muhasebe ve tahsilat kontrolu gerekli"]);
+      }
+    } else {
+      reviewedRefundMinor += refund.amount;
+    }
+    refundRows.push([
+      refund.id,refund.processedAt.toISOString(),refund.orderNo,refund.status,
+      refund.currency,refund.amount,
+      refund.orderFinalAmount,refund.cumulativeProcessedAmount,state,
+    ]);
+  }
   const fieldMap = {
     version: "generic-accounting-map-v1",
     status: "UNVERIFIED_VENDOR_MAPPING",
@@ -352,6 +388,8 @@ export function buildDayCloseFiles(input: {
     flaggedSalesCount: details.review,
     zeroAmountCount: details.zero,
     refundsCount: input.refunds.length,
+    flaggedRefundCount,
+    reviewedRefundMinor: reviewedRefundMinor.toString(),
     ledgerCount: input.ledger.length,
     ledgerSummaryGroups: byMovement.size,
     preparationRows: preparation.length - 1,

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { resolveEffectiveCommerceState } from "./effective-state";
 import { resolveCommissionRate } from "./commission-rates";
 
 /**
@@ -57,6 +58,20 @@ export async function getWriterCommissionPreviewContext(authorId: string, reques
             priceAmount: true,
             priceTaxTreatment: true,
             currency: true,
+            saleModel: true,
+            status: true,
+            activatedAt: true,
+          },
+        },
+        publicationConsents: {
+          orderBy: { confirmedAt: "desc" },
+          take: 1,
+          select: {
+            publicationModel: true,
+            priceAmount: true,
+            priceTaxTreatment: true,
+            currency: true,
+            accessPlanSnapshot: true,
           },
         },
         commissionRateEvents: {
@@ -75,12 +90,20 @@ export async function getWriterCommissionPreviewContext(authorId: string, reques
     authorEvent,
     workEvent: selectedWork?.commissionRateEvents[0] ?? null,
   });
-  const configuration = selectedWork?.saleConfiguration;
-  const savedNetPrice = configuration?.priceTaxTreatment === "net_plus_vat" &&
-    configuration.currency === "TRY" &&
-    configuration.priceAmount !== null &&
-    configuration.priceAmount > BigInt(0)
-    ? configuration.priceAmount : null;
+  // Match the checkout's effective price, including last confirmed paid
+  // terms when a writer has edited a live work into a pending draft.
+  const effective = selectedWork
+    ? resolveEffectiveCommerceState({
+        configuration: selectedWork.saleConfiguration,
+        latestConsent: selectedWork.publicationConsents[0] ?? null,
+      })
+    : null;
+  const savedNetPrice = effective?.saleModel === "paid" &&
+    effective.priceTaxTreatment === "net_plus_vat" &&
+    effective.currency === "TRY" &&
+    effective.priceAmount !== null &&
+    effective.priceAmount > BigInt(0)
+    ? effective.priceAmount : null;
 
   return {
     works: works.map((work) => ({ id: work.id, title: work.title })),

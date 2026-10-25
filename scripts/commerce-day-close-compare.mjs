@@ -8,13 +8,25 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_ENTRIES = 64;
 const SAFE_NAME = /^[a-z0-9._-]+$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
-const CRITICAL_FIELDS = [
-  "version", "day", "timezone", "batchKey", "salesCount",
-  "readySalesCount", "flaggedSalesCount", "refundsCount", "flaggedRefundCount",
+// Values are compared as stored, never through floating point conversion.
+// A numeric total can remain unchanged even when money moved between orders
+// or authors: source CSV changes must still trigger a separate review.
+const FINANCIAL_FIELDS = [
+  "checkedGrossMinor", "checkedVatMinor", "reviewedRefundMinor",
+  "reviewedCommissionIllustrationMinor", "reviewedServiceFeeIllustrationMinor",
+];
+const COUNT_FIELDS = [
+  "salesCount", "readySalesCount", "flaggedSalesCount", "zeroAmountCount",
+  "refundsCount", "flaggedRefundCount",
   "refundLedgerMatchedGroups", "refundLedgerReviewGroups",
-  "preparationRows", "reviewedAuthorSummaryGroups",
-  "reviewedRefundMinor", "reviewedCommissionIllustrationMinor",
-  "reviewedServiceFeeIllustrationMinor", "vendorImportReady",
+  "periodBridgeCurrencyGroups", "ledgerCount", "ledgerSummaryGroups",
+  "preparationRows", "liraWorksheetRows", "reviewedAuthorSummaryGroups",
+  "unmatchedGrossLedgerOrderCount", "reviewedInvoiceDocumentSales",
+  "reviewedGvk18DocumentSales",
+];
+const CONTROL_FIELDS = [
+  "version", "day", "timezone", "period", "batchKey", "classification",
+  "sourceMappingVerified", "authorTotalsReconciled", "vendorImportReady",
 ];
 
 function check(condition, reason) {
@@ -154,25 +166,49 @@ export function compareDayCloseArchives(first, second) {
   const latest = current.manifest.fileHashes;
   const names = [...new Set([...Object.keys(original), ...Object.keys(latest)])].sort();
   const changedFiles = names.filter(name => original[name] !== latest[name]);
-  const changedMetrics = CRITICAL_FIELDS.filter(field =>
-    previous.manifest[field] !== current.manifest[field]).map(field => ({
-      field, previous: previous.manifest[field] ?? null,
+  const metricsFor = (category, fields) => fields
+    .filter(field => previous.manifest[field] !== current.manifest[field])
+    .map(field => ({
+      category, field, previous: previous.manifest[field] ?? null,
       current: current.manifest[field] ?? null,
     }));
+  const changedFinancialMetrics = metricsFor("financial", FINANCIAL_FIELDS);
+  const changedCountMetrics = metricsFor("count", COUNT_FIELDS);
+  const changedControlMetrics = metricsFor("control", CONTROL_FIELDS);
+  const changedMetrics = [
+    ...changedFinancialMetrics, ...changedCountMetrics, ...changedControlMetrics,
+  ];
   const manifestChanged = previous.manifestSha256 !== current.manifestSha256;
   const archiveChanged = previous.archiveSha256 !== current.archiveSha256;
+  // Never say "descriptive only": authors, work IDs and financial allocations
+  // can change while all monetary and count aggregates remain the same.
+  const changeAssessment = !archiveChanged ? "IDENTICAL" :
+    changedFinancialMetrics.length ? "FINANCIAL_TOTALS_CHANGED" :
+    changedCountMetrics.length ? "RECORD_COUNTS_CHANGED" :
+    changedControlMetrics.length ? "CONTROL_METADATA_CHANGED" :
+    changedFiles.length ? "FILES_CHANGED_AGGREGATES_UNCHANGED" :
+    manifestChanged ? "MANIFEST_METADATA_CHANGED" :
+    "ZIP_CONTAINER_BYTES_CHANGED";
   return {
     day: current.manifest.day,
     result: !archiveChanged ? "IDENTICAL" : "CHANGED_REVIEW_REQUIRED",
+    changeAssessment,
     previousSha256: previous.archiveSha256,
     currentSha256: current.archiveSha256,
     changedFiles,
     changedMetrics,
+    changedFinancialMetrics,
+    changedCountMetrics,
+    changedControlMetrics,
     manifestChanged,
     archiveChanged,
-    warning: archiveChanged
-      ? "The same day's downloadable content changed. Compare the source rows and do not treat the earlier package as an immutable ledger or fiscal document."
-      : "Both downloaded ZIPs have identical bytes. This does not establish bank settlement or tax approval.",
+    warning: !archiveChanged
+      ? "Both downloaded ZIPs have identical bytes. This does not establish bank settlement or tax approval."
+      : changedFinancialMetrics.length
+      ? "At least one financial aggregate changed; inspect both ZIPs and source records. This is not a verified bank or tax statement."
+      : changedFiles.length
+      ? "Source file data changed even if aggregates stayed equal. Allocation, writer, order or sale details may still have changed; inspect both versions."
+      : "Archive or manifest metadata changed. Verify the origin, chronology and content of both packages; neither file is a signed fiscal document.",
     noWritesPerformed: true,
   };
 }

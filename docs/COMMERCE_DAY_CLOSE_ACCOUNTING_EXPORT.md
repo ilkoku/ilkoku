@@ -5,7 +5,8 @@
 
 - Yönetici: /sistem-yonetimi/finans-gelirler/gun-sonu-aktarim
 - İndirme: /sistem-yonetimi/finans-gelirler/gun-sonu-aktarim/indir?gun=YYYY-MM-DD
-- ZIP: siparisler.csv, finans_hareketleri.csv, iadeler.csv, uyarilar.csv, mutabakat.csv, gun_sonu_ozet.csv, muhasebe_on_hazirlik.csv, yazar_hesap_ozeti.csv, alan_esleme.json, manifest.json.
+- ZIP: siparisler.csv, finans_hareketleri.csv, iadeler.csv, uyarilar.csv, mutabakat.csv, gun_sonu_ozet.csv, muhasebe_on_hazirlik.csv, yazar_hesap_ozeti.csv, muhasebe_tl_inceleme.csv, alan_esleme.json, manifest.json.
+- muhasebe_tl_inceleme.csv: yalnız temel kontrolleri geçmiş siparişler için TL tutarları (kuruşlardan BigInt ile **tam** iki ondalığa çevrim), UTF-8 BOM, noktalı virgül ayraç ve virgüllü ondalık, başlık+satışlar; alıcı vergi numarası veya fatura numarası içermez. Bağımsız muhasebeci kontrolü içindir, Logo/Mikro/Paraşüt şablonu değildir. Satış, KDV, komisyon ve aracılık ön inceleme tutarları **birbiriyle toplanacak aynı tür gelirler değildir**.
 - yazar_hesap_ozeti.csv yazar / geçerli iç mali belge inceleme türü / para birimi bazında net satış, gösterilen satış KDV'si, brüt tahsilat, komisyon ve koşullu aracılığı yalnız gözden geçirilen pozitif siparişler için ayrı toplar. Bu toplamlar kâr/zarar, vergi tahakkuku veya düzenlenmiş hizmet faturası değildir.
 - CSV: UTF-8 BOM, virgül ayracı, CRLF, bütün parasal tutarlar kuruş; formül enjeksiyonu güvenlik önlemi.
 - Gün: Europe/Istanbul 00:00–24:00. Satış paidAt, iade processedAt, günlük finans hareketi createdAt tarihine göre. Mutabakat için brüt satış ledger kayıtları sipariş bağlantısından, farklı bir günde oluşmuş olsa da okunur.

@@ -6,9 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { validateCouponRules } from "./coupon-rules";
 import { resolveEffectiveCommerceState } from "./effective-state";
 import { buildCommerceOrderSnapshot } from "./order-snapshot";
-import { calculateCommercePricing } from "./pricing";
+import { resolveOrderCommissionRate } from "./commission-rates-repository";
+import { quoteCommercePrice } from "./price-quote";
 import { getPaymentProviderAdapter, type CommercePaymentMethod } from "./payment-providers";
 import { isCommerceCheckoutEnabled } from "./runtime";
+import { getVerifiedWorkSeller } from "./verified-seller";
 
 export type PaidCheckoutStartResult =
   | {
@@ -29,6 +31,7 @@ export type PaidCheckoutStartResult =
         | "checkout_disabled"
         | "provider_unavailable"
         | "work_unavailable"
+        | "seller_unverified"
         | "already_entitled"
         | "order_pending"
         | "coupon_invalid"
@@ -124,6 +127,7 @@ export async function startPaidCheckout(input: {
           select: {
             currency: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             saleModel: true,
             status: true,
             activatedAt: true,
@@ -135,6 +139,7 @@ export async function startPaidCheckout(input: {
           select: {
             publicationModel: true,
             priceAmount: true,
+            priceTaxTreatment: true,
             currency: true,
             accessPlanSnapshot: true,
           },
@@ -157,6 +162,14 @@ export async function startPaidCheckout(input: {
       effectiveCommerce.priceAmount <= BigInt(0)
     ) {
       return { ok: false, reason: "work_unavailable" } as const;
+    }
+
+    // Provider-backed checkouts must satisfy the same legal seller/rights
+    // precondition as provider-free 0 TL acquisitions. This is checked
+    // before creating any order, payment, consent, or coupon reservation.
+    const verifiedSeller = await getVerifiedWorkSeller(work.id, transaction);
+    if (!verifiedSeller) {
+      return { ok: false, reason: "seller_unverified" } as const;
     }
 
     const entitlement = await transaction.workEntitlement.findUnique({
@@ -291,22 +304,25 @@ export async function startPaidCheckout(input: {
       };
     }
 
-    const pricing = calculateCommercePricing(
-      effectiveCommerce.priceAmount,
-      coupon
+    const priceQuote = quoteCommercePrice({
+      configuredPriceAmount: effectiveCommerce.priceAmount,
+      taxTreatment: effectiveCommerce.priceTaxTreatment,
+      coupon: coupon
         ? {
             discountType: coupon.discountType,
             discountValue: coupon.discountValue,
             owner: coupon.owner,
           }
         : null,
-    );
+    });
+    const { pricing } = priceQuote;
 
     if (pricing.finalAmount === BigInt(0)) {
       return { ok: false, reason: "zero_total_required" } as const;
     }
 
     const now = new Date();
+    const commissionRate = await resolveOrderCommissionRate(transaction, work.authorId, work.id);
     const order = await transaction.order.create({
       data: {
         ...buildCommerceOrderSnapshot({
@@ -314,11 +330,31 @@ export async function startPaidCheckout(input: {
           coupon,
           currency: effectiveCommerce.currency,
           pricing,
+          priceQuote,
+          commissionRate,
           readerId: input.readerId,
           workId: work.id,
         }),
         orderNo: orderNumber(),
         status: "pending_payment",
+      },
+    });
+
+    // Freeze the approved seller and work rights at order creation. Later
+    // amendments/revocations must not silently rewrite the historical seller.
+    await transaction.orderLegalSnapshot.create({
+      data: {
+        orderId: order.id,
+        legalPartyId: verifiedSeller.party.id,
+        sellerAssignmentId: verifiedSeller.assignmentId,
+        authorizationId: verifiedSeller.rights.id,
+        sellerMode: verifiedSeller.mode,
+        sellerName: verifiedSeller.party.legalName!,
+        sellerTaxIdentifier: verifiedSeller.party.taxIdentifier!,
+        sellerAddress: verifiedSeller.party.legalAddress!,
+        sellerEmail: verifiedSeller.party.contactEmail!,
+        sellerPhone: verifiedSeller.party.contactPhone,
+        rightsDocumentHash: verifiedSeller.rights.documentHash!,
       },
     });
 
@@ -367,7 +403,7 @@ export async function startPaidCheckout(input: {
       paymentId: payment.id,
       workId: work.id,
     } as const;
-  });
+  }, { isolationLevel: "ReadCommitted" });
 
   if (!prepared.ok) return prepared;
 

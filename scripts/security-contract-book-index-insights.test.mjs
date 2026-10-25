@@ -300,6 +300,11 @@ test("Book Index query timing diagnostic is admin-only, read-only and request-sc
   contains(insightPage, 'export const dynamic = "force-dynamic";', "freshness model is unchanged");
   contains(insightPage, "getBookIndexPageInsights(definition.key, 50)", "selected insight routing and 50-row limit preserved");
   contains(insights, "GROUP BY externalBook.masterBookId", "historical SQL grouping preserved");
+  contains(insights, 'import { unstable_cache } from "next/cache";', "bounded Next data-cache for heavy history");
+  contains(insights, '"ilkoku-book-index-long-seller-history-20261023-v1"', "isolated historical cache key");
+  contains(insights, "{ revalidate: 30 }", "history freshness bounded to 30 seconds");
+  contains(insights, "observationCount: Number(row.observationCount)", "bigint normalization for cache transport");
+  contains(insights, "firstObservedAt: new Date(row.firstObservedAt)", "Date rehydration preserves downstream presentation");
   contains(insights, ".slice(0, limit);", "existing long-seller ranking and limit preserved");
   notContains(route, "executeRaw", "diagnostic does not write to database");
   notContains(route, "POST(", "no state-mutating diagnostic action");
@@ -361,6 +366,7 @@ test("three insight pages skip unrelated long-seller history while preserving so
   const mocks = {
     "server-only": {},
     "react": { cache: fn => fn },
+    "next/cache": { unstable_cache: fn => async (...args) => JSON.parse(JSON.stringify(await fn(...args))) },
     "@/lib/prisma": { prisma },
     "./performance-trace": { timeBookIndexOperation: async (_, fn) => fn() },
     "./sources": {
@@ -382,6 +388,9 @@ test("three insight pages skip unrelated long-seller history while preserving so
   const full = await getBookIndexInsights(50);
   assert.equal(historySqlCalls, 1, "normal full insight consumer retains historical evidence");
   assert.equal(full.longSellers.length, 1, "long-seller evidence is available to full consumer");
+  assert.ok(full.longSellers[0].firstObservedAt instanceof Date, "cached first observation is revived as Date");
+  assert.ok(full.longSellers[0].lastObservedAt instanceof Date, "cached last observation is revived as Date");
+  assert.equal(full.longSellers[0].observationCount, 2, "cached bigint count remains numeric evidence");
   assert.equal(full.newEntries.length, 1, "new-entry fixture is present");
   assert.equal(full.risers.length, 1, "riser fixture is present");
   assert.equal(full.everywhereSellers.length, 2, "independent-store visibility fixture is present");

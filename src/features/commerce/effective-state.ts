@@ -2,6 +2,7 @@ export type EffectiveSaleConfiguration = {
   activatedAt: Date | null;
   currency: string;
   priceAmount: bigint | null;
+  priceTaxTreatment?: string;
   saleModel: "free" | "paid";
   status: "draft" | "ready" | "active" | "paused";
 };
@@ -10,6 +11,7 @@ export type ConfirmedCommerceSnapshot = {
   accessPlanSnapshot: unknown;
   currency: string;
   priceAmount: bigint | null;
+  priceTaxTreatment?: string;
   publicationModel: "free" | "paid";
 };
 
@@ -60,6 +62,7 @@ export function resolveEffectiveCommerceState(input: {
       accessPlan: {} as Record<string, "preview" | "locked">,
       currency: "TRY",
       priceAmount: null,
+      priceTaxTreatment: "legacy_inclusive",
       saleModel: "free" as const,
       status: "draft" as const,
       useConfirmedSnapshot: false,
@@ -72,6 +75,7 @@ export function resolveEffectiveCommerceState(input: {
       accessPlan: {} as Record<string, "preview" | "locked">,
       currency: configuration.currency,
       priceAmount: configuration.priceAmount,
+      priceTaxTreatment: configuration.priceTaxTreatment ?? "legacy_inclusive",
       saleModel: configuration.saleModel,
       status: configuration.status,
       useConfirmedSnapshot: false,
@@ -82,10 +86,31 @@ export function resolveEffectiveCommerceState(input: {
     accessPlan: parseAccessPlanSnapshot(input.latestConsent.accessPlanSnapshot),
     currency: input.latestConsent.currency,
     priceAmount: input.latestConsent.priceAmount,
+    priceTaxTreatment: input.latestConsent.priceTaxTreatment ?? "legacy_inclusive",
     saleModel: input.latestConsent.publicationModel,
     status: "active" as const,
     useConfirmedSnapshot: true,
   };
+}
+
+/**
+ * A submitted/ready paid work protects its explicitly locked chapters before
+ * sale activation. Purchase readiness is a separate concern: missing seller,
+ * contract or provider must never turn a locked chapter into free content.
+ * Draft-only paid plans stay in preparation; historically activated plans stay
+ * protected even while paused or edited.
+ */
+export function shouldEnforcePaidChapterAccess(input: {
+  activatedAt: Date | null | undefined;
+  saleModel: "free" | "paid";
+  status: "draft" | "ready" | "active" | "paused";
+}) {
+  return (
+    input.saleModel === "paid" &&
+    (Boolean(input.activatedAt) ||
+      input.status === "ready" ||
+      input.status === "active")
+  );
 }
 
 /** Shared read-only disclosure; buying and reading remain server-authorized. */

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -121,6 +122,14 @@ export default async function WriterIncomePage() {
         </section>
 
         <div className={styles.notice}>
+          Genel komisyon %15’tir; yazara veya esere özel oran varsa o uygulanır.
+          Uygun faturasız telifte ayrıca %5 aracılık hizmeti, stopaj ve KDV
+          varsayımlarını satış öncesinde karşılaştırmak için{" "}
+          <Link href="/satis-erisim/kazanc-hesaplama">kazanç hesaplama örneğini</Link>{" "}
+          inceleyebilirsin. Bu önizleme gerçek muhasebe hareketi oluşturmaz.
+        </div>
+
+        <div className={styles.notice}>
           Bu ekran İlkOku’da oluşan gerçek satış ve yazar bakiye kayıtlarını
           gösterir. Komisyon veya vergi oranı burada yeniden hesaplanmaz;
           yalnızca kaydedilmiş finans hareketleri görüntülenir.
@@ -146,7 +155,8 @@ export default async function WriterIncomePage() {
                   <div>
                     <h3>{work.title}</h3>
                     <span>
-                      Güncel fiyat
+                      {work.priceTaxTreatment === "net_plus_vat"
+                        ? "Kayıtlı fiyat (KDV hariç)" : "Kayıtlı fiyat (eski KDV sınıfı)"}
                       <strong>
                         {work.priceAmount === null
                           ? "—"
@@ -275,6 +285,23 @@ export default async function WriterIncomePage() {
                           order.authorEarningBaseAmount,
                           order.currency,
                         )}
+                      </strong>
+                    </span>
+                    <span>
+                      Sipariş anındaki komisyon
+                      <strong>
+                        {order.commissionRateSnapshot?.calculationVersion === "rate-v1"
+                          ? (order.commissionRateSnapshot.commissionRateBps / 100).toLocaleString("tr-TR") + "%"
+                          : "Oran kaydı eksik"}
+                      </strong>
+                    </span>
+                    <span>
+                      Komisyon kaynağı
+                      <strong>
+                        {order.commissionRateSnapshot?.calculationVersion === "rate-v1"
+                          ? order.commissionRateSnapshot.source === "work" ? "Eser"
+                            : order.commissionRateSnapshot.source === "author" ? "Yazar" : "Genel"
+                          : "Mali inceleme gerekli"}
                       </strong>
                     </span>
                   </div>

@@ -49,7 +49,11 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
     />
-    <WritingGuideShell activeCategory={hub.category} activeGenreSlug="">
+    <WritingGuideShell
+      activeCategory={hub.category}
+      activeGenreSlug=""
+      expertVerificationRequired={hub.slug === "bilgilendirici"}
+    >
       <article className="mx-auto max-w-5xl pb-6 sm:pb-10">
         <header className="overflow-hidden rounded-[2.5rem] border border-black/[0.06] bg-white px-7 py-10 shadow-[0_20px_70px_rgba(34,23,70,0.09)] sm:px-10 sm:py-14 lg:px-12 lg:py-16">
           <div className="flex flex-wrap items-center gap-3">

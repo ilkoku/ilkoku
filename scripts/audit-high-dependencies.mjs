@@ -12,6 +12,13 @@ const TEMPORARY_DEV_ONLY_WAIVER = {
     "micromatch",
     "braces",
   ]),
+  versions: new Map([
+    ["@next/eslint-plugin-next", "16.3.8"],
+    ["eslint-config-next", "16.3.8"],
+    ["fast-glob", "3.3.1"],
+    ["micromatch", "4.0.8"],
+    ["braces", "3.0.3"],
+  ]),
 };
 
 const lockfile = JSON.parse(readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"));
@@ -73,6 +80,10 @@ function isDevOnlyVulnerability(packageName, vulnerability) {
   if (!TEMPORARY_DEV_ONLY_WAIVER.packages.has(packageName)) return false;
   if (!referencesTemporaryAdvisory(packageName)) return false;
 
+  const expectedVersion = TEMPORARY_DEV_ONLY_WAIVER.versions.get(packageName);
+  const installedVersion = lockfile.packages?.[`node_modules/${packageName}`]?.version;
+  if (!expectedVersion || installedVersion !== expectedVersion) return false;
+
   const nodes = vulnerability?.nodes ?? [];
   if (nodes.length === 0) return false;
 
@@ -95,7 +106,8 @@ if (waived.length > 0) {
     "Temporary dev-only waiver applied for CVE-2026-93687 / GHSA-vfj7-8cjw-p6xm (no patched braces release is currently available):",
   );
   for (const item of waived) {
-    console.warn(`- ${item.packageName}: ${item.severity}`);
+    const version = lockfile.packages?.[`node_modules/${item.packageName}`]?.version ?? "unknown";
+    console.warn(`- ${item.packageName}@${version}: ${item.severity}`);
   }
 }
 

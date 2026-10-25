@@ -24,7 +24,7 @@ concurrency:
 jobs:
   audit:
     name: Two isolated fresh-browser consent scenarios
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 13
     steps:
       - uses: actions/checkout@v6

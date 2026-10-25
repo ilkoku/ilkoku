@@ -205,3 +205,94 @@ test("nine core public CMS pages compare with exactly their live code source wit
   assertNotContains(pages, "saveCmsPageAction", "inventory remains read only");
   assertNotContains(copy, "prisma", "canonical comparison must not access or mutate database");
 });
+
+
+test("approved Hakkımızda content can be saved only through an explicit draft action", () => {
+  const approvedSource = source("src/content/approved-hakkimizda-cms-draft.ts");
+  const editor = source("src/components/content/CmsPageEditor.tsx");
+  const publicCopy = source("src/content/about.ts");
+  const match = approvedSource.match(/export const approvedHakkimizdaCmsDraft = (\{[\s\S]*\}) as const;/);
+  assert.ok(match, "approved CMS source must be a plain deterministic data object");
+  const approved = JSON.parse(match[1]);
+
+  assert.equal(approved.contentKey, "page:tr:hakkimizda");
+  assert.equal(approved.canonical, "/hakkimizda");
+  assert.equal(approved.title, "Hakkımızda");
+  assert.equal(approved.seoTitle, "Hakkımızda | İlkOku Dijital Yazar Platformu");
+  assertContains(approved.summary, "edebiyatın farklı seslerini aynı hikâyede buluşturur", "approved literary summary");
+  assertContains(approved.seoDescription, "İlkOku’nun neden var olduğunu", "approved SEO description");
+  assertNotContains(approved.body, "ekosistem", "approved body avoids rejected terminology");
+  assertNotContains(approved.summary, "ekosistem", "approved summary avoids rejected terminology");
+  assertContains(approved.body, "İlkOku, yazarların eserlerini geliştirebildiği", "existing CMS intro preserved");
+  assertContains(approved.body, "Yazar editör incelemesi talep ettiğinde eser Genel Editör Havuzu'na girer", "two-stage editor process preserved");
+  assertContains(approved.body, "otomatik sözleşme, basım veya yayın taahhüdü oluşturmaz", "publisher noncommitment preserved");
+  for (const heading of [
+    "Yazarın çalışma alanı", "Okurun katkısı", "İki aşamalı editör incelemesi",
+    "Yayınevi keşfi", "Bir eseri yalnızca son hâliyle görmüyoruz",
+    "Güvenin temeli: herkesin rolü belli", "Nereye gidiyoruz?",
+  ]) {
+    assertContains(approved.body, "## " + heading, "approved heading " + heading);
+  }
+  assert.equal(approved.body.match(/^## /gm)?.length, 7, "exactly the seven approved headings");
+  assertNotContains(approved.body, "## Yazar gelişir, okur keşfeder", "repetitive role recap must remain excluded");
+  assertContains(editor, 'page?.id === "51e2eb80-7192-4cec-ba69-6bf622c569a4"', "only the approved CMS record");
+  assertContains(editor, 'page.contentKey === approvedHakkimizdaCmsDraft.contentKey', "strict content key guard");
+  assertContains(editor, 'page.status !== "archived" && !corruptDraft', "published record can stage safe draft; archived record excluded");
+  const saveAction = source("src/features/cms/page-actions.ts");
+  assertContains(saveAction, 'if (existing?.status === "published" && mode !== "publish")', "published page drafts use staged path");
+  assertContains(saveAction, 'await saveCmsDraft(user.id, pageDraftKey(existing.id), snapshot)', "published page keeps current live row when staging a draft");
+  assertContains(saveAction, 'status: mode === "publish" ? "published" : "draft"', "draft snapshot records its safe status");
+  assertContains(editor, '<form action={saveApprovedHakkimizdaDraftAction}>', "approved import uses dedicated authoritative server action");
+  assertContains(editor, "Onaylanan metin bekleyen CMS taslağıyla birebir eşleşiyor", "editor gives exact parity confirmation");
+  assertContains(editor, "Bekleyen taslak onaylanan metinle henüz eşleşmiyor", "editor rejects mismatched drafts");
+  const actions = source("src/features/cms/page-actions.ts");
+  assertContains(actions, "export async function saveApprovedHakkimizdaDraftAction()", "server-only approved importer");
+  assertContains(actions, 'data.set("mode", "draft")', "approved import cannot publish");
+  for (const prop of ["title", "summary", "body", "seoTitle", "seoDescription"]) {
+    assertContains(actions, `data.set("${prop}", approved.${prop})`, "server-authored approved " + prop);
+  }
+  assertContains(actions, 'if (page.noIndex) data.set("noIndex", "on")', "original noindex flag preserved");
+  assertContains(actions, 'await saveCmsPageAction(data)', "approved action goes through existing authenticated CMS save");
+  assertContains(editor, "Onaylı Hakkımızda metnini taslağa aktar", "action label makes draft staging clear");
+  assertNotContains(editor, '<input type="hidden" name="body" value={approvedHakkimizdaCmsDraft.body}', "approved content never sent from browser hidden input");
+  assertNotContains(publicCopy, "edebiyatın farklı seslerini aynı hikâyede buluşturur", "approved draft must not silently replace live code");
+  assertNotContains(approvedSource, "prisma", "approved data source cannot mutate the database");
+});
+
+
+test("approved Hakkımızda has a complete public renderer without silently falling back to legacy copy", () => {
+  const page = source("src/app/hakkimizda/page.tsx");
+  const experience = source("src/components/content/AboutExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  const approvedSource = source("src/content/approved-hakkimizda-cms-draft.ts");
+  const match = approvedSource.match(/export const approvedHakkimizdaCmsDraft = (\{[\s\S]*\}) as const;/);
+  assert.ok(match, "approved source must remain readable for structural checks");
+  const approved = JSON.parse(match[1]);
+
+  for (const heading of [
+    "Yazarın çalışma alanı", "Okurun katkısı", "İki aşamalı editör incelemesi",
+    "Yayınevi keşfi", "Bir eseri yalnızca son hâliyle görmüyoruz",
+    "Güvenin temeli: herkesin rolü belli", "Nereye gidiyoruz?",
+  ]) {
+    assertContains(approved.body, "## " + heading, "approved CMS has " + heading);
+    assertContains(page, '"## ' + heading + '"', "public gate accepts " + heading);
+  }
+
+  assertContains(page, "function hasApprovedAboutStructure(body: string)", "approved gate is distinct from legacy gate");
+  assertContains(page, "|| hasApprovedAboutStructure(body)", "public page accepts the approved seven-heading structure");
+  assertContains(page, "hasApprovedAboutStructure(state.page.body)", "approved SEO is taken from its CMS record");
+  assertContains(experience, "const hasApprovedRoleSections = roleMeta.every", "role cards recognize the approved individual sections");
+  assertContains(experience, "const showRoleGrid = Boolean(roles) || hasApprovedRoleSections", "four-card layout supports both content formats");
+
+  for (const title of ["Yazarın çalışma alanı", "Okurun katkısı", "İki aşamalı editör incelemesi", "Yayınevi keşfi"]) {
+    assertContains(experience, '"' + title + '"', title + " appears in role mapping");
+  }
+  assertContains(experience, '<h3>{approved?.title ?? role.title}</h3>', "render exact approved role card heading");
+  assertContains(experience, 'const content = approved ?? legacy;', "render exact approved role body");
+  assertContains(preview, 'page.contentKey === "page:tr:hakkimizda"', "CMS About draft gets special preview");
+  assertContains(preview, '<AboutExperience title={title} summary={summary} body={body} updatedAt={page.updatedAt} />', "preview reuses public visual experience");
+  assertContains(preview, "<PublicTrustFooter />", "preview contains shared public footer");
+  assertContains(preview, 'const draft = state.state === "valid" ? state.record.payload : undefined', "preview uses draft, never published body when present");
+  assertContains(preview, "robots: { index: false, follow: false }", "staged preview is noindex");
+  assertNotContains(page, "approvedHakkimizdaCmsDraft", "public route must never read the draft source as a live replacement");
+});

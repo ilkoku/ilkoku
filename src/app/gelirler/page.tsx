@@ -121,6 +121,13 @@ export default async function WriterIncomePage() {
         </section>
 
         <div className={styles.notice}>
+          Komisyon (%15), uygun faturasız telifte ayrı aracılık hizmeti (%5),
+          stopaj ve KDV varsayımlarını satış öncesinde karşılaştırmak için{" "}
+          <a href="/satis-erisim/kazanc-hesaplama">kazanç hesaplama örneğini</a>{" "}
+          inceleyebilirsin. Bu önizleme gerçek muhasebe hareketi oluşturmaz.
+        </div>
+
+        <div className={styles.notice}>
           Bu ekran İlkOku’da oluşan gerçek satış ve yazar bakiye kayıtlarını
           gösterir. Komisyon veya vergi oranı burada yeniden hesaplanmaz;
           yalnızca kaydedilmiş finans hareketleri görüntülenir.

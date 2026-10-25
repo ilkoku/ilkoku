@@ -932,6 +932,15 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     );
   }
   await expect(page.getByText(/Satın alma başarılı/)).toBeVisible();
+  await expect(
+    page.getByText("Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Sipariş ayrıntısını görüntüle" }),
+  ).toHaveAttribute(
+    "href",
+    "/hesabim/odeme-gecmisi/" + encodeURIComponent(completedZeroTotalOrderNo),
+  );
 
   const purchasedCard = page
     .locator("article")
@@ -941,6 +950,25 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(
     purchasedCard.getByRole("link", { name: "Okumaya devam et" }),
   ).toBeVisible();
+  await expect(purchasedCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+
+  // Already-owned checkout is not a new order: show the same persisted number.
+  await page.goto("/satinal/ci-browser-zero-total-work", { waitUntil: "domcontentloaded" });
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+
+  // A tampered URL must not fabricate a successful checkout or a receipt link.
+  await page.goto(
+    "/kutuphanem/satin-aldiklarim?durum=eklendi&siparis=ILK-FAKE-ORDER-NUMBER",
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(page.getByText(/Sipariş doğrulanamadı/u)).toBeVisible();
+  await expect(page.getByRole("link", {
+    name: "Sipariş ayrıntısını görüntüle",
+  })).toHaveCount(0);
 
   await page.goto("/oku/ci-browser-zero-total-work/bolum-1", {
     waitUntil: "domcontentloaded",
@@ -964,6 +992,19 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(historyCard.getByText("CI Browser 0 TL Eser")).toBeVisible();
   await expect(historyCard.getByText("0 TL edinildi · Tahsilat yok", { exact: true })).toBeVisible();
   await expect(historyCard.getByText(/₺\s?0,00/u).last()).toBeVisible();
+  await expect(historyCard.getByText(
+    "Sipariş No: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await historyCard.getByRole("link", { name: "Sipariş ayrıntısı" }).click();
+  await expect(page).toHaveURL(
+    /\/hesabim\/odeme-gecmisi\/ILK-/u,
+  );
+  await expect(page.getByRole("heading", { name: "Sipariş ayrıntısı" })).toBeVisible();
+  await expect(page.getByText(
+    "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
+  )).toBeVisible();
+  await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
+  await expectResponsiveDocument(page);
 
   if (process.env.DATABASE_URL) {
     const databaseUrl = new URL(process.env.DATABASE_URL);

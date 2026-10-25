@@ -121,7 +121,7 @@ export type DayCloseOrder = {
     listNetAmount: bigint; listVatAmount: bigint; listGrossAmount: bigint;
     discountGrossAmount: bigint; payableGrossAmount: bigint;
   } | null;
-  payments: { status: string; amount: bigint; currency: string }[];
+  payments: { status: string; amount: bigint; currency: string; completedAt?: Date | null }[];
   taxReview: {
     documentKind: string; decision: string; validUntil: Date | null; reviewedAt: Date;
   } | null;
@@ -241,7 +241,20 @@ export function buildDayCloseFiles(input: {
     }
     if (order.couponCode || order.discountAmount !== BigInt(0)) warnings.push("KUPON_VERGI_MATRAHI_INCELEME");
     if (order.status === "refunded") warnings.push("IADE_SONRASI_SIPARIS");
-    const captures = order.payments.filter((payment) => payment.status === "succeeded");
+    // A captured payment may later become "refunded". Its original
+    // completedAt is the historical capture evidence; the CURRENT status
+    // alone must not erase a valid payment from an earlier day's sale.
+    const closeEnd = new Date(Date.parse(input.day + "T00:00:00.000+03:00") + 86400000);
+    const captures = order.payments.filter((payment) => {
+      if (payment.status === "succeeded") {
+        return !payment.completedAt || payment.completedAt < closeEnd;
+      }
+      return payment.status === "refunded" &&
+        payment.completedAt !== null && payment.completedAt !== undefined &&
+        order.paidAt !== null &&
+        payment.completedAt <= order.paidAt &&
+        payment.completedAt < closeEnd;
+    });
     const ledgerEntries = grossLedger.get(order.orderNo) ?? [];
     const ledgerGross = ledgerEntries.reduce((sum,entry) => sum + entry.amount, BigInt(0));
     const ledgerMatches = ledgerEntries.length === 1 &&

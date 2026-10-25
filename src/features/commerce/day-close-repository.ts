@@ -2,7 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import {
-  buildDayCloseFiles, closedDayRange, DAY_CLOSE_MAX_ROWS,
+  buildDayCloseFiles, closedDayRange, DAY_CLOSE_MAX_ROWS, DayCloseDataIntegrityError,
 } from "./day-close-export";
 
 /**
@@ -135,7 +135,9 @@ export async function getDayClosePackage(day: string, now = new Date()) {
     refundCurrencies.set(row.orderId,currencies);
   }
 
-  const prepared = buildDayCloseFiles({
+  let prepared: ReturnType<typeof buildDayCloseFiles>;
+  try {
+    prepared = buildDayCloseFiles({
     day: period.day,
     orders: orders.map((order) => ({
       orderNo: order.orderNo,
@@ -193,6 +195,17 @@ export async function getDayClosePackage(day: string, now = new Date()) {
       historicalCurrencyMismatch: [...(refundCurrencies.get(refund.orderId) ?? [])]
         .some((currency) => currency !== refund.order.currency),
     })),
-  });
+    });
+  } catch (error) {
+    if (error instanceof DayCloseDataIntegrityError) {
+      return {
+        ok: false as const,
+        reason: "Gün sonu kaynağında " + error.recordType +
+          " için " + (error.issue === "DUPLICATE" ? "mükerrer" : "boş") +
+          " kayıt referansı bulundu. Toplamların iki kez sayılmaması için paket oluşturulmadı.",
+      };
+    }
+    throw error;
+  }
   return { ok: true as const, ...prepared };
 }

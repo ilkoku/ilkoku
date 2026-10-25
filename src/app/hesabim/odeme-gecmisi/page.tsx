@@ -115,12 +115,20 @@ export default async function ReaderPaymentHistoryPage() {
                   <small>Kupon: {order.couponCodeSnapshot}</small>
                 ) : null}
 
-                <Link
-                  className={styles.secondaryAction}
-                  href={"/kitap/" + order.work.slug}
-                >
-                  Eseri görüntüle
-                </Link>
+                <div className={styles.heroActions}>
+                  <Link
+                    className={styles.secondaryAction}
+                    href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(order.orderNo)}
+                  >
+                    Sipariş ayrıntısı
+                  </Link>
+                  <Link
+                    className={styles.quietAction}
+                    href={"/kitap/" + order.work.slug}
+                  >
+                    Eseri görüntüle
+                  </Link>
+                </div>
               </article>
             ))}
           </section>

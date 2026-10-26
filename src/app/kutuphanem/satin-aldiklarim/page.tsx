@@ -166,7 +166,7 @@ export default async function PurchasedLibraryPage({
                     className={styles.quietAction}
                     href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(entitlement.order.orderNo)}
                   >
-                    Sipariş, iptal/iade talebi ve onay kayıtları
+                    Sipariş ve onay kayıtları
                   </Link>
                 ) : null}
                 {canCancelTestDemo &&

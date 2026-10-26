@@ -13,8 +13,8 @@ type BillingInput = {
   billingAddress: string;
 };
 export function WriterBillingForm({ initial }: { initial: BillingInput }) {
-  const [status, setStatus] = useState<"invoicing" | "non_invoicing">(
-    initial.invoiceStatus ?? "non_invoicing",
+  const [status, setStatus] = useState<"invoicing" | "non_invoicing" | "">(
+    initial.invoiceStatus ?? "",
   );
   const invoicing = status === "invoicing";
   return (
@@ -23,7 +23,7 @@ export function WriterBillingForm({ initial }: { initial: BillingInput }) {
         <legend>Fatura düzenleme durumun</legend>
         <label className={status === "invoicing" ? styles.selected : styles.option}>
           <input
-            type="radio" name="invoiceStatus" value="invoicing"
+            type="radio" name="invoiceStatus" value="invoicing" required
             checked={invoicing} onChange={() => setStatus("invoicing")}
           />
           <span><strong>Faturalıyım — vergi mükellefiyim</strong>
@@ -31,8 +31,8 @@ export function WriterBillingForm({ initial }: { initial: BillingInput }) {
         </label>
         <label className={status === "non_invoicing" ? styles.selected : styles.option}>
           <input
-            type="radio" name="invoiceStatus" value="non_invoicing"
-            checked={!invoicing} onChange={() => setStatus("non_invoicing")}
+            type="radio" name="invoiceStatus" value="non_invoicing" required
+            checked={status === "non_invoicing"} onChange={() => setStatus("non_invoicing")}
           />
           <span><strong>Faturasızım — fatura düzenlemiyorum</strong>
             <small>Gelir ve gider pusulası uygunluğu ayrıca değerlendirilecek.</small></span>
@@ -58,11 +58,13 @@ export function WriterBillingForm({ initial }: { initial: BillingInput }) {
             </label>
           </div>
         </section>
-      ) : (
+      ) : status === "non_invoicing" ? (
         <p className={styles.info}>
           Fatura düzenlemediğini beyan ettin. Bu seçim için fatura numarası,
           vergi dairesi veya fatura adresi girmen gerekmiyor.
         </p>
+      ) : (
+        <p className={styles.info}>Devam etmek için faturalı veya faturasız durumunu seç.</p>
       )}
       <p className={styles.info}>
         Bu seçim vergi durumuna ilişkin kendi beyanındır; otomatik mükellefiyet

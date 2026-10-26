@@ -82,7 +82,8 @@ export default async function CommercePaymentsPage({
           <p>
             Kart/telefon sağlayıcısı ödeme denemelerini ve sağlayıcısız Ücretli 0 TL
             sipariş işlemlerini ayrı izleyin. 0 TL işlemde gerçek tahsilat ve
-            Payment kaydı oluşmaz.
+            Payment kaydı oluşmaz. Kart veya operatör kimlik bilgileri burada
+            tutulmaz.
           </p>
         </div>
         <Link className="admin-button" href="/sistem-yonetimi/odeme-sistemi">

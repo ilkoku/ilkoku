@@ -56,13 +56,20 @@ test("P0 seller authorization expiry cannot normalize a nonexistent calendar day
   assert.ok(strictValidation >= 0 && expiryParsing > strictValidation, "calendar validation must precede expiry conversion");
 });
 
-test("P0 seller workbench requires admin identity, independent evidence review and auditable transitions", () => {
+test("P0 seller rights author submission is isolated from admin evidence verification", () => {
   const actions = source("src/features/commerce/seller-admin-actions.ts");
   const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const writerActions = source("src/features/commerce/seller-writer-actions.ts");
+  const writerPage = source("src/app/satis-erisim/satici-yetkileri/page.tsx");
+  const writerIndex = source("src/app/satis-erisim/page.tsx");
   const settings = source("src/app/admin/odeme-sistemi/ayarlar/page.tsx");
   const navigation = source("src/lib/admin-navigation.ts");
 
-  assert.ok(actions.includes('user.role !== "admin"'), "all seller mutations must be admin-only");
+  assert.ok(actions.includes('user.role !== "admin"'), "final legal review and approval require admin identity");
+  assert.ok(writerActions.includes('user.role !== "writer"'), "author submissions require actual writer identity");
+  assert.ok(writerActions.includes('ownerUserId: writer.id'), "identity belongs to the submitting writer");
+  assert.ok(writerActions.includes('authorId: writer.id'), "authorization must match writer own work");
+  assert.ok(writerActions.includes('status: "pending"'), "author submissions cannot grant rights");
   assert.ok(actions.includes('verificationStatus: "pending"'), "new seller starts unverified");
   assert.ok(actions.includes("reviewedOriginalEvidence"), "identity evidence must be reviewed explicitly");
   assert.ok(actions.includes("reviewedSalesRightsEvidence"), "rights evidence must be reviewed explicitly");
@@ -73,10 +80,13 @@ test("P0 seller workbench requires admin identity, independent evidence review a
   assert.ok(actions.includes("tx.auditLog.create"), "all transitions need audit evidence");
   assert.ok(actions.includes("createHash(\"sha256\")"), "rights evidence must be hashed");
   assert.ok(page.includes("Satıcı ve Satış Yetkisi"), "admin review UI exists");
-  assert.ok(page.includes("registerLegalSellerDraftAction"), "seller identity form wired");
+  assert.ok(writerPage.includes("submitWriterLegalSellerAction"), "writer identity form wired");
   assert.ok(page.includes("verifyLegalSellerAction"), "seller review form wired");
-  assert.ok(page.includes("registerWorkSalesRightsDraftAction"), "rights draft form wired");
-  assert.ok(page.includes("approveWorkSellerRightsAction"), "rights approval wired");
+  assert.ok(writerPage.includes("submitWriterSalesRightsAction"), "writer rights form wired");
+  assert.ok(page.includes("approveWorkSellerRightsAction"), "admin-only rights approval wired");
+  assert.ok(!page.includes("action={registerLegalSellerDraftAction}"), "author identity form removed from admin UI");
+  assert.ok(!page.includes("action={registerWorkSalesRightsDraftAction}"), "author rights form removed from admin UI");
+  assert.ok(writerIndex.includes('href="/satis-erisim/satici-yetkileri"'), "author navigation links to seller rights");
   assert.ok(settings.includes("/sistem-yonetimi/odeme-sistemi/satici-yetkileri"), "activation diagnostics link to admin workbench");
   assert.ok(navigation.includes("Satıcı & Satış Yetkisi"), "seller workbench appears in payment submenu");
 });

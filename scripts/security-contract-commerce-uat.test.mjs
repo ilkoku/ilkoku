@@ -696,3 +696,15 @@ test("seller-rights admin forms use a scoped responsive layout without changing 
   has(page, "Gerçek kişi", "seller types preserved");
   has(page, "Satıcı taslağını kaydet", "seller action wording preserved");
 });
+
+
+test("seller-rights visible steps keep stable numbered accessible headings", () => {
+  const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const css = source("src/app/admin/odeme-sistemi/satici-yetkileri/seller-rights.module.css");
+  for (const step of ["1. ", "2. ", "3. ", "4. "]) {
+    has(page, "styles.screenReaderOnly}>" + step, "numbered accessible step");
+  }
+  has(page, "Resmi satıcı kimliği oluştur</h2>", "existing identity step wording");
+  has(page, "Resmî kanıtı incele", "existing verification step wording");
+  has(css, ".screenReaderOnly", "visible step badges do not duplicate numbered headings");
+});

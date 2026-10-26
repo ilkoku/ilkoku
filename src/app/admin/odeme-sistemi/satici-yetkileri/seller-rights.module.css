@@ -350,3 +350,19 @@
 .pendingItem > .formGrid {
   width: 100%;
 }
+
+
+/* Keep the original numbered heading as an accessible name while the
+ * visual step number is already shown inside the decorative chip. */
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+}

@@ -29,6 +29,17 @@ jobs:
       - name: Validate sampling script
         run: bash -n scripts/origin-incident-trap.sh
 
+      - name: Check GitHub scheduled probe coverage (no site requests)
+        if: github.event_name == 'schedule'
+        id: coverage
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/origin-incident-trap.yml/runs?event=schedule&per_page=25" \
+            | node scripts/origin-schedule-coverage.mjs
+
       - name: Capture deployment and Cloudflare edge responses
         id: probe
         shell: bash
@@ -37,6 +48,22 @@ jobs:
           SAMPLE_INTERVAL: ${{ github.event_name == 'push' && '6' || '15' }}
           EXPECTED_COMMIT_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
         run: bash scripts/origin-incident-trap.sh
+
+      - name: Attach actual scheduled-coverage gaps to origin incident
+        if: github.event_name == 'schedule' && steps.coverage.outputs.coverage_gap == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GAP_MINUTES: ${{ steps.coverage.outputs.gap_minutes }}
+          PREVIOUS_UTC: ${{ steps.coverage.outputs.previous_utc }}
+          CURRENT_UTC: ${{ steps.coverage.outputs.current_utc }}
+        run: |
+          if [[ "$(gh api "repos/${GITHUB_REPOSITORY}/issues/1856" --jq '.state')" == 'open' ]]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/1856/comments" \
+              -f body="SCHEDULE_COVERAGE GAP: ${GAP_MINUTES} minutes between scheduled Origin trap runs (${PREVIOUS_UTC} to ${CURRENT_UTC}). This is a monitoring coverage gap, NOT evidence of HTTP downtime. GitHub schedule events may be delayed or dropped. No additional production probes or infrastructure changes."
+          else
+            echo '::notice::Issue #1856 is closed; coverage gap retained in Actions summary.'
+          fi
 
       - name: Save incident evidence
         if: steps.probe.outputs.incident == 'true' || steps.probe.outputs.blocked == 'true' || (github.event_name == 'push' && steps.probe.outputs.cutover_observed != 'true')

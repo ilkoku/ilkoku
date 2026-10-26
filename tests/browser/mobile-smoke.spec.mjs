@@ -640,30 +640,36 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
-test("admin seller rights workbench is connected to 0 TL readiness without activating payment providers", async ({ page }) => {
+test("writer applies for seller rights and admin separately reviews without enabling payment providers", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
-  const token = authFixture.sessions?.admin;
-  expect(token, "Missing admin session").toBeTruthy();
-  await page.context().addCookies([
-    { name: authFixture.cookieName, value: token, url: authCookieUrl },
-  ]);
+  const adminToken = authFixture.sessions?.admin;
+  const writerToken = authFixture.sessions?.writer;
+  expect(adminToken, "Missing admin session").toBeTruthy();
+  expect(writerToken, "Missing writer session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: adminToken, url: authCookieUrl }]);
   await page.setViewportSize(viewports.phone430);
   await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", {
     waitUntil: "domcontentloaded",
   });
-  await expect(page.getByRole("heading", { name: "Satıcı ve Satış Yetkisi" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /1\. Resmi satıcı kimliği oluştur/u })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /2\. Resmî kanıtı incele/u })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /3\. Eser için satış yetkisi/u })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /4\. Eser satış yetkisini/u })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toBeVisible();
-  await expect(page.getByRole("option", { name: "CI ONLY MOCK SELLER - NOT A REAL ENTITY" })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: /Satıcı ve Satış Yetkisi/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /1\. Resmî kanıtı incele/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2\. Eser satış yetkisini/u })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Eser satıcısını ve yetkiyi onayla" })).toHaveCount(0);
   await expectResponsiveDocument(page);
 
-  await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", {
-    waitUntil: "domcontentloaded",
-  });
+  await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("link", { name: /Satıcı ve satış yetkisi çalışma alanını aç/u })).toBeVisible();
+
+  await page.context().addCookies([{ name: authFixture.cookieName, value: writerToken, url: authCookieUrl }]);
+  await page.goto("/satis-erisim/satici-yetkileri", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Satıcı ve Satış Yetkisi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Resmî satıcı bilgileri" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Eser için satış yetkisi belgesi" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Satıcı bilgilerimi incelemeye gönder" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Eser satış yetkimi incelemeye gönder" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Resmî kimliği doğrula" })).toHaveCount(0);
+  await expectResponsiveDocument(page);
 });
 
 test("50% coupon cannot simulate 0 TL or unlock paid chapter without a provider", async ({ page }) => {

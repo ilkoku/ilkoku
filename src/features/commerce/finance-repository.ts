@@ -470,6 +470,32 @@ export async function getFinanceReconciliationSnapshot() {
   };
 }
 
+/**
+ * Non-commercial QA visibility only. A promotional work entitlement is NOT a
+ * sale, a settled order, author earning, commission, ledger or tax entry.
+ * AuthorId is always passed from the authenticated writer profile.
+ */
+export async function getWriterTest209DemoCounts(authorId: string) {
+  const grouped = await prisma.workEntitlement.groupBy({
+    by: ["status"],
+    where: {
+      source: "promotion",
+      orderId: null,
+      status: { in: ["active", "revoked"] },
+      work: {
+        is: {
+          authorId,
+          slug: "yeni-test209-30820c6a",
+        },
+      },
+    },
+    _count: { _all: true },
+  });
+  const active = grouped.find((row) => row.status === "active")?._count._all ?? 0;
+  const revoked = grouped.find((row) => row.status === "revoked")?._count._all ?? 0;
+  return { active, revoked };
+}
+
 export async function getWriterFinanceOverview(authorId: string) {
   const [ledgerSummary, workLedger, balance, orders, paidWorks] =
     await Promise.all([

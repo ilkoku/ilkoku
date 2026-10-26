@@ -70,6 +70,17 @@ export default async function CommerceOrdersPage({
         </Link>
       </header>
 
+      <section className="admin-readonly-notice admin-commerce-readonly" role="status">
+        <strong>TEST209 0 TL erişim denemesi gerçek sipariş değildir.</strong>
+        <p>
+          Deneme erişimi <code>WorkEntitlement / promotion</code> olarak kayıtlıdır.
+          Bu listede gerçek sipariş numarası, ödeme, komisyon veya finans hareketi gibi görünmez.
+        </p>
+        <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=promotion&q=YEN%C4%B0%20TEST209">
+          TEST209 deneme erişimini operasyon kayıtlarında görüntüle
+        </Link>
+      </section>
+
       <section className="admin-settings-grid admin-commerce-summary">
         <article className="admin-panel admin-settings-card">
           <span className="admin-eyebrow">Toplam</span>

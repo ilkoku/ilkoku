@@ -626,3 +626,33 @@ test("reader library links to payment history and zero-TL TEST209 shows as a non
   lacks(history, "prisma.order.create", "no fake order created");
   lacks(repository, "order.create(", "history cannot create fake orders");
 });
+
+
+test("TEST209 0 TL demo appears in admin ops and author's QA overview, never as a paid financial record", () => {
+  const admin = source("src/app/admin/odeme-sistemi/page.tsx");
+  const orders = source("src/app/admin/odeme-sistemi/siparisler/page.tsx");
+  const entitlements = source("src/app/admin/odeme-sistemi/erisim-haklari/page.tsx");
+  const finance = source("src/features/commerce/finance-repository.ts");
+  const writer = source("src/app/gelirler/page.tsx");
+  const dayClose = source("src/features/commerce/day-close-repository.ts");
+
+  has(admin, 'label: "TEST209 0 TL denemeler"', "admin separates test metrics");
+  has(admin, 'source: "promotion"', "promotion-source filter");
+  has(admin, "orderId: null", "no order linkage");
+  has(admin, "status: { in: [\"active\", \"revoked\"] }", "current grant states");
+  has(admin, "erisim-haklari?source=promotion", "drill down for the QA test");
+  has(orders, "TEST209 0 TL erişim denemesi gerçek sipariş değildir.", "no fake sale assertion");
+  has(orders, "erisim-haklari?source=promotion", "admin ops link");
+  has(entitlements, "TEST-{entitlement.id.slice(0, 16).toUpperCase()}", "TEST reference instead of order");
+  has(entitlements, "Gerçek sipariş numarası oluşturulmadı", "honest trial identity");
+  has(finance, "export async function getWriterTest209DemoCounts(authorId: string)", "writer-bound count read");
+  has(finance, 'source: "promotion"', "author QA read restricted to promotions");
+  has(finance, "orderId: null", "author QA read excludes real orders");
+  has(finance, 'slug: "yeni-test209-30820c6a"', "QA work only");
+  has(finance, "authorId,", "author ownership enforcement");
+  has(writer, "getWriterTest209DemoCounts(profile.id)", "authenticated writer source");
+  has(writer, "Denemeden doğan kazanç", "clearly zero financial consequence");
+  has(writer, "formatMoney(BigInt(0), finance.currency)", "no fake earnings");
+  has(dayClose, "prisma.order.findMany", "day-close uses sales orders");
+  lacks(dayClose, "prisma.workEntitlement.findMany", "promotions excluded from accounting close");
+});

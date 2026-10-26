@@ -246,6 +246,13 @@ export default async function CommerceEntitlementsPage({
                             )}
                           </small>
                         </>
+                      ) : entitlement.source === "promotion" &&
+                        entitlement.work.slug === "yeni-test209-30820c6a" ? (
+                        <>
+                          <strong>TEST-{entitlement.id.slice(0, 16).toUpperCase()}</strong>
+                          <small>0 TL deneme erişimi · Tahsilat yok</small>
+                          <small>Gerçek sipariş numarası oluşturulmadı</small>
+                        </>
                       ) : (
                         <small>Sipariş bağlantısı yok</small>
                       )}

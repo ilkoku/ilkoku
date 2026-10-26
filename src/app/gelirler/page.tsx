@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { getWriterFinanceOverview } from "@/features/commerce/finance-repository";
+import { getWriterFinanceOverview, getWriterTest209DemoCounts } from "@/features/commerce/finance-repository";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
 import styles from "@/features/commerce/commerce.module.css";
@@ -50,9 +50,10 @@ export default async function WriterIncomePage() {
     redirect("/erisim-reddedildi");
   }
 
-  const [finance, checkoutEnabled] = await Promise.all([
+  const [finance, checkoutEnabled, test209Demo] = await Promise.all([
     getWriterFinanceOverview(profile.id),
     Promise.resolve(isCommerceCheckoutEnabled()),
+    getWriterTest209DemoCounts(profile.id),
   ]);
   const providerReady = hasOperationalPaymentProvider();
   const paidCommerceLive = checkoutEnabled && providerReady;
@@ -134,6 +135,39 @@ export default async function WriterIncomePage() {
           gösterir. Komisyon veya vergi oranı burada yeniden hesaplanmaz;
           yalnızca kaydedilmiş finans hareketleri görüntülenir.
         </div>
+
+        {test209Demo.active + test209Demo.revoked > 0 ? (
+          <section className={`${styles.panel} ${styles.writerFinancePanel}`}>
+            <div className={styles.panelHeader}>
+              <div>
+                <span className={styles.eyebrow}>TEST209 · Mali kayıt dışı deneme</span>
+                <h2>0 TL deneme erişimleri</h2>
+                <p>
+                  Kendi eserine ait promosyon erişimleri gösterilir. Bu
+                  kayıtlar gerçek sipariş, satılan adet, hakediş, ödeme,
+                  komisyon veya vergi hesabına dahil edilmez.
+                </p>
+              </div>
+              <span className={styles.badge}>
+                {test209Demo.active + test209Demo.revoked} erişim
+              </span>
+            </div>
+            <div className={styles.statGrid}>
+              <article className={styles.stat}>
+                <span>Aktif deneme erişimi</span>
+                <strong>{test209Demo.active.toLocaleString("tr-TR")}</strong>
+              </article>
+              <article className={styles.stat}>
+                <span>İptal edilen erişim</span>
+                <strong>{test209Demo.revoked.toLocaleString("tr-TR")}</strong>
+              </article>
+              <article className={styles.stat}>
+                <span>Denemeden doğan kazanç</span>
+                <strong>{formatMoney(BigInt(0), finance.currency)}</strong>
+              </article>
+            </div>
+          </section>
+        ) : null}
 
         <section className={`${styles.panel} ${styles.writerFinancePanel}`}>
           <div className={styles.panelHeader}>

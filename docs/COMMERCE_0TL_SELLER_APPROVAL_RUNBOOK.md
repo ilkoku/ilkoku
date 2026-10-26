@@ -2,12 +2,14 @@
 
 **Amaç:** Gerçek ödeme sağlayıcısı olmadan, ücretli olarak işaretlenmiş eserlerin dijital okuma hakkını 0 TL sipariş ile kaydetmek. Gerçek para tahsil edilmez.
 
-## Yöneticinin yapacağı dört işlem
+## Yazar başvurusu ve yönetici onayı
 
-1. **Resmî satıcı kimliği** — `/sistem-yonetimi/odeme-sistemi/satici-yetkileri` üzerinden fiili hukukî işletmeci veya üçüncü kişi için resmi unvan, doğrulanabilir vergi/kimlik tanımlayıcısı, adres ve e-posta girilir. Yeni kayıt `pending` durumundadır. Okura görünen platform adı `ilkoku` olabilir; resmî unvanın yerine geçmez.
-2. **Kimlik kanıtını incele** — Yetkili yönetici, orijinal kaydın güvenilir HTTPS referansını açıp bilgileri karşılaştırır, gerekçe yazar ve açık doğrulama kutusuyla onay verir. Tarih, işlem yapan yönetici ve kanıt referansı denetim kaydına yazılır. Belge görülmeden hiçbir otomatik onay verilmez.
-3. **Eser bazlı yetki** — Satış modeli `paid`, durumu `ready` / `active` olan eser ile doğrulanmış satıcı seçilir. Eser dijital satış yetkisini gösteren gerçek belgenin kaynağı ve incelenen metin girilir. Kanıt metninin yalnız SHA-256 özeti kaydedilir; geçerlilik tarihi varsa belirtilir.
-4. **Eser satıcısını onayla** — Yönetici satış yetkisinin gerçekliği ve kapsamını son kez kontrol eder. Önceki güncel atama işlem geçmişi korunarak iptal edilir, yeni güncel atama aktif olur. Eski siparişlere bağlı `OrderLegalSnapshot` değişmez.
+1. **Yazar — resmî satıcı kimliği taslağı:** `/satis-erisim/satici-yetkileri` (Yazar Paneli → Satış & Erişim → Satıcı ve satış yetkisi). Yazar yalnız kendi hesap kimliğine bağlanan gerçek kişi veya tüzel kişi satıcı başvurusu oluşturabilir. Resmî ad/unvan, vergi/kimlik tanımlayıcısı, adres, e-posta zorunludur. `LegalParty.ownerUserId` hesabına bağlı ve durumu `pending` olur; kendini doğrulayamaz. Platform işletmecisi `platform` türü yazar ekranından oluşturulamaz.
+2. **Yazar — eser satış hakkı kanıtı:** Aynı ekranda sadece kendi yayımlanmış ve paid `ready/active` eserini, kendi satıcı kaydını, gerçek HTTPS belge referansını, incelenecek metni ve varsa bitiş tarihini seçer/girer. `WorkSalesAuthorization` `pending` oluşturulur; belge metninin SHA-256 özeti kaydedilir. Satıcı kimliği henüz incelemedeyse bile belge taslağı sunulabilir.
+3. **Yönetici — kimlik incelemesi:** `/sistem-yonetimi/odeme-sistemi/satici-yetkileri` artık başvuru formu değil **inceleme ekranıdır**. Admin, orijinal resmî kaynakla bilgileri karşılaştırıp gerekçe ve açık onay verir; `verifiedById` ve denetim kanıtı saklanır.
+4. **Yönetici — eser yetki incelemesi ve onay:** Admin kanıtı, eser-satıcı eşleşmesini, tarihleri ve doğrulanmış hukukî kimliği son kez inceler. Ancak sonrasında `approved` geçerli satıcı ataması oluşur. Önceki güncel atama tarihçesi korunur, eski `OrderLegalSnapshot` kayıtları değiştirilmez. Yetki iptali de gerekçe ve açık yönetici onayı gerektirir.
+
+Yazar yalnız kendi başvuru durumlarını ve eserlerini görür; admin incelemesi/iptali yapamaz. Bu ayrım gerçek tahsilat veya ödeme sağlayıcısı açmaz.
 
 ## Ayrı zorunlu şart: Okur sözleşmesi
 

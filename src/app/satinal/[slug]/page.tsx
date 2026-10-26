@@ -17,6 +17,7 @@ import {
 } from "@/features/commerce/checkout-repository";
 import { getActiveReaderPurchaseTerms } from "@/features/commerce/checkout-terms";
 import { resolveEffectiveCommerceState } from "@/features/commerce/effective-state";
+import { isTest209DemoReader, TEST209_DEMO_SLUG } from "@/features/commerce/test209-demo-access";
 import { getPaymentMethodAvailability } from "@/features/commerce/payment-providers";
 import { quoteCommercePrice } from "@/features/commerce/price-quote";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
@@ -169,6 +170,14 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.saleModel === "paid" &&
     effectiveCommerce.status === "ready" &&
     effectiveCommerce.priceAmount === BigInt(0);
+  // This is a separate non-sale trial for one QA reader and one QA work.
+  // Never make the real 0 TL order or its seller gate appear approved.
+  const test209DemoReady =
+    stagedZeroCandidate &&
+    Boolean(purchaseTerms) &&
+    !verifiedSeller &&
+    work.slug === TEST209_DEMO_SLUG &&
+    isTest209DemoReader(profile);
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const couponInputEnabled =
     effectiveCommerce.saleModel === "paid" &&
@@ -276,7 +285,7 @@ export default async function CheckoutPreparationPage({
         </nav>
 
         {flash ? <div role="alert" className={styles.flash}>{flash}</div> : null}
-        {!checkoutConfigurationActive ? (
+        {!checkoutConfigurationActive && !test209DemoReady ? (
           <div role="status" className={styles.notice}>
             {purchaseUnavailableMessage}
           </div>
@@ -382,6 +391,29 @@ export default async function CheckoutPreparationPage({
                 </button>
               </form>
             </>
+          ) : test209DemoReady ? (
+            <div className={styles.readerCheckoutNotReady}>
+              <strong>0 TL test erişimi hazır</strong>
+              <p>
+                YENİ TEST209 için okuma erişimi denemesi yapılacak.
+                Bu bir gerçek satın alma değildir; sipariş, ödeme ve
+                muhasebe kaydı oluşturulmaz. Test eseri kütüphanene eklenecek.
+              </p>
+              <form action={completeTest209ZeroTlDemoAction}>
+                <input name="slug" type="hidden" value={work.slug} />
+                <input name="returnTo" type="hidden" value={returnTo} />
+                <label className={styles.confirmation}>
+                  <input name="acceptDemoAccess" type="checkbox" required />
+                  <span>
+                    0 TL denemenin gerçek bir satış veya ödeme olmadığını
+                    ve erişimin yalnız TEST209 için verileceğini kabul ediyorum.
+                  </span>
+                </label>
+                <button className={styles.action} type="submit">
+                  0 TL denemeyi etkinleştir
+                </button>
+              </form>
+            </div>
           ) : !checkoutConfigurationActive ? (
             <div className={styles.readerCheckoutNotReady}>
               <strong>{stagedZeroCandidate ? "0 TL erişim hazırlıkta" : "Satın alma şu an kapalı"}</strong>
@@ -563,7 +595,9 @@ export default async function CheckoutPreparationPage({
             <div className={stagedZeroPurchaseReady ? styles.successNotice : styles.helper}>
               {stagedZeroPurchaseReady
                 ? "Bu eser için erişim fiyatı 0 TL. Harici ödeme sağlayıcısı kullanılmadan sipariş tamamlanacak."
-                : "Eser 0 TL erişime hazırlanıyor. Koşullar aktifleştirildiğinde kart bilgisi istenmeyecek."}
+                : test209DemoReady
+                  ? "TEST209 için 0 TL deneme erişimi hazır; gerçek sipariş veya ödeme oluşturulmaz."
+                  : "Eser 0 TL erişime hazırlanıyor. Satıcı ve erişim yetkisi doğrulanınca sipariş oluşturulabilecek."}
             </div>
           ) : null}
           <div className={styles.readerCheckoutWorkMeta}>

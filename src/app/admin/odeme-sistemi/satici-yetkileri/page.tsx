@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./seller-rights.module.css";
 
 import {
   approveWorkSellerRightsAction,
@@ -73,7 +74,7 @@ export default async function SellerRightsAdminPage({
   const pendingRights = authorizations.filter((a) => a.status === "pending");
 
   return (
-    <>
+    <div className={styles.root}>
       <header className="admin-page-heading">
         <div>
           <span className="admin-eyebrow">Ödeme Sistemi · 0 TL Edinim</span>
@@ -90,37 +91,32 @@ export default async function SellerRightsAdminPage({
       </header>
 
       {query.durum ? (
-        <div className="admin-panel" role="status">
+        <div className={styles.status} role="status">
           {messages[query.durum] ?? "İşlem sonucu kaydedildi."}
         </div>
       ) : null}
 
-      <section className="admin-settings-grid admin-commerce-summary">
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Kimlik</span>
-          <h2>{verifiedParties.length}</h2>
-          <p>Doğrulanmış hukukî satıcı</p>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Yetki</span>
-          <h2>{pendingRights.length}</h2>
-          <p>Belge incelemesi gereken eser yetkisi</p>
-        </article>
-        <article className="admin-panel admin-settings-card">
-          <span className="admin-eyebrow">Aktif eşleştirme</span>
-          <h2>{assignments.length}</h2>
-          <p>Onaylanmış güncel eser satıcısı</p>
-        </article>
+      <section className={styles.summaryGrid} aria-label="Satıcı yetkileri durum özeti">
+        <article className={styles.summaryCard}><span>Kimlik doğrulama</span><strong>{verifiedParties.length}</strong><p>Doğrulanmış hukukî satıcı</p></article>
+        <article className={styles.summaryCard}><span>Belge incelemesi</span><strong>{pendingRights.length}</strong><p>Bekleyen eser yetkileri</p></article>
+        <article className={styles.summaryCard}><span>Aktif atama</span><strong>{assignments.length}</strong><p>Onaylı güncel eser satıcısı</p></article>
       </section>
+      <nav className={styles.stepsNav} aria-label="Satıcı yetkisi işlem aşamaları">
+        <a href="#seller-identity">1 · Satıcı kimliği</a>
+        <a href="#seller-verification">2 · Kimlik doğrulama</a>
+        <a href="#sales-rights">3 · Eser satış yetkisi</a>
+        <a href="#sales-approval">4 · Son onay</a>
+        <a href="#current-sellers">Geçerli satıcılar</a>
+      </nav>
 
-      <section className="admin-panel">
-        <h2>1. Resmi satıcı kimliği oluştur</h2>
+      <section id="seller-identity" className={styles.section}>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">1</span><div className={styles.sectionHeadingText}><h2>Resmî satıcı kimliği oluştur</h2>
         <p>
           &quot;ilkoku&quot; sadece görünen platform adıdır. Resmi isim,
           vergi bilgisi, adres ve iletişim alanları gerçek kayıtlarla doldurulmalıdır.
           Oluşturulan kimlik doğrulama tamamlanıncaya kadar <strong>beklemede</strong> kalır.
-        </p>
-        <form action={registerLegalSellerDraftAction} className="admin-settings-grid">
+        </p></div></div>
+        <form action={registerLegalSellerDraftAction} className={styles.formGrid}>
           <label>Satıcı türü
             <select name="kind" required defaultValue="platform">
               <option value="platform">İlkOku platformunun resmî işletmecisi</option>
@@ -143,43 +139,43 @@ export default async function SellerRightsAdminPage({
           <label>İletişim telefonu (varsa)
             <input name="contactPhone" maxLength={32}/>
           </label>
-          <label>Resmî adres
+          <label className={styles.fieldWide}>Resmî adres
             <textarea name="legalAddress" rows={3} minLength={12} required/>
           </label>
-          <div><button type="submit" className="admin-button">Satıcı taslağını kaydet</button></div>
+          <div className={styles.formActions}><button type="submit" className={styles.submit}>Satıcı taslağını kaydet</button></div>
         </form>
       </section>
 
-      <section className="admin-panel">
-        <h2>2. Resmî kanıtı incele ve satıcıyı doğrula</h2>
-        {pendingParties.length === 0 ? <p>Doğrulama bekleyen satıcı kaydı yok.</p> : null}
+      <section id="seller-verification" className={styles.section}>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">2</span><div className={styles.sectionHeadingText}><h2>Resmî kanıtı incele ve satıcıyı doğrula</h2><p>Bekleyen satıcının belgesini kontrol ederek kimlik incelemesini tamamlayın.</p></div></div>
+        {pendingParties.length === 0 ? <p className={styles.empty}>Doğrulama bekleyen satıcı kaydı yok. İlk adımda bir satıcı taslağı oluşturun.</p> : null}
         {pendingParties.map((party) => (
-          <form action={verifyLegalSellerAction} key={party.id} className="admin-panel">
+          <form action={verifyLegalSellerAction} key={party.id} className={`${styles.pendingItem} ${styles.formGrid}`}>
             <h3>{party.legalName} · {party.kind}</h3>
             <p>Kimlik / vergi tanımlayıcısı: {party.taxIdentifier}</p>
             <input name="legalPartyId" type="hidden" value={party.id}/>
             <label>İncelenen resmî belge kaynağı (HTTPS)
               <input type="url" name="evidenceUrl" placeholder="https://" required/>
             </label>
-            <label>İnceleme notu ve uyuşan bilgiler
+            <label className={styles.fieldWide}>İnceleme notu ve uyuşan bilgiler
               <textarea name="reviewNote" rows={2} required minLength={25}/>
             </label>
-            <label>
+            <label className={styles.confirmLabel}>
               <input type="checkbox" name="reviewedOriginalEvidence" required/>
               Orijinal resmî kaydı bizzat inceledim ve bilgilerle eşleştirdim.
             </label>
-            <button className="admin-button" type="submit">Resmî kimliği doğrula</button>
+            <div className={styles.formActions}><button className={styles.submit} type="submit">Resmî kimliği doğrula</button></div>
           </form>
         ))}
       </section>
 
-      <section className="admin-panel">
-        <h2>3. Eser için satış yetkisi kanıtını gir</h2>
+      <section id="sales-rights" className={styles.section}>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">3</span><div className={styles.sectionHeadingText}><h2>Eser için satış yetkisi kanıtını gir</h2>
         <p>
           Bu form para tahsil etmez. Dijital eser erişimi hakkının
           gerçekten verildiğini gösteren belge ve kaynak gereklidir.
-        </p>
-        <form action={registerWorkSalesRightsDraftAction} className="admin-settings-grid">
+        </p></div></div>
+        <form action={registerWorkSalesRightsDraftAction} className={styles.formGrid}>
           <label>Ücretli eser
             <select name="workId" required defaultValue="">
               <option value="" disabled>Eseri seç</option>
@@ -202,56 +198,56 @@ export default async function SellerRightsAdminPage({
           <label>Yetki bitiş tarihi (varsa)
             <input type="date" name="validUntil"/>
           </label>
-          <label>Yetki belgesinden incelenecek gerçek metin / içerik (SHA-256 özeti saklanır)
+          <label className={styles.fieldWide}>Yetki belgesinden incelenecek gerçek metin / içerik (SHA-256 özeti saklanır)
             <textarea name="documentEvidence" rows={6} minLength={80} required/>
           </label>
-          <div><button className="admin-button" type="submit">Yetki inceleme kaydı oluştur</button></div>
+          <div className={styles.formActions}><button className={styles.submit} type="submit">Yetki inceleme kaydı oluştur</button></div>
         </form>
       </section>
 
-      <section className="admin-panel">
-        <h2>4. Eser satış yetkisini son kez onayla</h2>
-        {pendingRights.length === 0 ? <p>Son onay bekleyen belge yok.</p> : null}
+      <section id="sales-approval" className={styles.section}>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">4</span><div className={styles.sectionHeadingText}><h2>Eser satış yetkisini son kez onayla</h2><p>Yalnız incelenmiş, geçerli eser yetkilerini onaylayın.</p></div></div>
+        {pendingRights.length === 0 ? <p className={styles.empty}>Son onay bekleyen belge yok. Önce eser satış yetkisi kanıtı oluşturulmalıdır.</p> : null}
         {pendingRights.map((rights) => (
-          <form action={approveWorkSellerRightsAction} key={rights.id} className="admin-panel">
+          <form action={approveWorkSellerRightsAction} key={rights.id} className={`${styles.pendingItem} ${styles.formGrid}`}>
             <h3>{rights.work.title} · {rights.legalParty.legalName}</h3>
             <p style={{ overflowWrap: "anywhere" }}>Belge SHA-256: <code>{rights.documentHash ?? "—"}</code></p>
             <p style={{ overflowWrap: "anywhere" }}>Kanıt kaydı: {JSON.stringify(rights.rightsScope)}</p>
             <input type="hidden" name="authorizationId" value={rights.id}/>
-            <label>Belge inceleme ve hak sahipliği değerlendirmesi
+            <label className={styles.fieldWide}>Belge inceleme ve hak sahipliği değerlendirmesi
               <textarea name="reviewNote" rows={2} minLength={25} required/>
             </label>
-            <label>
+            <label className={styles.confirmLabel}>
               <input type="checkbox" name="reviewedSalesRightsEvidence" required/>
               Bu eserde dijital erişim satışı için yetkinin geçerliliğini doğruladım.
             </label>
-            <button className="admin-button" type="submit">Eser satıcısını ve yetkiyi onayla</button>
+            <div className={styles.formActions}><button className={styles.submit} type="submit">Eser satıcısını ve yetkiyi onayla</button></div>
           </form>
         ))}
       </section>
 
-      <section className="admin-panel">
-        <h2>Geçerli eser satıcıları</h2>
-        {assignments.length === 0 ? <p>Henüz onaylı ve geçerli eser satıcısı yok.</p> : null}
+      <section id="current-sellers" className={styles.section}>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">✓</span><div className={styles.sectionHeadingText}><h2>Geçerli eser satıcıları</h2><p>Onaylı satıcı atamaları ve gerekçeli yetki iptali.</p></div></div>
+        {assignments.length === 0 ? <p className={styles.empty}>Henüz onaylı ve geçerli eser satıcısı yok.</p> : null}
         {assignments.map((entry) => (
-          <div key={entry.id} className="admin-panel">
+          <div key={entry.id} className={styles.pendingItem}>
             <h3>{entry.work.title} — {entry.legalParty.legalName}</h3>
             <p>{entry.approvedAt?.toLocaleDateString("tr-TR") ?? "—"}</p>
             <Link href={`/kitap/${entry.work.slug}`}>Eser vitrini</Link>
-            <form action={revokeWorkSellerAssignmentAction}>
+            <form action={revokeWorkSellerAssignmentAction} className={styles.formGrid}>
               <input type="hidden" name="assignmentId" value={entry.id}/>
-              <label>Yetki iptali gerekçesi
+              <label className={styles.fieldWide}>Yetki iptali gerekçesi
                 <textarea name="revokeReason" minLength={25} required rows={2}/>
               </label>
-              <label>
+              <label className={styles.confirmLabel}>
                 <input type="checkbox" name="confirmRevocation" required/>
                 Bu eserde yeni sipariş oluşturma yetkisini kaldırmak istiyorum.
               </label>
-              <button type="submit" className="admin-button">Güncel satıcı atamasını iptal et</button>
+              <div className={styles.formActions}><button type="submit" className={`${styles.submit} ${styles.danger}`}>Güncel satıcı atamasını iptal et</button></div>
             </form>
           </div>
         ))}
       </section>
-    </>
+    </div>
   );
 }

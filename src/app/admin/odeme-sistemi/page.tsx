@@ -11,13 +11,21 @@ export default async function PaymentSystemPage() {
     (method) => method.available,
   ).length;
 
-  const [orders, payments, refunds, entitlements, platformCoupons] =
+  const [orders, payments, refunds, entitlements, platformCoupons, test209Demos] =
     await Promise.all([
       prisma.order.count(),
       prisma.payment.count(),
       prisma.refund.count(),
       prisma.workEntitlement.count(),
       prisma.coupon.count({ where: { owner: "platform" } }),
+      prisma.workEntitlement.count({
+        where: {
+          source: "promotion",
+          orderId: null,
+          work: { is: { slug: "yeni-test209-30820c6a" } },
+          status: { in: ["active", "revoked"] },
+        },
+      }),
     ]);
 
   const metrics = [
@@ -58,6 +66,16 @@ export default async function PaymentSystemPage() {
       link: (
         <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari">
           Erişim haklarını görüntüle <span aria-hidden="true">→</span>
+        </Link>
+      ),
+    },
+    {
+      label: "TEST209 0 TL denemeler",
+      count: test209Demos,
+      detail: "Gerçek sipariş / ödeme olmayan test erişimleri",
+      link: (
+        <Link href="/sistem-yonetimi/odeme-sistemi/erisim-haklari?source=promotion&q=YEN%C4%B0%20TEST209">
+          Deneme erişimlerini incele <span aria-hidden="true">→</span>
         </Link>
       ),
     },

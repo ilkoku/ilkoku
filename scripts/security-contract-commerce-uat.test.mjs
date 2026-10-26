@@ -564,3 +564,37 @@ test("reader purchased library uses its dark shell without leaking commerce them
   has(page, "completedDemo", "valid trial success evidence preserved");
   has(page, "entitlement.order?.orderNo", "purchase history remains visible");
 });
+
+
+test("0 TL TEST209 cancellation is a confirmed, owned, repeatable promotion-only operation", () => {
+  const demo = source("src/features/commerce/test209-demo-access.ts");
+  const action = source("src/features/commerce/test209-demo-cancel-action.ts");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+  const order = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
+  const reading = source("src/features/commerce/access.ts");
+
+  has(action, '"use server";', "explicit server action");
+  has(action, 'getCurrentUser()', "authenticated reader required");
+  has(action, 'isTest209DemoReader(user)', "QA account ownership required");
+  has(action, 'formData.get("confirmCancel")', "second confirmation required");
+  has(action, 'cancelTest209DemoAccess(user.id, id)', "user-owned cancellation");
+  has(demo, "FOR UPDATE", "serialize grant/revoke per reader");
+  has(demo, "TEST209_DEMO_WORK_ID", "fixed QA work id");
+  has(demo, "TEST209_DEMO_SLUG", "fixed QA work slug");
+  has(demo, 'readerId,', "reader ownership predicate");
+  has(demo, 'source: "promotion"', "promotion only");
+  has(demo, 'orderId: null', "never cancel purchase-linked right");
+  has(demo, 'status: "revoked", revokedAt: new Date()', "revocation is recorded not deletion");
+  has(demo, 'status: "active", revokedAt: null, grantedAt: new Date()', "repeat demo is possible");
+  lacks(demo, "transaction.order.update", "no paid order mutation");
+  lacks(demo, "transaction.payment.update", "no payment mutation");
+  lacks(demo, "transaction.refund.create", "no refund mutation");
+  has(reading, 'entitlement?.status === "active"', "revoked entitlements cannot bypass chapter lock");
+  has(library, "0 TL deneme erişimini iptal et", "clear library cancel control");
+  has(library, "İptali onayla", "explicit confirmed submit");
+  has(library, 'query.durum === "deneme-iptal-edildi"', "visible confirmed cancellation");
+  has(css, ".readerPurchasedPage .testCancelDetails", "dark scoped cancellation UI");
+  has(order, "E-posta ile iptal / iade talebi gönder", "real order support route");
+  has(order, "Siparişi kendiliğinden iptal etmez", "no fake refund claim");
+});

@@ -337,3 +337,16 @@
   .stepsNav a { flex: 1 1 auto; text-align: center; }
   .formActions .submit { width: 100%; }
 }
+
+
+/* Read-only evidence headers span both columns in approval forms. */
+.formGrid.pendingItem > :is(h3, p) {
+  grid-column: 1 / -1;
+}
+.formGrid.pendingItem > h3 {
+  padding-bottom: 3px;
+  border-bottom: 1px solid #32374d;
+}
+.pendingItem > .formGrid {
+  width: 100%;
+}

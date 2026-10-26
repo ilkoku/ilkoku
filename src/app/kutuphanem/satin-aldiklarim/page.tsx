@@ -91,9 +91,14 @@ export default async function PurchasedLibraryPage({
               Satın alma veya kampanya erişimiyle kütüphanene eklenen eserler.
             </p>
           </div>
-          <Link className={styles.secondaryAction} href="/okuyucu">
-            Okuma masama dön
-          </Link>
+          <nav className={styles.readerLibraryHeaderActions} aria-label="Kütüphane işlemleri">
+            <Link className={styles.secondaryAction} href="/hesabim/odeme-gecmisi">
+              Ödeme geçmişim
+            </Link>
+            <Link className={styles.quietAction} href="/okuyucu">
+              Okuma masama dön
+            </Link>
+          </nav>
         </header>
 
         {flash ? (

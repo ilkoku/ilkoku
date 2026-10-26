@@ -1,6 +1,7 @@
 import { recordContractTemplateReviewEvidenceAction } from "./actions";
 import type { ContractTemplateReviewEvidenceRecord } from "./review-evidence";
 import type { ContractTemplateWorkbenchRecord } from "./template-lifecycle";
+import { isReaderPurchaseTermsPlaceholder, READER_DIGITAL_CONTENT_TERMS_CODE } from "@/features/commerce/checkout-terms";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("tr-TR", {
@@ -39,6 +40,8 @@ export function ContractTemplateReviewEvidencePanel({
 }) {
   if (template.lifecycleStatus === "soft") return null;
 
+  const purchaseTermsPlaceholder = template.code === READER_DIGITAL_CONTENT_TERMS_CODE &&
+    isReaderPurchaseTermsPlaceholder(template.body);
   const currentAdminApproval = evidence.find(
     (item) => item.templateVersion === template.version && item.evidenceType === "admin_approval",
   );
@@ -66,6 +69,10 @@ export function ContractTemplateReviewEvidencePanel({
 
       {currentAdminApproval ? (
         <EvidenceCard evidence={currentAdminApproval} title="Admin Onayı" />
+      ) : template.lifecycleStatus === "review" && purchaseTermsPlaceholder ? (
+        <div className="contract-review-evidence-waiting">
+          Bu metin yalnızca çalışma taslağıdır. Önce tamamlanmış satın alma koşullarını kaydedin; taslak için Admin Onayı verilemez.
+        </div>
       ) : template.lifecycleStatus === "review" ? (
         <form action={recordContractTemplateReviewEvidenceAction} className="contract-review-evidence-form">
           <input type="hidden" name="templateId" value={template.id} />

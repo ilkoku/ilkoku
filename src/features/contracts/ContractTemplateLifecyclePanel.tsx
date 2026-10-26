@@ -125,7 +125,11 @@ export function ContractTemplateLifecyclePanel({
         {template.lifecycleStatus === "review" ? (
           <>
             <LifecycleButton label="Taslağa geri al" templateId={template.id} transition="return_draft" />
-            {hasCurrentAdminApproval && !purchaseTermsPlaceholder ? (
+            {purchaseTermsPlaceholder ? (
+              <span className="contract-lifecycle-evidence-lock">
+                Nihai satın alma koşulları yazılmadan onay verilemez. Önce çalışma taslağını tamamlayıp kaydedin.
+              </span>
+            ) : hasCurrentAdminApproval ? (
               <LifecycleButton label="Şablonu onayla" templateId={template.id} transition="approve" tone="primary" />
             ) : (
               <span className="contract-lifecycle-evidence-lock">

@@ -185,9 +185,14 @@ export default async function WriterCommerceWorkPage({
               onayı tek akışta tamamla.
             </p>
           </div>
-          <Link className={styles.secondaryAction} href="/satis-erisim">
-            Eserlere dön
-          </Link>
+          <div className={styles.heroActions}>
+            <Link className={styles.secondaryAction} href={`/satis-erisim/satici-yetkileri?workId=${encodeURIComponent(work.id)}`}>
+              Satıcı ve satış yetkisi başvurusu
+            </Link>
+            <Link className={styles.quietAction} href="/satis-erisim">
+              Eserlere dön
+            </Link>
+          </div>
         </header>
 
         {flash ? <div className={styles.flash}>{flash}</div> : null}

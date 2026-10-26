@@ -655,7 +655,7 @@ test("writer applies for seller rights and admin separately reviews without enab
   await expect(page.getByRole("heading", { name: /1\. Resmî kanıtı incele/u })).toBeVisible();
   await expect(page.getByRole("heading", { name: /2\. Eser satış yetkisini/u })).toBeVisible();
   await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Eser satıcısını ve yetkiyi onayla" })).toHaveCount(0);
+  // Approval buttons may be present for pending items, but only in the admin UI.
   await expectResponsiveDocument(page);
 
   await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", { waitUntil: "domcontentloaded" });

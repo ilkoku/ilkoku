@@ -186,8 +186,8 @@ export default async function WriterCommerceWorkPage({
             </p>
           </div>
           <div className={styles.heroActions}>
-            <Link className={styles.secondaryAction} href={`/satis-erisim/satici-yetkileri?workId=${encodeURIComponent(work.id)}`}>
-              Satıcı ve satış yetkisi başvurusu
+            <Link className={styles.secondaryAction} href="/satis-erisim/odeme-vergi-bilgileri">
+              Fatura ve vergi bilgilerim
             </Link>
             <Link className={styles.quietAction} href="/satis-erisim">
               Eserlere dön

@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isReaderPurchaseTermsPlaceholder, READER_DIGITAL_CONTENT_TERMS_CODE } from "@/features/commerce/checkout-terms";
 
 export type ContractTemplateReviewEvidenceType = "legal_review" | "product_owner_decision" | "admin_approval";
 
@@ -29,6 +30,8 @@ type LockedTemplate = {
   id: string;
   lifecycleStatus: string;
   version: number;
+  code: string;
+  body: string;
 };
 
 function bool(value: number | boolean) {
@@ -54,12 +57,15 @@ async function lockAdmin(transaction: Prisma.TransactionClient, actorId: string)
 }
 
 export async function listContractTemplateReviewEvidence(templateId: string) {
-  return prisma.$queryRaw<ContractTemplateReviewEvidenceRecord[]>`
+  const rows = await prisma.$queryRaw<ContractTemplateReviewEvidenceRecord[]>`
     SELECT id, templateId, templateVersion, evidenceType, reviewerLabel, note, recordedById, createdAt
     FROM ContractTemplateReviewEvidence
     WHERE templateId = ${templateId}
     ORDER BY templateVersion DESC, createdAt DESC
   `;
+  // Raw SQL drivers may return UNSIGNED INT values with a distinct numeric
+  // representation. Normalize before strict UI comparisons to the version.
+  return rows.map((row) => ({ ...row, templateVersion: Number(row.templateVersion) }));
 }
 
 export async function recordContractTemplateReviewEvidence(input: {
@@ -74,7 +80,7 @@ export async function recordContractTemplateReviewEvidence(input: {
     if (!actor) return { status: "forbidden" as const };
 
     const templates = await transaction.$queryRaw<LockedTemplate[]>`
-      SELECT id, version, lifecycleStatus
+      SELECT id, version, lifecycleStatus, code, body
       FROM ContractTemplate
       WHERE id = ${input.templateId}
       LIMIT 1
@@ -84,6 +90,13 @@ export async function recordContractTemplateReviewEvidence(input: {
     if (!template) return { status: "not_found" as const };
     if (template.lifecycleStatus !== "review") {
       return { status: "review_state_required" as const };
+    }
+    // Reject placeholder purchase terms BEFORE writing an approval record.
+    // The lifecycle transition independently enforces the same fail-closed gate.
+    if (input.evidenceType === "admin_approval" &&
+        template.code === READER_DIGITAL_CONTENT_TERMS_CODE &&
+        isReaderPurchaseTermsPlaceholder(template.body)) {
+      return { status: "purchase_terms_placeholder" as const };
     }
 
     const existing = await transaction.$queryRaw<Array<{ id: string }>>`

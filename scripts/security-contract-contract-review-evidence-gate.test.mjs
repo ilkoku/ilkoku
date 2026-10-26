@@ -99,3 +99,24 @@ test("new review evidence table is an acknowledged migration-only contract surfa
     "ContractTemplateReviewEvidence must be acknowledged by system-map runtime contracts",
   );
 });
+
+
+test("reader purchase approval reports placeholder refusal and never stores draft approval evidence", () => {
+  const repo = source("src/features/contracts/review-evidence.ts");
+  const page = source("src/app/sozlesme/sablonlar/[templateId]/page.tsx");
+  const panel = source("src/features/contracts/ContractTemplateReviewEvidencePanel.tsx");
+  const lifecycle = source("src/features/contracts/ContractTemplateLifecyclePanel.tsx");
+
+  contains(repo, 'input.evidenceType === "admin_approval"', "admin-only placeholder rejection");
+  contains(repo, "isReaderPurchaseTermsPlaceholder(template.body)", "placeholder checked before approval evidence write");
+  assert.ok(
+    repo.indexOf("isReaderPurchaseTermsPlaceholder(template.body)") <
+      repo.indexOf("INSERT INTO ContractTemplateReviewEvidence"),
+    "placeholder rejection must happen before recording admin approval",
+  );
+  contains(repo, "templateVersion: Number(row.templateVersion)", "SQL evidence version normalized for UI");
+  contains(page, 'reason === "purchase_terms_placeholder"', "visible placeholder-specific redirect feedback");
+  contains(page, 'role="alert"', "rejected approval must not silently look successful");
+  contains(panel, "template.lifecycleStatus === \"review\" && purchaseTermsPlaceholder", "draft cannot show approval form");
+  contains(lifecycle, "Nihai satın alma koşulları yazılmadan onay verilemez.", "review lifecycle tells user what blocks approval");
+});

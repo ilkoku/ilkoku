@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { prisma } from "@/lib/prisma";
 
 // An explicitly non-commercial promotional grant for one known QA work.
@@ -8,13 +10,21 @@ import { prisma } from "@/lib/prisma";
 export const TEST209_DEMO_SLUG = "yeni-test209-30820c6a";
 const TEST209_DEMO_WORK_ID = "6ebb633f-4356-459c-ac12-4fbd253a49e7";
 const TEST209_READER_NAME = "ERSİN OKURTEST";
+// Fixed account fingerprint, not a public/mutable profile name alone.
+const TEST209_READER_EMAIL_SHA256 = "ce87b63267a6875d790615f5c24e066bc3f963ab95331e89c46f7879dcf1a05a";
 
 export function isTest209DemoReader(input: {
   fullName: string | null | undefined;
+  email: string | null | undefined;
   role: string;
 }) {
-  return input.role === "reader" &&
-    input.fullName?.trim().normalize("NFC").toLocaleUpperCase("tr-TR") === TEST209_READER_NAME;
+  if (input.role !== "reader" ||
+      input.fullName?.trim().normalize("NFC").toLocaleUpperCase("tr-TR") !== TEST209_READER_NAME ||
+      !input.email) return false;
+  const hash = createHash("sha256")
+    .update(input.email.trim().toLowerCase(), "utf8")
+    .digest("hex");
+  return hash === TEST209_READER_EMAIL_SHA256;
 }
 
 export type Test209DemoResult =
@@ -28,11 +38,12 @@ export async function grantTest209DemoAccess(readerId: string): Promise<Test209D
       id: string;
       role: string;
       fullName: string | null;
+      email: string;
       status: string;
       isBanned: boolean | number;
       deletedAt: Date | null;
     }>>`
-      SELECT id, role, fullName, status, isBanned, deletedAt
+      SELECT id, role, fullName, email, status, isBanned, deletedAt
       FROM User
       WHERE id = ${readerId}
       FOR UPDATE

@@ -658,53 +658,56 @@ test("TEST209 0 TL demo appears in admin ops and author's QA overview, never as 
 });
 
 
-test("seller-rights admin forms use a scoped responsive layout without changing legal approval actions", () => {
-  const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
-  const css = source("src/app/admin/odeme-sistemi/satici-yetkileri/seller-rights.module.css");
-  has(page, 'import styles from "./seller-rights.module.css"', "route-scoped styles");
-  for (const id of ["seller-identity", "seller-verification", "sales-rights", "sales-approval", "current-sellers"]) {
-    has(page, 'id="' + id + '"', "accessible workflow section " + id);
-  }
-  for (const action of [
-    "registerLegalSellerDraftAction",
-    "verifyLegalSellerAction",
-    "registerWorkSalesRightsDraftAction",
-    "approveWorkSellerRightsAction",
-    "revokeWorkSellerAssignmentAction",
-  ]) {
-    has(page, "action={" + action + "}", "preserve seller action " + action);
-  }
-  for (const key of [
-    'name="kind"', 'name="legalName"', 'name="taxIdentifier"',
-    'name="taxOffice"', 'name="contactEmail"', 'name="contactPhone"',
-    'name="legalAddress"', 'name="reviewedOriginalEvidence"',
-    'name="workId"', 'name="legalPartyId"', 'name="evidenceUrl"',
-    'name="validUntil"', 'name="documentEvidence"',
-    'name="authorizationId"', 'name="reviewedSalesRightsEvidence"',
-    'name="assignmentId"', 'name="revokeReason"', 'name="confirmRevocation"',
-  ]) {
-    has(page, key, "seller-form contract remains " + key);
-  }
-  has(page, "styles.formGrid", "two-column controlled form layout");
-  has(page, "styles.fieldWide", "long evidence fields span the layout");
-  has(page, "styles.confirmLabel", "confirmations remain clearly visible");
-  has(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "desktop forms not four-column");
-  has(css, "grid-template-columns: minmax(0, 1fr)", "mobile forms use one column");
-  has(css, "width: 100%", "inputs fit their columns");
-  has(css, "color-scheme: dark", "native inputs harmonize with admin UI");
-  has(css, ":focus-visible", "keyboard focus visible");
-  has(page, "Gerçek kişi", "seller types preserved");
-  has(page, "Satıcı taslağını kaydet", "seller action wording preserved");
+test("writer-owned seller identity and sales-rights submissions stay pending until admin review", () => {
+  const writerPage = source("src/app/satis-erisim/satici-yetkileri/page.tsx");
+  const writerActions = source("src/features/commerce/seller-writer-actions.ts");
+  const writerIndex = source("src/app/satis-erisim/page.tsx");
+  const workPage = source("src/app/satis-erisim/[workId]/page.tsx");
+  const adminPage = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const adminActions = source("src/features/commerce/seller-admin-actions.ts");
+  const css = source("src/app/satis-erisim/satici-yetkileri/writer-seller-rights.module.css");
+
+  has(writerPage, 'profile.role !== "writer"', "writers only");
+  has(writerPage, "ownerUserId: profile.id", "list only owned seller identities");
+  has(writerPage, "authorId: profile.id", "list only owned works");
+  has(writerPage, "submitWriterLegalSellerAction", "author identity form");
+  has(writerPage, "submitWriterSalesRightsAction", "author sales rights form");
+  has(writerIndex, 'href="/satis-erisim/satici-yetkileri"', "writer menu entry");
+  has(workPage, '/satis-erisim/satici-yetkileri?workId=', "link with selected work");
+  has(writerActions, '"use server";', "submission runs on server");
+  has(writerActions, 'user.role !== "writer"', "role enforcement");
+  has(writerActions, "ownerUserId: writer.id", "owner account checks");
+  has(writerActions, "authorId: writer.id", "work ownership filter");
+  has(writerActions, 'status: "pending"', "rights stay pending");
+  has(writerActions, 'verificationStatus: "pending"', "legal entity remains unverified");
+  has(writerActions, 'kind: z.enum(["individual", "organization"])', "writer cannot impersonate platform operator");
+  has(writerActions, 'evidenceUrl: z.url()', "evidence URL validation");
+  has(writerActions, 'createHash("sha256")', "evidence digest recorded");
+  lacks(writerActions, 'status: "verified"', "writer never verifies self");
+  lacks(writerActions, 'status: "approved"', "writer never self-approves");
+  lacks(writerActions, "workSellerAssignment.create", "assignment not created by writer");
+  has(adminActions, "async function adminIdentity()", "admin role gate preserved");
+  has(adminActions, "approveWorkSellerRightsAction", "admin verification stays");
+  has(adminPage, "verifyLegalSellerAction", "admin identity review stays");
+  has(adminPage, "approveWorkSellerRightsAction", "admin rights approval stays");
+  has(adminPage, "revokeWorkSellerAssignmentAction", "admin revocation stays");
+  lacks(adminPage, "action={registerLegalSellerDraftAction}", "writer identity form not in admin");
+  lacks(adminPage, "action={registerWorkSalesRightsDraftAction}", "writer rights form not in admin");
+  has(css, "grid-template-columns: repeat(2,minmax(0,1fr))", "desktop grid readable");
+  has(css, "@media(max-width:710px)", "mobile layout");
 });
 
-
-test("seller-rights visible steps keep stable numbered accessible headings", () => {
+test("admin seller review workflow keeps readable stages and scope", () => {
   const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
   const css = source("src/app/admin/odeme-sistemi/satici-yetkileri/seller-rights.module.css");
-  for (const step of ["1. ", "2. ", "3. ", "4. "]) {
-    has(page, "styles.screenReaderOnly}>" + step, "numbered accessible step");
+  for (const id of ["seller-verification", "sales-approval", "current-sellers"]) {
+    has(page, 'id="' + id + '"', "admin review section " + id);
   }
-  has(page, "Resmi satıcı kimliği oluştur</h2>", "existing identity step wording");
-  has(page, "Resmî kanıtı incele", "existing verification step wording");
-  has(css, ".screenReaderOnly", "visible step badges do not duplicate numbered headings");
+  has(page, "styles.formGrid", "two-column review controls");
+  has(page, "styles.fieldWide", "long review evidence inputs");
+  has(page, "styles.confirmLabel", "explicit administrator confirmation");
+  has(page, 'styles.screenReaderOnly}>1. ', "admin identity review label");
+  has(page, 'styles.screenReaderOnly}>2. ', "admin sales rights review label");
+  has(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "desktop form grid");
+  has(css, "grid-template-columns: minmax(0, 1fr)", "mobile form grid");
 });

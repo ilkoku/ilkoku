@@ -663,8 +663,9 @@ test("writer enters only invoicing status and billing details; admin remains sep
   await page.context().addCookies([{ name: authFixture.cookieName, value: adminToken, url: authCookieUrl }]);
   await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: /Satıcı ve Satış Yetkisi/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /1\. Resmî kanıtı incele/u })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Hukukî satıcı taslağı oluştur" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2\. Resmî kanıtı incele/u })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Doğrulanmamış satıcı taslağı oluştur" })).toBeVisible();
   await expectResponsiveDocument(page);
 });
 

@@ -2355,3 +2355,121 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+
+/* Reader-owned history and the library link use the existing dark + gold
+ * reader design. This overrides only the scoped reader routes, not admin.
+ */
+.readerPurchasedPage .readerLibraryHeaderActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.readerPaymentHistoryPage .demoHistorySection,
+.readerPaymentHistoryPage .realOrdersSection {
+  display: grid;
+  gap: 14px;
+}
+
+.readerPaymentHistoryPage .demoHistoryHeading {
+  display: grid;
+  gap: 6px;
+}
+
+.readerPaymentHistoryPage .demoHistoryHeading h2,
+.readerPaymentHistoryPage .realOrdersSection > h2 {
+  margin: 0;
+  color: #f4f2f8;
+  font-size: clamp(1.18rem, 2vw, 1.4rem);
+}
+
+.readerPaymentHistoryPage .demoHistoryHeading p {
+  margin: 0;
+  color: #bfc4d1;
+  line-height: 1.55;
+}
+
+.readerPaymentHistoryPage .paymentHistoryCard,
+.readerPaymentHistoryPage .demoHistoryCard {
+  display: grid;
+  gap: 14px;
+  padding: clamp(1rem, 2vw, 1.4rem);
+  min-width: 0;
+  border: 1px solid rgba(215, 180, 63, 0.32);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #232833, #1b1f27);
+  color: #f4f2f8;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+}
+
+.readerPaymentHistoryPage .demoHistoryCard {
+  border-color: rgba(169, 129, 231, 0.42);
+}
+
+.readerPaymentHistoryPage :is(.paymentHistoryCard, .demoHistoryCard) :is(h2, h3) {
+  color: #f4f2f8;
+  margin: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+
+.readerPaymentHistoryPage :is(.paymentHistoryCard, .demoHistoryCard) p {
+  margin: 0;
+  color: #bfc4d1;
+}
+
+.readerPaymentHistoryPage .demoHistoryFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.readerPaymentHistoryPage .demoHistoryFacts span,
+.readerPaymentHistoryPage .paymentAmounts span {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(215, 180, 63, 0.18);
+  border-radius: 12px;
+  background: #1b2029;
+  color: #bfc4d1;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.readerPaymentHistoryPage .demoHistoryFacts strong,
+.readerPaymentHistoryPage .paymentAmounts strong {
+  color: #f4f2f8;
+  font-weight: 700;
+}
+
+.readerPaymentHistoryPage .paymentHistoryCard small {
+  color: #d0c1e8;
+}
+
+.readerPaymentHistoryPage .paymentHistoryCard .quietAction {
+  color: #d5bdff;
+}
+
+.readerPaymentHistoryPage .empty {
+  border-color: rgba(215, 180, 63, 0.32);
+  border-radius: 16px;
+  background: #1b1f27;
+  color: #bfc4d1;
+}
+
+@media (max-width: 720px) {
+  .readerPurchasedPage .readerLibraryHeaderActions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .readerPurchasedPage .readerLibraryHeaderActions a {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .readerPaymentHistoryPage .demoHistoryFacts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

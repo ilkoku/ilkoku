@@ -38,7 +38,22 @@ jobs:
           CURRENT_RUN_ID: ${{ github.run_id }}
         run: |
           gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/origin-incident-trap.yml/runs?event=schedule&per_page=25" \
-            | node scripts/origin-schedule-coverage.mjs
+            > "${RUNNER_TEMP}/origin-schedule-history.json"
+          python3 scripts/origin-schedule-coverage.py < "${RUNNER_TEMP}/origin-schedule-history.json"
+
+      - name: Report scheduled coverage analyzer failure
+        if: github.event_name == 'schedule' && steps.coverage.outcome == 'failure'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "::warning::Origin scheduled-monitor coverage analyzer failed; healthy HTTP probes do not certify coverage."
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/issues/1856" --jq '.state' 2>/dev/null || echo unknown)"
+          if [[ "$state" == 'open' ]]; then
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/1856/comments" \
+              -f body="SCHEDULE_COVERAGE ANALYZER_FAILURE in Actions run ${RUN_ID}: the GitHub-only coverage step failed. This is NOT a detected HTTP outage. Existing production probes still run independently."
+          fi
 
       - name: Capture deployment and Cloudflare edge responses
         id: probe

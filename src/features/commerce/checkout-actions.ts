@@ -11,6 +11,7 @@ import { getActiveReaderPurchaseTerms } from "./checkout-terms";
 import { startPaidCheckout } from "./paid-checkout";
 import type { CommercePaymentMethod } from "./payment-providers";
 import { completeZeroTotalCheckout } from "./zero-total-checkout";
+import { grantTest209DemoAccess, isTest209DemoReader, TEST209_DEMO_SLUG } from "./test209-demo-access";
 
 function parsePaymentMethod(value: FormDataEntryValue | null): CommercePaymentMethod | null {
   return value === "card" || value === "carrier" ? value : null;
@@ -120,6 +121,54 @@ export async function completeZeroTotalCheckoutAction(formData: FormData) {
   redirect(destination(slug, statusByReason[result.reason], returnTo));
 }
 
+
+
+/**
+ * TEST209-only reader QA. Grants a visibly labeled promotional entitlement,
+ * not a sale. Never creates an Order, Payment, OrderLegalSnapshot or ledger.
+ * The real 0 TL checkout remains seller-verified and unchanged.
+ */
+export async function completeTest209ZeroTlDemoAction(formData: FormData) {
+  const user = await getCurrentUser();
+  const slug = String(formData.get("slug") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "").trim();
+
+  if (!user) {
+    redirect(`/giris?sonraki=${encodeURIComponent(destination(TEST209_DEMO_SLUG, "giris-gerekli", returnTo))}`);
+  }
+  if (!isTest209DemoReader(user) || !canAccessReaderWorkspace(user.role)) {
+    redirect("/erisim-reddedildi?kaynak=reader");
+  }
+  if (slug !== TEST209_DEMO_SLUG) {
+    redirect("/erisim-reddedildi?kaynak=reader");
+  }
+  if (formData.get("acceptDemoAccess") !== "on") {
+    redirect(destination(slug, "deneme-onayi-gerekli", returnTo));
+  }
+
+  // A live reader terms document is still required; demo may not use an
+  // inactive contract, but it does not record a false sales consent either.
+  const terms = await getActiveReaderPurchaseTerms();
+  if (!terms) {
+    redirect(destination(slug, "satin-alma-kosullari-hazir-degil", returnTo));
+  }
+
+  await enforceAdultWorkGate({
+    returnTo: destination(slug, "yas-kontrolu", returnTo),
+    slug,
+    user,
+  });
+
+  const result = await grantTest209DemoAccess(user.id);
+  if (result.ok) {
+    redirect(`/kutuphanem/satin-aldiklarim?durum=deneme-erisim&deneme=${encodeURIComponent(result.entitlementId)}`);
+  }
+  if (result.reason === "already_entitled") {
+    redirect("/kutuphanem/satin-aldiklarim?durum=zaten-erisim-var");
+  }
+
+  redirect(destination(slug, "deneme-hazir-degil", returnTo));
+}
 
 export async function beginPaidCheckoutAction(formData: FormData) {
   const user = await getCurrentUser();

@@ -2250,3 +2250,108 @@
     gap: 5px 8px;
   }
 }
+
+
+/* TEST209: explicit, reversible cancellation of a promotional trial. */
+.readerPurchasedPage .testCancelDetails {
+  border: 1px solid rgba(212, 175, 55, 0.26);
+  border-radius: 12px;
+  background: #1c212b;
+  color: #f0eaf8;
+}
+
+.readerPurchasedPage .testCancelDetails > summary {
+  padding: 12px 14px;
+  color: #e1c1ff;
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+.readerPurchasedPage .testCancelDetails > summary:hover {
+  color: #fff;
+  background: rgba(109, 40, 217, 0.09);
+}
+
+.readerPurchasedPage .testCancelPanel {
+  display: grid;
+  gap: 12px;
+  padding: 4px 14px 14px;
+}
+
+.readerPurchasedPage .testCancelPanel p {
+  margin: 0;
+  color: #bec3d0;
+  line-height: 1.5;
+  font-size: 0.88rem;
+}
+
+.readerPurchasedPage .testCancelConfirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #f0eaf8;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.readerPurchasedPage .testCancelConfirm input {
+  margin-top: 3px;
+  accent-color: #8554e8;
+}
+
+.readerPurchasedPage .testCancelButton {
+  min-height: 42px;
+  border: 1px solid #ce8b91;
+  border-radius: 10px;
+  background: #512930;
+  color: #ffe7ea;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.readerPurchasedPage .testCancelButton:hover {
+  background: #6a2e38;
+}
+
+.readerPurchasedPage .testCancelButton:focus-visible,
+.readerPurchasedPage .testCancelDetails > summary:focus-visible {
+  outline: 2px solid var(--purchased-gold);
+  outline-offset: 2px;
+}
+
+.readerPurchasedPage .readerOrderPanel {
+  border: 1px solid var(--purchased-border);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #222631, #1b1f27);
+  color: var(--purchased-text);
+}
+
+.readerPurchasedPage .readerOrderPanel :is(h2, strong) {
+  color: var(--purchased-text);
+}
+
+.readerPurchasedPage .readerOrderPanel :is(p, dt, span) {
+  color: var(--purchased-muted);
+}
+
+.readerPurchasedPage .readerOrderPanel .readerCancelInfo {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 12px;
+  background: #252330;
+  color: var(--purchased-text);
+}
+
+.readerPurchasedPage .readerOrderPanel .readerCancelInfo p {
+  color: var(--purchased-muted);
+  margin: 0 0 10px;
+}
+
+.readerPurchasedPage .readerOrderPanel .readerCancelInfo a {
+  color: #e1c1ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

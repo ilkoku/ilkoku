@@ -1193,6 +1193,34 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(financeRow).toBeVisible();
   await expect(financeRow.getByText("sale_gross", { exact: true })).toBeVisible();
   await expect(financeRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
+  // Follow this same 0 TL order into the writer's read-only finance view.
+  const writerToken = authFixture.sessions?.writer;
+  expect(writerToken, "Missing disposable writer fixture").toBeTruthy();
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: writerToken, url: authCookieUrl },
+  ]);
+  await page.goto("/gelirler", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Gelirler", exact: true })).toBeVisible();
+  const writerOrder = page.locator("article").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(writerOrder).toBeVisible();
+  await expect(writerOrder).toContainText("CI Browser 0 TL Eser");
+  await expect(writerOrder).toContainText("₺0,00");
+  await expect(writerOrder).toContainText("15%");
+
+  // Confirm the day-close screen stays an admin-only read-only export view.
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+  const dayClose = await page.goto(
+    "/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim",
+    { waitUntil: "domcontentloaded" },
+  );
+  expect(dayClose?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Gün Sonu Muhasebe Aktarımı" })).toBeVisible();
+  await expect(page.getByText("İlkOku fatura düzenlemez.")).toBeVisible();
+  await expect(page.locator("code").filter({ hasText: "muhasebe_on_hazirlik.csv" }).first()).toBeVisible();
 });
 
 test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {

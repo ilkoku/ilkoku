@@ -1136,6 +1136,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
         "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId = o.id) AS consentCount,",
         "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId = o.id AND s.sellerName = 'CI ONLY MOCK SELLER - NOT A REAL ENTITY') AS legalSnapshotCount,",
         "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId = o.id AND e.status = 'active') AS entitlementCount,",
+        "(SELECT COUNT(*) FROM OrderCommissionRateSnapshot r WHERE r.orderId = o.id AND r.commissionRateBps = 1500 AND r.serviceFeeRateBps = 500 AND r.source = 'global' AND r.calculationVersion = 'rate-v1') AS rateSnapshotCount,",
         "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType = 'sale_gross' AND l.amount = 0) AS zeroGrossCount,",
         "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType IN ('author_earning', 'platform_commission', 'payment_provider_fee')) AS moneyMoveCount",
         "FROM \x60Order\x60 o WHERE o.orderNo = ?",
@@ -1158,6 +1159,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
       expect(Number(record.consentCount)).toBe(1);
       expect(Number(record.legalSnapshotCount)).toBe(1);
       expect(Number(record.entitlementCount)).toBe(1);
+      expect(Number(record.rateSnapshotCount), "0 TL orders must preserve the frozen default 15% / conditional 5% rate snapshot").toBe(1);
       expect(Number(record.zeroGrossCount)).toBe(1);
       expect(Number(record.moneyMoveCount)).toBe(0);
     } finally {

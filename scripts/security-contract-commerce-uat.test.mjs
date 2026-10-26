@@ -656,3 +656,43 @@ test("TEST209 0 TL demo appears in admin ops and author's QA overview, never as 
   has(dayClose, "prisma.order.findMany", "day-close uses sales orders");
   lacks(dayClose, "prisma.workEntitlement.findMany", "promotions excluded from accounting close");
 });
+
+
+test("seller-rights admin forms use a scoped responsive layout without changing legal approval actions", () => {
+  const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const css = source("src/app/admin/odeme-sistemi/satici-yetkileri/seller-rights.module.css");
+  has(page, 'import styles from "./seller-rights.module.css"', "route-scoped styles");
+  for (const id of ["seller-identity", "seller-verification", "sales-rights", "sales-approval", "current-sellers"]) {
+    has(page, 'id="' + id + '"', "accessible workflow section " + id);
+  }
+  for (const action of [
+    "registerLegalSellerDraftAction",
+    "verifyLegalSellerAction",
+    "registerWorkSalesRightsDraftAction",
+    "approveWorkSellerRightsAction",
+    "revokeWorkSellerAssignmentAction",
+  ]) {
+    has(page, "action={" + action + "}", "preserve seller action " + action);
+  }
+  for (const key of [
+    'name="kind"', 'name="legalName"', 'name="taxIdentifier"',
+    'name="taxOffice"', 'name="contactEmail"', 'name="contactPhone"',
+    'name="legalAddress"', 'name="reviewedOriginalEvidence"',
+    'name="workId"', 'name="legalPartyId"', 'name="evidenceUrl"',
+    'name="validUntil"', 'name="documentEvidence"',
+    'name="authorizationId"', 'name="reviewedSalesRightsEvidence"',
+    'name="assignmentId"', 'name="revokeReason"', 'name="confirmRevocation"',
+  ]) {
+    has(page, key, "seller-form contract remains " + key);
+  }
+  has(page, "styles.formGrid", "two-column controlled form layout");
+  has(page, "styles.fieldWide", "long evidence fields span the layout");
+  has(page, "styles.confirmLabel", "confirmations remain clearly visible");
+  has(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "desktop forms not four-column");
+  has(css, "grid-template-columns: minmax(0, 1fr)", "mobile forms use one column");
+  has(css, "width: 100%", "inputs fit their columns");
+  has(css, "color-scheme: dark", "native inputs harmonize with admin UI");
+  has(css, ":focus-visible", "keyboard focus visible");
+  has(page, "Gerçek kişi", "seller types preserved");
+  has(page, "Satıcı taslağını kaydet", "seller action wording preserved");
+});

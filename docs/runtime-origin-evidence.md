@@ -48,3 +48,9 @@ Hostinger runtime logs for the deployment at **2026-10-25 21:44 UTC / 26 October
 Exit 143 is commonly the Unix SIGTERM convention (128+15). Coincidence with the recorded Hostinger deployment minute does not establish which controller sent the signal; multiple startups alone do not prove an app crash or a process cap. Cloudflare Requests for **21:43–21:47 UTC** showed **38 edge requests, 0 5xx**; Origin showed **37 reached, 0 failed connections, 0 origin HTTP 5xx**. These observations do not explain earlier scanner-coincident 503/520/525 incidents.
 
 This is a logging-only quality fix: no runtime signal handlers, process count, host settings, external probes, DNS/WAF/SSL, routes, or payments are changed. Keep origin incident #1856 open pending Hostinger 443/proxy logs and longer-window error evidence.
+
+## GitHub schedule coverage calibration (26 October 2026)
+
+The origin trap is configured for **every 5 minutes**, but Actions run history recorded successful **scheduled** traps at 2026-10-26 **00:13:57 UTC** and **04:52:32 UTC**—a **279-minute** window without scheduled executions. Hourly private runtime checks were also sporadic. GitHub documents that scheduled events can be delayed or dropped. **A missing probe is not evidence of website downtime.**
+
+The read-only `scripts/origin-schedule-coverage.mjs` examines **GitHub workflow-run metadata only** when the scheduled workflow resumes. A gap over **20 minutes** gets a GitHub Actions warning and, when #1856 is open, an incident comment; missing/insufficient history is recorded as **UNKNOWN**, never as healthy. There are no new site requests, changes to the cron interval, TLS, DNS, WAF, Hostinger, Next.js runtime or probe circuit breaker. This provides **retrospective visibility**, not guaranteed real-time incident detection. A separately authorized independent scheduler would be needed to address schedule availability itself.

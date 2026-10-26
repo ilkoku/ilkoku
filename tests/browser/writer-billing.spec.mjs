@@ -39,6 +39,14 @@ test("disposable writer billing declaration: persist, admin read-only view, clea
     expect(writers).toHaveLength(1);
     const authorId = writers[0].id;
 
+    // Keep retries independent: the first attempt may have saved this
+    // disposable test writer's profile before another assertion fails.
+    // This test can run only against the exact CI recovery database above.
+    await db.execute(
+      "DELETE FROM `AuthorBillingProfile` WHERE authorId = ?",
+      [authorId],
+    );
+
     await page.setViewportSize({ width: 390, height: 844 });
     await asRole(page, "writer");
     const response = await page.goto(billingRoute, { waitUntil: "domcontentloaded" });
@@ -108,7 +116,7 @@ test("disposable writer billing declaration: persist, admin read-only view, clea
     await asRole(page, "admin");
     await page.goto(`${reviewRoute}?yazar=${writerPublicId}`, { waitUntil: "domcontentloaded" });
     await expect(page.getByText("Yazarın fatura beyanı — doğrulanmamış")).toBeVisible();
-    await expect(page.getByText("Faturasızım", { exact: true })).toBeVisible();
+    await expect(page.locator('[aria-label="Yazarın fatura beyanı"]')).toContainText("Faturasızım");
     await expect(page.getByText("Fatura unvanı: CI Writer Invoice Example")).toHaveCount(0);
   } finally {
     await db.end();

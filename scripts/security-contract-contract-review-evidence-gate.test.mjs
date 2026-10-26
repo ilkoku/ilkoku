@@ -138,3 +138,30 @@ test("one-time 0 TL reader terms import is review-only and guarded against overw
   notContains(sql, "INSERT INTO `ContractTemplateReviewEvidence`", "no fabricated admin evidence");
   notContains(sql, "`lifecycleStatus` = 'active'", "no auto publish");
 });
+
+test("0 TL terms v6 replace only matching v5 review draft and expose human admin approval without auto-activation", () => {
+  const migration = source("prisma/migrations/20261026153000_reader_0tl_admin_review_v6/migration.sql");
+  const doc = source("docs/COMMERCE_0TL_READER_TERMS_ADMIN_APPROVAL_V6_2026-10-26.md");
+  const panel = source("src/features/contracts/ContractTemplateReviewEvidencePanel.tsx");
+  const checkout = source("src/features/commerce/checkout-terms.ts");
+
+  contains(migration, "WHERE `id` = 'c5000000-0000-4000-8000-000000000002'", "only reader template");
+  contains(migration, "`version` = 5", "live v5 compare-and-swap");
+  contains(migration, "`version` = `version` + 1", "new v6 version");
+  contains(migration, "`body` LIKE 'ÇALIŞMA TASLAĞI — 0 TL DİJİTAL ESER EDİNİMİ%'", "old body identity guard");
+  contains(migration, "`lifecycleStatus` = 'review'", "remain in review");
+  contains(migration, "`active` = false", "do not auto-activate");
+  contains(migration, "`approvedById` = NULL", "do not forge approval actor");
+  contains(migration, "`approvedAt` = NULL", "do not forge approval time");
+  contains(migration, "`activatedAt` = NULL", "do not forge activation");
+  contains(doc, "ilkoku.com", "user-supplied platform label");
+  contains(doc, "İstanbul, Türkiye", "user-supplied location");
+  contains(doc, "doğrulanmış satıcı/yetki", "seller remains verified separately");
+  contains(doc, "0,00 TL", "zero TL scope");
+  contains(doc, "destek@ilkoku.com", "public support email");
+  assert.ok(!doc.trimStart().toLocaleLowerCase("tr-TR").startsWith("çalışma taslağı"), "body is no longer placeholder");
+  notContains(migration, "INSERT INTO `ContractTemplateReviewEvidence`", "do not invent admin confirmation");
+  notContains(migration, "'active',", "do not set active status");
+  contains(panel, "Admin Onayını ver ve Onaylı yap", "admin action remains only authenticated UI");
+  contains(checkout, "row.lifecycleStatus !== \"active\"", "checkout rejects non-active terms");
+});

@@ -77,4 +77,4 @@ Bu koşullar, ilgili gerçek taraf kimlikleri ve tüm zorunlu ön bilgilendirmel
 - [ ] Canlı sürüm/hash, 0 TL sipariş, bölüm kilidi, consent ve ledger uçtan uca doğrulandı.
 - [ ] Kart, telefon faturası ve pozitif tutarlı ödeme kapalı kaldı.
 
-**Uyarı:** Bu PR belge incelemesini sağlar. Veritabanı, satıcı/yetki kanıtı, çalışma zamanı ayarları ve canlı sözleşme durumu değiştirilmez. Bu taslağın GitHub'a konması, admin onayı veya yayın/aktivasyon yerine geçmez.
+**Aktarım işlemi:** Bu PR'daki korumalı veritabanı migration'ı üretim dağıtımı sırasında yalnızca değişmemiş `v3 / review / inactive` okur şablonuna sözleşme gövdesini `v4 / review / inactive` olarak aktarır. Satıcı/yetki kayıtları ve ödeme ayarları değiştirilmez. Önceki v3 Admin Onayı kanıtı tarihçede korunur ama v4 için geçerli değildir. Canlı aktarım yalnız başarılı merge + dağıtım + sürüm doğrulamasından sonra 'tamamlandı' kabul edilir. Nihai onay ve aktif yayın, gerçek hukukî bilgiler tamamlanınca ayrı admin işlemleridir.

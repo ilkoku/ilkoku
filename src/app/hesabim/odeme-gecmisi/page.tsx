@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
-import { listReaderPaymentHistory } from "@/features/commerce/reader-repository";
+import { listReaderPaymentHistory, listReaderZeroTlDemoActivity } from "@/features/commerce/reader-repository";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -51,11 +51,14 @@ export default async function ReaderPaymentHistoryPage() {
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const orders = await listReaderPaymentHistory(profile.id);
+  const [orders, demoActivity] = await Promise.all([
+    listReaderPaymentHistory(profile.id),
+    listReaderZeroTlDemoActivity(profile.id),
+  ]);
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.readerPurchasedPage} ${styles.readerPaymentHistoryPage}`}>
         <header className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>Hesabım</span>
@@ -65,14 +68,56 @@ export default async function ReaderPaymentHistoryPage() {
               görüntüleyebilirsin. 0 TL edinimlerde banka veya kart tahsilatı yapılmaz.
             </p>
           </div>
-          <Link className={styles.secondaryAction} href="/hesabim">
-            Hesabıma dön
-          </Link>
+          <div className={styles.heroActions}>
+            <Link className={styles.secondaryAction} href="/kutuphanem/satin-aldiklarim">
+              Kütüphaneme dön
+            </Link>
+            <Link className={styles.quietAction} href="/hesabim">
+              Hesabıma dön
+            </Link>
+          </div>
         </header>
 
+        {demoActivity.length > 0 ? (
+          <section className={styles.demoHistorySection} aria-label="0 TL deneme işlemleri">
+            <div className={styles.demoHistoryHeading}>
+              <span className={styles.eyebrow}>Ödeme olmayan işlemler</span>
+              <h2>0 TL Deneme İşlemleri — Tahsilat Yok</h2>
+              <p>
+                Bu kayıtlar ücretsiz erişim denemeleridir; sipariş, ödeme,
+                fatura, tahsilat veya iade işlemi değildir.
+              </p>
+            </div>
+            <div className={styles.paymentHistoryList}>
+              {demoActivity.map((demo) => (
+                <article className={styles.demoHistoryCard} key={demo.id}>
+                  <div>
+                    <span className={styles.eyebrow}>Deneme No: TEST-{demo.id.slice(0, 16).toUpperCase()}</span>
+                    <h3>{demo.work.title}</h3>
+                    <p>Başlangıç: {formatDate(demo.grantedAt)}</p>
+                    {demo.status === "revoked" && demo.revokedAt ? (
+                      <p>İptal: {formatDate(demo.revokedAt)}</p>
+                    ) : null}
+                  </div>
+                  <div className={styles.demoHistoryFacts}>
+                    <span>Bedel: <strong>0,00 TL</strong></span>
+                    <span>Tahsilat: <strong>Yok</strong></span>
+                    <span>Deneme erişimi: <strong>{demo.status === "active" ? "Aktif" : "İptal edildi"}</strong></span>
+                  </div>
+                  <Link className={styles.secondaryAction} href="/kutuphanem/satin-aldiklarim">
+                    Kütüphanemde görüntüle
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className={styles.realOrdersSection} aria-label="Gerçek siparişler">
+          <h2>Gerçek Siparişler</h2>
         {orders.length === 0 ? (
           <div className={styles.empty}>
-            Henüz ödeme geçmişinde gösterilecek bir sipariş yok.
+            Henüz gerçek sipariş veya tahsilat kaydın yok.
           </div>
         ) : (
           <section className={styles.paymentHistoryList}>
@@ -133,6 +178,7 @@ export default async function ReaderPaymentHistoryPage() {
             ))}
           </section>
         )}
+        </section>
       </div>
     </AppShell>
   );

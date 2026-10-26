@@ -12,6 +12,7 @@ const kindLabels = {
   self_employed_receipt: "e-Serbest meslek makbuzu (ayrı vergi hesabı gerekir)",
   gvk18_expense_receipt: "GVK 18 koşullarına uygun gider pusulası",
 };
+const declaredLabels = { invoicing: "Faturalıyım", non_invoicing: "Faturasızım" };
 const decisionLabels = {
   verified: "Belge incelemesi kaydedildi",
   needs_revision: "Eksik belge / yeniden inceleme",
@@ -33,6 +34,7 @@ export default async function AuthorTaxReviewAdminPage({
         publicId: true,
         displayName: true,
         fullName: true,
+        authorBillingProfile: { select: { invoiceStatus: true, updatedAt: true } },
         taxReviewsAsWriter: {
           orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
           take: 1,
@@ -55,6 +57,14 @@ export default async function AuthorTaxReviewAdminPage({
         fullName: true,
         displayName: true,
         status: true,
+        authorBillingProfile: { select: {
+          invoiceStatus: true,
+          billingName: true,
+          taxIdentifier: true,
+          taxOffice: true,
+          billingAddress: true,
+          updatedAt: true,
+        } },
         taxReviewsAsWriter: {
           orderBy: [{ reviewedAt: "desc" }, { id: "desc" }],
           take: 20,
@@ -138,6 +148,30 @@ export default async function AuthorTaxReviewAdminPage({
               </div>
             </div>
             <p>Hesap durumu: {selected.status} · Son inceleme: {stateText}</p>
+            <div className="admin-readonly-notice admin-commerce-readonly" aria-label="Yazarın fatura beyanı">
+              <strong>Yazarın fatura beyanı — doğrulanmamış</strong>
+              <p>
+                {selected.authorBillingProfile
+                  ? declaredLabels[selected.authorBillingProfile.invoiceStatus]
+                  : "Henüz faturalı/faturasız beyanı yok"}
+                {selected.authorBillingProfile
+                  ? " · Son güncelleme: " + formatFinanceDate(selected.authorBillingProfile.updatedAt)
+                  : ""}
+              </p>
+              {selected.authorBillingProfile?.invoiceStatus === "invoicing" ? (
+                <div>
+                  <p>Fatura unvanı: {selected.authorBillingProfile.billingName ?? "—"}</p>
+                  <p>Vergi / kimlik numarası: {selected.authorBillingProfile.taxIdentifier ?? "—"}</p>
+                  <p>Vergi dairesi: {selected.authorBillingProfile.taxOffice ?? "—"}</p>
+                  <p>Fatura adresi: {selected.authorBillingProfile.billingAddress ?? "—"}</p>
+                </div>
+              ) : null}
+              <p>
+                Bu bilgiler yalnız yazarın kendi beyanıdır. Mükellefiyeti veya
+                gider pusulası uygunluğunu kanıtlamaz. Aşağıdaki bağımsız belge
+                incelemesi, geçmiş siparişlerin vergi ve komisyon kaydını değiştirmez.
+              </p>
+            </div>
             {latest ? <p>Son kayıt: {decisionLabels[latest.decision]} · {kindLabels[latest.documentKind]}
               {" · "}{formatFinanceDate(latest.reviewedAt)}
               {latest.validUntil ? " · Son geçerlilik: " + formatFinanceDate(latest.validUntil) : ""}
@@ -216,12 +250,17 @@ export default async function AuthorTaxReviewAdminPage({
           </div>
           <div className="admin-table-wrap">
             <table className="admin-data-table admin-commerce-table">
-              <thead><tr><th>Yazar</th><th>İnceleme</th><th>İşlem</th></tr></thead>
+              <thead><tr><th>Yazar</th><th>Yazarın beyanı</th><th>İnceleme</th><th>İşlem</th></tr></thead>
               <tbody>
                 {writers.map((writer) => {
                   const state = resolveLatestAuthorTaxReview(writer.taxReviewsAsWriter[0] ?? null);
                   return <tr key={writer.id}>
                     <td><strong>{writer.displayName ?? writer.fullName}</strong><small>{writer.publicId}</small></td>
+                    <td>
+                      {writer.authorBillingProfile
+                        ? declaredLabels[writer.authorBillingProfile.invoiceStatus]
+                        : "Beyan yok"}
+                    </td>
                     <td>{state.state === "verified" ? "Belge incelemesi kayıtlı" : "İnceleme gerekli: " + state.state}</td>
                     <td><Link href={BASE + "?yazar=" + encodeURIComponent(writer.publicId)}>Yazarın belge kaydı</Link></td>
                   </tr>;

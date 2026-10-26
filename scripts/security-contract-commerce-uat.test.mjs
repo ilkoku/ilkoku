@@ -712,3 +712,26 @@ test("admin seller review workflow keeps readable stages and scope", () => {
   has(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "desktop form grid");
   has(css, "grid-template-columns: minmax(0, 1fr)", "mobile form grid");
 });
+
+
+test("admin finance sees writer invoice declaration without treating it as verified tax review", () => {
+  const admin = source("src/app/admin/finans-gelirler/yazar-vergi-inceleme/page.tsx");
+  const writer = source("src/app/gelirler/page.tsx");
+  const action = source("src/features/commerce/writer-billing-actions.ts");
+  has(admin, "authorBillingProfile:", "admin tax review reads declaration");
+  has(admin, "invoiceStatus: true", "only status in list");
+  has(admin, "billingAddress: true", "billing address in selected record");
+  has(admin, "Yazarın fatura beyanı — doğrulanmamış", "clear verification boundary");
+  has(admin, "Haricî doğrulama gerekir", "external tax verification guard remains");
+  has(admin, "recordAuthorTaxReviewAction", "separate manual finance review retained");
+  has(admin, 'Beyan yok', "no declaration handled");
+  has(admin, "Aşağıdaki bağımsız belge", "review independent of author's self report");
+  has(writer, "prisma.authorBillingProfile.findUnique", "writer income shows own declaration");
+  has(writer, "authorId: profile.id", "writer ownership restriction");
+  has(writer, "Fatura durumum", "writer income status indicator");
+  has(writer, 'href="/satis-erisim/odeme-vergi-bilgileri"', "writer can edit their billing info");
+  has(writer, "Bu yalnız kendi beyanındır", "not automatically verified");
+  lacks(action, "recordAuthorTaxReviewAction", "writer cannot attest own tax verification");
+  lacks(action, "financialLedger.create", "author declaration does not cause ledger entries");
+  lacks(action, "prisma.order.create", "author declaration cannot create orders");
+});

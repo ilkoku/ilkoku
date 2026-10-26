@@ -7,6 +7,7 @@ import { getCurrentProfile } from "@/features/auth/profile";
 import { getWriterFinanceOverview, getWriterTest209DemoCounts } from "@/features/commerce/finance-repository";
 import { hasOperationalPaymentProvider } from "@/features/commerce/payment-providers";
 import { isCommerceCheckoutEnabled } from "@/features/commerce/runtime";
+import { prisma } from "@/lib/prisma";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -50,10 +51,14 @@ export default async function WriterIncomePage() {
     redirect("/erisim-reddedildi");
   }
 
-  const [finance, checkoutEnabled, test209Demo] = await Promise.all([
+  const [finance, checkoutEnabled, test209Demo, billing] = await Promise.all([
     getWriterFinanceOverview(profile.id),
     Promise.resolve(isCommerceCheckoutEnabled()),
     getWriterTest209DemoCounts(profile.id),
+    prisma.authorBillingProfile.findUnique({
+      where: { authorId: profile.id },
+      select: { invoiceStatus: true },
+    }),
   ]);
   const providerReady = hasOperationalPaymentProvider();
   const paidCommerceLive = checkoutEnabled && providerReady;
@@ -80,6 +85,19 @@ export default async function WriterIncomePage() {
             {paidCommerceLive ? "Tahsilat aktif" : "Ödeme sistemi hazırlanıyor"}
           </span>
         </header>
+
+        <div className={styles.notice} role="status">
+          Fatura durumum:{" "}
+          <strong>
+            {billing?.invoiceStatus === "invoicing" ? "Faturalı"
+              : billing?.invoiceStatus === "non_invoicing" ? "Faturasız"
+                : "Henüz belirtilmedi"}
+          </strong>. Bu yalnız kendi beyanındır; mali belge incelemesi veya
+          hakediş onayı değildir.{" "}
+          <Link href="/satis-erisim/odeme-vergi-bilgileri">
+            Fatura ve vergi bilgilerimi görüntüle veya güncelle
+          </Link>.
+        </div>
 
         <section className={`${styles.statGrid} ${styles.writerFinanceStatGrid}`}>
           <article className={`${styles.stat} ${styles.writerFinanceStat}`}>

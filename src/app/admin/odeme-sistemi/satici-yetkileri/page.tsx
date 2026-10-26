@@ -32,21 +32,13 @@ export default async function SellerRightsAdminPage({
   searchParams: Promise<{ durum?: string }>;
 }) {
   const query = await searchParams;
-  const [parties, works, authorizations, assignments] = await Promise.all([
+  const [parties, authorizations, assignments] = await Promise.all([
     prisma.legalParty.findMany({
       orderBy: { createdAt: "desc" }, take: 80,
       select: {
         id: true, kind: true, legalName: true, taxIdentifier: true,
         verificationStatus: true, verifiedAt: true,
       },
-    }),
-    prisma.work.findMany({
-      where: {
-        archivedAt: null, isActive: true, status: "published",
-        saleConfiguration: { is: { saleModel: "paid", status: { in: ["ready", "active"] } } },
-      },
-      orderBy: { updatedAt: "desc" }, take: 100,
-      select: { id: true, title: true, slug: true },
     }),
     prisma.workSalesAuthorization.findMany({
       orderBy: { createdAt: "desc" }, take: 100,

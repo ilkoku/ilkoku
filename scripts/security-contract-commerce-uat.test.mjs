@@ -522,7 +522,7 @@ test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
   has(demo, "TEST209_READER_EMAIL_SHA256", "non-mutable QA account fingerprint");
   has(demo, 'input.email.trim().toLowerCase()', "account email matching");
   lacks(demo, "ersinokurtest@hotmail.com", "raw private account email not committed");
-  has(demo, 'input.role === "reader"', "reader-role test only");
+  has(demo, 'input.role !== "reader"', "reject non-reader roles");
   has(demo, "FOR UPDATE", "serialized QA access grant");
   has(demo, 'work.saleConfiguration?.status !== "ready"', "work must be ready");
   has(demo, 'work.saleConfiguration?.priceAmount !== BigInt(0)', "must be 0 TL");

@@ -543,3 +543,24 @@ test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
   has(normal, "getVerifiedWorkSeller(work.id, transaction)", "real purchases still need seller verification");
   has(normal, "transaction.orderLegalSnapshot.create", "real order legal evidence preserved");
 });
+
+
+test("reader purchased library uses its dark shell without leaking commerce theme to other routes", () => {
+  const page = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const css = source("src/features/commerce/commerce.module.css");
+
+  has(page, "styles.readerPurchasedPage", "reader-only class applied");
+  has(css, ".readerPurchasedPage .hero", "dark hero scoped to purchased library");
+  has(css, "background: linear-gradient(112deg, #211c30", "dark header background");
+  has(css, ".readerPurchasedPage .card {", "dark purchased-work card scoped");
+  has(css, "background: linear-gradient(145deg, var(--purchased-surface-raised)", "no white purchased-work card");
+  has(css, ".readerPurchasedPage .hero h1", "explicit legible title");
+  has(css, ".readerPurchasedPage .card h2", "explicit legible work title");
+  has(css, ".readerPurchasedPage .successNotice", "success notification restyled");
+  has(css, "background: linear-gradient(120deg, #172b24", "no pale-green status banner");
+  has(css, ".readerPurchasedPage .grid", "card grid scoped to route");
+  has(css, ".readerPurchasedPage :is(.action, .secondaryAction, .quietAction):focus-visible", "keyboard focus retained");
+  has(css, "@media (max-width: 720px)", "mobile responsive CSS present");
+  has(page, "completedDemo", "valid trial success evidence preserved");
+  has(page, "entitlement.order?.orderNo", "purchase history remains visible");
+});

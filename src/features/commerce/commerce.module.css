@@ -2047,3 +2047,206 @@
   }
   .readerCheckoutPage .checkoutStages > div { padding: 0.65rem 0.8rem; }
 }
+
+
+/*
+ * Reader > Kütüphanem > Satın Aldıklarım.
+ * Keep these styles route-scoped: shared commerce module also serves writers,
+ * admin workspaces, checkout and payment history.
+ *
+ * Match the reader's dark shell and muted gold frame, with the same purple
+ * reading CTA as its navigation. Never place muted dark text on white cards.
+ */
+.readerPurchasedPage {
+  --purchased-surface: #1b1f27;
+  --purchased-surface-raised: #232833;
+  --purchased-text: #f4f2f8;
+  --purchased-muted: #bfc4d1;
+  --purchased-border: rgba(215, 180, 63, 0.32);
+  --purchased-gold: #e4bc42;
+  width: min(100%, 74rem);
+  min-width: 0;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 2vw, 1.75rem);
+  gap: clamp(1rem, 2.3vw, 1.4rem);
+  color: var(--purchased-text);
+  color-scheme: dark;
+}
+
+.readerPurchasedPage .hero {
+  position: relative;
+  align-items: center;
+  overflow: hidden;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  border: 1px solid var(--purchased-border);
+  border-radius: 20px;
+  background: linear-gradient(112deg, #211c30 0%, #1a1e26 60%, #24232d 100%);
+  color: var(--purchased-text);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
+}
+
+.readerPurchasedPage .hero::before {
+  position: absolute;
+  inset: -1px 1.5rem auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 180, 63, 0.7), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.readerPurchasedPage .eyebrow {
+  color: var(--purchased-gold);
+}
+
+.readerPurchasedPage .hero h1 {
+  color: var(--purchased-text);
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+  line-height: 1.25;
+}
+
+.readerPurchasedPage .hero p {
+  max-width: 64ch;
+  margin-bottom: 0;
+  color: var(--purchased-muted);
+}
+
+.readerPurchasedPage .secondaryAction {
+  flex-shrink: 0;
+  border: 1px solid rgba(215, 180, 63, 0.36);
+  background: #292536;
+  color: #f4eaff;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.readerPurchasedPage .secondaryAction:hover {
+  border-color: rgba(215, 180, 63, 0.65);
+  background: #352d45;
+}
+
+.readerPurchasedPage .successNotice,
+.readerPurchasedPage .notice {
+  margin: 0;
+  padding: clamp(1rem, 2vw, 1.25rem);
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.readerPurchasedPage .successNotice {
+  border: 1px solid rgba(95, 189, 127, 0.34);
+  border-left: 3px solid #62c88c;
+  background: linear-gradient(120deg, #172b24, #1b242b 72%, #20232c);
+  color: #d7f5e3;
+}
+
+.readerPurchasedPage .successNotice strong,
+.readerPurchasedPage .successNotice p {
+  color: #e0f9e9;
+}
+
+.readerPurchasedPage .successNotice p {
+  margin: 0.3rem 0 0;
+}
+
+.readerPurchasedPage .notice {
+  border: 1px solid rgba(215, 180, 63, 0.36);
+  background: #242418;
+  color: #f2e5b1;
+}
+
+.readerPurchasedPage .notice strong {
+  color: inherit;
+}
+
+.readerPurchasedPage .grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: stretch;
+  gap: 16px;
+}
+
+.readerPurchasedPage .card {
+  min-width: 0;
+  align-content: space-between;
+  gap: 14px;
+  padding: clamp(1.1rem, 2vw, 1.5rem);
+  border: 1px solid var(--purchased-border);
+  border-radius: 18px;
+  background: linear-gradient(145deg, var(--purchased-surface-raised), var(--purchased-surface));
+  color: var(--purchased-text);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+}
+
+.readerPurchasedPage .card h2 {
+  margin: 0.35rem 0 0;
+  color: var(--purchased-text);
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.readerPurchasedPage .card p {
+  margin: 0.4rem 0 0;
+  color: var(--purchased-muted);
+}
+
+.readerPurchasedPage .cardMeta {
+  gap: 8px;
+  color: var(--purchased-muted);
+  overflow-wrap: anywhere;
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.readerPurchasedPage .cardMeta span {
+  min-width: 0;
+}
+
+.readerPurchasedPage .action {
+  min-height: 46px;
+  border: 1px solid rgba(198, 169, 255, 0.25);
+  background: #6d28d9;
+  color: #fff;
+  font-weight: 750;
+  text-align: center;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.readerPurchasedPage .action:hover {
+  background: #7c3aed;
+  box-shadow: 0 8px 24px rgba(109, 40, 217, 0.18);
+}
+
+.readerPurchasedPage .quietAction {
+  color: #d5bdff;
+}
+
+.readerPurchasedPage .empty {
+  border-color: var(--purchased-border);
+  background: var(--purchased-surface);
+  color: var(--purchased-muted);
+}
+
+.readerPurchasedPage :is(.action, .secondaryAction, .quietAction):focus-visible {
+  outline: 2px solid var(--purchased-gold);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .readerPurchasedPage .hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .readerPurchasedPage .hero .secondaryAction {
+    align-self: flex-start;
+  }
+
+  .readerPurchasedPage .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .readerPurchasedPage .cardMeta {
+    gap: 5px 8px;
+  }
+}

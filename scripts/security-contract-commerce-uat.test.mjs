@@ -507,3 +507,39 @@ test("0 TL admin readiness cannot show ready for an ineligible work despite appr
   has(settings, 'sampleZeroTotalStaged && sampleSeller && readerTermsReady',
     "do not claim a ready 0 TL checkout without all three prerequisites");
 });
+
+
+test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
+  const demo = source("src/features/commerce/test209-demo-access.ts");
+  const checkout = source("src/features/commerce/checkout-actions.ts");
+  const page = source("src/app/satinal/[slug]/page.tsx");
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const normal = source("src/features/commerce/zero-total-checkout.ts");
+
+  has(demo, 'TEST209_DEMO_SLUG = "yeni-test209-30820c6a"', "exact QA work slug");
+  has(demo, 'const TEST209_DEMO_WORK_ID = "6ebb633f-4356-459c-ac12-4fbd253a49e7"', "exact QA work id");
+  has(demo, 'const TEST209_READER_NAME = "ERSİN OKURTEST"', "single QA reader");
+  has(demo, "TEST209_READER_EMAIL_SHA256", "non-mutable QA account fingerprint");
+  has(demo, 'input.email.trim().toLowerCase()', "account email matching");
+  lacks(demo, "ersinokurtest@hotmail.com", "raw private account email not committed");
+  has(demo, 'input.role !== "reader"', "reject non-reader roles");
+  has(demo, "FOR UPDATE", "serialized QA access grant");
+  has(demo, 'work.saleConfiguration?.status !== "ready"', "work must be ready");
+  has(demo, 'work.saleConfiguration?.priceAmount !== BigInt(0)', "must be 0 TL");
+  has(demo, 'source: "promotion"', "promotion provenance rather than sale");
+  has(demo, 'transaction.workEntitlement.create', "only a test entitlement is issued");
+  lacks(demo, "transaction.order.create", "no sales order");
+  lacks(demo, "transaction.payment.create", "no payment");
+  lacks(demo, "transaction.financialLedger.create", "no commercial ledger");
+  lacks(demo, "transaction.orderLegalSnapshot.create", "no fabricated legal party snapshot");
+  has(checkout, "completeTest209ZeroTlDemoAction", "separate user-authorized trial action");
+  has(checkout, 'getActiveReaderPurchaseTerms()', "active reader terms still required");
+  has(checkout, 'formData.get("acceptDemoAccess")', "explicit reader consent to test");
+  has(page, "test209DemoReady", "demo is rendered only when qualified");
+  has(page, "0 TL denemeyi etkinleştir", "usable 0 TL test action");
+  has(page, "gerçek bir satış veya ödeme olmadığını", "non-sale disclosure");
+  has(library, "deneme-erisim", "reader receipt state");
+  has(library, "completedDemo.id.slice", "non-order test reference");
+  has(normal, "getVerifiedWorkSeller(work.id, transaction)", "real purchases still need seller verification");
+  has(normal, "transaction.orderLegalSnapshot.create", "real order legal evidence preserved");
+});

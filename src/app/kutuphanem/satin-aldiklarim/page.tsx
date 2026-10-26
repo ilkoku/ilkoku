@@ -26,7 +26,7 @@ function formatDate(value: Date) {
 export default async function PurchasedLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ durum?: string; siparis?: string }>;
+  searchParams: Promise<{ durum?: string; siparis?: string; deneme?: string }>;
 }) {
   const profile = await getCurrentProfile();
 
@@ -44,11 +44,24 @@ export default async function PurchasedLibraryPage({
   ]);
   // Never trust a URL-provided order number without confirming it belongs
   // to the current reader's active entitlement.
+  // A demo reference resolves ONLY through an actual entitlement belonging
+  // to this reader; URL parameters alone never certify a completed operation.
+  const completedDemo = query.durum === "deneme-erisim"
+    ? entitlements.find((item) =>
+        item.id === query.deneme &&
+        item.source === "promotion" &&
+        item.work.slug === "yeni-test209-30820c6a",
+      ) ?? null
+    : null;
   const completedOrderNo = query.durum === "eklendi"
     ? entitlements.find((item) => item.order?.orderNo === query.siparis)?.order?.orderNo ?? null
     : null;
   const flash =
-    query.durum === "eklendi" && completedOrderNo
+    query.durum === "deneme-erisim" && completedDemo
+      ? "0 TL deneme erişimi açıldı. TEST209 kütüphanene eklendi; gerçek sipariş veya tahsilat oluşturulmadı."
+      : query.durum === "deneme-erisim"
+        ? "Deneme erişimi bu hesap için doğrulanamadı."
+        : query.durum === "eklendi" && completedOrderNo
       ? "Satın alma başarılı. Eser kütüphanene eklendi."
       : query.durum === "eklendi"
         ? "Sipariş doğrulanamadı. Satın alınan eserleri aşağıdan kontrol edebilirsin."
@@ -73,8 +86,11 @@ export default async function PurchasedLibraryPage({
         </header>
 
         {flash ? (
-          <div className={completedOrderNo || query.durum === "zaten-erisim-var" ? styles.successNotice : styles.notice} role="status">
+          <div className={completedOrderNo || completedDemo || query.durum === "zaten-erisim-var" ? styles.successNotice : styles.notice} role="status">
             <strong>{flash}</strong>
+            {completedDemo ? (
+              <p>Deneme referansı: <strong>TEST-{completedDemo.id.slice(0, 16).toUpperCase()}</strong></p>
+            ) : null}
             {completedOrderNo ? (
               <div>
                 <p>Sipariş numarası: <strong>{completedOrderNo}</strong></p>
@@ -101,7 +117,9 @@ export default async function PurchasedLibraryPage({
                   <span className={styles.eyebrow}>
                     {entitlement.source === "purchase"
                       ? "Satın alındı"
-                      : "Erişim hakkı"}
+                      : entitlement.source === "promotion" && entitlement.work.slug === "yeni-test209-30820c6a"
+                        ? "0 TL test erişimi"
+                        : "Erişim hakkı"}
                   </span>
                   <h2>{entitlement.work.title}</h2>
                   <p>
@@ -112,6 +130,12 @@ export default async function PurchasedLibraryPage({
 
                 <div className={styles.cardMeta}>
                   <span>{formatDate(entitlement.grantedAt)}</span>
+                  {entitlement.source === "promotion" && entitlement.work.slug === "yeni-test209-30820c6a" ? (
+                    <>
+                      <span>•</span>
+                      <span>Deneme No: TEST-{entitlement.id.slice(0, 16).toUpperCase()}</span>
+                    </>
+                  ) : null}
                   {entitlement.order?.orderNo ? (
                     <>
                       <span>•</span>

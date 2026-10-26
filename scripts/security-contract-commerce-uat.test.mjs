@@ -598,3 +598,31 @@ test("0 TL TEST209 cancellation is a confirmed, owned, repeatable promotion-only
   has(order, "E-posta ile iptal / iade talebi gönder", "real order support route");
   has(order, "Siparişi kendiliğinden iptal etmez", "no fake refund claim");
 });
+
+
+test("reader library links to payment history and zero-TL TEST209 shows as a non-payment record", () => {
+  const library = source("src/app/kutuphanem/satin-aldiklarim/page.tsx");
+  const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  const repository = source("src/features/commerce/reader-repository.ts");
+  const css = source("src/features/commerce/commerce.module.css");
+  has(library, 'href="/hesabim/odeme-gecmisi"', "library-to-history route");
+  has(library, "Ödeme geçmişim", "visible library button");
+  has(history, "listReaderZeroTlDemoActivity(profile.id)", "reader-owned demo records loaded");
+  has(history, "listReaderPaymentHistory(profile.id)", "real orders still loaded");
+  has(repository, "export async function listReaderZeroTlDemoActivity(readerId: string)", "separate demo read");
+  has(repository, 'source: "promotion"', "only promotional grants");
+  has(repository, "orderId: null", "no real-order contamination");
+  has(repository, 'slug: "yeni-test209-30820c6a"', "exact TEST209 grant");
+  has(repository, 'status: { in: ["active", "revoked"] }', "cancelled trials remain visible");
+  has(history, "0 TL Deneme İşlemleri — Tahsilat Yok", "not described as real payments");
+  has(history, "sipariş, ödeme,", "no fabricated commercial transaction");
+  has(history, "Deneme No: TEST-", "test identifier kept separate from order number");
+  has(history, "Gerçek Siparişler", "separate sale history");
+  has(history, "Sipariş No: {order.orderNo}", "real order identity unchanged");
+  has(history, "Sipariş ayrıntısı", "real order detail route maintained");
+  has(history, "Kütüphaneme dön", "return navigation");
+  has(css, ".readerPaymentHistoryPage .demoHistoryCard", "dark scoped demo styles");
+  has(css, ".readerPurchasedPage .readerLibraryHeaderActions", "responsive header actions");
+  lacks(history, "prisma.order.create", "no fake order created");
+  lacks(repository, "order.create(", "history cannot create fake orders");
+});

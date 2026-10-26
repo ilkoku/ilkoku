@@ -1207,6 +1207,20 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(orderRow.getByText("0 TL edinildi", { exact: true })).toBeVisible();
   await expect(orderRow.getByText(/₺\s?0,00/u).first()).toBeVisible();
 
+  // 0 TL has its own provider-free method in admin Payments, without a
+  // synthetic Payment row or a card/carrier charge.
+  await page.goto("/sistem-yonetimi/odeme-sistemi/odemeler", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Ödemeler", exact: true })).toBeVisible();
+  const noChargeSection = page.locator('section[aria-labelledby="zero-total-orders-heading"]');
+  await expect(noChargeSection.getByRole("heading", { name: "Ücretli 0 TL işlemleri" })).toBeVisible();
+  const noChargeRow = noChargeSection.locator("tbody tr").filter({ hasText: completedZeroTotalOrderNo });
+  await expect(noChargeRow).toBeVisible();
+  await expect(noChargeRow.getByText("Ücretli 0 TL", { exact: true })).toBeVisible();
+  await expect(noChargeRow.getByText("Tahsilat yok", { exact: true })).toBeVisible();
+  await expect(noChargeRow.getByRole("link", { name: completedZeroTotalOrderNo })).toHaveAttribute(
+    "href", "/sistem-yonetimi/odeme-sistemi/siparisler?q=" + encodeURIComponent(completedZeroTotalOrderNo),
+  );
+
   await page.goto(
     "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),
     { waitUntil: "domcontentloaded" },

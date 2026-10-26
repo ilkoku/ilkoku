@@ -658,43 +658,41 @@ test("TEST209 0 TL demo appears in admin ops and author's QA overview, never as 
 });
 
 
-test("writer-owned seller identity and sales-rights submissions stay pending until admin review", () => {
-  const writerPage = source("src/app/satis-erisim/satici-yetkileri/page.tsx");
-  const writerActions = source("src/features/commerce/seller-writer-actions.ts");
+test("writer invoice status is self-declared, owner-scoped and does not create an order", () => {
+  const schema = source("prisma/schema.prisma");
+  const migration = source("prisma/migrations/20261026163000_author_billing_self_declaration/migration.sql");
+  const action = source("src/features/commerce/writer-billing-actions.ts");
+  const writerPage = source("src/app/satis-erisim/odeme-vergi-bilgileri/page.tsx");
+  const form = source("src/app/satis-erisim/odeme-vergi-bilgileri/WriterBillingForm.tsx");
   const writerIndex = source("src/app/satis-erisim/page.tsx");
-  const workPage = source("src/app/satis-erisim/[workId]/page.tsx");
-  const adminPage = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
-  const adminActions = source("src/features/commerce/seller-admin-actions.ts");
-  const css = source("src/app/satis-erisim/satici-yetkileri/writer-seller-rights.module.css");
+  const writerWork = source("src/app/satis-erisim/[workId]/page.tsx");
+  const legacy = source("src/app/satis-erisim/satici-yetkileri/page.tsx");
 
-  has(writerPage, 'profile.role !== "writer"', "writers only");
-  has(writerPage, "ownerUserId: profile.id", "list only owned seller identities");
-  has(writerPage, "authorId: profile.id", "list only owned works");
-  has(writerPage, "submitWriterLegalSellerAction", "author identity form");
-  has(writerPage, "submitWriterSalesRightsAction", "author sales rights form");
-  has(writerIndex, 'href="/satis-erisim/satici-yetkileri"', "writer menu entry");
-  has(workPage, '/satis-erisim/satici-yetkileri?workId=', "link with selected work");
-  has(writerActions, '"use server";', "submission runs on server");
-  has(writerActions, 'user.role !== "writer"', "role enforcement");
-  has(writerActions, "ownerUserId: writer.id", "owner account checks");
-  has(writerActions, "authorId: writer.id", "work ownership filter");
-  has(writerActions, 'status: "pending"', "rights stay pending");
-  has(writerActions, 'verificationStatus: "pending"', "legal entity remains unverified");
-  has(writerActions, 'kind: z.enum(["individual", "organization"])', "writer cannot impersonate platform operator");
-  has(writerActions, 'evidenceUrl: z.url()', "evidence URL validation");
-  has(writerActions, 'createHash("sha256")', "evidence digest recorded");
-  lacks(writerActions, 'status: "verified"', "writer never verifies self");
-  lacks(writerActions, 'status: "approved"', "writer never self-approves");
-  lacks(writerActions, "workSellerAssignment.create", "assignment not created by writer");
-  has(adminActions, "async function adminIdentity()", "admin role gate preserved");
-  has(adminActions, "approveWorkSellerRightsAction", "admin verification stays");
-  has(adminPage, "verifyLegalSellerAction", "admin identity review stays");
-  has(adminPage, "approveWorkSellerRightsAction", "admin rights approval stays");
-  has(adminPage, "revokeWorkSellerAssignmentAction", "admin revocation stays");
-  lacks(adminPage, "action={registerLegalSellerDraftAction}", "writer identity form not in admin");
-  lacks(adminPage, "action={registerWorkSalesRightsDraftAction}", "writer rights form not in admin");
-  has(css, "grid-template-columns: repeat(2,minmax(0,1fr))", "desktop grid readable");
-  has(css, "@media(max-width:710px)", "mobile layout");
+  has(schema, "model AuthorBillingProfile {", "separate author biller record");
+  has(schema, "authorId        String              @unique", "one billing record per writer");
+  has(migration, "CREATE TABLE `AuthorBillingProfile`", "migration available");
+  has(writerPage, "authorId: profile.id", "own billing data loaded");
+  has(writerPage, "WriterBillingForm", "editable billing form displayed");
+  has(form, 'name="invoiceStatus"', "two explicit status choices");
+  has(form, 'value="invoicing"', "faturalı option");
+  has(form, 'value="non_invoicing"', "faturasız option");
+  for (const key of ['name="billingName"', 'name="taxIdentifier"', 'name="taxOffice"', 'name="billingAddress"']) {
+    has(form, key, "invoice field present: " + key);
+  }
+  has(form, "{invoicing ? (", "invoice fields conditional");
+  has(action, 'writer.role !== "writer"', "writer role enforced on server");
+  has(action, "authorId: writer.id", "writer ownership of record");
+  has(action, "authorBillingProfile.upsert", "profile persists across sessions");
+  has(action, "taxVerified: false", "declaration does not impersonate verification");
+  has(action, "billingName: detail?.data.billingName ?? null", "no-invoice clears old billing details");
+  lacks(action, "workSalesAuthorization.create", "no writer sales authorization");
+  lacks(action, "order.create", "no fake purchase");
+  lacks(action, "financialLedger.create", "no financial transaction");
+  lacks(action, "payment.create", "no payment");
+  has(writerIndex, 'href="/satis-erisim/odeme-vergi-bilgileri"', "writer billing navigation");
+  lacks(writerIndex, 'href="/satis-erisim/satici-yetkileri"', "seller rights removed from writer navigation");
+  has(writerWork, 'href="/satis-erisim/odeme-vergi-bilgileri"', "per-work billing navigation");
+  has(legacy, 'redirect("/satis-erisim/odeme-vergi-bilgileri")', "old writer URL redirects");
 });
 
 test("admin seller review workflow keeps readable stages and scope", () => {

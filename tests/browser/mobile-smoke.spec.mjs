@@ -1223,6 +1223,70 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.locator("code").filter({ hasText: "muhasebe_on_hazirlik.csv" }).first()).toBeVisible();
 });
 
+test("day-close ZIP HTTP gate: admin-only, closed day, 13 private source files", async ({ page }) => {
+  test.skip(!authFixture, "Disposable authenticated browser fixture is required.");
+  const reader = authFixture.sessions?.reader;
+  const admin = authFixture.sessions?.admin;
+  expect(reader && admin, "Reader/admin test sessions required").toBeTruthy();
+
+  const path = "/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim/indir";
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: reader, url: authCookieUrl },
+  ]);
+  const denied = await page.request.get(path + "?gun=2026-10-25", { maxRedirects: 0 });
+  expect([302, 303, 307, 308, 401, 403], "Reader must not download an accountant archive").toContain(denied.status());
+  expect(denied.headers()["content-type"] ?? "").not.toContain("application/zip");
+  if (denied.status() >= 300 && denied.status() < 400) {
+    expect(denied.headers().location ?? "").toMatch(/erisim-reddedildi|giris/u);
+  }
+
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: admin, url: authCookieUrl },
+  ]);
+  const screen = await page.goto(
+    "/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim",
+    { waitUntil: "domcontentloaded" },
+  );
+  expect(screen?.status()).toBe(200);
+  const day = await page.locator('input[type="date"][name="gun"]').inputValue();
+  expect(day).toMatch(/^\d{4}-\d{2}-\d{2}$/u);
+
+  const unclosed = await page.request.get(path + "?gun=9999-01-01", { maxRedirects: 0 });
+  expect(unclosed.status()).toBe(422);
+  expect(unclosed.headers()["cache-control"]).toContain("no-store");
+  expect(unclosed.headers()["content-type"]).not.toContain("application/zip");
+
+  // Read-only archive download against a closed day in the disposable CI
+  // database. Do not issue an invoice, post a ledger item or write a file.
+  const result = await page.request.get(path + "?gun=" + day, { maxRedirects: 0 });
+  expect(result.status()).toBe(200);
+  expect(result.headers()["content-type"]).toContain("application/zip");
+  expect(result.headers()["content-disposition"]).toContain(
+    'filename="ilkoku-gun-sonu-' + day + '.zip"',
+  );
+  expect(result.headers()["cache-control"]).toContain("private");
+  expect(result.headers()["cache-control"]).toContain("no-store");
+  expect(result.headers()["x-robots-tag"]).toContain("noindex");
+  expect(result.headers()["x-content-type-options"]).toBe("nosniff");
+
+  const archive = await result.body();
+  expect(archive.length).toBeGreaterThan(22);
+  expect(archive.readUInt32LE(0)).toBe(0x04034b50);
+  const end = archive.length - 22;
+  expect(archive.readUInt32LE(end)).toBe(0x06054b50);
+  expect(archive.readUInt16LE(end + 10), "ZIP central directory entry count").toBe(13);
+  for (const file of [
+    "siparisler.csv", "finans_hareketleri.csv", "iadeler.csv",
+    "iade_ledger_mutabakat.csv", "gunluk_satis_iade_koprusu.csv",
+    "uyarilar.csv", "mutabakat.csv", "gun_sonu_ozet.csv",
+    "muhasebe_on_hazirlik.csv", "yazar_hesap_ozeti.csv",
+    "muhasebe_tl_inceleme.csv", "alan_esleme.json", "manifest.json",
+  ]) {
+    expect(archive.includes(Buffer.from(file)), "Missing day-close file: " + file).toBe(true);
+  }
+});
+
 test("authenticated commerce read-only boundaries smoke: admin sees refund payout and settings surfaces without execution controls", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
 

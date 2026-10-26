@@ -216,8 +216,12 @@ export default async function WriterIncomePage() {
                       </strong>
                     </span>
                     <span>
-                      Satış adedi
+                      Satış adedi (0 TL hariç)
                       <strong>{work.unitsSold.toLocaleString("tr-TR")}</strong>
+                    </span>
+                    <span>
+                      0 TL edinim adedi
+                      <strong>{work.zeroTotalAcquisitions.toLocaleString("tr-TR")}</strong>
                     </span>
                     <span>
                       Brüt satış

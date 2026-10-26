@@ -497,7 +497,7 @@ export async function getWriterTest209DemoCounts(authorId: string) {
 }
 
 export async function getWriterFinanceOverview(authorId: string) {
-  const [ledgerSummary, workLedger, balance, orders, paidWorks] =
+  const [ledgerSummary, workLedger, balance, orders, paidWorks, zeroTotalCounts] =
     await Promise.all([
       prisma.financialLedger.groupBy({
         by: ["entryType"],
@@ -587,13 +587,22 @@ export async function getWriterFinanceOverview(authorId: string) {
           _count: {
             select: {
               commerceOrders: {
-                where: { status: "paid" },
+                where: { status: "paid", finalAmount: { gt: BigInt(0) } },
               },
             },
           },
         },
       }),
+      prisma.order.groupBy({
+        by: ["workId"],
+        where: { authorId, status: "paid", finalAmount: BigInt(0) },
+        _count: { _all: true },
+      }),
     ]);
+
+  const zeroByWork = new Map(
+    zeroTotalCounts.map((entry) => [entry.workId, entry._count._all]),
+  );
 
   const totals = new Map(
     ledgerSummary.map((entry) => [
@@ -621,6 +630,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       currency: string;
       saleStatus: "draft" | "ready" | "active" | "paused";
       unitsSold: number;
+      zeroTotalAcquisitions: number;
     }
   >();
 
@@ -645,6 +655,7 @@ export async function getWriterFinanceOverview(authorId: string) {
       currency: configuration.currency,
       saleStatus: configuration.status,
       unitsSold: work._count.commerceOrders,
+      zeroTotalAcquisitions: zeroByWork.get(work.id) ?? 0,
     });
   }
 

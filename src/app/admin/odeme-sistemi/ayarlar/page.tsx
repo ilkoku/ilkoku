@@ -228,24 +228,33 @@ export default async function CommerceSettingsPage() {
       <section className="admin-panel">
         <div className="admin-panel__heading">
           <div>
-            <span>Provider kanalları</span>
-            <h2>Ödeme yöntemleri</h2>
+            <span>İşlem yöntemleri</span>
+            <h2>Ödeme / tahsilat seçenekleri</h2>
           </div>
-          <b>{paymentMethods.length}</b>
+          <b>{paymentMethods.length + 1}</b>
         </div>
 
         <div className="admin-commerce-provider-grid">
           {paymentMethods.map((method) => (
             <article key={method.method}>
-              <span className="admin-eyebrow">{method.method}</span>
+              <span className="admin-eyebrow">{method.method} · {method.available ? "Sağlayıcı hazır" : "Pasif"}</span>
               <h3>{method.label}</h3>
               <p>
                 {method.available
                   ? `Aktif provider: ${method.providerCode}`
-                  : "Operasyonel provider bağlı değil."}
+                  : "Şu anda tahsilat yapılamaz. Operasyonel provider bağlı değil."}
               </p>
             </article>
           ))}
+          <article aria-label="Ücretli 0 TL işlem yöntemi">
+            <span className="admin-eyebrow">zero · Sağlayıcısız işlem yolu</span>
+            <h3>Ücretli 0 TL</h3>
+            <p>
+              Kullanılabilir işlem yöntemi: ödenecek toplam 0 TL olduğunda kart veya telefon
+              tahsilatı olmadan sipariş akışı çalışır. Eserin satın alınabilirliği ayrıca
+              sözleşme ve erişim koşullarıyla denetlenir.
+            </p>
+          </article>
         </div>
       </section>
 

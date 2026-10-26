@@ -158,6 +158,11 @@ export default async function PaymentSystemPage() {
               </li>
             ))}
           </ul>
+          <p className="admin-commerce-overview__subtext">
+            <strong>Ücretli 0 TL</strong> ayrıca sağlayıcısız işlem yöntemidir.
+            Kart veya telefon tahsilatı gerektirmez; ödeme sağlayıcısı kanal sayısına dahil edilmez.
+            Eser ve satın alma koşulları ayrıca denetlenir.
+          </p>
         </article>
 
         <article className="admin-panel admin-commerce-overview__settings">

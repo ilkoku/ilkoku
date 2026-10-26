@@ -448,8 +448,30 @@ test("reader checkout shows zero-total summary first with dark cards and intact 
 
     await expect(page.locator('input[name="purchasePath"][value="card"]')).toBeDisabled();
     await expect(page.locator('input[name="purchasePath"][value="carrier"]')).toBeDisabled();
+    await expect(page.locator('input[name="purchasePath"][value="zero"]')).toBeChecked();
+    await expect(page.locator('input[name="purchasePath"][value="zero"]')).toBeEnabled();
+    await expect(page.getByText("Ücretli 0 TL", { exact: false }).first()).toBeVisible();
     await expectResponsiveDocument(page);
   }
+});
+
+test("admin lists 0 TL as third transaction method without enabling card or carrier", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  await page.context().addCookies([{
+    name: authFixture.cookieName,
+    value: authFixture.sessions.admin,
+    url: authCookieUrl,
+  }]);
+  const response = await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Ödeme / tahsilat seçenekleri" })).toBeVisible();
+  const zero = page.getByRole("article", { name: "Ücretli 0 TL işlem yöntemi" });
+  await expect(zero).toBeVisible();
+  await expect(zero.getByRole("heading", { name: "Ücretli 0 TL" })).toBeVisible();
+  await expect(zero.getByText(/sağlayıcısız işlem yolu/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kredi / Banka Kartı" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Telefon Faturama Yansıt" })).toBeVisible();
+  await expect(page.getByText("Şu anda tahsilat yapılamaz. Operasyonel provider bağlı değil.")).toHaveCount(2);
 });
 
 test("reader checkout separates platform and author codes and blocks discounts on staged 0 TL work", async ({ page }) => {

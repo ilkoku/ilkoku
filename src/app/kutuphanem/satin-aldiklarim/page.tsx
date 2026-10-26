@@ -6,6 +6,9 @@ import { AppShell } from "@/components/layout/AppShell";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
 import { listReaderPurchasedWorks } from "@/features/commerce/reader-repository";
+import { cancelTest209DemoAccessAction } from "@/features/commerce/test209-demo-cancel-action";
+import { isTest209DemoReader } from "@/features/commerce/test209-demo-access";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import styles from "@/features/commerce/commerce.module.css";
 
 export const metadata: Metadata = {
@@ -38,10 +41,12 @@ export default async function PurchasedLibraryPage({
     redirect("/erisim-reddedildi?kaynak=reader");
   }
 
-  const [entitlements, query] = await Promise.all([
+  const [entitlements, query, currentUser] = await Promise.all([
     listReaderPurchasedWorks(profile.id),
     searchParams,
+    getCurrentUser(),
   ]);
+  const canCancelTestDemo = Boolean(currentUser && isTest209DemoReader(currentUser));
   // Never trust a URL-provided order number without confirming it belongs
   // to the current reader's active entitlement.
   // A demo reference resolves ONLY through an actual entitlement belonging
@@ -57,7 +62,13 @@ export default async function PurchasedLibraryPage({
     ? entitlements.find((item) => item.order?.orderNo === query.siparis)?.order?.orderNo ?? null
     : null;
   const flash =
-    query.durum === "deneme-erisim" && completedDemo
+    query.durum === "deneme-iptal-edildi"
+      ? "0 TL deneme erişimi iptal edildi. Okuma geçmişin korundu; yeniden denemek istersen TEST209 sayfasına dönebilirsin."
+      : query.durum === "iptal-onayi-gerekli"
+        ? "İptal için onay kutusunu işaretlemelisin."
+        : query.durum === "iptal-gerceklestirilemedi"
+          ? "Deneme erişimi iptal edilemedi. İşlem önceden iptal edilmiş veya artık bu hesaba ait olmayabilir."
+          : query.durum === "deneme-erisim" && completedDemo
       ? "0 TL deneme erişimi açıldı. TEST209 kütüphanene eklendi; gerçek sipariş veya tahsilat oluşturulmadı."
       : query.durum === "deneme-erisim"
         ? "Deneme erişimi bu hesap için doğrulanamadı."
@@ -86,7 +97,7 @@ export default async function PurchasedLibraryPage({
         </header>
 
         {flash ? (
-          <div className={completedOrderNo || completedDemo || query.durum === "zaten-erisim-var" ? styles.successNotice : styles.notice} role="status">
+          <div className={completedOrderNo || completedDemo || query.durum === "deneme-iptal-edildi" || query.durum === "zaten-erisim-var" ? styles.successNotice : styles.notice} role="status">
             <strong>{flash}</strong>
             {completedDemo ? (
               <p>Deneme referansı: <strong>TEST-{completedDemo.id.slice(0, 16).toUpperCase()}</strong></p>
@@ -107,7 +118,7 @@ export default async function PurchasedLibraryPage({
 
         {entitlements.length === 0 ? (
           <div className={styles.empty}>
-            Henüz satın alma yoluyla kütüphanene eklenen bir eser yok.
+            Henüz aktif satın alma veya deneme erişimin bulunmuyor.
           </div>
         ) : (
           <section className={styles.grid} aria-label="Satın alınan eserler">
@@ -155,9 +166,32 @@ export default async function PurchasedLibraryPage({
                     className={styles.quietAction}
                     href={"/hesabim/odeme-gecmisi/" + encodeURIComponent(entitlement.order.orderNo)}
                   >
-                    Sipariş ve onay kayıtları
+                    Sipariş, iptal/iade talebi ve onay kayıtları
                   </Link>
                 ) : null}
+                {canCancelTestDemo &&
+                  entitlement.source === "promotion" &&
+                  entitlement.work.slug === "yeni-test209-30820c6a" &&
+                  !entitlement.order ? (
+                    <details className={styles.testCancelDetails}>
+                      <summary>0 TL deneme erişimini iptal et</summary>
+                      <form action={cancelTest209DemoAccessAction} className={styles.testCancelPanel}>
+                        <input type="hidden" name="entitlementId" value={entitlement.id} />
+                        <p>
+                          İptal edince TEST209 için erişim hakkın sonlandırılır.
+                          Okuma geçmişin silinmez ve para iadesi yapılmaz; zaten
+                          para tahsil edilmedi. Sonradan yeniden 0 TL deneme yapabilirsin.
+                        </p>
+                        <label className={styles.testCancelConfirm}>
+                          <input type="checkbox" name="confirmCancel" required />
+                          <span>0 TL test erişiminin sonlandırılmasını onaylıyorum.</span>
+                        </label>
+                        <button className={styles.testCancelButton} type="submit">
+                          İptali onayla
+                        </button>
+                      </form>
+                    </details>
+                  ) : null}
               </article>
             ))}
           </section>

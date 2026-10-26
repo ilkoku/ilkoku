@@ -119,3 +119,31 @@ export async function listReaderPaymentHistory(readerId: string) {
     take: 200,
   });
 }
+
+
+/**
+ * TEST209's no-charge QA activity is a WorkEntitlement (source=promotion),
+ * not an Order/Payment. Keep it separate from financial order history.
+ * Include revoked grants so the reader can see a cancelled test.
+ * One entitlement row represents its current state, not a full event log.
+ */
+export async function listReaderZeroTlDemoActivity(readerId: string) {
+  return prisma.workEntitlement.findMany({
+    where: {
+      readerId,
+      source: "promotion",
+      orderId: null,
+      status: { in: ["active", "revoked"] },
+      work: { is: { slug: "yeni-test209-30820c6a" } },
+    },
+    orderBy: { grantedAt: "desc" },
+    take: 20,
+    select: {
+      id: true,
+      grantedAt: true,
+      revokedAt: true,
+      status: true,
+      work: { select: { title: true, slug: true } },
+    },
+  });
+}

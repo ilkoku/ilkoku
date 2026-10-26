@@ -120,3 +120,21 @@ test("reader purchase approval reports placeholder refusal and never stores draf
   contains(panel, "template.lifecycleStatus === \"review\" && purchaseTermsPlaceholder", "draft cannot show approval form");
   contains(lifecycle, "Nihai satın alma koşulları yazılmadan onay verilemez.", "review lifecycle tells user what blocks approval");
 });
+
+test("one-time 0 TL reader terms import is review-only and guarded against overwrites", () => {
+  const sql = source("prisma/migrations/20261026144500_reader_0tl_review_text_import/migration.sql");
+  const reader = source("src/features/commerce/checkout-terms.ts");
+  contains(sql, "UPDATE `ContractTemplate`", "existing template update");
+  contains(sql, "`version` = `version` + 1", "new version");
+  contains(sql, "`lifecycleStatus` = 'review'", "review-only lifecycle");
+  contains(sql, "`active` = false", "no accidental activation");
+  contains(sql, "`approvedById` = NULL", "old approvals cleared");
+  contains(sql, "`approvedAt` = NULL", "old approval date cleared");
+  contains(sql, "`activatedAt` = NULL", "no activation");
+  contains(sql, "`version` = 3", "optimistic version guard");
+  contains(sql, "`body` LIKE '%nihai hukuki metnin hazırlanacağı çalışma alanıdır%'", "unchanged seed guard");
+  contains(sql, "GERÇEK SATICI, TAM ADRES", "visible incomplete legal party warning");
+  contains(reader, 'normalized.startsWith("çalışma taslağı")', "reader checkout still refuses review draft");
+  notContains(sql, "INSERT INTO `ContractTemplateReviewEvidence`", "no fabricated admin evidence");
+  notContains(sql, "`lifecycleStatus` = 'active'", "no auto publish");
+});

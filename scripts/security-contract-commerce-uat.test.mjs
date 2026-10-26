@@ -519,6 +519,9 @@ test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
   has(demo, 'TEST209_DEMO_SLUG = "yeni-test209-30820c6a"', "exact QA work slug");
   has(demo, 'const TEST209_DEMO_WORK_ID = "6ebb633f-4356-459c-ac12-4fbd253a49e7"', "exact QA work id");
   has(demo, 'const TEST209_READER_NAME = "ERSİN OKURTEST"', "single QA reader");
+  has(demo, "TEST209_READER_EMAIL_SHA256", "non-mutable QA account fingerprint");
+  has(demo, 'input.email.trim().toLowerCase()', "account email matching");
+  lacks(demo, "ersinokurtest@hotmail.com", "raw private account email not committed");
   has(demo, 'input.role === "reader"', "reader-role test only");
   has(demo, "FOR UPDATE", "serialized QA access grant");
   has(demo, 'work.saleConfiguration?.status !== "ready"', "work must be ready");

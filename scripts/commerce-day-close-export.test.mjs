@@ -231,6 +231,53 @@ test("missing snapshot, coupon, duplicate payments and 0TL produce review lines,
   assert.equal(result.manifest.checkedGrossMinor,"0");
 });
 
+test("complete 0 TL snapshots remain traceable but never enter taxable accounting preparation",() => {
+  const order = validOrder();
+  order.orderNo = "ILK-ZERO-VALID-SNAPSHOT";
+  order.originalAmount = 0n;
+  order.discountAmount = 0n;
+  order.finalAmount = 0n;
+  order.commission = {
+    commissionRateBps: 1500, serviceFeeRateBps: 500, source: "global",
+    sourceEventId: null, calculationVersion: "rate-v1",
+  };
+  order.quote = {
+    calculationVersion: "quote-v1", taxTreatment: "net_plus_vat",
+    vatRateBasisPoints: 2000, listNetAmount: 0n, listVatAmount: 0n,
+    listGrossAmount: 0n, discountGrossAmount: 0n, payableGrossAmount: 0n,
+  };
+  order.payments = [];
+  const result = exportModule.buildDayCloseFiles({
+    day: "2026-10-25",
+    orders: [order],
+    ledger: [{
+      id: "ledger-zero", entryType: "sale_gross", amount: 0n,
+      currency: "TRY", createdAt: order.paidAt,
+      orderNo: order.orderNo, authorPublicId: order.authorPublicId,
+    }],
+    refunds: [],
+  });
+  assert.equal(result.manifest.salesCount, 1);
+  assert.equal(result.manifest.zeroAmountCount, 1);
+  assert.equal(result.manifest.readySalesCount, 0);
+  assert.equal(result.manifest.flaggedSalesCount, 1);
+  assert.equal(result.manifest.preparationRows, 0);
+  assert.equal(result.manifest.reviewedAuthorSummaryGroups, 0);
+  assert.equal(result.manifest.liraWorksheetRows, 0);
+  for (const key of [
+    "checkedGrossMinor", "checkedVatMinor",
+    "reviewedCommissionIllustrationMinor", "reviewedServiceFeeIllustrationMinor",
+  ]) {
+    assert.equal(result.manifest[key], "0", key);
+  }
+  const csv = (name) => result.files.find(f => f.name === name).data;
+  assert.ok(csv("siparisler.csv").includes(order.orderNo));
+  assert.ok(csv("uyarilar.csv").includes("SIFIR_TL_MALI_BELGE_DEGIL"));
+  for (const name of ["muhasebe_on_hazirlik.csv", "yazar_hesap_ozeti.csv", "muhasebe_tl_inceleme.csv"]) {
+    assert.ok(!csv(name).includes(order.orderNo), name);
+  }
+});
+
 test("day close route is admin-only, ZIP-only, non-mutating and excludes customer fiscal identity",() => {
   const route = source("src/app/admin/finans-gelirler/gun-sonu-aktarim/indir/route.ts");
   const repo = source("src/features/commerce/day-close-repository.ts");

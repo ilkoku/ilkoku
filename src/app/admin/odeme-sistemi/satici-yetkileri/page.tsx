@@ -3,6 +3,8 @@ import styles from "./seller-rights.module.css";
 
 import {
   approveWorkSellerRightsAction,
+  registerLegalSellerDraftAction,
+  registerWorkSalesRightsDraftAction,
   revokeWorkSellerAssignmentAction,
   verifyLegalSellerAction,
 } from "@/features/commerce/seller-admin-actions";
@@ -32,7 +34,7 @@ export default async function SellerRightsAdminPage({
   searchParams: Promise<{ durum?: string }>;
 }) {
   const query = await searchParams;
-  const [parties, authorizations, assignments] = await Promise.all([
+  const [parties, authorizations, assignments, eligibleWorks] = await Promise.all([
     prisma.legalParty.findMany({
       orderBy: { createdAt: "desc" }, take: 80,
       select: {
@@ -58,6 +60,15 @@ export default async function SellerRightsAdminPage({
         approvedAt: true,
       },
     }),
+    prisma.work.findMany({
+      where: {
+        archivedAt: null, isActive: true, status: "published",
+        saleConfiguration: { is: { saleModel: "paid", status: { in: ["ready", "active"] } } },
+      },
+      orderBy: { title: "asc" },
+      take: 100,
+      select: { id: true, title: true, slug: true },
+    }),
   ]);
   const verifiedParties = parties.filter((p) => p.verificationStatus === "verified");
   const pendingParties = parties.filter((p) => p.verificationStatus === "pending");
@@ -70,9 +81,9 @@ export default async function SellerRightsAdminPage({
           <span className="admin-eyebrow">Ödeme Sistemi · 0 TL Edinim</span>
           <h1>Satıcı ve Satış Yetkisi · Yönetici Onayları</h1>
           <p>
-            Yazarlar satıcı kimliği ve eser satış hakkı başvurularını kendi Satış &amp; Erişim alanlarından gönderir.
-            Bu panel yalnız kimlik ve yetki inceleme, onay ve iptal işlemleri içindir.
-            Buradan ödeme sağlayıcısı açılmaz.
+            Yazar yalnız faturalı veya faturasız beyanını kendi panelinden kaydeder.
+            Resmî hukukî satıcı ve esere özel satış yetkisi taslakları, kanıt incelemesi ve onayları
+            yalnız yönetici tarafından bu panelde yürütülür. Buradan ödeme sağlayıcısı açılmaz.
           </p>
         </div>
         <Link className="admin-button" href="/sistem-yonetimi/odeme-sistemi/ayarlar">
@@ -92,16 +103,62 @@ export default async function SellerRightsAdminPage({
         <article className={styles.summaryCard}><span>Aktif atama</span><strong>{assignments.length}</strong><p>Onaylı güncel eser satıcısı</p></article>
       </section>
       <nav className={styles.stepsNav} aria-label="Yönetici inceleme aşamaları">
-        <a href="#seller-verification">1 · Kimlik doğrulama</a>
-        <a href="#sales-approval">2 · Satış yetkisi onayı</a>
+        <a href="#seller-draft">1 · Satıcı taslağı</a>
+        <a href="#seller-verification">2 · Kimlik doğrulama</a>
+        <a href="#rights-draft">3 · Eser yetkisi taslağı</a>
+        <a href="#sales-approval">4 · Satış yetkisi onayı</a>
         <a href="#current-sellers">Geçerli satıcılar</a>
       </nav>
       <p className={styles.empty}>
-        Satıcı ve eser satış yetkisi bilgileri <strong>Yazar Paneli → Satış &amp; Erişim → Satıcı ve satış yetkisi</strong> ekranından gönderilir. Bu alanda yazar adına belge veya satıcı başvurusu oluşturulmaz.
+        Yazarın <strong>Fatura ve Vergi Bilgilerim</strong> beyanı, hukukî satıcı
+        doğrulaması veya eser satış yetkisi değildir. Aşağıdaki taslakları
+        yalnız resmî bilgilere ve gerçek belgelere dayanarak oluşturun.
+        Taslak kaydı satış açmaz; bağımsız doğrulama ve eser bazlı onay zorunludur.
       </p>
 
+      <section id="seller-draft" className={styles.section}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.stepNumber} aria-hidden="true">1</span>
+          <div className={styles.sectionHeadingText}>
+            <h2>Hukukî satıcı taslağı oluştur</h2>
+            <p>Resmî taraf bilgilerini yönetici girer. Taslak durumundaki satıcı, kanıt incelemesi tamamlanmadan doğrulanmış sayılmaz.</p>
+          </div>
+        </div>
+        <form action={registerLegalSellerDraftAction} className={styles.formGrid} aria-label="Hukukî satıcı taslağı">
+          <label>Hukukî satıcı türü
+            <select name="kind" defaultValue="" required>
+              <option value="" disabled>Satıcı türünü seçin</option>
+              <option value="platform">İlkOku platform işletmecisi</option>
+              <option value="individual">Gerçek kişi</option>
+              <option value="organization">Şirket / tüzel kişi</option>
+            </select>
+          </label>
+          <label>Resmî ad soyad / ticaret unvanı
+            <input name="legalName" required minLength={3} maxLength={240} autoComplete="off" />
+          </label>
+          <label>Vergi / kimlik tanımlayıcısı
+            <input name="taxIdentifier" required minLength={5} maxLength={32} autoComplete="off" />
+          </label>
+          <label>Vergi dairesi (varsa)
+            <input name="taxOffice" maxLength={160} autoComplete="off" />
+          </label>
+          <label className={styles.fieldWide}>Resmî tebligat adresi
+            <textarea name="legalAddress" required minLength={12} maxLength={5000} rows={3} />
+          </label>
+          <label>İletişim e-postası
+            <input type="email" name="contactEmail" required maxLength={320} autoComplete="off" />
+          </label>
+          <label>Telefon (varsa)
+            <input type="tel" name="contactPhone" maxLength={32} autoComplete="off" />
+          </label>
+          <div className={styles.formActions}>
+            <button type="submit" className={styles.submit}>Doğrulanmamış satıcı taslağı oluştur</button>
+          </div>
+        </form>
+      </section>
+
       <section id="seller-verification" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">1</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>1. </span>Resmî kanıtı incele ve satıcıyı doğrula</h2><p>Bekleyen satıcının belgesini kontrol ederek kimlik incelemesini tamamlayın.</p></div></div>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">2</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>2. </span>Resmî kanıtı incele ve satıcıyı doğrula</h2><p>Bekleyen satıcının belgesini kontrol ederek kimlik incelemesini tamamlayın.</p></div></div>
         {pendingParties.length === 0 ? <p className={styles.empty}>Doğrulama bekleyen satıcı kaydı yok. İlk adımda bir satıcı taslağı oluşturun.</p> : null}
         {pendingParties.map((party) => (
           <form action={verifyLegalSellerAction} key={party.id} className={`${styles.pendingItem} ${styles.formGrid}`}>
@@ -123,8 +180,58 @@ export default async function SellerRightsAdminPage({
         ))}
       </section>
 
+      <section id="rights-draft" className={styles.section}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.stepNumber} aria-hidden="true">3</span>
+          <div className={styles.sectionHeadingText}>
+            <h2>Eser satış yetkisi taslağı oluştur</h2>
+            <p>Yalnız doğrulanmış hukukî satıcı ve yayımlanmış, ücretli erişime hazır eser için kanıt kaydı oluşturulabilir. Taslak satışa izin vermez.</p>
+          </div>
+        </div>
+        {verifiedParties.length === 0 ? (
+          <p className={styles.empty}>Önce hukukî satıcının resmî kanıtlarını inceleyip kimliğini doğrulayın.</p>
+        ) : eligibleWorks.length === 0 ? (
+          <p className={styles.empty}>Satış için hazır, yayımlanmış ücretli eser bulunamadı.</p>
+        ) : (
+          <form action={registerWorkSalesRightsDraftAction} className={styles.formGrid} aria-label="Eser satış yetkisi taslağı">
+            <label>Eser
+              <select name="workId" defaultValue="" required>
+                <option value="" disabled>Eser seçin</option>
+                {eligibleWorks.map((work) => (
+                  <option key={work.id} value={work.id}>{work.title} · {work.slug}</option>
+                ))}
+              </select>
+            </label>
+            <label>Doğrulanmış hukukî satıcı
+              <select name="legalPartyId" defaultValue="" required>
+                <option value="" disabled>Satıcı seçin</option>
+                {verifiedParties.map((party) => (
+                  <option key={party.id} value={party.id}>{party.legalName} · {party.kind}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.fieldWide}>Resmî satış hakkı kanıt bağlantısı (HTTPS)
+              <input type="url" name="evidenceUrl" required pattern="https://.*" placeholder="https://" autoComplete="off" />
+            </label>
+            <label className={styles.fieldWide}>Eser bazlı satış hakkı belgesinin kontrol metni
+              <textarea name="documentEvidence" required minLength={80} maxLength={20000} rows={5}
+                placeholder="Yetkiyi veren taraf, eser, dijital okuma hakkı, Türkiye kapsamı ve belge geçerliliğini içeren kanıt metni" />
+            </label>
+            <label>Belge geçerlilik bitişi (varsa)
+              <input type="date" name="validUntil" />
+            </label>
+            <p className={styles.fieldWide}>
+              Bu işlem belge metninin SHA-256 özetini ve kanıt bağlantısını saklar; taslak oluşturmak satış izni veya belge onayı değildir.
+            </p>
+            <div className={styles.formActions}>
+              <button type="submit" className={styles.submit}>Eser satış yetkisi taslağı oluştur</button>
+            </div>
+          </form>
+        )}
+      </section>
+
       <section id="sales-approval" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">2</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>2. </span>Eser satış yetkisini son kez onayla</h2><p>Yalnız incelenmiş, geçerli eser yetkilerini onaylayın.</p></div></div>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">4</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>4. </span>Eser satış yetkisini son kez onayla</h2><p>Yalnız incelenmiş, geçerli eser yetkilerini onaylayın.</p></div></div>
         {pendingRights.length === 0 ? <p className={styles.empty}>Son onay bekleyen belge yok. Önce eser satış yetkisi kanıtı oluşturulmalıdır.</p> : null}
         {pendingRights.map((rights) => (
           <form action={approveWorkSellerRightsAction} key={rights.id} className={`${styles.pendingItem} ${styles.formGrid}`}>

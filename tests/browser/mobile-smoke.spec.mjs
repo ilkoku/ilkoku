@@ -663,8 +663,9 @@ test("writer enters only invoicing status and billing details; admin remains sep
   await page.context().addCookies([{ name: authFixture.cookieName, value: adminToken, url: authCookieUrl }]);
   await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: /Satıcı ve Satış Yetkisi/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /1\. Resmî kanıtı incele/u })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Hukukî satıcı taslağı oluştur" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /2\. Resmî kanıtı incele/u })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Doğrulanmamış satıcı taslağı oluştur" })).toBeVisible();
   await expectResponsiveDocument(page);
 });
 
@@ -1228,6 +1229,45 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.getByRole("heading", { name: "Gün Sonu Muhasebe Aktarımı" })).toBeVisible();
   await expect(page.getByText("İlkOku fatura düzenlemez.")).toBeVisible();
   await expect(page.locator("code").filter({ hasText: "muhasebe_on_hazirlik.csv" }).first()).toBeVisible();
+});
+
+test("admin seller drafts are available without granting rights; writer sees only billing declaration", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is required.");
+  const admin = authFixture.sessions?.admin;
+  const writer = authFixture.sessions?.writer;
+  expect(admin && writer, "Admin and writer test accounts required").toBeTruthy();
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: admin, url: authCookieUrl },
+  ]);
+  const response = await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/satici-yetkileri",
+    { waitUntil: "domcontentloaded" },
+  );
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Hukukî satıcı taslağı oluştur" })).toBeVisible();
+  const sellerForm = page.locator('form[aria-label="Hukukî satıcı taslağı"]');
+  await expect(sellerForm).toBeVisible();
+  await expect(sellerForm.locator('select[name="kind"]')).toBeVisible();
+  await expect(sellerForm.locator('input[name="legalName"]')).toBeVisible();
+  await expect(sellerForm.locator('input[name="taxIdentifier"]')).toBeVisible();
+  await expect(sellerForm.getByRole("button", { name: "Doğrulanmamış satıcı taslağı oluştur" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Eser satış yetkisi taslağı oluştur" })).toBeVisible();
+  await expect(page.getByText(/Yazar yalnız faturalı veya faturasız beyanını/u)).toBeVisible();
+  await expect(page.getByText(/başvurularını kendi Satış/u)).toHaveCount(0);
+  // Deliberately do not submit either form: financial and legal status stay unchanged.
+
+  await page.context().clearCookies();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: writer, url: authCookieUrl },
+  ]);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+  await page.goto("/satis-erisim/odeme-vergi-bilgileri", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Fatura ve Vergi Bilgilerim" })).toBeVisible();
+  await expect(page.locator('input[name="invoiceStatus"][value="non_invoicing"]')).toBeVisible();
 });
 
 test("day-close ZIP HTTP gate: admin-only, closed day, 13 private source files", async ({ page }) => {

@@ -698,17 +698,27 @@ test("writer invoice status is self-declared, owner-scoped and does not create a
   has(legacy, 'redirect("/satis-erisim/odeme-vergi-bilgileri")', "old writer URL redirects");
 });
 
-test("admin seller review workflow keeps readable stages and scope", () => {
+test("admin seller drafts and evidence reviews keep explicit four-stage scope", () => {
   const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const actions = source("src/features/commerce/seller-admin-actions.ts");
   const css = source("src/app/admin/odeme-sistemi/satici-yetkileri/seller-rights.module.css");
-  for (const id of ["seller-verification", "sales-approval", "current-sellers"]) {
+  for (const id of ["seller-draft", "seller-verification", "rights-draft", "sales-approval", "current-sellers"]) {
     has(page, 'id="' + id + '"', "admin review section " + id);
   }
+  has(page, "registerLegalSellerDraftAction", "administrator seller draft");
+  has(page, "registerWorkSalesRightsDraftAction", "administrator work rights draft");
+  has(page, 'aria-label="Hukukî satıcı taslağı"', "seller legal identity form");
+  has(page, 'aria-label="Eser satış yetkisi taslağı"', "work-specific evidence form");
+  has(page, "verifiedParties.length === 0", "block rights draft until verified seller");
+  has(page, "eligibleWorks.length === 0", "block rights draft without eligible work");
+  has(actions, 'verificationStatus: "pending"', "seller draft is never auto-verified");
+  has(actions, 'status: "pending"', "work rights draft is never auto-approved");
+  has(page, 'styles.screenReaderOnly}>2. ', "admin identity verification label");
+  has(page, 'styles.screenReaderOnly}>4. ', "admin sales rights approval label");
+  lacks(page, "Yazarlar satıcı kimliği ve eser satış hakkı başvurularını", "obsolete writer sales rights instruction removed");
   has(page, "styles.formGrid", "two-column review controls");
   has(page, "styles.fieldWide", "long review evidence inputs");
   has(page, "styles.confirmLabel", "explicit administrator confirmation");
-  has(page, 'styles.screenReaderOnly}>1. ', "admin identity review label");
-  has(page, 'styles.screenReaderOnly}>2. ', "admin sales rights review label");
   has(css, "grid-template-columns: repeat(2, minmax(0, 1fr))", "desktop form grid");
   has(css, "grid-template-columns: minmax(0, 1fr)", "mobile form grid");
 });

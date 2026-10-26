@@ -71,7 +71,7 @@ export default async function PurchasedLibraryPage({
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.readerPurchasedPage}`}>
         <header className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>Kütüphanem</span>

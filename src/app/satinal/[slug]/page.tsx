@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { enforceAdultWorkGate } from "@/features/adult-content/work-gate";
 import { canAccessReaderWorkspace } from "@/features/auth/data";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import {
   beginPaidCheckoutAction,
   completeZeroTotalCheckoutAction,
@@ -175,12 +176,13 @@ export default async function CheckoutPreparationPage({
     effectiveCommerce.priceAmount === BigInt(0);
   // This is a separate non-sale trial for one QA reader and one QA work.
   // Never make the real 0 TL order or its seller gate appear approved.
+  const test209DemoUser = stagedZeroCandidate ? await getCurrentUser() : null;
   const test209DemoReady =
     stagedZeroCandidate &&
     Boolean(purchaseTerms) &&
     !verifiedSeller &&
     work.slug === TEST209_DEMO_SLUG &&
-    isTest209DemoReader(profile);
+    Boolean(test209DemoUser && isTest209DemoReader(test209DemoUser));
   const originalAmount = effectiveCommerce.priceAmount ?? BigInt(0);
   const couponInputEnabled =
     effectiveCommerce.saleModel === "paid" &&

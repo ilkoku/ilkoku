@@ -21,13 +21,46 @@ export default async function CommerceSettingsPage() {
       where: { saleModel: "paid", status: "ready", priceAmount: BigInt(0), activatedAt: null,
         work: { isActive: true, archivedAt: null, status: "published", visibility: "public" } },
     }),
-    prisma.work.findUnique({ where: { slug: "yeni-test209-30820c6a" }, select: { id: true, title: true } }),
+    prisma.work.findFirst({
+      where: {
+        slug: "yeni-test209-30820c6a",
+        isActive: true,
+        archivedAt: null,
+        publishedAt: { not: null },
+        status: "published",
+        visibility: "public",
+        author: { is: { deletedAt: null, status: "active" } },
+      },
+      select: {
+        id: true,
+        title: true,
+        saleConfiguration: {
+          select: {
+            saleModel: true,
+            status: true,
+            priceAmount: true,
+            activatedAt: true,
+          },
+        },
+      },
+    }),
   ]);
   const sampleSeller = sampleWork ? await getVerifiedWorkSeller(sampleWork.id) : null;
   const readerTermsReady = Boolean(
     readerTerms?.active && readerTerms.lifecycleStatus === "active" && !readerTerms.placeholder
   );
-  const zeroTotalExampleReady = Boolean(sampleWork && sampleSeller && readerTermsReady);
+  // The dashboard must match completeZeroTotalCheckout's staged 0 TL gate.
+  // A verified seller and active contract alone are not enough if the work
+  // is free, in draft, already activated, or priced above zero.
+  const sampleZeroTotalStaged = Boolean(
+    sampleWork?.saleConfiguration?.saleModel === "paid" &&
+    sampleWork.saleConfiguration.status === "ready" &&
+    sampleWork.saleConfiguration.priceAmount === BigInt(0) &&
+    !sampleWork.saleConfiguration.activatedAt
+  );
+  const zeroTotalExampleReady = Boolean(
+    sampleZeroTotalStaged && sampleSeller && readerTermsReady
+  );
 
   const checkoutEnabled = isCommerceCheckoutEnabled();
   const providerReady = hasOperationalPaymentProvider();

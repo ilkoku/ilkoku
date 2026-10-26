@@ -492,3 +492,18 @@ test("UAT: VAT-exclusive new prices are frozen per order without retroactive leg
   has(reader, "priceQuoteSnapshot:", "order reader retrieves frozen quote");
   has(details, "order.priceQuoteSnapshot", "order receipt shows frozen net price and VAT");
 });
+
+
+test("0 TL admin readiness cannot show ready for an ineligible work despite approved terms and seller", () => {
+  const settings = source("src/app/admin/odeme-sistemi/ayarlar/page.tsx");
+  has(settings, 'slug: "yeni-test209-30820c6a"', "sample work is fixed to TEST209");
+  has(settings, 'publishedAt: { not: null }', "sample work must be published");
+  has(settings, 'visibility: "public"', "sample work must be public");
+  has(settings, 'author: { is: { deletedAt: null, status: "active" } }', "author must be active");
+  has(settings, 'sampleWork?.saleConfiguration?.saleModel === "paid"', "paid model required");
+  has(settings, 'sampleWork.saleConfiguration.status === "ready"', "ready state required");
+  has(settings, 'sampleWork.saleConfiguration.priceAmount === BigInt(0)', "zero price required");
+  has(settings, '!sampleWork.saleConfiguration.activatedAt', "staged, not activated, required");
+  has(settings, 'sampleZeroTotalStaged && sampleSeller && readerTermsReady',
+    "do not claim a ready 0 TL checkout without all three prerequisites");
+});

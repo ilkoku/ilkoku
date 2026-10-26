@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   approved_two_request_check:
-    if: github.event.head_commit.message == 'ops(origin): one-time approved HTTP1/H2 diagnostic'
+    if: github.event.head_commit.message == 'approved-one-time-origin-protocol-run'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:

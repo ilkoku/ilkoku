@@ -110,7 +110,7 @@ export default async function SellerRightsAdminPage({
       </nav>
 
       <section id="seller-identity" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">1</span><div className={styles.sectionHeadingText}><h2>Resmî satıcı kimliği oluştur</h2>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">1</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>1. </span>Resmi satıcı kimliği oluştur</h2>
         <p>
           &quot;ilkoku&quot; sadece görünen platform adıdır. Resmi isim,
           vergi bilgisi, adres ve iletişim alanları gerçek kayıtlarla doldurulmalıdır.
@@ -147,7 +147,7 @@ export default async function SellerRightsAdminPage({
       </section>
 
       <section id="seller-verification" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">2</span><div className={styles.sectionHeadingText}><h2>Resmî kanıtı incele ve satıcıyı doğrula</h2><p>Bekleyen satıcının belgesini kontrol ederek kimlik incelemesini tamamlayın.</p></div></div>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">2</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>2. </span>Resmî kanıtı incele ve satıcıyı doğrula</h2><p>Bekleyen satıcının belgesini kontrol ederek kimlik incelemesini tamamlayın.</p></div></div>
         {pendingParties.length === 0 ? <p className={styles.empty}>Doğrulama bekleyen satıcı kaydı yok. İlk adımda bir satıcı taslağı oluşturun.</p> : null}
         {pendingParties.map((party) => (
           <form action={verifyLegalSellerAction} key={party.id} className={`${styles.pendingItem} ${styles.formGrid}`}>
@@ -170,7 +170,7 @@ export default async function SellerRightsAdminPage({
       </section>
 
       <section id="sales-rights" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">3</span><div className={styles.sectionHeadingText}><h2>Eser için satış yetkisi kanıtını gir</h2>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">3</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>3. </span>Eser için satış yetkisi kanıtını gir</h2>
         <p>
           Bu form para tahsil etmez. Dijital eser erişimi hakkının
           gerçekten verildiğini gösteren belge ve kaynak gereklidir.
@@ -206,7 +206,7 @@ export default async function SellerRightsAdminPage({
       </section>
 
       <section id="sales-approval" className={styles.section}>
-        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">4</span><div className={styles.sectionHeadingText}><h2>Eser satış yetkisini son kez onayla</h2><p>Yalnız incelenmiş, geçerli eser yetkilerini onaylayın.</p></div></div>
+        <div className={styles.sectionHeading}><span className={styles.stepNumber} aria-hidden="true">4</span><div className={styles.sectionHeadingText}><h2><span className={styles.screenReaderOnly}>4. </span>Eser satış yetkisini son kez onayla</h2><p>Yalnız incelenmiş, geçerli eser yetkilerini onaylayın.</p></div></div>
         {pendingRights.length === 0 ? <p className={styles.empty}>Son onay bekleyen belge yok. Önce eser satış yetkisi kanıtı oluşturulmalıdır.</p> : null}
         {pendingRights.map((rights) => (
           <form action={approveWorkSellerRightsAction} key={rights.id} className={`${styles.pendingItem} ${styles.formGrid}`}>

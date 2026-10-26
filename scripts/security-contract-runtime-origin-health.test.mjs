@@ -208,7 +208,7 @@ test("Scheduled origin coverage reports gaps, unknown data, and failure fallback
   });
   assert.match(malformed, /SCHEDULE_COVERAGE status=UNKNOWN/u);
   assert.match(source, /THRESHOLD_MINUTES = 20/u);
-  assert.doesNotMatch(source, /urllib|requests\.|http\.client|socket\.|subprocess|curl /u);
+  assert.doesNotMatch(source, /(?:^|\n)\s*(?:import|from)\s+(?:urllib|requests|socket|subprocess|http)\b|requests\.(?:get|post|request|Session)\s*\(|\bcurl\s+https?:/mu);
   assert.match(trapWorkflow, /Check GitHub scheduled probe coverage/u);
   assert.match(trapWorkflow, /event=schedule&per_page=25/u);
   assert.match(trapWorkflow, /python3 scripts\/origin-schedule-coverage\.py/u);

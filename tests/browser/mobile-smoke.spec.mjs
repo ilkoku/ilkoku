@@ -640,35 +640,31 @@ test("authenticated writer commerce configuration mutation smoke: writer stages 
   await expectResponsiveDocument(page);
 });
 
-test("writer applies for seller rights and admin separately reviews without enabling payment providers", async ({ page }) => {
+test("writer enters only invoicing status and billing details; admin remains separate", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
-  const adminToken = authFixture.sessions?.admin;
   const writerToken = authFixture.sessions?.writer;
-  expect(adminToken, "Missing admin session").toBeTruthy();
   expect(writerToken, "Missing writer session").toBeTruthy();
-  await page.context().addCookies([{ name: authFixture.cookieName, value: adminToken, url: authCookieUrl }]);
+  await page.context().addCookies([{ name: authFixture.cookieName, value: writerToken, url: authCookieUrl }]);
   await page.setViewportSize(viewports.phone430);
-  await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", {
-    waitUntil: "domcontentloaded",
-  });
+  await page.goto("/satis-erisim/odeme-vergi-bilgileri", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "Fatura ve Vergi Bilgilerim" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Faturalıyım/u })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Faturasızım/u })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /satış yetkisi kanıtı/iu })).toHaveCount(0);
+  await page.getByRole("radio", { name: /Faturalıyım/u }).check();
+  await expect(page.getByRole("region", { name: "Fatura bilgilerim" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: /Vergi \/ T\.C\. kimlik numarası/u })).toBeVisible();
+  await expectResponsiveDocument(page);
+  await page.goto("/satis-erisim/satici-yetkileri", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/satis-erisim\/odeme-vergi-bilgileri/u);
+
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken, "Missing admin session").toBeTruthy();
+  await page.context().addCookies([{ name: authFixture.cookieName, value: adminToken, url: authCookieUrl }]);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/satici-yetkileri", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: /Satıcı ve Satış Yetkisi/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: /1\. Resmî kanıtı incele/u })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /2\. Eser satış yetkisini/u })).toBeVisible();
   await expect(page.getByRole("button", { name: "Satıcı taslağını kaydet" })).toHaveCount(0);
-  // Approval buttons may be present for pending items, but only in the admin UI.
-  await expectResponsiveDocument(page);
-
-  await page.goto("/sistem-yonetimi/odeme-sistemi/ayarlar", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: /Satıcı ve satış yetkisi çalışma alanını aç/u })).toBeVisible();
-
-  await page.context().addCookies([{ name: authFixture.cookieName, value: writerToken, url: authCookieUrl }]);
-  await page.goto("/satis-erisim/satici-yetkileri", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { name: "Satıcı ve Satış Yetkisi" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Resmî satıcı bilgileri" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Eser için satış yetkisi belgesi" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Satıcı bilgilerimi incelemeye gönder" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Eser satış yetkimi incelemeye gönder" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Resmî kimliği doğrula" })).toHaveCount(0);
   await expectResponsiveDocument(page);
 });
 

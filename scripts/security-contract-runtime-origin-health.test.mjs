@@ -185,6 +185,31 @@ test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin
 });
 
 
+test("Scheduled origin coverage detects multi-hour gaps without extra HTTP probes", () => {
+  const source = readFileSync("scripts/origin-schedule-coverage.mjs", "utf8");
+  const trapWorkflow = readFileSync(".github/workflows/origin-incident-trap.yml", "utf8");
+  const current = { id: 200, event: "schedule", created_at: "2026-10-26T04:52:32Z" };
+  const previous = { id: 100, event: "schedule", created_at: "2026-10-26T00:13:57Z" };
+  const run = (runs) => execFileSync(process.execPath, ["scripts/origin-schedule-coverage.mjs"], {
+    input: JSON.stringify({ workflow_runs: runs }),
+    encoding: "utf8",
+    env: { CURRENT_RUN_ID: "200", GITHUB_OUTPUT: "", GITHUB_STEP_SUMMARY: "" },
+  });
+  assert.match(run([current, previous]), /SCHEDULE_COVERAGE status=GAP gap_minutes=279/u);
+  assert.match(run([current, { ...previous, created_at: "2026-10-26T04:44:32Z" }]),
+    /SCHEDULE_COVERAGE status=OK gap_minutes=8/u);
+  assert.match(run([previous]), /SCHEDULE_COVERAGE status=UNKNOWN/u);
+  assert.match(source, /thresholdMinutes = 20/u);
+  assert.doesNotMatch(source, /fetch\(|https?:\/\/|curl |https\.request|http\.request/u);
+  assert.match(trapWorkflow, /Check GitHub scheduled probe coverage/u);
+  assert.match(trapWorkflow, /event=schedule&per_page=25/u);
+  assert.match(trapWorkflow, /steps\.coverage\.outputs\.coverage_gap == 'true'/u);
+  assert.match(trapWorkflow, /github\.event_name == 'schedule'/u);
+  assert.match(trapWorkflow, /SAMPLE_COUNT:.*'push'.*'50'/u);
+  assert.match(trapWorkflow, /SAMPLE_INTERVAL:.*'push'.*'6'/u);
+  assert.match(trapWorkflow, /cron: "\*\/5 \* \* \* \*"/u);
+});
+
 test("Cloudflare secret-file probe WAF candidate is narrow and inert", () => {
   const expression = readFileSync("docs/security/cloudflare-secret-probe-waf.expr", "utf8").trim();
   const known = [

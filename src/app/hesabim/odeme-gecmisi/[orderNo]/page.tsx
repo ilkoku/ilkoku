@@ -54,10 +54,18 @@ export default async function ReaderOrderDetailPage({
   const hasAccess = order.status === "paid" &&
     order.entitlement?.status === "active";
   const seller = order.legalSnapshot;
+  const cancellationMailSubject = encodeURIComponent(
+    `İlkOku sipariş iptal/iade talebi — ${order.orderNo}`,
+  );
+  const cancellationMailBody = encodeURIComponent(
+    `Merhaba,\n\n${order.orderNo} numaralı ${order.work.title} siparişi için iptal/iade koşullarının değerlendirilmesini talep ediyorum.\n\nSipariş durumu: ${statusNames[order.status] ?? order.status}\n\nTalep gerekçem:\n\n`,
+  );
+  const cancellationMailHref =
+    `mailto:destek@ilkoku.com?subject=${cancellationMailSubject}&body=${cancellationMailBody}`;
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.readerPurchasedPage}`}>
         <header className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>Satın alma sonrası · Sipariş kaydı</span>
@@ -69,7 +77,7 @@ export default async function ReaderOrderDetailPage({
             Ödeme geçmişine dön
           </Link>
         </header>
-        <section className={styles.panel}>
+        <section className={`${styles.panel} ${styles.readerOrderPanel}`}>
           <span className={styles.eyebrow}>1. Sipariş durumu</span>
           <h2>{statusNames[order.status] ?? order.status}</h2>
           <div className={styles.summaryGrid}>
@@ -89,8 +97,19 @@ export default async function ReaderOrderDetailPage({
           ) : (
             <p className={styles.notice}>Erişim hakkı yalnız doğrulanmış tamamlanan siparişlerde açılır.</p>
           )}
+          {(order.status === "paid" || order.status === "pending_payment") ? (
+            <aside className={styles.readerCancelInfo} aria-label="Sipariş iptal ve iade başvurusu">
+              <h3>Sipariş iptal / iade talebi</h3>
+              <p>
+                Bu bağlantı destek ekibine e-posta hazırlayarak başvuru yapmanı sağlar.
+                Siparişi kendiliğinden iptal etmez ve otomatik para iadesi oluşturmaz.
+                Talebin ve yürürlükteki yasal hakların ayrıca değerlendirilir.
+              </p>
+              <a href={cancellationMailHref}>E-posta ile iptal / iade talebi gönder</a>
+            </aside>
+          ) : null}
         </section>
-        <section className={styles.panel}>
+        <section className={`${styles.panel} ${styles.readerOrderPanel}`}>
           <span className={styles.eyebrow}>2. Tahsilat özeti</span>
           <h2>Satın alma tutarları</h2>
           <div className={styles.summaryGrid}>
@@ -123,7 +142,7 @@ export default async function ReaderOrderDetailPage({
             stopaj ve aracılık hizmet bedeli okurdan ikinci kez tahsil edilmez.
           </p>
         </section>
-        <section className={styles.panel}>
+        <section className={`${styles.panel} ${styles.readerOrderPanel}`}>
           <span className={styles.eyebrow}>3. Satıcı ve onay kayıtları</span>
           <h2>Siparişe ait bilgiler</h2>
           {seller ? (

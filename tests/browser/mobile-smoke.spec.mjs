@@ -1212,8 +1212,8 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   const workTotals = page.locator("article").filter({ hasText: "CI Browser 0 TL Eser" })
     .filter({ hasText: "Satış adedi (0 TL hariç)" });
   await expect(workTotals).toBeVisible();
-  await expect(workTotals.getByText("Satış adedi (0 TL hariç)").locator("..").locator("strong")).toHaveText("0");
-  await expect(workTotals.getByText("0 TL edinim adedi").locator("..").locator("strong")).toHaveText("1");
+  await expect(workTotals.getByText("Satış adedi (0 TL hariç)").locator("strong")).toHaveText("0");
+  await expect(workTotals.getByText("0 TL edinim adedi").locator("strong")).toHaveText("1");
 
   // Confirm the day-close screen stays an admin-only read-only export view.
   await page.context().clearCookies();

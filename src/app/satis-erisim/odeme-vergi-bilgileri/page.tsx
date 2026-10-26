@@ -4,85 +4,77 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { getCurrentProfile } from "@/features/auth/profile";
+import { prisma } from "@/lib/prisma";
 import styles from "@/features/commerce/commerce.module.css";
+import { WriterBillingForm } from "./WriterBillingForm";
 
 export const metadata: Metadata = {
-  title: "Ödeme ve Vergi Bilgileri | İlkOku",
+  title: "Fatura ve Vergi Bilgilerim | İlkOku",
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";
 
-export default async function WriterTaxPaymentPreparationPage() {
+export default async function WriterTaxPaymentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ durum?: string }>;
+}) {
   const profile = await getCurrentProfile();
-  if (!profile) redirect("/giris?sonraki=/satis-erisim/odeme-vergi-bilgileri");
+  if (!profile) redirect("/giris?sonraki=%2Fsatis-erisim%2Fodeme-vergi-bilgileri");
   if (profile.role !== "writer") redirect("/erisim-reddedildi");
 
+  const query = await searchParams;
+  const declared = await prisma.authorBillingProfile.findUnique({
+    where: { authorId: profile.id },
+    select: {
+      invoiceStatus: true,
+      billingName: true,
+      taxIdentifier: true,
+      taxOffice: true,
+      billingAddress: true,
+      updatedAt: true,
+    },
+  });
+  const notice =
+    query.durum === "kaydedildi"
+      ? "Fatura durumun ve bilgilerin kaydedildi."
+      : query.durum === "durum-sec"
+        ? "Faturalı veya faturasız durumunu seç."
+        : query.durum === "fatura-bilgisi-eksik"
+          ? "Faturalı seçeneği için unvan, geçerli vergi/kimlik numarası, vergi dairesi ve adres bilgilerini tamamla."
+          : null;
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.writerCommercePage}`}>
         <header className={styles.hero}>
           <div>
-            <span className={styles.eyebrow}>Yazar · Satış öncesi · Vergi hazırlığı</span>
-            <h1>Ödeme ve vergi bilgileri</h1>
-            <p>Yazar telif ödemelerinde belge türü, kimlik ve vergi statüsü
-              kontrol edildikten sonra net hakediş belirlenir.</p>
+            <span className={styles.eyebrow}>Yazar · Ödeme öncesi bilgiler</span>
+            <h1>Fatura ve Vergi Bilgilerim</h1>
+            <p>Faturalı mı faturasız mı çalıştığını seç ve varsa fatura bilgilerini kaydet.</p>
           </div>
           <Link className={styles.secondaryAction} href="/satis-erisim">
             Satış &amp; Erişim&apos;e dön
           </Link>
         </header>
-        <div className={styles.notice} role="status">
-          Bu bölüm bilgilendirme ve ön hazırlıktır. Belge türü seçimi, kimlik,
-          vergi numarası veya IBAN kaydı bu sürümde alınmıyor. Vergi
-          doğrulama sistemi ve güvenli saklama altyapısı tamamlanana kadar
-          gerçek ödeme talebi oluşturulamaz. Bu ekran fatura veya mali belge düzenlemez.
-        </div>
-        <div className={styles.grid}>
-          <section className={styles.panel}>
-            <span className={styles.eyebrow}>Belge türü · 1</span>
-            <h2>Fatura / e-serbest meslek makbuzu</h2>
-            <p>Vergi mükellefiyetine uygun belge düzenleyen yazar için
-              gelir ve KDV işlemleri belgenin niteliğine göre yapılır.</p>
-            <div className={styles.summaryGrid}>
-              <div><span>İlkOku komisyonu</span><strong>Genel %15 veya özel oran + komisyon KDV&apos;si</strong></div>
-              <div><span>Ek aracılık hizmet bedeli</span><strong>Yok</strong></div>
-              <div><span>Yazar belgesi</span><strong>Fatura veya uygun makbuz</strong></div>
-              <div><span>Stopaj</span><strong>Belge ve statüye göre</strong></div>
-            </div>
-            <p className={styles.helper}>
-              Fatura düzenleyebilmek ve serbest meslek makbuzu düzenleyebilmek
-              aynı hukukî statü değildir. Vergi numarası, faaliyet türü ve
-              belge uygunluğu doğrulanacaktır.
-            </p>
-          </section>
-          <section className={styles.panel}>
-            <span className={styles.eyebrow}>Belge türü · 2</span>
-            <h2>Gider pusulasına uygun telif</h2>
-            <p>Gider pusulasıyla ödeme talep eden kişinin ilgili mevzuata
-              göre uygunluğu muhasebe tarafından değerlendirilecektir.</p>
-            <div className={styles.summaryGrid}>
-              <div><span>İlkOku komisyon payı</span><strong>Genel %15 veya özel oran</strong></div>
-              <div><span>Ayrı aracılık hizmet bedeli</span><strong>%5 + KDV</strong></div>
-              <div><span>Stopaj örneği</span><strong>GVK 18 uygunsa %17</strong></div>
-              <div><span>Telif alış KDV&apos;si</span><strong>2 No.lu KDV koşullarına göre</strong></div>
-            </div>
-            <p className={styles.helper}>
-              Gider pusulası yalnızca yazarın isteğiyle seçilemez. Kimlik,
-              eser sahipliği ve vergi statüsü incelenmelidir.
-            </p>
-          </section>
-        </div>
-        <section className={styles.panel}>
-          <h2>Ödeme öncesi kontrol sırası</h2>
-          <div className={styles.summaryGrid}>
-            <div><span>1. Belge</span><strong>Vergi statüsü doğrulanır</strong></div>
-            <div><span>2. Satış</span><strong>Sipariş ve kupon kesinleşir</strong></div>
-            <div><span>3. Vergiler</span><strong>KDV ve stopaj ayrıştırılır</strong></div>
-            <div><span>4. Hakediş</span><strong>Net banka ödeme tutarı onaylanır</strong></div>
+        {notice ? <div className={styles.flash} role="status">{notice}</div> : null}
+        {declared ? (
+          <div className={styles.notice} role="status">
+            Son kayıt: {new Intl.DateTimeFormat("tr-TR", {
+              dateStyle: "short",
+              timeStyle: "short",
+              timeZone: "Europe/Istanbul",
+            }).format(declared.updatedAt)}.
+            {" "}Beyan edilen durum: <strong>{declared.invoiceStatus === "invoicing" ? "Faturalı" : "Faturasız"}</strong>.
           </div>
-          <Link className={styles.action} href="/satis-erisim/kazanc-hesaplama">
-            Örnek kazancımı hesapla
-          </Link>
+        ) : null}
+        <section className={styles.panel} aria-label="Yazarın fatura beyanı">
+          <WriterBillingForm initial={{
+            invoiceStatus: declared?.invoiceStatus ?? null,
+            billingName: declared?.billingName ?? "",
+            taxIdentifier: declared?.taxIdentifier ?? "",
+            taxOffice: declared?.taxOffice ?? "",
+            billingAddress: declared?.billingAddress ?? "",
+          }} />
         </section>
       </div>
     </AppShell>

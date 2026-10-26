@@ -2,14 +2,18 @@
 
 **Amaç:** Gerçek ödeme sağlayıcısı olmadan, ücretli olarak işaretlenmiş eserlerin dijital okuma hakkını 0 TL sipariş ile kaydetmek. Gerçek para tahsil edilmez.
 
-## Yazar başvurusu ve yönetici onayı
+## Yazarın gireceği bilgiler — sadece fatura ve vergi mükellefiyeti beyanı
 
-1. **Yazar — resmî satıcı kimliği taslağı:** `/satis-erisim/satici-yetkileri` (Yazar Paneli → Satış & Erişim → Satıcı ve satış yetkisi). Yazar yalnız kendi hesap kimliğine bağlanan gerçek kişi veya tüzel kişi satıcı başvurusu oluşturabilir. Resmî ad/unvan, vergi/kimlik tanımlayıcısı, adres, e-posta zorunludur. `LegalParty.ownerUserId` hesabına bağlı ve durumu `pending` olur; kendini doğrulayamaz. Platform işletmecisi `platform` türü yazar ekranından oluşturulamaz.
-2. **Yazar — eser satış hakkı kanıtı:** Aynı ekranda sadece kendi yayımlanmış ve paid `ready/active` eserini, kendi satıcı kaydını, gerçek HTTPS belge referansını, incelenecek metni ve varsa bitiş tarihini seçer/girer. `WorkSalesAuthorization` `pending` oluşturulur; belge metninin SHA-256 özeti kaydedilir. Satıcı kimliği henüz incelemedeyse bile belge taslağı sunulabilir.
-3. **Yönetici — kimlik incelemesi:** `/sistem-yonetimi/odeme-sistemi/satici-yetkileri` artık başvuru formu değil **inceleme ekranıdır**. Admin, orijinal resmî kaynakla bilgileri karşılaştırıp gerekçe ve açık onay verir; `verifiedById` ve denetim kanıtı saklanır.
-4. **Yönetici — eser yetki incelemesi ve onay:** Admin kanıtı, eser-satıcı eşleşmesini, tarihleri ve doğrulanmış hukukî kimliği son kez inceler. Ancak sonrasında `approved` geçerli satıcı ataması oluşur. Önceki güncel atama tarihçesi korunur, eski `OrderLegalSnapshot` kayıtları değiştirilmez. Yetki iptali de gerekçe ve açık yönetici onayı gerektirir.
+**Yazar Paneli → Satış & Erişim → Fatura ve vergi bilgilerim** (`/satis-erisim/odeme-vergi-bilgileri`):
 
-Yazar yalnız kendi başvuru durumlarını ve eserlerini görür; admin incelemesi/iptali yapamaz. Bu ayrım gerçek tahsilat veya ödeme sağlayıcısı açmaz.
+- **Faturalıyım:** İlgili faturayı düzenleyebildiğini beyan eder. Fatura unvanı/ad-soyad, vergi/T.C. kimlik numarası, vergi dairesi ve fatura adresi bilgilerini girer.
+- **Faturasızım:** Fatura düzenlemediğini beyan eder. Fatura alanları zorunlu tutulmaz ve önceki fatura verileri temizlenir.
+- Beyan yalnızca bu yazara özel `AuthorBillingProfile` içinde tutulur. Resmî vergi mükellefiyeti otomatik doğrulanmaz; `AuthorTaxReviewEvent` yönetici/muhasebe değerlendirmesi bu kayıttan bağımsızdır.
+- Bu ekran eser satış yetkisi belgesi, resmî satıcı ataması, IBAN, ödeme yöntemi veya fatura oluşturma ekranı değildir. Eski `/satis-erisim/satici-yetkileri` bağlantısı fatura ekranına yönlendirilir.
+
+## Yönetimin ayrı hukukî doğrulama süreci
+
+`/sistem-yonetimi/odeme-sistemi/satici-yetkileri` yöneticiye ait doğrulama, satış hakkı kanıtı, onay ve yetki iptal alanıdır. **Yazar bu formu doldurmaz ve satış hakkını kendisi onaylamaz.** Gerçek 0 TL ticari sipariş için gereken doğrulanmış hukukî satıcı ile esere özel satış yetkisi şartı değişmez; yazarın faturalı/faturasız beyanı tek başına bunun yerine geçmez.
 
 ## Ayrı zorunlu şart: Okur sözleşmesi
 

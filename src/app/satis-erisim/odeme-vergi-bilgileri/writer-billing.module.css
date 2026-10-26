@@ -1,0 +1,24 @@
+.form{display:grid;gap:18px;color:#f6f2fc}
+.choice{border:0;padding:0;margin:0;display:grid;gap:12px;min-width:0}
+.choice legend{padding:0 0 12px;color:#efe8f8;font-weight:750;font-size:1.1rem}
+.option,.selected{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border-radius:13px;border:1px solid #4c4564;background:#181827;cursor:pointer}
+.selected{background:#30234b;border-color:#a482ec}
+.option input,.selected input{margin:3px 0 0;flex:none;accent-color:#a274f4;width:17px;height:17px}
+.option span,.selected span{display:grid;gap:4px;min-width:0}
+.option strong,.selected strong{color:#f5efff;font-size:.96rem;line-height:1.45}
+.option small,.selected small{color:#bab8ce;font-size:.84rem;line-height:1.45}
+.details{padding:18px;border:1px solid #403955;background:#1b192a;border-radius:14px;display:grid;gap:14px}
+.details h2{margin:0;font-size:1.12rem;color:#f1e8ff}
+.details p{margin:0;color:#bab6ce;line-height:1.6;font-size:.89rem}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 17px}
+.grid label{display:grid;align-content:start;gap:7px;color:#ece7f6;font-size:.9rem;min-width:0;font-weight:600}
+.grid :is(input,textarea){box-sizing:border-box;min-width:0;max-width:100%;width:100%;background:#10111f;color:#fff;color-scheme:dark;border:1px solid #5b536f;border-radius:9px;min-height:44px;padding:10px 12px;font:inherit;font-weight:400;line-height:1.5}
+.grid textarea{min-height:95px;resize:vertical}
+.grid :is(input,textarea):focus-visible{outline:2px solid #c09bfd;outline-offset:2px}
+.grid .wide{grid-column:1/-1}
+.info{margin:0;padding:13px 15px;border-radius:10px;border:1px solid #4d4563;background:#242037;color:#ccc7de;font-size:.9rem;line-height:1.65}
+.actions{display:flex;justify-content:flex-start;padding-top:8px;border-top:1px solid #474057}
+.actions button{border:1px solid #a689e5;color:#fff;background:#6936c8;border-radius:10px;padding:12px 19px;min-height:45px;font:inherit;font-weight:750;cursor:pointer}
+.actions button:hover{background:#7e47db}
+.actions button:focus-visible{outline:2px solid #d7bfff;outline-offset:3px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.details{padding:15px}.actions button{width:100%}}

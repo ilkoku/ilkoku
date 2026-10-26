@@ -82,6 +82,7 @@ model User {
   payouts                      Payout[]                     @relation("PayoutAuthor")
   workPriceHistory             WorkPriceHistory[]           @relation("WorkPriceHistoryAuthor")
   orderConsents                OrderConsent[]               @relation("OrderConsentReader")
+  authorBillingProfile         AuthorBillingProfile?        @relation("AuthorBillingProfileAuthor")
   ownedLegalParties            LegalParty[]                  @relation("LegalPartyOwner")
   verifiedLegalParties         LegalParty[]                  @relation("LegalPartyVerifier")
   approvedSellerAssignments    WorkSellerAssignment[]        @relation("WorkSellerAssignmentApprover")
@@ -1210,6 +1211,28 @@ model WorkEntitlement {
 
 // Append-only internal tax-document examination records. These do not
 // verify tax status with the government and NEVER authorize payouts.
+// Author-provided invoicing self-declaration. This record is NOT evidence
+// that tax status has been independently verified by accounting.
+model AuthorBillingProfile {
+  id              String              @id @default(uuid()) @db.Char(36)
+  authorId        String              @unique @db.Char(36)
+  invoiceStatus   AuthorInvoiceStatus @default(non_invoicing)
+  billingName     String?             @db.VarChar(240)
+  taxIdentifier   String?             @db.VarChar(32)
+  taxOffice       String?             @db.VarChar(160)
+  billingAddress  String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  author          User                @relation("AuthorBillingProfileAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceStatus])
+}
+
+enum AuthorInvoiceStatus {
+  invoicing
+  non_invoicing
+}
+
 model AuthorTaxReviewEvent {
   id                String                   @id @default(uuid()) @db.Char(36)
   authorId          String                   @db.Char(36)

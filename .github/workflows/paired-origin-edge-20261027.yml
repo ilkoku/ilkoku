@@ -1,0 +1,325 @@
+name: Paired Cloudflare versus Hostinger origin 24h diagnostic
+on:
+  push:
+    branches:
+      - ops/paired-origin-edge-20261027
+    paths:
+      - .github/workflows/paired-origin-edge-20261027.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: paired-origin-edge-20261027
+  cancel-in-progress: false
+jobs:
+  phase1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 299
+    outputs:
+      anchor: ${{ steps.clock.outputs.anchor }}
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+      - name: Start 24-hour UTC measurement window
+        id: clock
+        run: echo "anchor=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+      - name: Run paired diagnostic segment 1/5
+        env:
+          SEGMENT_NUMBER: '1'
+          ANCHOR_EPOCH: ${{ steps.clock.outputs.anchor }}
+        run: |
+          python3 -m py_compile scripts/paired-origin-edge-24h-20261027.py
+          python3 scripts/paired-origin-edge-24h-20261027.py
+      - name: Report only genuine anomalies to incident 1856
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          n = 1
+          f = Path("paired-diagnostics") / f"segment-{n:02d}-summary.json"
+          if not f.exists():
+              print("No segment summary to report")
+          else:
+              summary = json.loads(f.read_text())
+              counts = summary["counts"]
+              if counts["incidents"] or counts["blocked"]:
+                  p = f.with_name(f"segment-{n:02d}.jsonl")
+                  issues = [json.loads(line) for line in p.read_text().splitlines()
+                            if any(v.get("curl_exit") != 0 or v.get("code") != "200"
+                                   for v in (json.loads(line)["origin"], json.loads(line)["cloudflare"]))]
+                  body = ("PAIRED_ORIGIN_EDGE_INCIDENT segment %s/5. UTC window start: %s. "
+                          "Pair count: %s; origin failures: %s; CF-edge failures: %s; blocked: %s. "
+                          "Examples (max 4): %s. Full artifact: https://github.com/ilkoku/ilkoku/actions/runs/%s "
+                          "Do not equate the GitHub runner client timings with Cloudflare-origin transport timings."
+                          % (n, summary["segment_start_utc"], counts["pairs"],
+                             counts["origin_fail"], counts["cloudflare_fail"], counts["blocked"],
+                             json.dumps(issues[:4]), "${{ github.run_id }}"))
+                  subprocess.run(["gh", "api", "--method", "POST",
+                                  "repos/ilkoku/ilkoku/issues/1856/comments", "-f", "body=" + body], check=True)
+          PY
+      - name: Retain paired timestamped samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-origin-edge-part-1
+          path: paired-diagnostics/
+          retention-days: 14
+          if-no-files-found: warn
+  phase2:
+    needs: phase1
+    runs-on: ubuntu-latest
+    timeout-minutes: 299
+    outputs:
+      anchor: ${{ steps.clock.outputs.anchor }}
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+      - name: Continue original UTC measurement window
+        id: clock
+        env:
+          PRIOR_ANCHOR: ${{ needs.phase1.outputs.anchor }}
+        run: |
+          test -n "$PRIOR_ANCHOR"
+          echo "anchor=$PRIOR_ANCHOR" >> "$GITHUB_OUTPUT"
+      - name: Run paired diagnostic segment 2/5
+        env:
+          SEGMENT_NUMBER: '2'
+          ANCHOR_EPOCH: ${{ steps.clock.outputs.anchor }}
+        run: |
+          python3 -m py_compile scripts/paired-origin-edge-24h-20261027.py
+          python3 scripts/paired-origin-edge-24h-20261027.py
+      - name: Report only genuine anomalies to incident 1856
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          n = 2
+          f = Path("paired-diagnostics") / f"segment-{n:02d}-summary.json"
+          if not f.exists():
+              print("No segment summary to report")
+          else:
+              summary = json.loads(f.read_text())
+              counts = summary["counts"]
+              if counts["incidents"] or counts["blocked"]:
+                  p = f.with_name(f"segment-{n:02d}.jsonl")
+                  issues = [json.loads(line) for line in p.read_text().splitlines()
+                            if any(v.get("curl_exit") != 0 or v.get("code") != "200"
+                                   for v in (json.loads(line)["origin"], json.loads(line)["cloudflare"]))]
+                  body = ("PAIRED_ORIGIN_EDGE_INCIDENT segment %s/5. UTC window start: %s. "
+                          "Pair count: %s; origin failures: %s; CF-edge failures: %s; blocked: %s. "
+                          "Examples (max 4): %s. Full artifact: https://github.com/ilkoku/ilkoku/actions/runs/%s "
+                          "Do not equate the GitHub runner client timings with Cloudflare-origin transport timings."
+                          % (n, summary["segment_start_utc"], counts["pairs"],
+                             counts["origin_fail"], counts["cloudflare_fail"], counts["blocked"],
+                             json.dumps(issues[:4]), "${{ github.run_id }}"))
+                  subprocess.run(["gh", "api", "--method", "POST",
+                                  "repos/ilkoku/ilkoku/issues/1856/comments", "-f", "body=" + body], check=True)
+          PY
+      - name: Retain paired timestamped samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-origin-edge-part-2
+          path: paired-diagnostics/
+          retention-days: 14
+          if-no-files-found: warn
+  phase3:
+    needs: phase2
+    runs-on: ubuntu-latest
+    timeout-minutes: 299
+    outputs:
+      anchor: ${{ steps.clock.outputs.anchor }}
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+      - name: Continue original UTC measurement window
+        id: clock
+        env:
+          PRIOR_ANCHOR: ${{ needs.phase2.outputs.anchor }}
+        run: |
+          test -n "$PRIOR_ANCHOR"
+          echo "anchor=$PRIOR_ANCHOR" >> "$GITHUB_OUTPUT"
+      - name: Run paired diagnostic segment 3/5
+        env:
+          SEGMENT_NUMBER: '3'
+          ANCHOR_EPOCH: ${{ steps.clock.outputs.anchor }}
+        run: |
+          python3 -m py_compile scripts/paired-origin-edge-24h-20261027.py
+          python3 scripts/paired-origin-edge-24h-20261027.py
+      - name: Report only genuine anomalies to incident 1856
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          n = 3
+          f = Path("paired-diagnostics") / f"segment-{n:02d}-summary.json"
+          if not f.exists():
+              print("No segment summary to report")
+          else:
+              summary = json.loads(f.read_text())
+              counts = summary["counts"]
+              if counts["incidents"] or counts["blocked"]:
+                  p = f.with_name(f"segment-{n:02d}.jsonl")
+                  issues = [json.loads(line) for line in p.read_text().splitlines()
+                            if any(v.get("curl_exit") != 0 or v.get("code") != "200"
+                                   for v in (json.loads(line)["origin"], json.loads(line)["cloudflare"]))]
+                  body = ("PAIRED_ORIGIN_EDGE_INCIDENT segment %s/5. UTC window start: %s. "
+                          "Pair count: %s; origin failures: %s; CF-edge failures: %s; blocked: %s. "
+                          "Examples (max 4): %s. Full artifact: https://github.com/ilkoku/ilkoku/actions/runs/%s "
+                          "Do not equate the GitHub runner client timings with Cloudflare-origin transport timings."
+                          % (n, summary["segment_start_utc"], counts["pairs"],
+                             counts["origin_fail"], counts["cloudflare_fail"], counts["blocked"],
+                             json.dumps(issues[:4]), "${{ github.run_id }}"))
+                  subprocess.run(["gh", "api", "--method", "POST",
+                                  "repos/ilkoku/ilkoku/issues/1856/comments", "-f", "body=" + body], check=True)
+          PY
+      - name: Retain paired timestamped samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-origin-edge-part-3
+          path: paired-diagnostics/
+          retention-days: 14
+          if-no-files-found: warn
+  phase4:
+    needs: phase3
+    runs-on: ubuntu-latest
+    timeout-minutes: 299
+    outputs:
+      anchor: ${{ steps.clock.outputs.anchor }}
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+      - name: Continue original UTC measurement window
+        id: clock
+        env:
+          PRIOR_ANCHOR: ${{ needs.phase3.outputs.anchor }}
+        run: |
+          test -n "$PRIOR_ANCHOR"
+          echo "anchor=$PRIOR_ANCHOR" >> "$GITHUB_OUTPUT"
+      - name: Run paired diagnostic segment 4/5
+        env:
+          SEGMENT_NUMBER: '4'
+          ANCHOR_EPOCH: ${{ steps.clock.outputs.anchor }}
+        run: |
+          python3 -m py_compile scripts/paired-origin-edge-24h-20261027.py
+          python3 scripts/paired-origin-edge-24h-20261027.py
+      - name: Report only genuine anomalies to incident 1856
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          n = 4
+          f = Path("paired-diagnostics") / f"segment-{n:02d}-summary.json"
+          if not f.exists():
+              print("No segment summary to report")
+          else:
+              summary = json.loads(f.read_text())
+              counts = summary["counts"]
+              if counts["incidents"] or counts["blocked"]:
+                  p = f.with_name(f"segment-{n:02d}.jsonl")
+                  issues = [json.loads(line) for line in p.read_text().splitlines()
+                            if any(v.get("curl_exit") != 0 or v.get("code") != "200"
+                                   for v in (json.loads(line)["origin"], json.loads(line)["cloudflare"]))]
+                  body = ("PAIRED_ORIGIN_EDGE_INCIDENT segment %s/5. UTC window start: %s. "
+                          "Pair count: %s; origin failures: %s; CF-edge failures: %s; blocked: %s. "
+                          "Examples (max 4): %s. Full artifact: https://github.com/ilkoku/ilkoku/actions/runs/%s "
+                          "Do not equate the GitHub runner client timings with Cloudflare-origin transport timings."
+                          % (n, summary["segment_start_utc"], counts["pairs"],
+                             counts["origin_fail"], counts["cloudflare_fail"], counts["blocked"],
+                             json.dumps(issues[:4]), "${{ github.run_id }}"))
+                  subprocess.run(["gh", "api", "--method", "POST",
+                                  "repos/ilkoku/ilkoku/issues/1856/comments", "-f", "body=" + body], check=True)
+          PY
+      - name: Retain paired timestamped samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-origin-edge-part-4
+          path: paired-diagnostics/
+          retention-days: 14
+          if-no-files-found: warn
+  phase5:
+    needs: phase4
+    runs-on: ubuntu-latest
+    timeout-minutes: 299
+    outputs:
+      anchor: ${{ steps.clock.outputs.anchor }}
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+      - name: Continue original UTC measurement window
+        id: clock
+        env:
+          PRIOR_ANCHOR: ${{ needs.phase4.outputs.anchor }}
+        run: |
+          test -n "$PRIOR_ANCHOR"
+          echo "anchor=$PRIOR_ANCHOR" >> "$GITHUB_OUTPUT"
+      - name: Run paired diagnostic segment 5/5
+        env:
+          SEGMENT_NUMBER: '5'
+          ANCHOR_EPOCH: ${{ steps.clock.outputs.anchor }}
+        run: |
+          python3 -m py_compile scripts/paired-origin-edge-24h-20261027.py
+          python3 scripts/paired-origin-edge-24h-20261027.py
+      - name: Report only genuine anomalies to incident 1856
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          n = 5
+          f = Path("paired-diagnostics") / f"segment-{n:02d}-summary.json"
+          if not f.exists():
+              print("No segment summary to report")
+          else:
+              summary = json.loads(f.read_text())
+              counts = summary["counts"]
+              if counts["incidents"] or counts["blocked"]:
+                  p = f.with_name(f"segment-{n:02d}.jsonl")
+                  issues = [json.loads(line) for line in p.read_text().splitlines()
+                            if any(v.get("curl_exit") != 0 or v.get("code") != "200"
+                                   for v in (json.loads(line)["origin"], json.loads(line)["cloudflare"]))]
+                  body = ("PAIRED_ORIGIN_EDGE_INCIDENT segment %s/5. UTC window start: %s. "
+                          "Pair count: %s; origin failures: %s; CF-edge failures: %s; blocked: %s. "
+                          "Examples (max 4): %s. Full artifact: https://github.com/ilkoku/ilkoku/actions/runs/%s "
+                          "Do not equate the GitHub runner client timings with Cloudflare-origin transport timings."
+                          % (n, summary["segment_start_utc"], counts["pairs"],
+                             counts["origin_fail"], counts["cloudflare_fail"], counts["blocked"],
+                             json.dumps(issues[:4]), "${{ github.run_id }}"))
+                  subprocess.run(["gh", "api", "--method", "POST",
+                                  "repos/ilkoku/ilkoku/issues/1856/comments", "-f", "body=" + body], check=True)
+          PY
+      - name: Retain paired timestamped samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-origin-edge-part-5
+          path: paired-diagnostics/
+          retention-days: 14
+          if-no-files-found: warn

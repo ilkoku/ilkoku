@@ -9,6 +9,7 @@ import { getCurrentProfile } from "@/features/auth/profile";
 import {
   beginPaidCheckoutAction,
   completeZeroTotalCheckoutAction,
+  completeTest209ZeroTlDemoAction,
 } from "@/features/commerce/checkout-actions";
 import {
   getApplicableCheckoutCoupon,
@@ -33,6 +34,8 @@ export const dynamic = "force-dynamic";
 
 const checkoutMessages: Record<string, string> = {
   "kosul-onayi-gerekli": "Devam etmek için dijital içerik satın alma koşullarını kabul etmelisin.",
+  "deneme-onayi-gerekli": "0 TL deneme erişimi için onay kutusunu işaretlemelisin.",
+  "deneme-hazir-degil": "Bu test eseri veya test hesabı şu anda erişim denemesine uygun değil.",
   "tahsilat-kapali": "Satın alma işlemi henüz aktif değil.",
   "eser-hazir-degil": "Bu eser henüz ücretli satın almaya hazır değil.",
   "satici-yetkisi-dogrulanmadi": "Bu eser için hukukî satıcı ve satış yetkisi henüz doğrulanmadı.",

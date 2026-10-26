@@ -185,12 +185,12 @@ test("Origin trap names curl timings as client-to-Cloudflare metrics, not origin
 });
 
 
-test("Scheduled origin coverage detects multi-hour gaps without extra HTTP probes", () => {
-  const source = readFileSync("scripts/origin-schedule-coverage.mjs", "utf8");
+test("Scheduled origin coverage reports gaps, unknown data, and failure fallback without site requests", () => {
+  const source = readFileSync("scripts/origin-schedule-coverage.py", "utf8");
   const trapWorkflow = readFileSync(".github/workflows/origin-incident-trap.yml", "utf8");
   const current = { id: 200, event: "schedule", created_at: "2026-10-26T04:52:32Z" };
   const previous = { id: 100, event: "schedule", created_at: "2026-10-26T00:13:57Z" };
-  const run = (runs) => execFileSync(process.execPath, ["scripts/origin-schedule-coverage.mjs"], {
+  const run = (runs) => execFileSync("python3", ["scripts/origin-schedule-coverage.py"], {
     input: JSON.stringify({ workflow_runs: runs }),
     encoding: "utf8",
     env: { CURRENT_RUN_ID: "200", GITHUB_OUTPUT: "", GITHUB_STEP_SUMMARY: "" },
@@ -198,13 +198,25 @@ test("Scheduled origin coverage detects multi-hour gaps without extra HTTP probe
   assert.match(run([current, previous]), /SCHEDULE_COVERAGE status=GAP gap_minutes=279/u);
   assert.match(run([current, { ...previous, created_at: "2026-10-26T04:44:32Z" }]),
     /SCHEDULE_COVERAGE status=OK gap_minutes=8/u);
+  assert.match(run([current, { ...previous, created_at: "2026-10-26T04:32:32Z" }]),
+    /SCHEDULE_COVERAGE status=OK gap_minutes=20/u);
   assert.match(run([previous]), /SCHEDULE_COVERAGE status=UNKNOWN/u);
-  assert.match(source, /thresholdMinutes = 20/u);
-  assert.doesNotMatch(source, /fetch\(|https?:\/\/|curl |https\.request|http\.request/u);
+  const malformed = execFileSync("python3", ["scripts/origin-schedule-coverage.py"], {
+    input: "{invalid-json",
+    encoding: "utf8",
+    env: { CURRENT_RUN_ID: "200", GITHUB_OUTPUT: "", GITHUB_STEP_SUMMARY: "" },
+  });
+  assert.match(malformed, /SCHEDULE_COVERAGE status=UNKNOWN/u);
+  assert.match(source, /THRESHOLD_MINUTES = 20/u);
+  assert.doesNotMatch(source, /(?:^|\n)\s*(?:import|from)\s+(?:urllib|requests|socket|subprocess|http)\b|requests\.(?:get|post|request|Session)\s*\(|\bcurl\s+https?:/mu);
   assert.match(trapWorkflow, /Check GitHub scheduled probe coverage/u);
   assert.match(trapWorkflow, /event=schedule&per_page=25/u);
+  assert.match(trapWorkflow, /python3 scripts\/origin-schedule-coverage\.py/u);
+  assert.match(trapWorkflow, /RUNNER_TEMP/u);
+  assert.match(trapWorkflow, /steps\.coverage\.outcome == 'failure'/u);
   assert.match(trapWorkflow, /steps\.coverage\.outputs\.coverage_gap == 'true'/u);
   assert.match(trapWorkflow, /github\.event_name == 'schedule'/u);
+  assert.doesNotMatch(trapWorkflow, /node scripts\/origin-schedule-coverage\.mjs/u);
   assert.match(trapWorkflow, /SAMPLE_COUNT:.*'push'.*'50'/u);
   assert.match(trapWorkflow, /SAMPLE_INTERVAL:.*'push'.*'6'/u);
   assert.match(trapWorkflow, /cron: "\*\/5 \* \* \* \*"/u);

@@ -1428,6 +1428,15 @@ test("author seller informational commission and intermediary fee use frozen net
   assert.equal(result.manifest.reviewedCommissionIllustrationMinor, "0");
   assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor, "0");
 
+  const standard = validOrder();
+  standard.sellerMode = "third_party";
+  standard.commission = {
+    commissionRateBps: 1500, serviceFeeRateBps: 500,
+    source: "global", sourceEventId: null, calculationVersion: "rate-v1",
+  };
+  const standardCsv = make([standard]).files.find((row) => row.name === "siparisler.csv").data;
+  assert.ok(standardCsv.includes(",1500,500,"), "Default frozen 15 percent commission and separate 5 percent fee");
+
   const invoiced = validOrder();
   invoiced.sellerMode = "third_party";
   invoiced.taxReview.documentKind = "commercial_invoice";
@@ -1441,6 +1450,7 @@ test("author seller withholding amount is never guessed and uncertain rows have 
     ["coupon", (order) => { order.couponCode = "CI-COUPON"; }],
     ["unverified", (order) => { order.taxReview = null; }],
     ["refund", (order) => { order.status = "refunded"; }],
+    ["pending", (order) => { order.status = "pending_payment"; }],
     ["capture", (order) => { order.payments = []; }],
   ];
   for (const [label, mutate] of cases) {

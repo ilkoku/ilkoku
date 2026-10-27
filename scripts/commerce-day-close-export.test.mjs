@@ -1409,7 +1409,6 @@ test("day-close order CSV and manifest identify the true seller without changing
  
 test("author seller informational commission and intermediary fee use frozen net price and invoice category", () => {
   const author = validOrder();
-  author.orderNo = "ILK-THIRD-RECONCILED";
   author.sellerMode = "third_party";
   const result = make([author]);
   const orderCsv = result.files.find((row) => row.name === "siparisler.csv").data;
@@ -1430,7 +1429,6 @@ test("author seller informational commission and intermediary fee use frozen net
   assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor, "0");
 
   const invoiced = validOrder();
-  invoiced.orderNo = "ILK-THIRD-INVOICED";
   invoiced.sellerMode = "third_party";
   invoiced.taxReview.documentKind = "commercial_invoice";
   const invoicedCsv = make([invoiced]).files.find((row) => row.name === "siparisler.csv").data;
@@ -1447,7 +1445,6 @@ test("author seller withholding amount is never guessed and uncertain rows have 
   ];
   for (const [label, mutate] of cases) {
     const order = validOrder();
-    order.orderNo = "ILK-AUTHOR-" + label.toUpperCase();
     order.sellerMode = "third_party";
     mutate(order);
     const result = make([order]);

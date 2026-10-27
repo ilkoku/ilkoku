@@ -49,6 +49,9 @@ export type OrderReviewInput = {
   } | null;
 };
 
+const AUTHOR_SELLER_ROLE_NOTICE =
+  "Satıcı eser sahibi yazardır; İlkOku aracı platformdur. Doğrudan satıcıya özgü hakediş ve vergi senaryoları bu siparişe uygulanmaz.";
+
 export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   const blockers: string[] = [];
   const tax = resolveLatestAuthorTaxReview(input.taxReview ?? null, input.paidAt ?? new Date(0));
@@ -79,7 +82,7 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
   if (input.sellerMode === "third_party") {
     // The author being seller is expected, not an identity-verification failure.
     // Platform-direct settlement formulae must not be reused for intermediaries.
-    blockers.push("Satıcı eser sahibi yazardır; İlkOku aracı platformdur. Doğrudan satıcıya özgü hakediş ve vergi senaryoları bu siparişe uygulanmaz.");
+    blockers.push(AUTHOR_SELLER_ROLE_NOTICE);
   } else if (input.sellerMode !== "platform_direct") {
     blockers.push("Siparişin hukukî satıcı modeli kayıtlı değil veya belirsiz.");
   }
@@ -123,10 +126,40 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
     }
   }
 
+  // An author-owned sale may show neutral revenue-share illustrations even
+  // though platform-direct tax/cash settlement is categorically disallowed.
+  // Require ALL other preflight checks to pass. Never infer withholding,
+  // post a ledger movement, or authorize a payout from this view.
+  const authorPreviewEligible = input.sellerMode === "third_party" &&
+    blockers.length === 1 && blockers[0] === AUTHOR_SELLER_ROLE_NOTICE &&
+    quote !== null && rate !== null &&
+    (tax.documentKind === "commercial_invoice" ||
+      tax.documentKind === "gvk18_expense_receipt");
+  const authorSellerCommission = authorPreviewEligible
+    ? (quote!.listNetAmount * BigInt(rate!.commissionRateBps) + BigInt(5000)) / BigInt(10000)
+    : null;
+  const intermediaryRateBps = tax.documentKind === "gvk18_expense_receipt"
+    ? rate?.serviceFeeRateBps ?? 0 : 0;
+  const intermediaryPreview = authorPreviewEligible ? {
+    sellerMode: "third_party" as const,
+    documentKind: tax.documentKind,
+    netSaleMinor: quote!.listNetAmount,
+    saleVatMinor: quote!.listVatAmount,
+    grossSaleMinor: input.finalAmount,
+    commissionRateBps: rate!.commissionRateBps,
+    commissionNetMinor: authorSellerCommission!,
+    intermediaryFeeRateBps: intermediaryRateBps,
+    intermediaryFeeNetMinor:
+      (quote!.listNetAmount * BigInt(intermediaryRateBps) + BigInt(5000)) / BigInt(10000),
+    withholdingMinor: null as bigint | null,
+    status: "ACCOUNTING_PREVIEW_ONLY" as const,
+  } : null;
+
   if (blockers.length > 0 || !quote) {
     return {
       blockers,
       scenarios: null,
+      intermediaryPreview,
       approvalStatus: "accounting_verification_required" as const,
     };
   }
@@ -147,12 +180,14 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
     return {
       blockers: ["Örnek mali hesap ile sipariş tutarı mutabık değil."],
       scenarios: null,
+      intermediaryPreview: null,
       approvalStatus: "accounting_verification_required" as const,
     };
   }
 
   return {
     blockers: [],
+    intermediaryPreview: null,
     scenarios: {
       invoiced: tax.documentKind === "commercial_invoice" ? invoiced : null,
       expenseReceipt: tax.documentKind === "gvk18_expense_receipt" ? expenseReceipt : null,

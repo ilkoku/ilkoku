@@ -69,6 +69,8 @@ function crc32(data: Buffer): number {
 export function zipFiles(files: { name: string; data: string }[]): Buffer {
   const parts: Buffer[] = [], central: Buffer[] = [];
   let offset = 0;
+  // Fixed valid MS-DOS date (1980-01-01). Keeps ZIP bytes reproducible without invalid 00/00 dates.
+  const fixedDosDate = 0x0021;
   for (const { name, data } of files) {
     if (!/^[a-z0-9._-]+$/u.test(name)) throw new Error("Unsafe ZIP filename");
     const filename = Buffer.from(name, "utf8");
@@ -79,6 +81,7 @@ export function zipFiles(files: { name: string; data: string }[]): Buffer {
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
     local.writeUInt16LE(0x0800, 6); // UTF-8 filenames
+    local.writeUInt16LE(fixedDosDate, 12);
     local.writeUInt32LE(crc, 14);
     local.writeUInt32LE(body.length, 18);
     local.writeUInt32LE(body.length, 22);
@@ -89,6 +92,7 @@ export function zipFiles(files: { name: string; data: string }[]): Buffer {
     dir.writeUInt16LE(20, 4);
     dir.writeUInt16LE(20, 6);
     dir.writeUInt16LE(0x0800, 8);
+    dir.writeUInt16LE(fixedDosDate, 14);
     dir.writeUInt32LE(crc, 16);
     dir.writeUInt32LE(body.length, 20);
     dir.writeUInt32LE(body.length, 24);

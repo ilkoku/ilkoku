@@ -48,7 +48,18 @@ export default async function CommercePaymentsPage({
 
   // Provider-free 0 TL acquisitions are real orders but never Payment rows.
   // Show them separately instead of manufacturing a provider/tahsilat record.
-  const zeroTotalWhere = { status: "paid" as const, finalAmount: BigInt(0) };
+  const zeroTotalWhere = {
+    status: "paid" as const,
+    finalAmount: BigInt(0),
+    ...(q
+      ? {
+          OR: [
+            { orderNo: { contains: q } },
+            { work: { is: { title: { contains: q } } } },
+          ],
+        }
+      : {}),
+  };
   const [payments, counts, zeroTotalCount, zeroTotalOrders] = await Promise.all([
     listCommercePayments({ q, status }),
     getCommercePaymentStatusCounts(),
@@ -151,6 +162,8 @@ export default async function CommercePaymentsPage({
               </tbody>
             </table>
           </div>
+        ) : q ? (
+          <p>Aramanızla eşleşen tamamlanmış Ücretli 0 TL siparişi bulunamadı.</p>
         ) : (
           <p>Henüz tamamlanmış Ücretli 0 TL siparişi yok. Bu, ödeme sağlayıcısı gerektirdiği anlamına gelmez.</p>
         )}

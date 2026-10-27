@@ -122,5 +122,25 @@ export async function GET() {
     collations = { readable: false };
   }
 
-  return Response.json({ issue: 1961, results, collations }, { headers: HEADERS });
+  // Read-only regression evidence: confirm the default for explicit utf8mb4
+  // casts on the same Prisma pool that runs the failing contains queries.
+  let effectiveUtf8mb4 = "";
+  let castCollation = "";
+  try {
+    const rows = await prisma.$queryRaw<Array<{
+      mapped: string;
+      casted: string;
+    }>>`SELECT @@character_set_collations AS mapped,
+      COLLATION(CAST('ILK' AS CHAR CHARACTER SET utf8mb4)) AS casted`;
+    const mapping = rows[0]?.mapped?.split(",").find((item) => item.startsWith("utf8mb4="));
+    if (mapping && /^[A-Za-z0-9_]{1,40}=([A-Za-z0-9_]{1,80})$/u.test(mapping)) {
+      effectiveUtf8mb4 = mapping;
+    }
+    if (rows[0]?.casted && /^[A-Za-z0-9_]{1,80}$/u.test(rows[0].casted)) {
+      castCollation = rows[0].casted;
+    }
+  } catch {
+    // Keep diagnostic read-only and non-fatal.
+  }
+  return Response.json({ issue: 1961, results, collations, effectiveUtf8mb4, castCollation }, { headers: HEADERS });
 }

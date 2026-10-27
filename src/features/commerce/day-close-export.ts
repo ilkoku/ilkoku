@@ -215,7 +215,7 @@ export function buildDayCloseFiles(input: {
     "para_birimi","liste_brut_kurus","indirim_kurus","tahsilat_kurus",
     "net_fiyat_kurus","satis_kdv_kurus","komisyon_bps",
     "komisyon_kaynagi","aracilik_snapshot_bps","aracilik_uygulanan_bps",
-    "yazar_mali_belge_turu","kupon","kontrol",
+    "yazar_mali_belge_turu","kupon","kontrol","hukuki_satici_modeli",
   ]];
   const issues: CsvField[][] = [["kaynak","referans","uyari","islem"]];
   const reconciliation: CsvField[][] = [[
@@ -388,6 +388,8 @@ export function buildDayCloseFiles(input: {
       quote?.listVatAmount,rate?.commissionRateBps,rate?.source,
       rate?.serviceFeeRateBps,tax.appliedServiceFeeBps,
       tax.documentKind,order.couponCode,review,
+      order.sellerMode === "third_party" ? "YAZAR_SATICI" :
+        order.sellerMode === "platform_direct" ? "ILKOKU_DOGRUDAN_SATICI" : "BELIRSIZ",
     ]);
     if (review === "VERI_KONTROLU_GECTI" && quote && rate) {
       // This is only the net commission illustration at the frozen order
@@ -853,6 +855,10 @@ export function buildDayCloseFiles(input: {
     note: "Fatura veya fis olusturmaz; genel CSV inceleme paketidir. Vergi belge uygunlugu ve alici verileri bu paketle dogrulanmaz. Dis sisteme aktarim muhasebe onayina baglidir.",
     counting: "Siparisler paidAt, iadeler processedAt, gunluk ledger createdAt tarihine gore gruplanir. Siparis mutabakati tum bagli sale_gross ledger kayitlarini kontrol eder; tarih farki dogal olabilir. Sonradan gelen duzeltmeler yeni indirmede fark yaratabilir.",
     salesCount: input.orders.length,
+    authorSellerOrders: input.orders.filter((order) => order.sellerMode === "third_party").length,
+    platformDirectSellerOrders: input.orders.filter((order) => order.sellerMode === "platform_direct").length,
+    unknownSellerModeOrders: input.orders.filter((order) =>
+      order.sellerMode !== "third_party" && order.sellerMode !== "platform_direct").length,
     readySalesCount: details.ready,
     flaggedSalesCount: details.review,
     zeroAmountCount: details.zero,

@@ -26,6 +26,7 @@ export async function GET() {
 
   const q = "ILK";
   const probes = [
+    { name: "driver-like-parameter", run: () => prisma.$queryRaw`SELECT 1 AS ok WHERE ${q} LIKE ${q}` },
     { name: "writer-baseline", run: () => prisma.user.count({ where: { role: "writer" } }) },
     { name: "writer-one-contains", run: () => prisma.user.count({ where: { role: "writer", fullName: { contains: q } } }) },
     { name: "writer-or-contains", run: () => prisma.user.count({ where: { role: "writer", OR: [
@@ -33,6 +34,7 @@ export async function GET() {
       { email: { contains: q } }, { username: { contains: q } },
     ] } }) },
     { name: "order-baseline", run: () => prisma.order.count({ where: { status: "paid" } }) },
+    { name: "order-exact", run: () => prisma.order.count({ where: { orderNo: q } }) },
     { name: "order-one-contains", run: () => prisma.order.count({ where: { orderNo: { contains: q } } }) },
     { name: "order-or-relation", run: () => prisma.order.count({ where: { OR: [
       { orderNo: { contains: q } }, { work: { is: { title: { contains: q } } } },
@@ -50,20 +52,23 @@ export async function GET() {
     ] } }) },
   ];
 
-  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverMessage?: string }[] = [];
+  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverMessage?: string; metadataKeys?: string[]; driverKind?: string }[] = [];
   for (const probe of probes) {
     try {
       await probe.run();
       results.push({ name: probe.name, ok: true });
     } catch (error) {
-      const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string } };
+      const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string; driverAdapterError?: { cause?: { originalCode?: string | number; originalMessage?: string; kind?: string } } } };
       const message = typeof err.message === "string" ? err.message : "";
       const driverError = message.match(/Database error\. Code: ([A-Za-z0-9_-]+)\. Message: ([^\n]+)/u);
+      const driverCause = err.meta?.driverAdapterError?.cause;
+      const originalText = driverCause?.originalMessage ?? driverError?.[2];
       // Return only a driver code and a short redacted server diagnostic to the
       // already-authenticated administrator; never expose SQL or connection values.
-      const safeMessage = driverError?.[2]
+      const safeMessage = originalText
         ?.replace(/(?:mysql|mariadb):\/\/\S+/giu, "[redacted-url]")
         .replace(/(?:password|passwd|pwd)\s*[=:]\s*\S+/giu, "password=[redacted]")
+        .replace(/([\x27\x22\x60])[^\x27\x22\x60]{1,100}\1/gu, "[quoted-value]")
         .slice(0, 250);
       results.push({
         name: probe.name,
@@ -71,8 +76,10 @@ export async function GET() {
         errorClass: (err.name ?? "unknown").slice(0, 100),
         errorCode: typeof err.code === "string" ? err.code.slice(0, 30) : undefined,
         causeCode: typeof err.meta?.code === "string" ? err.meta.code.slice(0, 30) : undefined,
-        driverCode: driverError?.[1],
+        driverCode: String(driverCause?.originalCode ?? driverError?.[1] ?? "").slice(0, 30) || undefined,
         driverMessage: safeMessage,
+        metadataKeys: err.meta ? Object.keys(err.meta).slice(0, 12) : undefined,
+        driverKind: driverCause?.kind?.slice(0, 50),
       });
     }
   }

@@ -79,5 +79,48 @@ export async function GET() {
     }
   }
 
-  return Response.json({ issue: 1961, results }, { headers: HEADERS });
+  // Collation metadata only: no table rows, database name, credentials or SQL exposed.
+  let collations: {
+    connection?: string;
+    database?: string;
+    server?: string;
+    columns?: { table: string; column: string; collation: string }[];
+    readable: boolean;
+  } = { readable: false };
+  try {
+    const sessions = await prisma.$queryRaw<
+      { connectionCollation: string; databaseCollation: string; serverCollation: string }[]
+    >`SELECT @@collation_connection AS connectionCollation,
+          @@collation_database AS databaseCollation,
+          @@collation_server AS serverCollation`;
+    const columns = await prisma.$queryRaw<
+      { TABLE_NAME: string; COLUMN_NAME: string; COLLATION_NAME: string | null }[]
+    >`SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME
+      FROM information_schema.COLUMNS
+      WHERE BINARY TABLE_SCHEMA = BINARY DATABASE()
+        AND (
+          (BINARY TABLE_NAME = BINARY 'User' AND BINARY COLUMN_NAME IN ('fullName', 'displayName', 'username', 'email'))
+          OR (BINARY TABLE_NAME = BINARY 'Work' AND BINARY COLUMN_NAME = BINARY 'title')
+          OR (BINARY TABLE_NAME = BINARY 'Order' AND BINARY COLUMN_NAME = BINARY 'orderNo')
+          OR (BINARY TABLE_NAME = BINARY 'Payment' AND BINARY COLUMN_NAME = BINARY 'provider')
+        )
+      LIMIT 16`;
+    const safeName = (value: string | null | undefined) =>
+      typeof value === "string" && /^[A-Za-z0-9_]{1,80}$/u.test(value) ? value : "";
+    collations = {
+      readable: true,
+      connection: safeName(sessions[0]?.connectionCollation),
+      database: safeName(sessions[0]?.databaseCollation),
+      server: safeName(sessions[0]?.serverCollation),
+      columns: columns.map((column) => ({
+        table: safeName(column.TABLE_NAME),
+        column: safeName(column.COLUMN_NAME),
+        collation: safeName(column.COLLATION_NAME),
+      })),
+    };
+  } catch {
+    collations = { readable: false };
+  }
+
+  return Response.json({ issue: 1961, results, collations }, { headers: HEADERS });
 }

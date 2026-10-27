@@ -1405,3 +1405,56 @@ test("day-close order CSV and manifest identify the true seller without changing
   assert.ok(unknownResult.files.find((entry) => entry.name === "siparisler.csv").data.includes('"BELIRSIZ"'));
   assert.equal(unknownResult.manifest.unknownSellerModeOrders, 1);
 });
+
+ 
+test("author seller informational commission and intermediary fee use frozen net price and invoice category", () => {
+  const author = validOrder();
+  author.orderNo = "ILK-THIRD-RECONCILED";
+  author.sellerMode = "third_party";
+  const result = make([author]);
+  const orderCsv = result.files.find((row) => row.name === "siparisler.csv").data;
+  const header = orderCsv.split("\r\n")[0];
+  for (const column of [
+    "yazar_satici_komisyon_net_ornek_kurus",
+    "yazar_satici_aracilik_net_ornek_kurus",
+    "yazar_satici_stopaj_durumu",
+    "yazar_satici_stopaj_tutari_kurus",
+  ]) assert.ok(header.includes('"' + column + '"'), column);
+  // 10000 net minor units, frozen 20% custom commission, verified GVK18 fee 5%.
+  assert.ok(orderCsv.includes(",2000,500,"));
+  assert.ok(orderCsv.includes('"STOPAJ_YUKUMLULUGU_MATRAHI_ORANI_INCELEMEDE"'));
+  assert.ok(orderCsv.includes(",500,\"STOPAJ_YUKUMLULUGU_MATRAHI_ORANI_INCELEMEDE\",,"));
+  assert.equal(result.manifest.readySalesCount, 0);
+  assert.equal(result.manifest.preparationRows, 0);
+  assert.equal(result.manifest.reviewedCommissionIllustrationMinor, "0");
+  assert.equal(result.manifest.reviewedServiceFeeIllustrationMinor, "0");
+
+  const invoiced = validOrder();
+  invoiced.orderNo = "ILK-THIRD-INVOICED";
+  invoiced.sellerMode = "third_party";
+  invoiced.taxReview.documentKind = "commercial_invoice";
+  const invoicedCsv = make([invoiced]).files.find((row) => row.name === "siparisler.csv").data;
+  assert.ok(invoicedCsv.includes(",2000,0,"), "Invoicing author incurs no extra 5% fee");
+});
+
+test("author seller withholding amount is never guessed and uncertain rows have no economic previews", () => {
+  const cases = [
+    ["zero", (order) => { order.originalAmount = 0n; order.finalAmount = 0n; order.quote = null; order.payments = []; }],
+    ["coupon", (order) => { order.couponCode = "CI-COUPON"; }],
+    ["unverified", (order) => { order.taxReview = null; }],
+    ["refund", (order) => { order.status = "refunded"; }],
+    ["capture", (order) => { order.payments = []; }],
+  ];
+  for (const [label, mutate] of cases) {
+    const order = validOrder();
+    order.orderNo = "ILK-AUTHOR-" + label.toUpperCase();
+    order.sellerMode = "third_party";
+    mutate(order);
+    const result = make([order]);
+    const csv = result.files.find((row) => row.name === "siparisler.csv").data;
+    assert.ok(csv.includes('"HESAPLAMA_ENGELLENDI_KAYNAK_INCELEME"'), label);
+    assert.ok(csv.includes('"STOPAJ_ON_INCELEME_ICIN_KAYNAK_KAYDI_EKSIK"'), label);
+    assert.equal(result.manifest.preparationRows, 0, label);
+    assert.equal(result.manifest.readySalesCount, 0, label);
+  }
+});

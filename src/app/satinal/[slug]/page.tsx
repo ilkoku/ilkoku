@@ -115,14 +115,22 @@ export default async function CheckoutPreparationPage({
   const entitlement = work.entitlements[0] ?? null;
 
   if (entitlement) {
+    const isTestAccess =
+      entitlement.source === "promotion" &&
+      work.slug === TEST209_DEMO_SLUG &&
+      !entitlement.order?.orderNo;
     return (
       <AppShell profile={profile}>
         <div className={styles.page}>
           <header className={styles.hero}>
             <div>
-              <span className={styles.eyebrow}>Satın alındı</span>
+              <span className={styles.eyebrow}>{entitlement.order?.orderNo
+                ? "Satın alındı"
+                : isTestAccess ? "0 TL test erişimi" : "Erişim hakkı aktif"}</span>
               <h1>{work.title}</h1>
-              <p>Bu eser için aktif erişim hakkın zaten bulunuyor.</p>
+              <p>{isTestAccess
+                ? "Bu eser için 0 TL deneme erişimin etkin. Bu işlem gerçek sipariş veya tahsilat değildir."
+                : "Bu eser için aktif erişim hakkın zaten bulunuyor."}</p>
               {entitlement.order?.orderNo ? (
                 <p>Sipariş numarası: <strong>{entitlement.order.orderNo}</strong></p>
               ) : null}

@@ -758,7 +758,9 @@ test("admin finance sees writer invoice declaration without treating it as verif
   lacks(action, "financialLedger.create", "author declaration does not cause ledger entries");
   lacks(action, "prisma.order.create", "author declaration cannot create orders");
 });
-\n\ntest("0 TL role screens remain visible without a transaction or provider", () => {
+
+
+test("0 TL role screens remain visible without a transaction or provider", () => {
   const admin = source("src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx");
   const checkout = source("src/app/satinal/[slug]/page.tsx");
   const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");

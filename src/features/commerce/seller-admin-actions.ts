@@ -14,6 +14,7 @@ const uuid = z.string().uuid();
 const kind = z.enum(["platform", "individual", "organization"]);
 const partySchema = z.object({
   kind,
+  ownerAuthorId: z.string().trim().optional(),
   legalName: z.string().trim().min(3).max(240),
   taxIdentifier: z.string().trim().min(5).max(32),
   taxOffice: z.string().trim().max(160),
@@ -55,6 +56,7 @@ export async function registerLegalSellerDraftAction(data: FormData) {
   const admin = await adminIdentity();
   const parsed = partySchema.safeParse({
     kind: data.get("kind"),
+    ownerAuthorId: data.get("ownerAuthorId") ?? "",
     legalName: data.get("legalName"),
     taxIdentifier: data.get("taxIdentifier"),
     taxOffice: data.get("taxOffice") ?? "",
@@ -64,10 +66,31 @@ export async function registerLegalSellerDraftAction(data: FormData) {
   });
   if (!parsed.success) go("kimlik-bilgisi-eksik");
 
+  // Author-owned sellers must be linked to an actual writer account.
+  // Account linkage never verifies a legal identity or sales rights.
+  const authorId = parsed.data.kind === "platform" ? null
+    : uuid.safeParse(parsed.data.ownerAuthorId ?? "");
+  if (parsed.data.kind !== "platform" && (!authorId || !authorId.success)) {
+    go("satici-yazar-hesabi-eksik");
+  }
+  const ownerUserId = authorId && authorId.success ? authorId.data : null;
+  if (ownerUserId) {
+    const author = await prisma.user.findFirst({
+      where: { id: ownerUserId, role: "writer", status: "active", isBanned: false, deletedAt: null },
+      select: { id: true },
+    });
+    if (!author) go("satici-yazar-hesabi-eksik");
+  }
+
   await prisma.$transaction(async (tx) => {
     const party = await tx.legalParty.create({
       data: {
-        ...parsed.data,
+        kind: parsed.data.kind,
+        ownerUserId,
+        legalName: parsed.data.legalName,
+        taxIdentifier: parsed.data.taxIdentifier,
+        legalAddress: parsed.data.legalAddress,
+        contactEmail: parsed.data.contactEmail,
         taxOffice: parsed.data.taxOffice || null,
         contactPhone: parsed.data.contactPhone || null,
         verificationStatus: "pending",
@@ -77,6 +100,7 @@ export async function registerLegalSellerDraftAction(data: FormData) {
     await tx.auditLog.create({
       data: audit(admin.id, "commerce_seller_draft_created", "LegalParty", party.id, {
         kind: party.kind,
+        ownerUserId: party.ownerUserId,
         evidenceState: "not_verified",
       }),
     });
@@ -164,10 +188,13 @@ export async function registerWorkSalesRightsDraftAction(data: FormData) {
           id: parsed.data.workId, archivedAt: null, status: "published",
           saleConfiguration: { is: { saleModel: "paid", status: { in: ["ready", "active"] } } },
         },
-        select: { id: true },
+        select: { id: true, authorId: true },
       }),
     ]);
-    if (!work || party?.verificationStatus !== "verified") return false;
+    if (
+      !work || party?.verificationStatus !== "verified" ||
+      (party.kind !== "platform" && party.ownerUserId !== work.authorId)
+    ) return false;
     const latest = await tx.workSalesAuthorization.findFirst({
       where: { workId: work.id, legalPartyId: party.id },
       orderBy: { version: "desc" }, select: { version: true },
@@ -217,6 +244,8 @@ export async function approveWorkSellerRightsAction(data: FormData) {
       !rights.documentHash || !/^[a-f0-9]{64}$/i.test(rights.documentHash) ||
       !rights.rightsScope || (rights.validUntil && rights.validUntil <= new Date()) ||
       rights.legalParty.verificationStatus !== "verified" ||
+      (rights.legalParty.kind !== "platform" &&
+        rights.legalParty.ownerUserId !== rights.work.authorId) ||
       !rights.legalParty.verifiedAt || !rights.legalParty.verifiedById ||
       !rights.work.isActive || rights.work.archivedAt ||
       rights.work.status !== "published" ||

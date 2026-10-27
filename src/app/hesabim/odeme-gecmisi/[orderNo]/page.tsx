@@ -149,6 +149,9 @@ export default async function ReaderOrderDetailPage({
             <div className={styles.summaryGrid}>
               <div><span>Satışın hukukî tarafı</span><strong>{seller.sellerName}</strong></div>
               <div><span>Satıcının rolü</span><strong>{
+                seller.sellerMode === "platform_direct" ? "Doğrudan satıcı" : "Eser sahibi yazar"
+              }</strong></div>
+              <div><span>İlkOku rolü</span><strong>{
                 seller.sellerMode === "platform_direct" ? "Doğrudan satıcı" : "Aracı platform"
               }</strong></div>
               <div><span>Satıcı iletişimi</span><strong>{seller.sellerEmail}</strong></div>

@@ -169,6 +169,37 @@ export default async function OrderAccountingReviewPage({
             </section>
           ) : null}
 
+          {review?.intermediaryPreview ? (
+            <section className="admin-panel" aria-label="Yazar satıcı komisyon ve aracılık ön incelemesi">
+              <div className="admin-panel__heading">
+                <div>
+                  <span>Yazar satıcı · İlkOku aracı platform</span>
+                  <h2>Siparişe bağlı komisyon ve aracılık ön hesabı</h2>
+                </div>
+              </div>
+              <p>Bu tutarlar siparişin değişmez fiyat ve komisyon kayıtlarından
+                hesaplanan inceleme örnekleridir. Satış tutarı İlkOku geliri,
+                stopaj veya yazara kesin hakediş olarak kaydedilmez.</p>
+              <div className="admin-table-wrap">
+                <table className="admin-data-table admin-commerce-table">
+                  <tbody>
+                    <tr><th>KDV hariç satış matrahı</th><td>{fmt(review.intermediaryPreview.netSaleMinor)}</td></tr>
+                    <tr><th>Satış KDV&apos;si (sipariş kaydı)</th><td>{fmt(review.intermediaryPreview.saleVatMinor)}</td></tr>
+                    <tr><th>Okurun sipariş tutarı</th><td>{fmt(review.intermediaryPreview.grossSaleMinor)}</td></tr>
+                    <tr><th>Siparişe sabitlenen komisyon oranı</th><td>{review.intermediaryPreview.commissionRateBps / 100}%</td></tr>
+                    <tr><th>Komisyon net ön hesabı</th><td>{fmt(review.intermediaryPreview.commissionNetMinor)}</td></tr>
+                    <tr><th>Koşullu aracılık oranı</th><td>{review.intermediaryPreview.intermediaryFeeRateBps / 100}%</td></tr>
+                    <tr><th>Aracılık net ön hesabı</th><td>{fmt(review.intermediaryPreview.intermediaryFeeNetMinor)}</td></tr>
+                    <tr><th>Yazar stopajı</th><td>Yükümlü, matrah ve oran değerlendirmesi gerekli; tutar hesaplanmadı</td></tr>
+                    <tr><th>Hakediş veya banka ödemesi</th><td>Hesaplanmadı; ödeme emri oluşturulmaz</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>Gün sonu ZIP dosyasında aynı tür tutarlar sipariş bazında ayrıca
+                izlenir. Muhasebe programına otomatik kayıt aktarılmaz.</p>
+            </section>
+          ) : null}
+
           {cases.length ? (
             <section className="admin-panel">
               <div className="admin-panel__heading">

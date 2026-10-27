@@ -1244,6 +1244,19 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.locator('section[aria-labelledby="zero-total-orders-heading"] tbody tr')).toHaveCount(0);
   await expect(page.getByText("Aramanızla eşleşen tamamlanmış Ücretli 0 TL siparişi bulunamadı.")).toBeVisible();
 
+  // Regression for Hostinger MariaDB 11.8: multiple admin text-search routes
+  // must not fail when Prisma compiles a contains predicate.
+  await page.goto("/sistem-yonetimi/yazarlar?q=ILK", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Yazar Yönetimi" })).toBeVisible();
+  await expect(page.getByText("Yönetim verileri yüklenemedi")).toHaveCount(0);
+  await page.goto("/sistem-yonetimi/odeme-sistemi/siparisler?q=ILK", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Siparişler" })).toBeVisible();
+  await expect(page.getByText("Yönetim verileri yüklenemedi")).toHaveCount(0);
+
 
   await page.goto(
     "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),

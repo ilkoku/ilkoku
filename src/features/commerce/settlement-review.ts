@@ -76,8 +76,12 @@ export function reviewCommerceOrderSettlement(input: OrderReviewInput) {
       input.bookedEntryTypes.includes("refund")) {
     blockers.push("İade talebi veya işlenmiş kısmi/tam iade bulunan siparişin tam tutarı üzerinden hakediş hesaplanmaz.");
   }
-  if (input.sellerMode !== "platform_direct") {
-    blockers.push("Satıcının İlkOku olduğu hukukî kayıt doğrulanmalı.");
+  if (input.sellerMode === "third_party") {
+    // The author being seller is expected, not an identity-verification failure.
+    // Platform-direct settlement formulae must not be reused for intermediaries.
+    blockers.push("Satıcı eser sahibi yazardır; İlkOku aracı platformdur. Doğrudan satıcıya özgü hakediş ve vergi senaryoları bu siparişe uygulanmaz.");
+  } else if (input.sellerMode !== "platform_direct") {
+    blockers.push("Siparişin hukukî satıcı modeli kayıtlı değil veya belirsiz.");
   }
   if (!input.priceQuote || input.priceQuote.calculationVersion !== "quote-v1" ||
       input.priceQuote.taxTreatment !== "net_plus_vat") {

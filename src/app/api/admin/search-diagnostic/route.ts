@@ -68,7 +68,7 @@ export async function GET() {
         ? String(originalCode).match(/^[0-9]{1,6}$/u)?.[0]
         : undefined;
       const originalMessage = driverCause?.originalMessage ?? "";
-      const comparisons = [...originalMessage.matchAll(/\\((utf8mb4_[A-Za-z0-9_]{1,70}),([A-Z]{1,20})\\)/gu)]
+      const comparisons = [...originalMessage.matchAll(/\((utf8mb4_[A-Za-z0-9_]{1,70}),([A-Z]{1,20})\)/gu)]
         .slice(0, 2)
         .map((match) => match[1] + ":" + match[2]);
       results.push({

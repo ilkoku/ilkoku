@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 
 const messages: Record<string, string> = {
   "kimlik-bilgisi-eksik": "Satıcının resmi kimlik alanlarını tamamlayın.",
+  "satici-yazar-hesabi-eksik": "Yazarın satıcı olduğu kayıtta aktif yazar hesabı seçilmelidir.",
   "satici-taslagi-olusturuldu": "Satıcı taslağı oluşturuldu. Resmi belge incelenmeden doğrulama yapılmaz.",
   "kimlik-kaniti-gerekli": "Resmi kanıtın HTTPS kaynağı, inceleme notu ve açık onay gereklidir.",
   "kimlik-dogrulanamadi": "Bu kayıt doğrulanamıyor. Durumunu ve zorunlu alanları kontrol edin.",
@@ -67,12 +68,21 @@ export default async function SellerRightsAdminPage({
       },
       orderBy: { title: "asc" },
       take: 100,
-      select: { id: true, title: true, slug: true },
+      select: {
+        id: true, title: true, slug: true, authorId: true,
+        author: { select: { fullName: true, displayName: true } },
+      },
     }),
   ]);
   const verifiedParties = parties.filter((p) => p.verificationStatus === "verified");
   const pendingParties = parties.filter((p) => p.verificationStatus === "pending");
   const pendingRights = authorizations.filter((a) => a.status === "pending");
+  const eligibleAuthors = Array.from(
+    new Map(eligibleWorks.map((work) => [
+      work.authorId,
+      { id: work.authorId, name: work.author.displayName ?? work.author.fullName },
+    ])).values(),
+  );
 
   return (
     <div className={styles.root}>
@@ -110,6 +120,7 @@ export default async function SellerRightsAdminPage({
         <a href="#current-sellers">Geçerli satıcılar</a>
       </nav>
       <p className={styles.empty}>
+        Eserin sahibi olan yazar, satıcı hesabına açıkça bağlanır; İlkOku aracı platformdur.
         Yazarın <strong>Fatura ve Vergi Bilgilerim</strong> beyanı, hukukî satıcı
         doğrulaması veya eser satış yetkisi değildir. Aşağıdaki taslakları
         yalnız resmî bilgilere ve gerçek belgelere dayanarak oluşturun.
@@ -131,6 +142,14 @@ export default async function SellerRightsAdminPage({
               <option value="platform">İlkOku platform işletmecisi</option>
               <option value="individual">Gerçek kişi</option>
               <option value="organization">Şirket / tüzel kişi</option>
+            </select>
+          </label>
+          <label>Satıcı olarak bağlanacak yazar hesabı (yazar satıcılarda zorunlu)
+            <select name="ownerAuthorId" defaultValue="">
+              <option value="">Yazar hesabı seçin</option>
+              {eligibleAuthors.map((author) => (
+                <option key={author.id} value={author.id}>{author.name}</option>
+              ))}
             </select>
           </label>
           <label>Resmî ad soyad / ticaret unvanı

@@ -366,3 +366,66 @@ test("author-seller review is correctly labeled intermediary and never runs plat
   assert.ok(dayClose.includes("hukukî satıcı türü"));
   assert.ok(dayClose.includes("Stopaj tutarı hesaplanmaz"));
 });
+
+test("author seller shows safe independent commission/fee preview without direct-seller payouts", () => {
+  const invoiced = review.reviewCommerceOrderSettlement({ ...valid(), sellerMode: "third_party" });
+  assert.equal(invoiced.scenarios, null);
+  assert.equal(invoiced.intermediaryPreview?.sellerMode, "third_party");
+  assert.equal(invoiced.intermediaryPreview?.netSaleMinor, 10000n);
+  assert.equal(invoiced.intermediaryPreview?.grossSaleMinor, 12000n);
+  assert.equal(invoiced.intermediaryPreview?.commissionRateBps, 1500);
+  assert.equal(invoiced.intermediaryPreview?.commissionNetMinor, 1500n);
+  assert.equal(invoiced.intermediaryPreview?.intermediaryFeeRateBps, 0);
+  assert.equal(invoiced.intermediaryPreview?.intermediaryFeeNetMinor, 0n);
+  assert.equal(invoiced.intermediaryPreview?.withholdingMinor, null);
+  assert.equal(invoiced.approvalStatus, "accounting_verification_required");
+
+  const gv = valid();
+  gv.sellerMode = "third_party";
+  gv.taxReview.documentKind = "gvk18_expense_receipt";
+  const gvResult = review.reviewCommerceOrderSettlement(gv);
+  assert.equal(gvResult.scenarios, null);
+  assert.equal(gvResult.intermediaryPreview?.commissionNetMinor, 1500n);
+  assert.equal(gvResult.intermediaryPreview?.intermediaryFeeRateBps, 500);
+  assert.equal(gvResult.intermediaryPreview?.intermediaryFeeNetMinor, 500n);
+  assert.equal(gvResult.intermediaryPreview?.withholdingMinor, null);
+
+  const custom = valid();
+  custom.sellerMode = "third_party";
+  custom.commissionRateSnapshot = {
+    commissionRateBps: 2000, serviceFeeRateBps: 500,
+    source: "work", sourceEventId: "work-rate-01", calculationVersion: "rate-v1",
+  };
+  assert.equal(review.reviewCommerceOrderSettlement(custom).intermediaryPreview?.commissionNetMinor, 2000n);
+});
+
+test("author seller preview does not bypass any order risk blocker", () => {
+  const variants = [
+    ["zero", { originalAmount: 0n, finalAmount: 0n }],
+    ["coupon", { couponCodeSnapshot: "DISCOUNT" }],
+    ["discount", { discountAmount: 100n }],
+    ["pending", { status: "pending_payment" }],
+    ["refund", { hasOpenOrProcessedRefund: true }],
+    ["currency", { currency: "USD" }],
+    ["captures", { payments: [] }],
+    ["booked", { bookedEntryTypes: ["sale_gross", "payout"] }],
+    ["missing quote", { priceQuote: null }],
+    ["no rate", { commissionRateSnapshot: null }],
+    ["missing review", { taxReview: null }],
+    ["unknown seller", { sellerMode: null }],
+    ["self employed review", { taxReview: { ...valid().taxReview, documentKind: "self_employed_receipt" } }],
+  ];
+  for (const [label, patch] of variants) {
+    const result = review.reviewCommerceOrderSettlement({ ...valid(), sellerMode: "third_party", ...patch });
+    assert.equal(result.intermediaryPreview, null, label);
+    assert.equal(result.scenarios, null, label);
+  }
+  const direct = review.reviewCommerceOrderSettlement(valid());
+  assert.equal(direct.intermediaryPreview, null);
+  assert.ok(direct.scenarios?.invoiced);
+
+  const page = readFileSync(join(ROOT, "src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx"), "utf8");
+  assert.ok(page.includes('aria-label="Yazar satıcı komisyon ve aracılık ön incelemesi"'));
+  assert.ok(page.includes("review?.intermediaryPreview"));
+  assert.ok(page.includes("tutar hesaplanmadı"));
+});

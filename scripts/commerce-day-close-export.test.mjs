@@ -1381,3 +1381,27 @@ test("author-as-seller day close is flagged for intermediary review, not treated
   assert.ok(issues.includes("YAZAR_SATICI_ARACILIK_MALI_INCELEME"));
   assert.ok(!issues.includes("SATICI_ILKOKU_DOGRULANMADI"));
 });
+ 
+test("day-close order CSV and manifest identify the true seller without changing accounting approvals", () => {
+  const authorOrder = validOrder();
+  authorOrder.orderNo = "ILK-THIRD-PARTY-SELLER";
+  authorOrder.sellerMode = "third_party";
+  const result = make([authorOrder]);
+  const ordersCsv = result.files.find((entry) => entry.name === "siparisler.csv").data;
+  assert.ok(ordersCsv.includes('"hukuki_satici_modeli"'));
+  assert.ok(ordersCsv.includes('"YAZAR_SATICI"'));
+  assert.equal(result.manifest.authorSellerOrders, 1);
+  assert.equal(result.manifest.platformDirectSellerOrders, 0);
+  assert.equal(result.manifest.unknownSellerModeOrders, 0);
+  assert.equal(result.manifest.readySalesCount, 0, "author-seller export remains under manual accounting review");
+  const directResult = make([validOrder()]);
+  const directCsv = directResult.files.find((entry) => entry.name === "siparisler.csv").data;
+  assert.ok(directCsv.includes('"ILKOKU_DOGRUDAN_SATICI"'));
+  assert.equal(directResult.manifest.authorSellerOrders, 0);
+  assert.equal(directResult.manifest.platformDirectSellerOrders, 1);
+  const unknown = validOrder();
+  unknown.sellerMode = null;
+  const unknownResult = make([unknown]);
+  assert.ok(unknownResult.files.find((entry) => entry.name === "siparisler.csv").data.includes('"BELIRSIZ"'));
+  assert.equal(unknownResult.manifest.unknownSellerModeOrders, 1);
+});

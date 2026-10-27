@@ -129,7 +129,11 @@ export default async function OrderAccountingReviewPage({
             <article className="admin-panel admin-settings-card">
               <span>Satıcı</span>
               <h2>{order.legalSnapshot?.sellerName ?? "Doğrulanmadı"}</h2>
-              <p>{order.legalSnapshot?.sellerMode ?? "Hukukî taraf belirsiz"}</p>
+              <p>{order.legalSnapshot?.sellerMode === "third_party"
+                ? "Eser sahibi yazar · İlkOku aracı platform"
+                : order.legalSnapshot?.sellerMode === "platform_direct"
+                  ? "İlkOku doğrudan satıcı"
+                  : "Hukukî satıcı türü belirsiz"}</p>
             </article>
           </section>
 

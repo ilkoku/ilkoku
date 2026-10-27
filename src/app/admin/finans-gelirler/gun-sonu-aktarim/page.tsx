@@ -60,7 +60,10 @@ export default async function DayCloseAccountingTransferPage() {
         <article className="admin-panel">
           <h2>Paket dosyaları</h2>
           <p><code>siparisler.csv</code> — Sipariş no, dönem, fiyat, KDV,
-            indirim, kayıtlı komisyon oranı ve inceleme sonucu.</p>
+            indirim, kayıtlı komisyon oranı, hukukî satıcı türü ve inceleme sonucu.
+            Yazarın satıcı olduğu tamamlanmış ve tutarlı işlemlerde yalnız inceleme
+            amaçlı komisyon ve koşullu aracılık örnekleri ayrı sütunlarda yer alır.
+            Stopaj tutarı hesaplanmaz; yükümlülük ve matrah inceleme durumunda gösterilir.</p>
           <p><code>finans_hareketleri.csv</code> — Mevcut ledger kayıtları,
             hareket tipi ve kuruş bazlı tutar.</p>
           <p><code>iadeler.csv</code> — Tamamlanmış iadeler, sipariş tahsilatı,
@@ -76,7 +79,8 @@ export default async function DayCloseAccountingTransferPage() {
             Fark yalnız aritmetiktir; kâr, kesin gelir, banka bakiyesi
             veya vergi tutarı değildir.</p>
           <p><code>uyarilar.csv</code> — Eksik snapshot, kupon,
-            mükerrer tahsilat, yanlış satıcı ve ledger uyuşmazlıkları.</p>
+            mükerrer tahsilat, satıcı modeli belirsizliği, yazar satıcının
+            aracılık mali incelemesi ve ledger uyuşmazlıkları.</p>
           <p><code>mutabakat.csv</code> — Sipariş brüt tutarını,
             tarihinden bağımsız ilgili siparişin sale_gross ledger kayıtlarıyla
             ve tamamlanma tarihi doğrulanan tahsilat bilgisiyle karşılaştırır.
@@ -100,12 +104,16 @@ export default async function DayCloseAccountingTransferPage() {
             henüz onaylanmamış hedef şema engelleri. Muhasebe programına
             otomatik gönderim veya belge düzenleme yapılmaz.</p>
           <p><code>manifest.json</code> — İş günü, içerik sayıları,
+            yazar satıcı / İlkOku doğrudan satıcı / belirsiz satıcı sayıları,
             sürüm, dosya SHA-256 özetleri ve kontrol durumu.</p>
         </article>
         <article className="admin-panel">
           <h2>Aktarım ve muhasebe kontrolü</h2>
           <p>Dosyalarda tutarlar <strong>kuruş</strong> olarak, tarihler
             UTC ISO 8601 biçiminde saklanır; iş günü Türkiye saatidir.</p>
+          <p>Eserin sahibi ve satıcısı yazar olduğunda İlkOku aracı platformdur.
+            Sipariş hukukî satıcı türü dışa aktarılır. Yazar satıcıya ait
+            ön inceleme tutarları mali aktarım onayı değildir.</p>
           <p>Genel komisyon %15, varsa siparişe sabitlenmiş yazar/eser
             oranı kullanılır. Sipariş tarihinde geçerli yönetici incelemesi
             bulunan ticari fatura veya serbest meslek makbuzu düzenleyen

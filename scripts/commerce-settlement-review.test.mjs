@@ -349,3 +349,20 @@ test("new orders freeze rate before checkout, never mutate old balances", () => 
     assert.ok(!admin.includes(forbidden), "No economic side effects on rate change");
   }
 });
+
+test("author-seller review is correctly labeled intermediary and never runs platform-direct settlement scenarios", () => {
+  const authorSale = { ...valid(), sellerMode: "third_party" };
+  const result = review.reviewCommerceOrderSettlement(authorSale);
+  assert.equal(result.scenarios, null);
+  assert.ok(result.blockers.some((x) => x.includes("Satıcı eser sahibi yazardır")));
+  assert.ok(result.blockers.some((x) => x.includes("İlkOku aracı platformdur")));
+  assert.ok(!result.blockers.some((x) => x.includes("Satıcının İlkOku olduğu")));
+  const unknown = review.reviewCommerceOrderSettlement({ ...valid(), sellerMode: null });
+  assert.equal(unknown.scenarios, null);
+  assert.ok(unknown.blockers.some((x) => x.includes("hukukî satıcı modeli")));
+  const page = readFileSync(join(ROOT, "src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx"), "utf8");
+  assert.ok(page.includes('"Eser sahibi yazar · İlkOku aracı platform"'));
+  const dayClose = readFileSync(join(ROOT, "src/app/admin/finans-gelirler/gun-sonu-aktarim/page.tsx"), "utf8");
+  assert.ok(dayClose.includes("hukukî satıcı türü"));
+  assert.ok(dayClose.includes("Stopaj tutarı hesaplanmaz"));
+});

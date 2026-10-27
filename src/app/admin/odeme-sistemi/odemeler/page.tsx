@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+import { getAdminSearchIds } from "@/features/commerce/admin-search-sql";
 
 import {
   getCommercePaymentStatusCounts,
@@ -48,17 +49,11 @@ export default async function CommercePaymentsPage({
 
   // Provider-free 0 TL acquisitions are real orders but never Payment rows.
   // Show them separately instead of manufacturing a provider/tahsilat record.
+  const zeroIds = q ? await getAdminSearchIds("zeroOrders", q) : [];
   const zeroTotalWhere = {
     status: "paid" as const,
     finalAmount: BigInt(0),
-    ...(q
-      ? {
-          OR: [
-            { orderNo: { contains: q } },
-            { work: { is: { title: { contains: q } } } },
-          ],
-        }
-      : {}),
+    ...(q ? { id: { in: zeroIds } } : {}),
   };
   const [payments, counts, zeroTotalCount, zeroTotalOrders] = await Promise.all([
     listCommercePayments({ q, status }),

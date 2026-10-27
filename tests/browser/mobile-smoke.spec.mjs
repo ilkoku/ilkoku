@@ -451,6 +451,13 @@ test("reader checkout shows zero-total summary first with dark cards and intact 
     await expect(page.locator('input[name="purchasePath"][value="zero"]')).toBeChecked();
     await expect(page.locator('input[name="purchasePath"][value="zero"]')).toBeEnabled();
     await expect(page.getByText("Ücretli 0 TL", { exact: false }).first()).toBeVisible();
+    const readiness = page.locator('[data-commerce-zero-screen="reader-checkout"]');
+    await expect(readiness).toBeVisible();
+    await expect(readiness.getByText("0 TL satın alma ekranı hazır")).toBeVisible();
+    await expect(readiness).toContainText("Gerçek tahsilat");
+    await expect(readiness).toContainText("Yok");
+    await expect(readiness).toContainText("Hukukî satıcı");
+    await expect(readiness).toContainText("Satın alma koşulları");
     await expectResponsiveDocument(page);
   }
 });
@@ -2667,6 +2674,12 @@ test("finance order review is admin-only, read-only, and rejects unknown order n
   await expect(page.getByRole("heading", { name: "Sipariş Mali İnceleme" })).toBeVisible();
   await expect(page.getByText("Muhasebe doğrulaması bekleniyor")).toBeVisible();
   await expect(page.getByRole("button", { name: "Mali inceleme yap" })).toBeVisible();
+  const noOrderPreview = page.locator('[data-commerce-zero-screen="admin"]');
+  await expect(noOrderPreview).toBeVisible();
+  await expect(noOrderPreview.getByRole("heading", { name: "0 TL sipariş ekranı hazır" })).toBeVisible();
+  await expect(noOrderPreview).toContainText("Sipariş oluşturulmadı");
+  await expect(noOrderPreview).toContainText("Finansal tahakkuk değil");
+  await expect(noOrderPreview).toContainText("Yazar satıcı / İlkOku aracı modeli");
   await expectResponsiveDocument(page);
 
   await page.goto(route + "?siparis=ILK-UNOWNED-TEST-0000", { waitUntil: "domcontentloaded" });
@@ -2778,4 +2791,71 @@ test("authenticated admin global search stays on works search route", async ({ p
   await search.fill("CI Browser");
   await search.press("Enter");
   await expect(page).toHaveURL(/\/sistem-yonetimi\/eserler\?q=CI(?:\+|%20)Browser/u);
+});
+
+test("authenticated writer views prepared 0 TL sales and earnings screens on phone and desktop without payment", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const writerToken = authFixture.sessions?.writer;
+  const readerToken = authFixture.sessions?.reader;
+  expect(writerToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: writerToken, url: authCookieUrl },
+  ]);
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const dashboard = await page.goto("/satis-erisim", { waitUntil: "domcontentloaded" });
+    expect(dashboard?.status()).toBe(200);
+    const zeroWriter = page.locator('[data-commerce-zero-screen="writer"]');
+    await expect(zeroWriter).toBeVisible();
+    await expect(zeroWriter.getByRole("heading", { name: "Satış ekranların hazır" })).toBeVisible();
+    await expect(zeroWriter).toContainText("0,00");
+    await expect(zeroWriter).toContainText("%15");
+    await expect(zeroWriter).toContainText("%5");
+    await expect(zeroWriter).toContainText("Gerçek tahsilat");
+    await expectResponsiveDocument(page);
+    const earnings = await page.goto("/satis-erisim/kazanc-hesaplama?fiyat=0", { waitUntil: "domcontentloaded" });
+    expect(earnings?.status()).toBe(200);
+    const zeroEarnings = page.locator('[data-commerce-zero-screen="writer-earnings"]');
+    await expect(zeroEarnings).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Yazar kazancı hesaplama örneği" })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "KDV hariç satış bedeli" })).toHaveValue("0");
+    await expect(zeroEarnings).toContainText("0 TL");
+    await expect(page.getByText("0 TL siparişlerde gerçek para tahsilatı veya telif ödemesi oluşturulmaz.")).toBeVisible();
+    await expectResponsiveDocument(page);
+  }
+  // Writer-only finance pages must not be available to reader sessions.
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto("/satis-erisim/kazanc-hesaplama", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
+});
+
+test("authenticated reader order history and admin zero-value preview stay distinct and accessible", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const readerToken = authFixture.sessions?.reader;
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/hesabim/odeme-gecmisi", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Ödeme Geçmişi" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Gerçek Siparişler" })).toBeVisible();
+    const noOrderScreen = page.locator('[data-commerce-zero-screen="reader-history"]');
+    if (await noOrderScreen.count()) {
+      await expect(noOrderScreen).toContainText("Henüz gerçek sipariş kaydın yok");
+      await expect(noOrderScreen).toContainText("Ödeme geçmişi ekranın hazır");
+      await expect(noOrderScreen).toContainText("ILK-");
+    } else {
+      // Other existing fixture tests may already have completed an ILK- order.
+      await expect(page.locator('article[class*="paymentHistoryCard"]').first()).toBeVisible();
+    }
+    await expectResponsiveDocument(page);
+  }
+  await page.goto("/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });

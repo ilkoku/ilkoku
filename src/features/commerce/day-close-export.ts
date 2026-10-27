@@ -390,6 +390,7 @@ export function buildDayCloseFiles(input: {
     // Reuse the immutable rate and price snapshots; never use the current rate.
     const authorSellerPreflight =
       order.sellerMode === "third_party" &&
+      order.status === "paid" &&
       warnings.length === 1 &&
       warnings[0] === "YAZAR_SATICI_ARACILIK_MALI_INCELEME" &&
       order.finalAmount > BigInt(0) && quote !== null && rate !== null &&

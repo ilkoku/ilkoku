@@ -102,7 +102,7 @@ export default async function OrderAccountingReviewPage({
             </div>
           </div>
           <p>{order
-            ? "Aşağıdaki 0 TL değerler bu siparişin mevcut kaydından alınır; tahsilat veya hakediş doğurmaz."
+            ? "Bu siparişin ödenecek toplamı 0 TL'dir. %100 indirim kuponu kullanılmışsa KDV hariç liste fiyatı ve satış KDV'si geçmiş fiyat kaydında sıfırdan büyük olabilir. Bu önizleme tahsilat veya hakediş oluşturmaz."
             : "Bu bölüm arayüz önizlemesidir. Henüz bir sipariş seçilmedi; görünen sıfır tutarlar örnek değerlerdir, işlem veya mali kayıt değildir."}</p>
           <div className="admin-table-wrap">
             <table className="admin-data-table admin-commerce-table">

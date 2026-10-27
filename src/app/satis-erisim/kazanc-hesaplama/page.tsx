@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 function parseTryNetPrice(text: string | undefined): bigint {
-  const value = (text ?? "100").trim().replace(",", ".");
+  const value = (text ?? "0").trim().replace(",", ".");
   if (!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,2})?$/.test(value)) {
-    return BigInt(10000);
+    return BigInt(0);
   }
   const [whole, decimals = ""] = value.split(".");
   return BigInt(whole) * BigInt(100) +
@@ -71,6 +71,15 @@ export default async function WriterEarningIllustrationPage({
           </Link>
         </header>
 
+        {price === BigInt(0) ? (
+          <div className={styles.notice} role="status" data-commerce-zero-screen="writer-earnings">
+            Şu anda 0 TL ile kazanç hesaplama ekranı hazır: satış bedeli,
+            komisyon ve koşullu aracılık örnekleri 0,00 TL görünür.
+            Tutarı değiştirerek ilerideki fiyatlandırmayı önizleyebilirsin.
+            Bu ekran sipariş, hakediş veya para transferi oluşturmaz.
+          </div>
+        ) : null}
+
         <div className={styles.notice} role="status">
           Bu sayfa yalnızca varsayımsal hesaplamadır. Belge tercihi, vergi
           mükellefiyeti ve gider pusulasına uygunluk henüz sistemde doğrulanmıyor.
@@ -104,7 +113,7 @@ export default async function WriterEarningIllustrationPage({
                 defaultValue={preview.savedNetPrice !== null
                   ? (Number(preview.savedNetPrice) / 100).toFixed(2).replace(".", ",")
                   : query.fiyat && /^(?:0|[1-9]\d{0,5})(?:[,.]\d{1,2})?$/.test(query.fiyat.trim())
-                    ? query.fiyat : "100"}
+                    ? query.fiyat : "0"}
                 readOnly={preview.savedNetPrice !== null}
                 aria-label="KDV hariç satış bedeli"
                 required

@@ -27,6 +27,22 @@ export async function GET() {
   const q = "ILK";
   const probes = [
     { name: "driver-like-parameter", run: () => prisma.$queryRaw`SELECT 1 AS ok WHERE ${q} LIKE ${q}` },
+    // Exact-match-safe, read-only test of explicit pattern collation.
+    { name: "raw-user-like-explicit", run: () => prisma.$queryRaw`
+      SELECT COUNT(*) AS n FROM \`User\`
+      WHERE fullName COLLATE utf8mb4_unicode_ci
+        LIKE (CONCAT('%', ${q}, '%') COLLATE utf8mb4_unicode_ci)
+    ` },
+    { name: "raw-order-like-explicit", run: () => prisma.$queryRaw`
+      SELECT COUNT(*) AS n FROM \`Order\`
+      WHERE orderNo COLLATE utf8mb4_unicode_ci
+        LIKE (CONCAT('%', ${q}, '%') COLLATE utf8mb4_unicode_ci)
+    ` },
+    { name: "raw-user-convert-explicit", run: () => prisma.$queryRaw`
+      SELECT COUNT(*) AS n FROM \`User\`
+      WHERE fullName LIKE
+        (CONCAT('%', CONVERT(${q} USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
+    ` },
     { name: "writer-baseline", run: () => prisma.user.count({ where: { role: "writer" } }) },
     { name: "writer-one-contains", run: () => prisma.user.count({ where: { role: "writer", fullName: { contains: q } } }) },
     { name: "writer-or-contains", run: () => prisma.user.count({ where: { role: "writer", OR: [

@@ -82,6 +82,9 @@ function createPrismaClient() {
     // Hostinger paylaşımlı MariaDB kotasını korumak için
     // uygulama örneği başına tek bağlantı kullanılır.
     connectionLimit: 1,
+    // Prepared-statement parameter collation is negotiated at handshake;
+    // SESSION and CAST defaults alone do not control parameter metadata.
+    collation: "UTF8MB4_UNICODE_CI",
 
     // MariaDB 11.5+ defaults CAST(... AS CHAR CHARACTER SET utf8mb4)
     // to utf8mb4_uca1400_ai_ci, while our existing text columns use

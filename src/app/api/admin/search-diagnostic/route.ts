@@ -52,7 +52,7 @@ export async function GET() {
     ] } }) },
   ];
 
-  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverKind?: string }[] = [];
+  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverKind?: string; comparisonCollations?: string[] }[] = [];
   for (const probe of probes) {
     try {
       await probe.run();
@@ -67,6 +67,10 @@ export async function GET() {
       const safeCode = (typeof originalCode === "number" || typeof originalCode === "string")
         ? String(originalCode).match(/^[0-9]{1,6}$/u)?.[0]
         : undefined;
+      const originalMessage = driverCause?.originalMessage ?? "";
+      const comparisons = [...originalMessage.matchAll(/\((utf8mb4_[A-Za-z0-9_]{1,70}),([A-Z]{1,20})\)/gu)]
+        .slice(0, 2)
+        .map((match) => match[1] + ":" + match[2]);
       results.push({
         name: probe.name,
         ok: false,
@@ -74,6 +78,7 @@ export async function GET() {
         errorCode: typeof err.code === "string" ? err.code.slice(0, 30) : undefined,
         causeCode: typeof err.meta?.code === "string" ? err.meta.code.slice(0, 30) : undefined,
         driverCode: safeCode,
+        comparisonCollations: comparisons.length ? comparisons : undefined,
         driverKind: ["mysql", "postgres", "sqlite", "mssql"].includes(driverCause?.kind ?? "") ? driverCause?.kind : undefined,
       });
     }
@@ -142,5 +147,14 @@ export async function GET() {
   } catch {
     // Keep diagnostic read-only and non-fatal.
   }
-  return Response.json({ issue: 1961, results, collations, effectiveUtf8mb4, castCollation }, { headers: HEADERS });
+  let boundParameterCollation = "";
+  try {
+    const parameterRows = await prisma.$queryRaw<{ applied: string }[]>`SELECT COLLATION(${q}) AS applied`;
+    if (/^[A-Za-z0-9_]{1,80}$/u.test(parameterRows[0]?.applied ?? "")) {
+      boundParameterCollation = parameterRows[0].applied;
+    }
+  } catch {
+    // The diagnostic itself must not block the admin route.
+  }
+  return Response.json({ issue: 1961, results, collations, effectiveUtf8mb4, castCollation, boundParameterCollation }, { headers: HEADERS });
 }

@@ -103,6 +103,12 @@ test("day close ZIP has CSV, generic field map and JSON manifest with content ha
   }
   assert.equal(result.zip.readUInt32LE(0),0x04034b50);
   assert.equal(result.zip.readUInt32LE(result.zip.length-22),0x06054b50);
+  assert.equal(result.zip.readUInt16LE(10),0,"fixed DOS file time");
+  assert.equal(result.zip.readUInt16LE(12),0x0021,"valid 1980-01-01 local ZIP date");
+  const centralOffset=result.zip.readUInt32LE(result.zip.length-22+16);
+  assert.equal(result.zip.readUInt32LE(centralOffset),0x02014b50);
+  assert.equal(result.zip.readUInt16LE(centralOffset+12),0,"fixed DOS directory time");
+  assert.equal(result.zip.readUInt16LE(centralOffset+14),0x0021,"matching central ZIP date");
   const second = make([validOrder()]);
   assert.deepEqual(result.zip,second.zip,"unchanged source rows yield same bytes/batch hash");
 });

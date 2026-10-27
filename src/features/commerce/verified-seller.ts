@@ -30,10 +30,12 @@ export async function getVerifiedWorkSeller(
       mode: true,
       legalPartyId: true,
       authorizationId: true,
+      work: { select: { authorId: true } },
       legalParty: {
         select: {
           id: true,
           kind: true,
+          ownerUserId: true,
           legalName: true,
           taxIdentifier: true,
           legalAddress: true,
@@ -74,7 +76,8 @@ export async function getVerifiedWorkSeller(
     !party.legalAddress?.trim() ||
     !party.contactEmail?.trim() ||
     (assignment.mode === "platform_direct" && party.kind !== "platform") ||
-    (assignment.mode === "third_party" && party.kind === "platform") ||
+    (assignment.mode === "third_party" &&
+      (party.kind === "platform" || party.ownerUserId !== assignment.work.authorId)) ||
     !rights ||
     rights.id !== assignment.authorizationId ||
     rights.workId !== workId ||

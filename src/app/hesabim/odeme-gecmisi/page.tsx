@@ -116,8 +116,17 @@ export default async function ReaderPaymentHistoryPage() {
         <section className={styles.realOrdersSection} aria-label="Gerçek siparişler">
           <h2>Gerçek Siparişler</h2>
         {orders.length === 0 ? (
-          <div className={styles.empty}>
-            Henüz gerçek sipariş veya tahsilat kaydın yok.
+          <div className={styles.empty} data-commerce-zero-screen="reader-history">
+            <strong>Ödeme geçmişi ekranın hazır</strong>
+            <p>Henüz gerçek sipariş kaydın yok. 0 TL eser edindiğinde
+              burada ILK- ile başlayan sipariş numaran, eser adı, 0,00 TL
+              toplam ve “Tahsilat yok” durumu görünecek.</p>
+            <p>Deneme erişimleri gerçek siparişlerden ayrı gösterilir;
+              örnek sipariş veya ödeme kaydı oluşturulmaz.</p>
+            <div className={styles.heroActions}>
+              <Link className={styles.secondaryAction} href="/kesfet">Eserleri keşfet</Link>
+              <Link className={styles.quietAction} href="/kutuphanem/satin-aldiklarim">Kütüphanem</Link>
+            </div>
           </div>
         ) : (
           <section className={styles.paymentHistoryList}>

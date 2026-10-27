@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { getAdminSearchIds } from "@/features/commerce/admin-search-sql";
 
 export type CommerceOrderStatusFilter =
   | "all"
@@ -50,24 +51,12 @@ export async function listCommerceOrders(input: {
   status: CommerceOrderStatusFilter;
 }) {
   const q = cleanQuery(input.q);
+  const ids = q ? await getAdminSearchIds("orders", q) : [];
 
   return prisma.order.findMany({
     where: {
       ...(input.status === "all" ? {} : { status: input.status }),
-      ...(q
-        ? {
-            OR: [
-              { orderNo: { contains: q } },
-              { work: { is: { title: { contains: q } } } },
-              { reader: { is: { publicId: { contains: q } } } },
-              { reader: { is: { fullName: { contains: q } } } },
-              { reader: { is: { displayName: { contains: q } } } },
-              { author: { is: { publicId: { contains: q } } } },
-              { author: { is: { fullName: { contains: q } } } },
-              { author: { is: { displayName: { contains: q } } } },
-            ],
-          }
-        : {}),
+      ...(q ? { id: { in: ids } } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -145,36 +134,12 @@ export async function listCommercePayments(input: {
   status: CommercePaymentStatusFilter;
 }) {
   const q = cleanQuery(input.q);
+  const ids = q ? await getAdminSearchIds("payments", q) : [];
 
   return prisma.payment.findMany({
     where: {
       ...(input.status === "all" ? {} : { status: input.status }),
-      ...(q
-        ? {
-            OR: [
-              { provider: { contains: q } },
-              { providerTransactionId: { contains: q } },
-              { failureCode: { contains: q } },
-              { order: { is: { orderNo: { contains: q } } } },
-              { order: { is: { work: { is: { title: { contains: q } } } } } },
-              {
-                order: {
-                  is: {
-                    reader: {
-                      is: {
-                        OR: [
-                          { publicId: { contains: q } },
-                          { fullName: { contains: q } },
-                          { displayName: { contains: q } },
-                        ],
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          }
-        : {}),
+      ...(q ? { id: { in: ids } } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -234,21 +199,12 @@ export async function listCommerceRefunds(input: {
   status: CommerceRefundStatusFilter;
 }) {
   const q = cleanQuery(input.q);
+  const ids = q ? await getAdminSearchIds("refunds", q) : [];
 
   return prisma.refund.findMany({
     where: {
       ...(input.status === "all" ? {} : { status: input.status }),
-      ...(q
-        ? {
-            OR: [
-              { reason: { contains: q } },
-              { order: { is: { orderNo: { contains: q } } } },
-              { order: { is: { work: { is: { title: { contains: q } } } } } },
-              { payment: { is: { provider: { contains: q } } } },
-              { payment: { is: { providerTransactionId: { contains: q } } } },
-            ],
-          }
-        : {}),
+      ...(q ? { id: { in: ids } } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -309,6 +265,7 @@ export async function listCommerceEntitlements(input: {
   status: CommerceEntitlementStatusFilter;
 }) {
   const q = cleanQuery(input.q);
+  const ids = q ? await getAdminSearchIds("entitlements", q) : [];
 
   return prisma.workEntitlement.findMany({
     where: {
@@ -334,17 +291,7 @@ export async function listCommerceEntitlements(input: {
         : input.source === "all"
           ? {}
           : { source: input.source }),
-      ...(q
-        ? {
-            OR: [
-              { work: { is: { title: { contains: q } } } },
-              { reader: { is: { publicId: { contains: q } } } },
-              { reader: { is: { fullName: { contains: q } } } },
-              { reader: { is: { displayName: { contains: q } } } },
-              { order: { is: { orderNo: { contains: q } } } },
-            ],
-          }
-        : {}),
+      ...(q ? { id: { in: ids } } : {}),
     },
     orderBy: { grantedAt: "desc" },
     take: 200,

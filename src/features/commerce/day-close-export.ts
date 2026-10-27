@@ -216,6 +216,9 @@ export function buildDayCloseFiles(input: {
     "net_fiyat_kurus","satis_kdv_kurus","komisyon_bps",
     "komisyon_kaynagi","aracilik_snapshot_bps","aracilik_uygulanan_bps",
     "yazar_mali_belge_turu","kupon","kontrol","hukuki_satici_modeli",
+    "yazar_satici_komisyon_net_ornek_kurus","yazar_satici_aracilik_net_ornek_kurus",
+    "yazar_satici_stopaj_durumu","yazar_satici_stopaj_tutari_kurus",
+    "yazar_satici_on_inceleme_durumu",
   ]];
   const issues: CsvField[][] = [["kaynak","referans","uyari","islem"]];
   const reconciliation: CsvField[][] = [[
@@ -381,6 +384,31 @@ export function buildDayCloseFiles(input: {
       grossMinor += order.finalAmount;
       vatMinor += quote!.listVatAmount;
     }
+    // Intermediary-only informational figures for a clean, reconciled
+    // author-owned sale. Not a payment instruction, VAT document, withholding
+    // determination, or a row in the accounting import-preparation sheet.
+    // Reuse the immutable rate and price snapshots; never use the current rate.
+    const authorSellerPreflight =
+      order.sellerMode === "third_party" &&
+      order.status === "paid" &&
+      warnings.length === 1 &&
+      warnings[0] === "YAZAR_SATICI_ARACILIK_MALI_INCELEME" &&
+      order.finalAmount > BigInt(0) && quote !== null && rate !== null &&
+      tax.appliedServiceFeeBps !== null;
+    const authorSellerCommission = authorSellerPreflight
+      ? (quote!.listNetAmount * BigInt(rate!.commissionRateBps) + BigInt(5000)) / BigInt(10000)
+      : null;
+    const authorSellerService = authorSellerPreflight
+      ? (quote!.listNetAmount * BigInt(tax.appliedServiceFeeBps!) + BigInt(5000)) / BigInt(10000)
+      : null;
+    // Under the author-as-seller model the party responsible for withholding,
+    // applicable tax base and rate need their own accounting determination.
+    // An earlier platform-direct simulation must not be reused as if approved.
+    const authorSellerWithholdingStatus = order.sellerMode === "third_party"
+      ? (authorSellerPreflight ? "STOPAJ_YUKUMLULUGU_MATRAHI_ORANI_INCELEMEDE"
+        : "STOPAJ_ON_INCELEME_ICIN_KAYNAK_KAYDI_EKSIK")
+      : null;
+
     sales.push([
       order.orderNo, order.paidAt?.toISOString() ?? null,order.status,
       order.authorPublicId,order.workTitle,order.currency,order.originalAmount,
@@ -390,6 +418,12 @@ export function buildDayCloseFiles(input: {
       tax.documentKind,order.couponCode,review,
       order.sellerMode === "third_party" ? "YAZAR_SATICI" :
         order.sellerMode === "platform_direct" ? "ILKOKU_DOGRUDAN_SATICI" : "BELIRSIZ",
+      authorSellerCommission, authorSellerService, authorSellerWithholdingStatus,
+      null, // Withholding amount is not determined by an unapproved simulation.
+      order.sellerMode === "third_party"
+        ? (authorSellerPreflight ? "SADECE_ARACILIK_ORNEGI_MALI_INCELEME"
+          : "HESAPLAMA_ENGELLENDI_KAYNAK_INCELEME")
+        : null,
     ]);
     if (review === "VERI_KONTROLU_GECTI" && quote && rate) {
       // This is only the net commission illustration at the frozen order

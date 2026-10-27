@@ -58,12 +58,12 @@ export async function GET() {
     } catch (error) {
       const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string } };
       const message = typeof err.message === "string" ? err.message : "";
-      const driverError = message.match(/Database error\\. Code: ([A-Za-z0-9_-]+)\\. Message: ([^\\n]+)/u);
+      const driverError = message.match(/Database error\. Code: ([A-Za-z0-9_-]+)\. Message: ([^\n]+)/u);
       // Return only a driver code and a short redacted server diagnostic to the
       // already-authenticated administrator; never expose SQL or connection values.
       const safeMessage = driverError?.[2]
-        ?.replace(/(?:mysql|mariadb):\\/\\/\\S+/giu, "[redacted-url]")
-        .replace(/(?:password|passwd|pwd)\\s*[=:]\\s*\\S+/giu, "password=[redacted]")
+        ?.replace(/(?:mysql|mariadb):\/\/\S+/giu, "[redacted-url]")
+        .replace(/(?:password|passwd|pwd)\s*[=:]\s*\S+/giu, "password=[redacted]")
         .slice(0, 250);
       results.push({
         name: probe.name,

@@ -1257,6 +1257,23 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.getByRole("heading", { name: "Siparişler" })).toBeVisible();
   await expect(page.getByText("Yönetim verileri yüklenemedi")).toHaveCount(0);
 
+  // All read-only commerce searches must survive MariaDB 11.8 collation
+  // mismatch and must handle literal LIKE wildcard characters in input.
+  for (const [path, heading] of [
+    ["/sistem-yonetimi/odeme-sistemi/erisim-haklari", "Erişim Hakları"],
+    ["/sistem-yonetimi/odeme-sistemi/iadeler", "İadeler"],
+  ]) {
+    await page.goto(path + "?q=" + encodeURIComponent(completedZeroTotalOrderNo), {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByText("Yönetim verileri yüklenemedi")).toHaveCount(0);
+  }
+  await page.goto("/sistem-yonetimi/yazarlar?q=%25_%3D", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.getByRole("heading", { name: "Yazar Yönetimi" })).toBeVisible();
+  await expect(page.getByText("Yönetim verileri yüklenemedi")).toHaveCount(0);
 
   await page.goto(
     "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Prisma, UserStatus } from "@/generated/prisma/client";
 import { updateUserStatusAction } from "@/features/admin/actions";
 import { prisma } from "@/lib/prisma";
+import { getAdminSearchIds } from "@/features/commerce/admin-search-sql";
 
 const PAGE_SIZE = 12;
 
@@ -70,6 +71,7 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
   const requestedPage = Number.parseInt(params.page ?? "1", 10);
   const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
+  const searchIds = q ? await getAdminSearchIds("writers", q) : [];
   const where: Prisma.UserWhereInput = {
     role: "writer",
     deletedAt: null,
@@ -77,16 +79,7 @@ export default async function WritersPage({ searchParams }: { searchParams: Sear
     ...(works ? { works: works === "yes" ? { some: {} } : { none: {} } } : {}),
     ...(verification ? { emailVerified: verification === "yes" ? { not: null } : null } : {}),
     ...(premium ? { isPremium: premium === "yes" } : {}),
-    ...(q
-      ? {
-          OR: [
-            { fullName: { contains: q } },
-            { displayName: { contains: q } },
-            { email: { contains: q } },
-            { username: { contains: q } },
-          ],
-        }
-      : {}),
+    ...(q ? { id: { in: searchIds } } : {}),
   };
 
   const [totalWriters, activeWriters, suspendedWriters, writersWithWorks, filteredCount] = await Promise.all([

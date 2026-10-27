@@ -26,6 +26,7 @@ export async function GET() {
 
   const q = "ILK";
   const probes = [
+    { name: "driver-like-parameter", run: () => prisma.$queryRaw`SELECT 1 AS ok WHERE ${q} LIKE ${q}` },
     { name: "writer-baseline", run: () => prisma.user.count({ where: { role: "writer" } }) },
     { name: "writer-one-contains", run: () => prisma.user.count({ where: { role: "writer", fullName: { contains: q } } }) },
     { name: "writer-or-contains", run: () => prisma.user.count({ where: { role: "writer", OR: [
@@ -33,6 +34,7 @@ export async function GET() {
       { email: { contains: q } }, { username: { contains: q } },
     ] } }) },
     { name: "order-baseline", run: () => prisma.order.count({ where: { status: "paid" } }) },
+    { name: "order-exact", run: () => prisma.order.count({ where: { orderNo: q } }) },
     { name: "order-one-contains", run: () => prisma.order.count({ where: { orderNo: { contains: q } } }) },
     { name: "order-or-relation", run: () => prisma.order.count({ where: { OR: [
       { orderNo: { contains: q } }, { work: { is: { title: { contains: q } } } },
@@ -50,29 +52,29 @@ export async function GET() {
     ] } }) },
   ];
 
-  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverMessage?: string }[] = [];
+  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverKind?: string }[] = [];
   for (const probe of probes) {
     try {
       await probe.run();
       results.push({ name: probe.name, ok: true });
     } catch (error) {
-      const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string } };
-      const message = typeof err.message === "string" ? err.message : "";
-      const driverError = message.match(/Database error\. Code: ([A-Za-z0-9_-]+)\. Message: ([^\n]+)/u);
-      // Return only a driver code and a short redacted server diagnostic to the
-      // already-authenticated administrator; never expose SQL or connection values.
-      const safeMessage = driverError?.[2]
-        ?.replace(/(?:mysql|mariadb):\/\/\S+/giu, "[redacted-url]")
-        .replace(/(?:password|passwd|pwd)\s*[=:]\s*\S+/giu, "password=[redacted]")
-        .slice(0, 250);
+      const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string; driverAdapterError?: { cause?: { originalCode?: string | number; originalMessage?: string; kind?: string } } } };
+      // Metadata from the Prisma adapter is never returned verbatim.
+      // Only a numerical database error code and a fixed driver category
+      // are safe to inspect on this temporary admin-only route.
+      const driverCause = err.meta?.driverAdapterError?.cause;
+      const originalCode = driverCause?.originalCode;
+      const safeCode = (typeof originalCode === "number" || typeof originalCode === "string")
+        ? String(originalCode).match(/^[0-9]{1,6}$/u)?.[0]
+        : undefined;
       results.push({
         name: probe.name,
         ok: false,
         errorClass: (err.name ?? "unknown").slice(0, 100),
         errorCode: typeof err.code === "string" ? err.code.slice(0, 30) : undefined,
         causeCode: typeof err.meta?.code === "string" ? err.meta.code.slice(0, 30) : undefined,
-        driverCode: driverError?.[1],
-        driverMessage: safeMessage,
+        driverCode: safeCode,
+        driverKind: ["mysql", "postgres", "sqlite", "mssql"].includes(driverCause?.kind ?? "") ? driverCause?.kind : undefined,
       });
     }
   }

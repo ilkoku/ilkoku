@@ -59,6 +59,7 @@ export async function getCheckoutWorkBySlug(slug: string, readerId: string) {
         select: {
           id: true,
           grantedAt: true,
+          source: true,
           order: {
             select: {
               orderNo: true,

@@ -479,7 +479,7 @@ export function BookShowcase({
                               : "Kilitli · Ücretli erişime dahildir"
                             : "Kilitli · Erişim koşulları hazırlanıyor"
                         : hasPaidAccess && paidAccessActive
-                          ? "Satın alındı · Okunabilir"
+                          ? "Erişim hakkı aktif · Okunabilir"
                           : commerce?.configured && commerce.saleModel === "paid"
                             ? accessType === "preview"
                               ? "Ön İzleme · Hazırlıkta okunabilir"

@@ -468,6 +468,17 @@ test("UAT: purchase order number is shown only from reader-owned persisted order
 });
 
 
+test("UAT: promotion-only TEST209 access is never labeled purchased in checkout", () => {
+  const repository = source("src/features/commerce/checkout-repository.ts");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  has(repository, "source: true", "checkout reads entitlement origin");
+  has(checkout, 'entitlement.source === "promotion"', "demo access is detected by persisted origin");
+  has(checkout, "work.slug === TEST209_DEMO_SLUG", "demo label is restricted to TEST209");
+  has(checkout, '"0 TL test erişimi"', "reader sees a demo label rather than a purchase label");
+  has(checkout, "Bu işlem gerçek sipariş veya tahsilat değildir.", "reader is told demo has no order or payment");
+  has(checkout, "entitlement.order?.orderNo", "real purchased entitlements still display persisted order number");
+});
+
 test("UAT: VAT-exclusive new prices are frozen per order without retroactive legacy migration", () => {
   const schema = source("prisma/schema.prisma");
   const migration = source("prisma/migrations/20261025143000_commerce_price_tax_quote/migration.sql");

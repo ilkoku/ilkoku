@@ -765,6 +765,9 @@ test("0 TL role screens remain visible without a transaction or provider", () =>
   const checkout = source("src/app/satinal/[slug]/page.tsx");
   const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
   const writer = source("src/app/satis-erisim/page.tsx");
+  const writerEarnings = source("src/app/satis-erisim/kazanc-hesaplama/page.tsx");
+  has(writerEarnings, 'data-commerce-zero-screen="writer-earnings"', "writer earnings 0 TL screen");
+  has(writerEarnings, '(text ?? "0")', "writer preview 0 TL default");
   has(admin, 'data-commerce-zero-screen="admin"', "admin zero amount preview");
   has(admin, "Sipariş oluşturulmadı", "no fabricated order id");
   has(admin, "Finansal tahakkuk değil", "no synthetic commission");

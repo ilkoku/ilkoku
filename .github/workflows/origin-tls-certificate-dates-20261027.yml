@@ -1,0 +1,41 @@
+name: Origin certificate dates and chain — 525 diagnostic
+on:
+  push:
+    branches:
+      - ops/origin-tls-certificate-dates-20261027
+    paths:
+      - .github/workflows/origin-tls-certificate-dates-20261027.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  origin-cert-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read origin certificate dates, issuer, SAN and TLS verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Measured UTC: $(date -u +%FT%TZ)"
+          echo "Direct Hostinger origin: 82.198.229.51:443; TLS SNI: ilkoku.com; no proxy; read only"
+          set +e
+          timeout 20 openssl s_client -connect 82.198.229.51:443 \
+              -servername ilkoku.com -verify_hostname ilkoku.com \
+              -verify_return_error -alpn h2,http/1.1 \
+              </dev/null > handshake.txt 2>&1
+          rc=$?
+          set -e
+          echo "openssl_s_client_exit=$rc"
+          echo "=== Certificate presented by origin ==="
+          if grep -q -- "-----BEGIN CERTIFICATE-----" handshake.txt; then
+              openssl x509 -in handshake.txt -noout -dates -issuer -subject -serial -fingerprint -sha256 -ext subjectAltName
+          else
+              echo "NO_CERTIFICATE_RECEIVED"
+          fi
+          echo "=== Handshake result lines ==="
+          grep -E "Verify return code:|Verification:|ALPN protocol:|Protocol|Cipher|CONNECTED|verify error|SSL alert|handshake failure" handshake.txt | head -30 || true
+          if (( rc != 0 )); then
+              echo "::warning::Current direct origin certificate/TLS handshake check failed, investigate the recorded exit and lines"
+          fi
+          test "$rc" -eq 0

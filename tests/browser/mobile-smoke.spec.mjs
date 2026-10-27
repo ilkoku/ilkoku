@@ -1221,6 +1221,30 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     "href", "/sistem-yonetimi/odeme-sistemi/siparisler?q=" + encodeURIComponent(completedZeroTotalOrderNo),
   );
 
+  // Payments search must include provider-free 0 TL orders, not just Payment rows.
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/odemeler?q=" + encodeURIComponent(completedZeroTotalOrderNo),
+    { waitUntil: "domcontentloaded" },
+  );
+  const filteredZeroSection = page.locator('section[aria-labelledby="zero-total-orders-heading"]');
+  await expect(filteredZeroSection.locator("tbody tr").filter({ hasText: completedZeroTotalOrderNo })).toBeVisible();
+
+  await page.goto(
+    "/sistem-yonetimi/odeme-sistemi/odemeler?q=" + encodeURIComponent("CI Browser 0 TL Eser"),
+    { waitUntil: "domcontentloaded" },
+  );
+  await expect(
+    page.locator('section[aria-labelledby="zero-total-orders-heading"] tbody tr')
+      .filter({ hasText: completedZeroTotalOrderNo }),
+  ).toBeVisible();
+
+  await page.goto("/sistem-yonetimi/odeme-sistemi/odemeler?q=CI-NO-MATCH-0TL", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.locator('section[aria-labelledby="zero-total-orders-heading"] tbody tr')).toHaveCount(0);
+  await expect(page.getByText("Aramanızla eşleşen tamamlanmış Ücretli 0 TL siparişi bulunamadı.")).toBeVisible();
+
+
   await page.goto(
     "/sistem-yonetimi/finans-gelirler/finans-hareketleri?type=sale_gross&q=" + encodeURIComponent(completedZeroTotalOrderNo),
     { waitUntil: "domcontentloaded" },

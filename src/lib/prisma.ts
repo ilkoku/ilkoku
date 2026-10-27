@@ -82,6 +82,21 @@ function createPrismaClient() {
     // Hostinger paylaşımlı MariaDB kotasını korumak için
     // uygulama örneği başına tek bağlantı kullanılır.
     connectionLimit: 1,
+
+    // MariaDB 11.5+ defaults CAST(... AS CHAR CHARACTER SET utf8mb4)
+    // to utf8mb4_uca1400_ai_ci, while our existing text columns use
+    // utf8mb4_unicode_ci. Prisma contains filters can otherwise fail
+    // with P2039 / ER_CANT_AGGREGATE_2COLLATIONS (1267).
+    // Connection-local only; preserve mappings for other Unicode charsets.
+    sessionVariables: {
+      character_set_collations: [
+        "utf8mb3=utf8mb3_uca1400_ai_ci",
+        "ucs2=ucs2_uca1400_ai_ci",
+        "utf8mb4=utf8mb4_unicode_ci",
+        "utf16=utf16_uca1400_ai_ci",
+        "utf32=utf32_uca1400_ai_ci",
+      ].join(","),
+    },
   });
 
   return new PrismaClient({

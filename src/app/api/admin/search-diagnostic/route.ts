@@ -50,19 +50,29 @@ export async function GET() {
     ] } }) },
   ];
 
-  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string }[] = [];
+  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverMessage?: string }[] = [];
   for (const probe of probes) {
     try {
       await probe.run();
       results.push({ name: probe.name, ok: true });
     } catch (error) {
-      const err = error as { name?: string; code?: string; meta?: { code?: string } };
+      const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string } };
+      const message = typeof err.message === "string" ? err.message : "";
+      const driverError = message.match(/Database error\\. Code: ([A-Za-z0-9_-]+)\\. Message: ([^\\n]+)/u);
+      // Return only a driver code and a short redacted server diagnostic to the
+      // already-authenticated administrator; never expose SQL or connection values.
+      const safeMessage = driverError?.[2]
+        ?.replace(/(?:mysql|mariadb):\\/\\/\\S+/giu, "[redacted-url]")
+        .replace(/(?:password|passwd|pwd)\\s*[=:]\\s*\\S+/giu, "password=[redacted]")
+        .slice(0, 250);
       results.push({
         name: probe.name,
         ok: false,
         errorClass: (err.name ?? "unknown").slice(0, 100),
         errorCode: typeof err.code === "string" ? err.code.slice(0, 30) : undefined,
         causeCode: typeof err.meta?.code === "string" ? err.meta.code.slice(0, 30) : undefined,
+        driverCode: driverError?.[1],
+        driverMessage: safeMessage,
       });
     }
   }

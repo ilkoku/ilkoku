@@ -93,6 +93,47 @@ export default async function OrderAccountingReviewPage({
         </form>
       </section>
 
+      {(!orderNo || (order && order.status === "paid" && order.finalAmount === BigInt(0))) ? (
+        <section className="admin-panel" aria-label="0 TL sipariş ekranı" data-commerce-zero-screen="admin">
+          <div className="admin-panel__heading">
+            <div>
+              <span>0 TL · Salt okunur ekran</span>
+              <h2>{order ? "0 TL siparişin mali görünümü" : "0 TL sipariş ekranı hazır"}</h2>
+            </div>
+          </div>
+          <p>{order
+            ? "Aşağıdaki 0 TL değerler bu siparişin mevcut kaydından alınır; tahsilat veya hakediş doğurmaz."
+            : "Bu bölüm arayüz önizlemesidir. Henüz bir sipariş seçilmedi; görünen sıfır tutarlar örnek değerlerdir, işlem veya mali kayıt değildir."}</p>
+          <div className="admin-table-wrap">
+            <table className="admin-data-table admin-commerce-table">
+              <tbody>
+                <tr><th>Sipariş numarası</th><td>{order?.orderNo ?? "Sipariş oluşturulmadı"}</td></tr>
+                <tr><th>Satışın hukukî tarafı</th><td>{order?.legalSnapshot?.sellerMode === "third_party"
+                  ? "Eser sahibi yazar"
+                  : order?.legalSnapshot?.sellerMode === "platform_direct"
+                    ? "İlkOku doğrudan satıcı"
+                    : order ? "Satıcı kaydı incelenmeli" : "Yazar satıcı / İlkOku aracı modeli"}</td></tr>
+                <tr><th>KDV hariç satış fiyatı</th><td>{fmt(order?.priceQuoteSnapshot?.listNetAmount ?? BigInt(0))}</td></tr>
+                <tr><th>Satış KDV&apos;si (fiyat kaydı)</th><td>{fmt(order?.priceQuoteSnapshot?.listVatAmount ?? BigInt(0))}</td></tr>
+                <tr><th>Toplam</th><td>{fmt(order?.finalAmount ?? BigInt(0))}</td></tr>
+                <tr><th>Gerçek para tahsilatı</th><td>Yok · 0 TL</td></tr>
+                <tr><th>Komisyon tutarı</th><td>{fmt(BigInt(0))} · Finansal tahakkuk değil</td></tr>
+                <tr><th>Aracılık hizmet bedeli</th><td>{fmt(BigInt(0))} · Finansal tahakkuk değil</td></tr>
+                <tr><th>Stopaj / yazara ödeme</th><td>Oluşturulmadı</td></tr>
+                <tr><th>Erişim</th><td>{order ? "Sipariş sonrası erişim hakkı ayrı doğrulanır" : "Henüz sipariş yok"}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>0 TL ekranı, gelecekte gerçek fiyat uygulanacak iş akışının
+            görünümünü de hazır tutar. Kayıt oluşmadıysa rapor veya ödeme
+            tamamlanmış olarak işaretlenmez.</p>
+          <div className="admin-commerce-toolbar">
+            <Link className="admin-button" href="/sistem-yonetimi/odeme-sistemi/siparisler">Siparişler</Link>
+            <Link className="admin-button" href="/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim">Gün sonu aktarımı</Link>
+          </div>
+        </section>
+      ) : null}
+
       {orderNo && !order ? (
         <div className="admin-readonly-notice" role="alert">
           Bu sipariş numarasıyla eşleşen kayıt bulunamadı.

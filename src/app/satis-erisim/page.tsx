@@ -77,6 +77,26 @@ export default async function WriterCommercePage() {
           </div>
         </header>
 
+        <section className={styles.panel} aria-label="Yazar 0 TL satış ekranı" data-commerce-zero-screen="writer">
+          <span className={styles.eyebrow}>Yazar · 0 TL çalışma modeli</span>
+          <h2>Satış ekranların hazır</h2>
+          <p>Mevcut tutar 0 TL olsa da eser satış modeli, bölüm erişimi,
+            fatura beyanı ve komisyon oranı ekranları kullanılabilir.
+            Eserin sahibi yazardır; İlkOku yayına destek veren aracı platformdur.</p>
+          <div className={styles.summaryGrid}>
+            <div><span>0 TL işlem tutarı</span><strong>{formatMinorUnits(BigInt(0), "TRY")}</strong></div>
+            <div><span>Genel komisyon oranı</span><strong>%15 (varsa özel oran)</strong></div>
+            <div><span>Faturasız yazar için koşullu aracılık</span><strong>%5</strong></div>
+            <div><span>Gerçek tahsilat</span><strong>Kapalı</strong></div>
+          </div>
+          <p>Bu bölüm bilgilendirme amaçlıdır; yazar adına satış, komisyon
+            tahakkuku, stopaj, fatura veya ödeme kaydı oluşturmaz.</p>
+          <div className={styles.heroActions}>
+            <Link className={styles.secondaryAction} href="/satis-erisim/odeme-vergi-bilgileri">Fatura durumum</Link>
+            <Link className={styles.quietAction} href="/satis-erisim/kazanc-hesaplama">Kazanç hesaplaması</Link>
+          </div>
+        </section>
+
         {!paymentPathReady ? (
           <div className={styles.notice}>
             Ücretli eser ayarlarını şimdiden hazırlayabilirsin. İlk kez satışa

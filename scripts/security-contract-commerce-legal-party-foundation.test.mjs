@@ -81,3 +81,19 @@ test("author declares invoice status only, while existing seller verification re
   assert.ok(!writerIndex.includes('href="/satis-erisim/satici-yetkileri"'), "rights application removed from writer menu");
   assert.ok(oldRoute.includes('redirect("/satis-erisim/odeme-vergi-bilgileri")'));
 });
+ 
+test("author seller must match work owner throughout seller and checkout gates", () => {
+  const actions = source("src/features/commerce/seller-admin-actions.ts");
+  const page = source("src/app/admin/odeme-sistemi/satici-yetkileri/page.tsx");
+  const resolver = source("src/features/commerce/verified-seller.ts");
+  assert.ok(page.includes('name="ownerAuthorId"'), "admin selects the author account");
+  assert.ok(page.includes("eligibleWorks.map"), "writer choices come from sale-ready works");
+  assert.ok(actions.includes("ownerUserId,"), "author account link persisted");
+  assert.ok(actions.includes('role: "writer"'), "linked user must be writer");
+  assert.ok(actions.includes('status: "active"'), "linked writer must be active");
+  assert.ok(actions.includes("party.ownerUserId !== work.authorId"), "rights draft matches work owner");
+  assert.ok(actions.includes("rights.legalParty.ownerUserId !== rights.work.authorId"), "approval rechecks work owner");
+  assert.ok(resolver.includes("party.ownerUserId !== assignment.work.authorId"), "checkout rechecks author owner");
+  assert.ok(resolver.includes('party.verificationStatus !== "verified"'), "identity checks preserved");
+  assert.ok(resolver.includes('rights.status !== "verified"'), "rights checks preserved");
+});

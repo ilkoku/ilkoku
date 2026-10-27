@@ -356,6 +356,28 @@ export default async function CheckoutPreparationPage({
             </div>
           </section>
 
+          {zeroTotalOptionSelected ? (
+            <section className={styles.readerCheckoutNotReady} aria-label="0 TL satın alma ekranı" data-commerce-zero-screen="reader-checkout">
+              <strong>0 TL satın alma ekranı hazır</strong>
+              <p>Bu işlemde kredi kartı veya telefon faturası kullanılmaz.
+                Tamamlanan gerçek 0 TL siparişi için sipariş numarası ve
+                kütüphane erişimi oluşturulur.</p>
+              <div className={styles.summaryGrid}>
+                <div><span>Toplam tutar</span><strong>{formatMoney(BigInt(0), effectiveCommerce.currency)}</strong></div>
+                <div><span>Gerçek tahsilat</span><strong>Yok</strong></div>
+                <div><span>Hukukî satıcı</span><strong>{verifiedSeller
+                  ? verifiedSeller.party.legalName
+                  : "Satıcı kaydı bekleniyor"}</strong></div>
+                <div><span>Satın alma koşulları</span><strong>{purchaseTerms
+                  ? "Metin hazır" : "Henüz aktif değil"}</strong></div>
+                <div><span>İşlem durumu</span><strong>{checkoutConfigurationActive
+                  ? "0 TL edinim kullanılabilir"
+                  : test209DemoReady ? "TEST209 deneme erişimi (gerçek sipariş değil)"
+                    : "Ekran hazır · Sipariş henüz açılamaz"}</strong></div>
+              </div>
+            </section>
+          ) : null}
+
           {purchaseTerms ? (
             <div className={styles.contractBox}>
               <div className={styles.contractHeading}>

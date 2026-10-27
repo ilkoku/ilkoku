@@ -52,34 +52,29 @@ export async function GET() {
     ] } }) },
   ];
 
-  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverMessage?: string; metadataKeys?: string[]; driverKind?: string }[] = [];
+  const results: { name: string; ok: boolean; errorClass?: string; errorCode?: string; causeCode?: string; driverCode?: string; driverKind?: string }[] = [];
   for (const probe of probes) {
     try {
       await probe.run();
       results.push({ name: probe.name, ok: true });
     } catch (error) {
       const err = error as { name?: string; code?: string; message?: string; meta?: { code?: string; driverAdapterError?: { cause?: { originalCode?: string | number; originalMessage?: string; kind?: string } } } };
-      const message = typeof err.message === "string" ? err.message : "";
-      const driverError = message.match(/Database error\. Code: ([A-Za-z0-9_-]+)\. Message: ([^\n]+)/u);
+      // Metadata from the Prisma adapter is never returned verbatim.
+      // Only a numerical database error code and a fixed driver category
+      // are safe to inspect on this temporary admin-only route.
       const driverCause = err.meta?.driverAdapterError?.cause;
-      const originalText = driverCause?.originalMessage ?? driverError?.[2];
-      // Return only a driver code and a short redacted server diagnostic to the
-      // already-authenticated administrator; never expose SQL or connection values.
-      const safeMessage = originalText
-        ?.replace(/(?:mysql|mariadb):\/\/\S+/giu, "[redacted-url]")
-        .replace(/(?:password|passwd|pwd)\s*[=:]\s*\S+/giu, "password=[redacted]")
-        .replace(/([\x27\x22\x60])[^\x27\x22\x60]{1,100}\1/gu, "[quoted-value]")
-        .slice(0, 250);
+      const originalCode = driverCause?.originalCode;
+      const safeCode = (typeof originalCode === "number" || typeof originalCode === "string")
+        ? String(originalCode).match(/^[0-9]{1,6}$/u)?.[0]
+        : undefined;
       results.push({
         name: probe.name,
         ok: false,
         errorClass: (err.name ?? "unknown").slice(0, 100),
         errorCode: typeof err.code === "string" ? err.code.slice(0, 30) : undefined,
         causeCode: typeof err.meta?.code === "string" ? err.meta.code.slice(0, 30) : undefined,
-        driverCode: String(driverCause?.originalCode ?? driverError?.[1] ?? "").slice(0, 30) || undefined,
-        driverMessage: safeMessage,
-        metadataKeys: err.meta ? Object.keys(err.meta).slice(0, 12) : undefined,
-        driverKind: driverCause?.kind?.slice(0, 50),
+        driverCode: safeCode,
+        driverKind: ["mysql", "postgres", "sqlite", "mssql"].includes(driverCause?.kind ?? "") ? driverCause?.kind : undefined,
       });
     }
   }

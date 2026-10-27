@@ -1,0 +1,35 @@
+name: Read-only response header sizes for intermittent 520
+on:
+  push:
+    branches:
+      - ops/response-header-sizes-20261027
+    paths:
+      - .github/workflows/origin-response-header-sizes-20261027.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Measure public headers only, edge vs direct origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "UTC measured: $(date -u +%FT%TZ)"
+          for path in "/" "/api/build-info"; do
+            echo "=== edge $path ==="
+            curl --silent --show-error --http2 --noproxy '*' \
+              --connect-timeout 6 --max-time 12 --retry 0 \
+              --output /dev/null \
+              --write-out 'http=%{http_code} header_bytes=%{size_header} http_version=%{http_version} tls_verify=%{ssl_verify_result} total_s=%{time_total}\n' \
+              "https://ilkoku.com$path"
+            echo "=== origin $path ==="
+            curl --silent --show-error --http2 --noproxy '*' \
+              --connect-timeout 6 --max-time 12 --retry 0 \
+              --resolve ilkoku.com:443:82.198.229.51 \
+              --output /dev/null \
+              --write-out 'http=%{http_code} header_bytes=%{size_header} http_version=%{http_version} tls_verify=%{ssl_verify_result} total_s=%{time_total}\n' \
+              "https://ilkoku.com$path"
+          done

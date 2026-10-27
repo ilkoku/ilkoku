@@ -758,3 +758,20 @@ test("admin finance sees writer invoice declaration without treating it as verif
   lacks(action, "financialLedger.create", "author declaration does not cause ledger entries");
   lacks(action, "prisma.order.create", "author declaration cannot create orders");
 });
+\n\ntest("0 TL role screens remain visible without a transaction or provider", () => {
+  const admin = source("src/app/admin/finans-gelirler/siparis-mali-inceleme/page.tsx");
+  const checkout = source("src/app/satinal/[slug]/page.tsx");
+  const history = source("src/app/hesabim/odeme-gecmisi/page.tsx");
+  const writer = source("src/app/satis-erisim/page.tsx");
+  has(admin, 'data-commerce-zero-screen="admin"', "admin zero amount preview");
+  has(admin, "Sipariş oluşturulmadı", "no fabricated order id");
+  has(admin, "Finansal tahakkuk değil", "no synthetic commission");
+  has(checkout, 'data-commerce-zero-screen="reader-checkout"', "reader zero checkout preparation");
+  has(checkout, "checkoutConfigurationActive", "seller and terms remain gated");
+  has(checkout, "completeZeroTotalCheckoutAction", "actual server-side zero checkout unchanged");
+  has(history, 'data-commerce-zero-screen="reader-history"', "zero empty history screen");
+  has(history, "ILK- ile başlayan sipariş numaran", "zero receipt expectation");
+  has(writer, 'data-commerce-zero-screen="writer"', "writer zero amount workflow");
+  lacks(writer, "financialLedger.create(", "writer dashboard never posts money");
+  lacks(admin, "financialLedger.create(", "admin preview never posts money");
+});

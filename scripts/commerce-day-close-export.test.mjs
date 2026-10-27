@@ -233,7 +233,7 @@ test("missing snapshot, coupon, duplicate payments and 0TL produce review lines,
   assert.ok(issues.includes("TAHSILAT_KAYDI_MUTABAKATSIZ"));
   assert.ok(issues.includes("KUPON_VERGI_MATRAHI_INCELEME"));
   assert.ok(issues.includes("SIFIR_TL_MALI_BELGE_DEGIL"));
-  assert.ok(issues.includes("SATICI_ILKOKU_DOGRULANMADI"));
+  assert.ok(issues.includes("SATICI_MODU_EKSIK_GECERSIZ"));
   assert.equal(result.manifest.checkedGrossMinor,"0");
 });
 
@@ -1367,4 +1367,17 @@ test("unverified tax-document review produces no commission or intermediary VAT 
   assert.equal(result.manifest.reviewedServiceFeeVatIllustrationMinor,"0");
   assert.equal(result.manifest.reviewedCommissionGrossIllustrationMinor,"0");
   assert.equal(result.manifest.reviewedServiceFeeGrossIllustrationMinor,"0");
+});
+ 
+test("author-as-seller day close is flagged for intermediary review, not treated as invalid identity", () => {
+  const authorSellerOrder = validOrder();
+  authorSellerOrder.orderNo = "ILK-AUTHOR-SELLER";
+  authorSellerOrder.sellerMode = "third_party";
+  const result = make([authorSellerOrder]);
+  assert.equal(result.manifest.salesCount, 1);
+  assert.equal(result.manifest.readySalesCount, 0);
+  assert.equal(result.manifest.flaggedSalesCount, 1);
+  const issues = result.files.find((entry) => entry.name === "uyarilar.csv").data;
+  assert.ok(issues.includes("YAZAR_SATICI_ARACILIK_MALI_INCELEME"));
+  assert.ok(!issues.includes("SATICI_ILKOKU_DOGRULANMADI"));
 });

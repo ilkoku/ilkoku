@@ -293,7 +293,13 @@ export function buildDayCloseFiles(input: {
     if (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
         tax.appliedServiceFeeBps === null) warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
-    if (order.sellerMode !== "platform_direct") warnings.push("SATICI_ILKOKU_DOGRULANMADI");
+    // An author-seller is an expected intermediary model, not failed identity.
+    // Keep financial posting closed until author-seller accounting is separately reviewed.
+    if (order.sellerMode === "third_party") {
+      warnings.push("YAZAR_SATICI_ARACILIK_MALI_INCELEME");
+    } else if (order.sellerMode !== "platform_direct") {
+      warnings.push("SATICI_MODU_EKSIK_GECERSIZ");
+    }
     if (order.finalAmount < BigInt(0) || order.originalAmount - order.discountAmount !== order.finalAmount) {
       warnings.push("TUTAR_MUTABAKATSIZ");
     }

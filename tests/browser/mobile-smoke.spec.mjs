@@ -1125,6 +1125,9 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
   )).toBeVisible();
   await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
+  await expect(page.getByText("Eser sahibi yazar", { exact: true })).toBeVisible();
+  await expect(page.getByText("Aracı platform", { exact: true })).toBeVisible();
+  await expect(page.getByText("CI ONLY MOCK AUTHOR SELLER - NOT A REAL ENTITY", { exact: true })).toBeVisible();
   await expectResponsiveDocument(page);
 
   // Another authenticated reader must not be able to open this buyer's receipt.
@@ -1157,7 +1160,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
         "SELECT o.status, o.finalAmount,",
         "(SELECT COUNT(*) FROM Payment p WHERE p.orderId = o.id) AS paymentCount,",
         "(SELECT COUNT(*) FROM OrderConsent c WHERE c.orderId = o.id) AS consentCount,",
-        "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId = o.id AND s.sellerName = 'CI ONLY MOCK SELLER - NOT A REAL ENTITY') AS legalSnapshotCount,",
+        "(SELECT COUNT(*) FROM OrderLegalSnapshot s WHERE s.orderId = o.id AND s.sellerMode = 'third_party' AND s.sellerName = 'CI ONLY MOCK AUTHOR SELLER - NOT A REAL ENTITY') AS legalSnapshotCount,",
         "(SELECT COUNT(*) FROM WorkEntitlement e WHERE e.orderId = o.id AND e.status = 'active') AS entitlementCount,",
         "(SELECT COUNT(*) FROM OrderCommissionRateSnapshot r WHERE r.orderId = o.id AND r.commissionRateBps = 1500 AND r.serviceFeeRateBps = 500 AND r.source = 'global' AND r.calculationVersion = 'rate-v1') AS rateSnapshotCount,",
         "(SELECT COUNT(*) FROM FinancialLedger l WHERE l.orderId = o.id AND l.entryType = 'sale_gross' AND l.amount = 0) AS zeroGrossCount,",

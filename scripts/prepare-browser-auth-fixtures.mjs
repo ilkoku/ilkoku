@@ -424,7 +424,8 @@ try {
 
   // Ephemeral CI-only verified party. This is never deployed or seeded in production.
   // Seller identity must not be inferred from the author record.
-  const ciLegalPartyId = randomUUID();
+  const ciLegalPartyId = randomUUID(); // platform-direct coupon fixture
+  const ciAuthorLegalPartyId = randomUUID(); // independent author-owned 0 TL fixture
   const ciAuthorizationId = randomUUID();
   await client.execute(
     `INSERT INTO \`LegalParty\`
@@ -435,6 +436,17 @@ try {
        'verified', ?, ?, ?, ?)`,
     [ciLegalPartyId, userIds.admin, now, now, now],
   );
+  // Disposable CI-only author seller linked to the exact work's writer.
+  // These mock fields are never seeded to production.
+  await client.execute(
+    `INSERT INTO \`LegalParty\`
+      (id, kind, ownerUserId, legalName, taxIdentifier, legalAddress, contactEmail,
+       verificationStatus, verifiedById, verifiedAt, createdAt, updatedAt)
+     VALUES (?, 'individual', ?, 'CI ONLY MOCK AUTHOR SELLER - NOT A REAL ENTITY',
+       'CI-AUTHOR-TEST', 'CI ephemeral address', 'ci-author@example.invalid',
+       'verified', ?, ?, ?, ?)`,
+    [ciAuthorLegalPartyId, userIds.writer, userIds.admin, now, now, now],
+  );
   await client.execute(
     `INSERT INTO \`WorkSalesAuthorization\`
       (id, workId, legalPartyId, version, status, rightsScope,
@@ -443,7 +455,7 @@ try {
     [
       ciAuthorizationId,
       commerceWorkId,
-      ciLegalPartyId,
+      ciAuthorLegalPartyId,
       JSON.stringify({ right: "digital_read_access", territory: "TR", testOnly: true }),
       "a".repeat(64),
       now,
@@ -457,11 +469,11 @@ try {
     `INSERT INTO \`WorkSellerAssignment\`
       (id, workId, legalPartyId, authorizationId, mode, status,
        version, currentKey, approvedById, approvedAt, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, 'platform_direct', 'approved', 1, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, 'third_party', 'approved', 1, ?, ?, ?, ?, ?)`,
     [
       randomUUID(),
       commerceWorkId,
-      ciLegalPartyId,
+      ciAuthorLegalPartyId,
       ciAuthorizationId,
       commerceWorkId,
       userIds.admin,

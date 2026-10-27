@@ -97,12 +97,12 @@ export async function GET() {
       { TABLE_NAME: string; COLUMN_NAME: string; COLLATION_NAME: string | null }[]
     >`SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME
       FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
+      WHERE BINARY TABLE_SCHEMA = BINARY DATABASE()
         AND (
-          (TABLE_NAME = 'User' AND COLUMN_NAME IN ('fullName', 'displayName', 'username', 'email'))
-          OR (TABLE_NAME = 'Work' AND COLUMN_NAME = 'title')
-          OR (TABLE_NAME = 'Order' AND COLUMN_NAME = 'orderNo')
-          OR (TABLE_NAME = 'Payment' AND COLUMN_NAME = 'provider')
+          (BINARY TABLE_NAME = BINARY 'User' AND BINARY COLUMN_NAME IN ('fullName', 'displayName', 'username', 'email'))
+          OR (BINARY TABLE_NAME = BINARY 'Work' AND BINARY COLUMN_NAME = BINARY 'title')
+          OR (BINARY TABLE_NAME = BINARY 'Order' AND BINARY COLUMN_NAME = BINARY 'orderNo')
+          OR (BINARY TABLE_NAME = BINARY 'Payment' AND BINARY COLUMN_NAME = BINARY 'provider')
         )
       LIMIT 16`;
     const safeName = (value: string | null | undefined) =>

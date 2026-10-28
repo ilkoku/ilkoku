@@ -306,7 +306,10 @@ export function Sidebar({
                   }
                   active={
                     !item.disabled &&
-                    isActiveRoute(pathname, searchParams, item.href)
+                    isActiveRoute(pathname, searchParams, item.href) &&
+                    !(navigationRole === "writer" &&
+                      pathname === "/satis-erisim/odemelerim" &&
+                      item.href === "/satis-erisim")
                   }
                 />
 

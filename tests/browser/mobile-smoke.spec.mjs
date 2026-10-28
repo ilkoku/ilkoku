@@ -2877,6 +2877,11 @@ test("writer payout history is private, readable, responsive and read-only", asy
     const root = page.locator('[class*="writerFinancePage"]');
     await expect(root).toBeVisible();
     await expect(root.getByRole("heading", { name: "Ödemelerim" })).toBeVisible();
+    const writerMenu = page.getByRole("navigation", { name: "Ana menü" });
+    await expect(writerMenu.getByRole("link", { name: "Ödemelerim" }))
+      .toHaveAttribute("aria-current", "page");
+    await expect(writerMenu.getByRole("link", { name: "Satış & Erişim" }))
+      .not.toHaveAttribute("aria-current", "page");
     for (const item of ["Bekleyen", "Ödenebilir", "Ödeme sürecinde", "Ödenen"]) {
       await expect(root.getByRole("article").filter({ hasText: item }).first()).toBeVisible();
     }

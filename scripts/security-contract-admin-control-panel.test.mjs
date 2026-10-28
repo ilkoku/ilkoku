@@ -465,6 +465,29 @@ test("third-level admin navigation preserves 7 groups and all 25 existing destin
   assert.match(shell, /className="admin-secondary-panel"/);
 });
 
+test("finance tertiary menu exposes four existing accounting and review pages", () => {
+  const financeItems = navigation.slice(
+    navigation.indexOf("const financeSubNavigation:"),
+    navigation.indexOf("const contractSubNavigation:"),
+  );
+  for (const [slug, label] of [
+    ["komisyon-yonetimi", "Komisyon Yönetimi"],
+    ["yazar-vergi-inceleme", "Yazar Vergi İnceleme"],
+    ["siparis-mali-inceleme", "Sipariş Mali İnceleme"],
+    ["gun-sonu-aktarim", "Gün Sonu Aktarım"],
+  ]) {
+    const route = `/sistem-yonetimi/finans-gelirler/${slug}`;
+    assert.ok(
+      financeItems.includes(`{ href: "${route}", label: "${label}" }`),
+      `${label} must be in the finance tertiary menu`,
+    );
+    assert.ok(
+      read(`src/app/admin/finans-gelirler/${slug}/page.tsx`).length > 0,
+      `${label} must point to an implemented page`,
+    );
+  }
+});
+
 test("admin removes only duplicated shortcuts while preserving Hesabım and Çıkış", () => {
   assert.doesNotMatch(shell, /href="\/icerik">\s*İçerik Yönetimi/);
   assert.doesNotMatch(dashboard, /Sistem hareketlerini aç/);

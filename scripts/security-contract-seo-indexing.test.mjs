@@ -1659,3 +1659,19 @@ test("public reader and editor CMS visuals deliver responsive optimized images w
   assertContains(canary, "src/components/content/ReaderEducationPage.tsx", "live optimizer canary covers reader delivery");
   assertContains(canary, "src/components/content/EditorEducationShell.tsx", "live optimizer canary covers editor delivery");
 });
+
+test("Power-SEO honors published Book Index routes and labels uncertain audit heuristics", () => {
+  const parity = source("scripts/seo-sitemap-data-parity.mjs");
+  const page = source("src/app/admin/power-seo/page.tsx");
+  assertContains(parity, "publicBookIndexUrlsInXml", "Book Index entries are counted, not rejected");
+  assertNotContains(parity, "gatedRouteLeakCount", "retired noindex launch gate must not flag public Book Index");
+  assertNotContains(parity, "unexpectedWorks.length || gated.length", "DB parity must compare actual works and CMS only");
+  assertContains(page, "const canonicalMatches =", "canonical warning cross-checked with independent HTML");
+  assertContains(page, "const oneH1 =", "H1 warning cross-checked with independently parsed headings");
+  assertContains(page, "const reliableRules =", "do not display contradictory library warnings");
+  assertContains(page, 'const isTurkishPage =', "English-only lexical scoring gated by document language");
+  assertContains(page, "Ham paket puanı", "raw library score not called validated technical SEO score");
+  assertContains(page, "imageAltIssues,", "missing alt attribute count separated from library review suggestions");
+  assertContains(page, "imageReviewSignals: imageAudit.issues.length", "image heuristic retained as human review only");
+  assertContains(page, "Yalnız doğrulanmış yayın/güncelleme tarihi varsa", "schema must not invent publication dates");
+});

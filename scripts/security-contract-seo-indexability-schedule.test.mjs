@@ -45,8 +45,8 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
   );
   contains(
     workflow,
-    "! grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar' \"$sitemap\"",
-    "Book Index stays excluded from sitemap during soft launch",
+    "grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/dunya</loc>' \"$sitemap\"",
+    "public global bestseller page is included in sitemap",
   );
 });
 

@@ -197,11 +197,8 @@ jobs:
             grep -Fq "<loc>${required}</loc>" "$sitemap"
           done
 
-          for excluded in \
-            'https://ilkoku.com/yeni-cikanlar'; do
-            ! grep -Fq "<loc>${excluded}</loc>" "$sitemap"
-          done
-          ! grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar' "$sitemap"
+          grep -Fq '<loc>https://ilkoku.com/yeni-cikanlar</loc>' "$sitemap"
+          grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/dunya</loc>' "$sitemap"
           ! grep -Fq '<loc>https://ilkoku.com/eserler</loc>' "$sitemap"
 
           check_page '/' 'https://ilkoku.com/'
@@ -243,8 +240,15 @@ jobs:
           check_page '/okurlar-icin/aktif-okuma' 'https://ilkoku.com/okurlar-icin/aktif-okuma'
           check_page '/editorler-icin/egitim/yapisal-editorluk' 'https://ilkoku.com/editorler-icin/egitim/yapisal-editorluk'
 
-          check_noindex_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'
-          check_noindex_page '/yeni-cikanlar' 'https://ilkoku.com/yeni-cikanlar'
+          check_page '/yeni-cikanlar' 'https://ilkoku.com/yeni-cikanlar'
+          check_page '/en-cok-satanlar/dunya' 'https://ilkoku.com/en-cok-satanlar/dunya'
+          if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$sitemap"; then
+            check_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'
+            grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/turkiye</loc>' "$sitemap"
+            check_page '/en-cok-satanlar/turkiye' 'https://ilkoku.com/en-cok-satanlar/turkiye'
+          else
+            check_noindex_page '/en-cok-satanlar' 'https://ilkoku.com/en-cok-satanlar'
+          fi
 
           echo "PASS: soft-launch index targets and crawlable noindex routes verified."
 

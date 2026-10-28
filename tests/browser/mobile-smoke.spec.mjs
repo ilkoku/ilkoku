@@ -2859,3 +2859,35 @@ test("authenticated reader order history and admin zero-value preview stay disti
   await page.goto("/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
+
+test("writer Gelirler readability: dark TEST209 tiles, bright text and no mobile overflow", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const token = authFixture.sessions?.writer;
+  expect(token, "Missing writer browser fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: token, url: authCookieUrl },
+  ]);
+
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/gelirler", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Gelirler", exact: true })).toBeVisible();
+
+    const financePage = page.locator('[class*="writerFinancePage"]');
+    await expect(financePage).toBeVisible();
+    const metricLabel = financePage.locator('[class*="writerFinanceStat"] > span').first();
+    await expect(metricLabel).toHaveCSS("color", "rgb(210, 216, 226)");
+    await expect(financePage.locator('[class*="writerFinanceStat"] > strong').first())
+      .toHaveCSS("color", "rgb(242, 244, 248)");
+
+    const demoTiles = financePage.locator('[class*="writerFinancePanel"] [class*="statGrid"] [class*="stat"]');
+    if (await demoTiles.count()) {
+      const firstTile = demoTiles.first();
+      await expect(firstTile).toHaveCSS("background-color", "rgb(21, 27, 36)");
+      await expect(firstTile.locator("span")).toHaveCSS("color", "rgb(210, 216, 226)");
+      await expect(firstTile.locator("strong")).toHaveCSS("color", "rgb(242, 244, 248)");
+    }
+    await expectResponsiveDocument(page);
+  }
+});

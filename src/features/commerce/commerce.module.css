@@ -923,6 +923,90 @@
   color: var(--writer-custom-text-muted, #9ca3af);
 }
 
+/* Gelirler: dark/gold writer page, accessible text and dark TEST209 tiles.
+   Scoped to this route, leaving checkout, author pricing and reader UI alone. */
+.writerFinancePage {
+  --finance-readable-text: #f2f4f8;
+  --finance-readable-muted: #d2d8e2;
+}
+
+.writerFinancePage .writerFinanceHero p,
+.writerFinancePage .writerFinancePanel p,
+.writerFinancePage .notice {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.writerFinancePage .writerFinancePanel p,
+.writerFinancePage .writerFinanceHero p {
+  color: var(--finance-readable-muted);
+}
+
+.writerFinancePage .notice a {
+  color: #ffe08a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+}
+
+.writerFinancePage .writerFinanceStat span,
+.writerFinancePage .writerFinancePanel .stat span {
+  color: var(--finance-readable-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.writerFinancePage .writerFinanceStat strong {
+  color: var(--finance-readable-text);
+  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+}
+
+.writerFinancePage .writerFinancePanel .stat {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.34));
+  border-radius: 14px;
+  background: #151b24;
+  color: var(--finance-readable-text);
+}
+
+.writerFinancePage .writerFinancePanel .stat strong {
+  color: var(--finance-readable-text);
+  font-size: 1.3rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.writerFinancePage .financeWorkCard > div:first-child > span {
+  color: var(--finance-readable-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.writerFinancePage .financeWorkCard > div:first-child strong,
+.writerFinancePage .paymentAmounts strong {
+  color: var(--finance-readable-text);
+  font-size: 1.02rem;
+}
+
+.writerFinancePage .paymentAmounts span {
+  color: var(--finance-readable-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.writerFinancePage .panelHeader > div,
+.writerFinancePage .financeWorkCard > div,
+.writerFinancePage .paymentAmounts span {
+  min-width: 0;
+}
+
+.writerFinancePage .writerFinancePanel .empty {
+  color: var(--finance-readable-muted);
+  font-size: 1rem;
+}
+
 .writerCommercePage .action {
   background: var(--writer-custom-primary, #d4af37);
   color: var(--writer-custom-button-text, #0b0d10);

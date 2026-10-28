@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { GlobalBestsellerView } from "@/features/book-index/public/GlobalBestsellerView";
 import { getGlobalBestsellerReadModel } from "@/lib/book-index/global-public-read-model";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
-import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const canonical = "/en-cok-satanlar/dunya";
 const description =
@@ -16,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: isSoftLaunchSearchExcludedPath(canonical),
+    noIndex: false,
   });
 }
 

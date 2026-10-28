@@ -1737,3 +1737,23 @@ test("Power-SEO distinguishes actual HTML facts from English-first editorial aud
   assertContains(page, '"external links"', "unverified outbound-link suggestions are not technical failures");
   assertContains(page, '"people also ask coverage"', "English PAA heuristics remain editorial review only");
 });
+
+
+test("public Book Index metadata descriptions are unique, factual and within review length", () => {
+  const routes = [
+    "src/app/en-cok-satanlar/page.tsx",
+    "src/app/en-cok-satanlar/turkiye/page.tsx",
+    "src/app/en-cok-satanlar/dunya/page.tsx",
+  ];
+  const descriptions = routes.map((route) => {
+    const content = source(route);
+    const match = /const description\s*=\s*"([^"\n]+)";/u.exec(content);
+    assert.ok(match, route + ": metadata description is present");
+    assertContains(content, "description,", route + ": metadata uses observed description");
+    assert.ok(match[1].length >= 80 && match[1].length <= 180,
+      route + ": meta description needs manual review if outside the 80–180 character band");
+    return match[1];
+  });
+  assert.equal(new Set(descriptions).size, routes.length,
+    "overview, Turkey and global ranking pages need distinct factual descriptions");
+});

@@ -809,3 +809,49 @@ export async function listRecentOrderAccountingReviews() {
     },
   });
 }
+
+/**
+ * Writer-only, read-only payout history. The caller must supply the authorId
+ * from the authenticated writer session; never trust a URL or form value.
+ * TEST209 promotion entitlements are not payouts.
+ */
+export async function getWriterPayoutOverview(authorId: string) {
+  const [balance, payouts] = await Promise.all([
+    prisma.authorBalance.findUnique({
+      where: { authorId_currency: { authorId, currency: "TRY" } },
+      select: {
+        pendingAmount: true,
+        availableAmount: true,
+        processingAmount: true,
+        paidAmount: true,
+      },
+    }),
+    prisma.payout.findMany({
+      where: { authorId, currency: "TRY" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 100,
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        status: true,
+        periodStart: true,
+        periodEnd: true,
+        method: true,
+        reference: true,
+        createdAt: true,
+        paidAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    balance: balance ?? {
+      pendingAmount: BigInt(0),
+      availableAmount: BigInt(0),
+      processingAmount: BigInt(0),
+      paidAmount: BigInt(0),
+    },
+    payouts,
+  };
+}

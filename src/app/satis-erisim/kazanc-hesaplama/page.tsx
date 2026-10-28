@@ -156,19 +156,6 @@ export default async function WriterEarningIllustrationPage({
                 <div><span>Stopaj (uygun telifte %17)</span><strong>{money(p.withholding)}</strong></div>
                 <div><span>Yazara tahmini banka ödemesi</span><strong>{money(p.authorBankPayment)}</strong></div>
               </div>
-              <h3>3. Vergiler ve İlkOku kârı</h3>
-              <div className={styles.summaryGrid}>
-                <div><span>1 No.lu KDV</span><strong>{money(p.vat1Payment)}</strong></div>
-                <div><span>2 No.lu KDV</span><strong>{money(p.vat2Payment)}</strong></div>
-                <div><span>Stopaj</span><strong>{money(p.withholding)}</strong></div>
-                <div><span>Vergi öncesi İlkOku payı</span><strong>{money(p.profitBeforeCorporateTax)}</strong></div>
-                <div><span>Kurumlar vergisi karşılığı (%25 örnek)</span><strong>{money(p.corporateTaxIllustration)}</strong></div>
-                <div><span>Diğer giderler öncesi örnek net kâr</span><strong>{money(p.profitAfterTax)}</strong></div>
-              </div>
-              <p className={styles.helper}>
-                Kurumlar vergisi tek satış üzerinden beyan edilmez. Banka, ödeme,
-                personel ve diğer giderler hesaba dahil edilmedi.
-              </p>
             </section>
           ))}
         </div>

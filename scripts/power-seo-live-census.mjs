@@ -29,7 +29,7 @@ function canonicalFromHtml(html) {
 // Count headings from the actual HTML response, not the upstream audit heuristic.
 // Findings are review signals; a page is not declared deindexed because of H1 count.
 function h1CountFromHtml(html) {
-  return (html.match(/<h1\\b[^>]*>/giu) || []).length;
+  return (html.match(/<h1\b[^>]*>/giu) || []).length;
 }
 
 function robotsFromHtml(html) {

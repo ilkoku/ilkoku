@@ -2860,6 +2860,40 @@ test("authenticated reader order history and admin zero-value preview stay disti
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
 
+test("writer payout history is private, readable, responsive and read-only", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const writerToken = authFixture.sessions?.writer;
+  const readerToken = authFixture.sessions?.reader;
+  expect(writerToken).toBeTruthy();
+  expect(readerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: writerToken, url: authCookieUrl },
+  ]);
+
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/satis-erisim/odemelerim", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    const root = page.locator('[class*="writerFinancePage"]');
+    await expect(root).toBeVisible();
+    await expect(root.getByRole("heading", { name: "Ödemelerim" })).toBeVisible();
+    for (const item of ["Bekleyen", "Ödenebilir", "Ödeme sürecinde", "Ödenen"]) {
+      await expect(root.getByRole("article").filter({ hasText: item }).first()).toBeVisible();
+    }
+    await expect(root.getByRole("heading", { name: "Son ödeme kayıtlarım" })).toBeVisible();
+    await expect(root).toContainText("bu ekrandan başlatılamaz");
+    await expect(root).not.toContainText("İlkOku kârı");
+    await expect(root.getByRole("button", { name: /Ödeme başlat|Para çek|Transfer/i })).toHaveCount(0);
+    await expectResponsiveDocument(page);
+  }
+
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.goto("/satis-erisim/odemelerim", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/erisim-reddedildi/u);
+});
+
 test("writer Gelirler readability: dark TEST209 tiles, bright text and no mobile overflow", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const token = authFixture.sessions?.writer;

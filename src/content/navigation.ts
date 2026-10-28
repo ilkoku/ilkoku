@@ -19,6 +19,7 @@ export const navigationContent = {
     { label: "Eserlerim", href: "/eserlerim" },
     { label: "Satış & Erişim", href: "/satis-erisim" },
     { label: "Gelirler", href: "/gelirler" },
+    { label: "Ödemelerim", href: "/satis-erisim/odemelerim" },
     { label: "Yorumlarım", href: "/yorumlarim" },
     { label: "Geri Bildirimler", href: "/geri-bildirimler" },
     { label: "Yayınevleri", href: "/yayinevleri" },

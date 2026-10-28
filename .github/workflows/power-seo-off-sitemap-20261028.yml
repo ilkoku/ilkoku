@@ -1,0 +1,44 @@
+name: Power-SEO off-sitemap route verification 2026-10-28
+
+on:
+  push:
+    branches:
+      - diag/power-seo-off-sitemap-20261028
+    paths:
+      - ".github/workflows/power-seo-off-sitemap-20261028.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Read-only verify public demo and editor destinations found in link graph
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          const paths = [
+            "/kitap/demo-ikinci-bakis",
+            "/kitap/demo-kayip-harfler",
+            "/editorler",
+          ];
+          for (const path of paths) {
+            const url = "https://ilkoku.com" + path;
+            try {
+              const response = await fetch(url, {
+                redirect: "manual",
+                headers: { "User-Agent": "IlkOku-PowerSEO-OffSitemapReview/1.0" },
+                signal: AbortSignal.timeout(12000),
+              });
+              console.log(JSON.stringify({url, status: response.status, type: response.headers.get("content-type"), redirectTo: response.headers.get("location"), result: "one-off-observation"}));
+              if (response.status === 403 || response.status === 429) break;
+            } catch (err) {
+              console.log(JSON.stringify({url, error: err instanceof Error ? err.name : "network", result: "unverified-not-404"}));
+            }
+          }
+          JS

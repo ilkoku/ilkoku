@@ -18,35 +18,14 @@ test("Yandex cleanup targets only verified stale or refresh URLs", () => {
 
   assert.deepEqual(YANDEX_NOINDEX_URLS, [
     "https://ilkoku.com/editorler",
-    "https://ilkoku.com/editorler-icin/egitim/tur-editorlugu",
-    "https://ilkoku.com/editorler-icin/egitim/yazarla-calismak",
-    "https://ilkoku.com/yasal/cerez-politikasi",
-    "https://ilkoku.com/yasal/gizlilik-politikasi",
-    "https://ilkoku.com/yasal/kullanim-sartlari",
-    "https://ilkoku.com/yasal/telif-hakki-politikasi",
-    "https://ilkoku.com/yardim",
-    "https://ilkoku.com/yazarlar-icin/kurgu/alternatif-tarih",
-    "https://ilkoku.com/yazarlar-icin/kurgu/casusluk",
-    "https://ilkoku.com/yazarlar-icin/kurgu/dram",
-    "https://ilkoku.com/yazarlar-icin/kurgu/gerilim",
-    "https://ilkoku.com/yazarlar-icin/kurgu/gotik",
-    "https://ilkoku.com/yazarlar-icin/kurgu/hiciv",
-    "https://ilkoku.com/yazarlar-icin/kurgu/korku",
-    "https://ilkoku.com/yazarlar-icin/kurgu/mitoloji",
-    "https://ilkoku.com/yazarlar-icin/kurgu/mizah",
-    "https://ilkoku.com/yazarlar-icin/kurgu/paranormal",
-    "https://ilkoku.com/yazarlar-icin/kurgu/polisiye",
-    "https://ilkoku.com/yazarlar-icin/kurgu/post-apokaliptik",
-    "https://ilkoku.com/yazarlar-icin/kurgu/romantik",
-    "https://ilkoku.com/yazarlar-icin/senaryo-ve-sahne/tiyatro",
   ]);
 
   assert.deepEqual(YANDEX_REFRESH_URLS, [
     "https://ilkoku.com/hakkimizda",
   ]);
 
-  assert.equal(YANDEX_NOINDEX_URLS.length, 21);
-  assert.equal(YANDEX_CLEANUP_URLS.length, 25);
+  assert.equal(YANDEX_NOINDEX_URLS.length, 1);
+  assert.equal(YANDEX_CLEANUP_URLS.length, 5);
   assert.equal(new Set(YANDEX_CLEANUP_URLS).size, 33);
   assert.ok(
     YANDEX_CLEANUP_URLS.every((url) => url.startsWith("https://ilkoku.com/")),

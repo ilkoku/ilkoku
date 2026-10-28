@@ -2918,7 +2918,7 @@ test("writer earnings illustration matches dark/gold writer layout with readable
     await expect(valueTile.locator("span")).toHaveCSS("color", "rgb(210, 216, 226)");
     await expect(valueTile.locator("strong")).toHaveCSS("color", "rgb(242, 244, 248)");
     // The writer's canonical light-cream heading is also readable on dark cards.
-    const readableHeadingColor = /rgb\\((242, 244, 248|245, 241, 232)\\)/;
+    const readableHeadingColor = /rgb\((242, 244, 248|245, 241, 232)\)/;
     await expect(firstPanel.getByRole("heading", { name: "1. Eser, komisyon ve örnek satış fiyatı" }))
       .toHaveCSS("color", readableHeadingColor);
     await expect(root.getByRole("heading", { name: "3. Vergiler ve İlkOku kârı" }).first())

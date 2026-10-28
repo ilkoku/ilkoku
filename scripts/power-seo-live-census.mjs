@@ -26,6 +26,12 @@ function canonicalFromHtml(html) {
   return "";
 }
 
+// Count headings from the actual HTML response, not the upstream audit heuristic.
+// Findings are review signals; a page is not declared deindexed because of H1 count.
+function h1CountFromHtml(html) {
+  return (html.match(/<h1\\b[^>]*>/giu) || []).length;
+}
+
 function robotsFromHtml(html) {
   for (const tag of html.match(/<meta\b[^>]*>/giu) || []) {
     if (attribute(tag, "name").toLowerCase() === "robots") return attribute(tag, "content");
@@ -385,12 +391,13 @@ async function inspect(url, retry = 0) {
     const robots = ok ? robotsFromHtml(body) : "";
     const description = ok ? descriptionFromHtml(body) : "";
     const mainText = ok ? mainTextFromHtml(body) : "";
+    const h1Count = ok ? h1CountFromHtml(body) : null;
     const imageAlt = ok ? imageAltFromHtml(body) : null;
     const structuredData = ok ? structuredDataFromHtml(body) : null;
     const internalLinks = ok ? internalLinksFromHtml(body, url) : [];
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt, structuredData, internalLinks,
+      url, status: response.status, ok, title, description, canonical, robots, h1Count, mainText, imageAlt, structuredData, internalLinks,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       recoveredTransientFailure: retry > 0 && ok,
       error: ok ? "" : "Not HTTP 200 HTML",
@@ -402,7 +409,7 @@ async function inspect(url, retry = 0) {
       await new Promise((done) => setTimeout(done, 950));
       return inspect(url, 1);
     }
-    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
+    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", h1Count: null, mainText: "",
       imageAlt: null, structuredData: null, internalLinks: [], canonicalMatches: false, recoveredTransientFailure: false,
       error: e instanceof Error ? e.name : "Unknown error" };
   }
@@ -495,6 +502,9 @@ async function main() {
     errors: results.filter((x) => !x.ok).length,
     recoveredTransientRequests: results.filter((x) => x.recoveredTransientFailure).length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,
+    pagesWithOneH1: validPages.filter((x) => x.h1Count === 1).length,
+    pagesWithoutH1: validPages.filter((x) => x.h1Count === 0).length,
+    pagesWithMultipleH1: validPages.filter((x) => x.h1Count > 1).length,
     sitemapInternalLinkEdges: linkReview.internalEdges,
     sitemapNoIncomingLinkCandidates: linkReview.noIncomingCandidates.length,
     distinctOffSitemapLinkTargets: linkReview.offSitemapTargets.length,
@@ -529,7 +539,9 @@ async function main() {
     noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
     scope: "Read-only full live-sitemap SEO and internal-link census; no external inbound or Google index status",
   };
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
+  const h1Review = validPages.filter((page) => page.h1Count !== 1)
+    .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
@@ -538,6 +550,9 @@ async function main() {
     console.log(JSON.stringify(page));
   }
   // Non-sitemap destinations are only review candidates, not confirmed 404s.
+  for (const item of h1Review.slice(0, 25)) {
+    console.log(JSON.stringify({ h1Review: item }));
+  }
   for (const item of linkReview.offSitemapTargets.slice(0, 12)) {
     console.log(JSON.stringify({ offSitemapLinkReview: item }));
   }
@@ -575,7 +590,7 @@ async function main() {
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
 }
 
-export { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview };
+export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

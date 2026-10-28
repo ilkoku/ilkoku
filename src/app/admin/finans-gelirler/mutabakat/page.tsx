@@ -78,6 +78,40 @@ export default async function FinanceReconciliationPage() {
         </p>
       </div>
 
+      <section className="admin-panel" aria-label="Mali inceleme bekleyen ücretli siparişler">
+        <div className="admin-panel__heading">
+          <div>
+            <span>Yazar hakedişi · Salt okunur kontrol</span>
+            <h2>Mali inceleme bekleyen ücretli siparişler</h2>
+          </div>
+          <b>{snapshot.paidAwaitingAuthorEarningReview.length}</b>
+        </div>
+        <p>
+          Yalnızca son 500 paid sipariş içinden, tutarı sıfırdan büyük olduğu
+          halde henüz author_earning kaydı bulunmayanlar listelenir. Bu
+          durum tek başına hakediş borcu, muhasebe hatası, yazar ödemesi veya
+          vergi yükümlülüğü oluşturmaz. Belge ve satıcı modeli kontrolü gerekir.
+          0 TL siparişler bu listeye girmez.
+        </p>
+        {snapshot.paidAwaitingAuthorEarningReview.length ? (
+          <div className="admin-profile-list">
+            {snapshot.paidAwaitingAuthorEarningReview.map((order) => (
+              <div key={order.id}>
+                <Link href={
+                  "/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme?siparis=" +
+                  encodeURIComponent(order.orderNo)
+                }>
+                  {order.orderNo} · Mali incelemeyi aç
+                </Link>
+                <span>{formatFinanceMoney(order.finalAmount, order.currency)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>Son 500 paid siparişte inceleme bekleyen ücretli kayıt bulunmadı.</p>
+        )}
+      </section>
+
       <section className="admin-detail-grid">
         <article className="admin-panel">
           <div className="admin-panel__heading">

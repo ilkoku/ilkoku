@@ -686,6 +686,25 @@ test("finance ledger remains the source of truth while author balance is a proje
 });
 
 
+test("paid nonzero orders without author_earning are review-only, not payments", () => {
+  const repository = source("src/features/commerce/finance-repository.ts");
+  const reconciliation = source("src/app/admin/finans-gelirler/mutabakat/page.tsx");
+  const sourceStart = repository.indexOf("export async function getFinanceReconciliationSnapshot()");
+  const sourceEnd = repository.indexOf("export async function getWriterTest209DemoCounts", sourceStart);
+  const scope = repository.slice(sourceStart, sourceEnd);
+
+  contains(scope, 'where: { status: "paid" }', "only completed orders are reviewed");
+  contains(scope, 'in: ["sale_gross", "author_earning"]', "both ledger types are examined");
+  contains(scope, "order.finalAmount > BigInt(0)", "0 TL acquisitions never become missing payments");
+  contains(scope, 'entry.entryType === "author_earning"', "author earning posting is checked");
+  contains(scope, "paidAwaitingAuthorEarningReview", "separate accounting review queue");
+  contains(reconciliation, "Mali inceleme bekleyen ücretli siparişler", "admin review category");
+  contains(reconciliation, "0 TL siparişler bu listeye girmez.", "0 TL exclusion disclosure");
+  contains(reconciliation, "encodeURIComponent(order.orderNo)", "safe order review destination");
+  notContains(reconciliation, 'action={', "reconciliation never starts payment or ledger postings");
+  notContains(scope, "prisma.financialLedger.create", "read-only ledger review");
+});
+
 test("payout and reconciliation screens remain non-mutating until finance policy is frozen", () => {
   const payouts = source("src/app/admin/finans-gelirler/yazar-odemeleri/page.tsx");
   const reconciliation = source("src/app/admin/finans-gelirler/mutabakat/page.tsx");

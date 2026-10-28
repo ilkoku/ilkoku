@@ -2860,6 +2860,32 @@ test("authenticated reader order history and admin zero-value preview stay disti
   await expect(page).toHaveURL(/\/erisim-reddedildi/u);
 });
 
+test("admin reconciliation shows a separate nonzero paid-order accounting review queue", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto(
+      "/sistem-yonetimi/finans-gelirler/mutabakat",
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(response?.status()).toBe(200);
+    const review = page.getByRole("region", { name: "Mali inceleme bekleyen ücretli siparişler" });
+    await expect(review).toBeVisible();
+    await expect(review).toContainText("0 TL siparişler bu listeye girmez.");
+    await expect(review).toContainText("Bu");
+    for (const link of await review.getByRole("link", { name: /Mali incelemeyi aç/ }).all()) {
+      await expect(link).toHaveAttribute("href", /\/sistem-yonetimi\/finans-gelirler\/siparis-mali-inceleme\?siparis=/u);
+    }
+    await expectResponsiveDocument(page);
+  }
+});
+
 test("writer payout history is private, readable, responsive and read-only", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const writerToken = authFixture.sessions?.writer;

@@ -1719,3 +1719,21 @@ test("Power-SEO census counts real HTML H1s without changing publication policy"
   assertContains(census, "h1Review, descriptionReview,", "per-page H1 review is in artifact");
   assertContains(census, 'classification: "manual-technical-review"', "no invented Google indexing penalty");
 });
+
+
+test("Power-SEO distinguishes actual HTML facts from English-first editorial audit claims", () => {
+  const page = source("src/app/admin/power-seo/page.tsx");
+  assertContains(page, '/^(?:single h1|heading structure)$/i', "both upstream H1 rule titles reconciled with observed H1");
+  assertContains(page, "schemaCount > 0 && /^structured data$/i", "upstream missing-schema finding cannot contradict parsed JSON-LD");
+  assertContains(page, "const advisoryRules = reliableRules.filter(", "editorial package rules are separated");
+  assertContains(page, "const technicalRules = reliableRules.filter(", "technical findings retain their own list");
+  assertContains(page, "advisoryRules: advisoryRules.map(", "advisory results are returned independently");
+  assertContains(page, "Doğrulanmış teknik denetim bulguları", "technical findings remain visible");
+  assertContains(page, "Editoryal inceleme önerileri (Google indeksleme hatası değil)", "English editorial suggestions not shown as Google error");
+  assertContains(page, "audit.rules.filter((r) => r.severity !== \"pass\")", "technical failures remain visible");
+  assertContains(page, "if (oneH1 &&", "H1 correction is conditional on actual count");
+  assertContains(page, "if (schemaCount > 0", "schema correction is conditional on observed schema");
+  assertContains(page, "imageAltIssues === 0 && /^(?:image alt text|image alt attributes)$/i", "both upstream alt rule titles cross-check actual img attributes");
+  assertContains(page, '"external links"', "unverified outbound-link suggestions are not technical failures");
+  assertContains(page, '"people also ask coverage"', "English PAA heuristics remain editorial review only");
+});

@@ -105,6 +105,7 @@ type AuditResult = {
   imageCount: number;
   score: number;
   rules: Array<{ id: string; title: string; description: string; severity: string }>;
+  advisoryRules: Array<{ id: string; title: string; description: string; severity: string }>;
   contentScore: number | null;
   previewTitle: string;
   previewUrl: string;
@@ -220,21 +221,75 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     catch { return false; }
   })();
   const oneH1 = headings.filter((heading) => heading.startsWith("h1:")).length === 1;
+  // Only reconcile claims that directly contradict independently observed HTML.
+  // Never ignore a genuine missing/multiple H1, missing canonical or absent schema.
   const reliableRules = audit.rules.filter((rule) => {
     if (canonicalMatches && /canonical url/i.test(rule.title)) return false;
-    if (oneH1 && /heading structure/i.test(rule.title)) return false;
-    // English lexical features are not evidence of a Turkish SEO defect.
-    if (isTurkishPage && /transition words|title sentiment|title power word|expert precision/i.test(rule.title)) return false;
+    if (oneH1 && /^(?:single h1|heading structure)$/i.test(rule.title)) return false;
+    if (schemaCount > 0 && /^structured data$/i.test(rule.title)
+      && /no structured data/i.test(rule.description)) return false;
+    if (imageAltIssues === 0 && /^(?:image alt text|image alt attributes)$/i.test(rule.title)
+      && /missing alt text/i.test(rule.description)) return false;
     return true;
   });
+  // The upstream package uses English lexical signals and generic E-E-A-T/AEO
+  // templates. These are suggestions, not confirmed technical SEO failures,
+  // especially when inspecting Turkish HTML and a separately parsed JSON-LD graph.
+  const editorialTitles = new Set([
+    "seo title",
+    "external links",
+    "paragraph length",
+    "sentence length",
+    "title number",
+    "title sentiment",
+    "title power word",
+    "headline analyzer",
+    "table of contents",
+    "experience signals",
+    "multimedia evidence",
+    "case studies & examples",
+    "author schema",
+    "technical vocabulary",
+    "methodology transparency",
+    "author social presence",
+    "organization affiliation",
+    "published works & credentials",
+    "expert sourcing",
+    "editorial review",
+    "source quality",
+    "correction & update policy",
+    "privacy & safety",
+    "e-e-a-t overall score",
+    "word complexity",
+    "flesch reading ease",
+    "consecutive sentences",
+    "featured snippet readiness",
+    "people also ask coverage",
+    "rich result schema readiness",
+    "direct answer opening (aeo)",
+    "faq section (aeo)",
+    "fact density (aeo)",
+    "tl;dr / summary section (aeo)",
+    "concise answer paragraphs (aeo)",
+    "structured content patterns (aeo)",
+    "citation readiness (aeo)",
+    "content size",
+    "transition words",
+    "expert precision",
+  ]);
+  const isEditorialRule = (title: string) => editorialTitles.has(title.toLowerCase().trim());
+  const advisoryRules = reliableRules.filter((rule) => isTurkishPage && isEditorialRule(rule.title));
+  const technicalRules = reliableRules.filter((rule) => !(isTurkishPage && isEditorialRule(rule.title)));
   return {
     statusCode: response.status,
     elapsed, title, description, canonical, robots, xRobotsTag,
     h1Count: headings.filter((h) => h.startsWith("h1:")).length,
     linkCount: internalLinks.length, imageCount: images.length,
     score: audit.score,
-    rules: reliableRules.map(({ id, title: ruleTitle, description: detail, severity }) =>
+    rules: technicalRules.map(({ id, title: ruleTitle, description: detail, severity }) =>
       ({ id, title: ruleTitle, description: detail, severity })),
+    advisoryRules: advisoryRules.map(({ id, title: ruleTitle, description: detail }) =>
+      ({ id, title: ruleTitle, description: detail, severity: "review" })),
     contentScore: !isTurkishPage && contentAnalysis.maxScore > 0 && Number.isFinite(contentAnalysis.score)
       ? Math.round((contentAnalysis.score / contentAnalysis.maxScore) * 100)
       : null,
@@ -417,12 +472,25 @@ export default async function PowerSeoDashboard({
               <summary>Meta açıklaması önerisi istemi</summary>
               <pre className={styles.facts}>{audit.descriptionPrompt}</pre>
             </details>
-            <h3>Denetim bulguları</h3>
-            <ul className={styles.issues}>
-              {audit.rules.filter((r) => r.severity !== "pass").map((r, i) => (
-                <li key={r.id + i}><b>{r.severity.toUpperCase()} — {r.title}</b><span>{r.description}</span></li>
-              ))}
-            </ul>
+            <h3>Doğrulanmış teknik denetim bulguları</h3>
+            {audit.rules.some((rule) => rule.severity !== "pass") ? (
+              <ul className={styles.issues}>
+                {audit.rules.filter((r) => r.severity !== "pass").map((r, i) => (
+                  <li key={r.id + i}><b>{r.severity.toUpperCase()} — {r.title}</b><span>{r.description}</span></li>
+                ))}
+              </ul>
+            ) : <p>Canlı HTML ile çelişen paket uyarıları teknik hata olarak gösterilmiyor.</p>}
+            {audit.advisoryRules.length ? (
+              <>
+                <h3>Editoryal inceleme önerileri (Google indeksleme hatası değil)</h3>
+                <p>Bu paket önerileri İngilizce odaklı veya genel şablon ölçümleridir. Türkçe sayfa için doğrulanmış teknik SEO hatası, Google sıralama kuralı ya da siteyi değiştirme talimatı değildir.</p>
+                <ul className={styles.issues}>
+                  {audit.advisoryRules.map((r, i) => (
+                    <li key={r.id + i}><b>İNCELEME — {r.title}</b><span>{r.description}</span></li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
           </div>
         ) : null}
       </section>

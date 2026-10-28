@@ -12,7 +12,7 @@ import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { hasPublishedEditorProfiles } from "@/features/editors/data";
 import { GENRES } from "@/lib/genres";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { getBookIndexInsights } from "@/lib/book-index/insights";
 import { getPublishedBookIndexInsightPages } from "@/lib/book-index/insight-pages";
@@ -292,8 +292,10 @@ type EducationFreshnessRow = {
 
 async function loadBookIndexSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   try {
-    const context = await getBookIndexPublicPageContext(100);
-    if (!context || context.model.turkey.availability !== "available") {
+    // List only actually usable public ranking pages; do not require the
+    // separate historical full-publication gate for search discovery.
+    const context = await getBookIndexSoftLaunchPageContext(100);
+    if (context.model.turkey.availability !== "available") {
       return [];
     }
 

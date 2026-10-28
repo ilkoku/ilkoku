@@ -71,6 +71,10 @@ const financeSubNavigation: readonly AdminNavSubItem[] = [
   { href: "/sistem-yonetimi/finans-gelirler/yazar-bakiyeleri", label: "Yazar Bakiyeleri" },
   { href: "/sistem-yonetimi/finans-gelirler/yazar-hakedisleri", label: "Yazar Hakedişleri" },
   { href: "/sistem-yonetimi/finans-gelirler/yazar-odemeleri", label: "Yazar Ödemeleri" },
+  { href: "/sistem-yonetimi/finans-gelirler/komisyon-yonetimi", label: "Komisyon Yönetimi" },
+  { href: "/sistem-yonetimi/finans-gelirler/yazar-vergi-inceleme", label: "Yazar Vergi İnceleme" },
+  { href: "/sistem-yonetimi/finans-gelirler/siparis-mali-inceleme", label: "Sipariş Mali İnceleme" },
+  { href: "/sistem-yonetimi/finans-gelirler/gun-sonu-aktarim", label: "Gün Sonu Aktarım" },
 ];
 
 const contractSubNavigation: readonly AdminNavSubItem[] = [

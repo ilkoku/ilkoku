@@ -228,7 +228,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     if (oneH1 && /^(?:single h1|heading structure)$/i.test(rule.title)) return false;
     if (schemaCount > 0 && /^structured data$/i.test(rule.title)
       && /no structured data/i.test(rule.description)) return false;
-    if (imageAltIssues === 0 && /^image alt text$/i.test(rule.title)
+    if (imageAltIssues === 0 && /^(?:image alt text|image alt attributes)$/i.test(rule.title)
       && /missing alt text/i.test(rule.description)) return false;
     return true;
   });
@@ -237,6 +237,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   // especially when inspecting Turkish HTML and a separately parsed JSON-LD graph.
   const editorialTitles = new Set([
     "seo title",
+    "external links",
     "paragraph length",
     "sentence length",
     "title number",

@@ -71,7 +71,7 @@ export default async function WriterIncomePage() {
 
   return (
     <AppShell profile={profile}>
-      <div className={`${styles.page} ${styles.writerCommercePage}`}>
+      <div className={`${styles.page} ${styles.writerCommercePage} ${styles.writerFinancePage}`}>
         <header className={`${styles.hero} ${styles.writerFinanceHero}`}>
           <div>
             <span className={styles.eyebrow}>Yazar finans görünümü</span>

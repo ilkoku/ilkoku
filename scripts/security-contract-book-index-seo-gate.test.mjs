@@ -47,7 +47,7 @@ test("Book Index SEO gate requires evidence and a separate publication switch", 
   contains(gate, '"insufficient_evidence"', "evidence failure state");
 });
 
-test("Book Index soft-launch routes stay noindex while sitemap publication remains gated", () => {
+test("Book Index public pages index usable content and keep quality-gate telemetry", () => {
   const access = source("src/lib/book-index/public-access.ts");
   const overview = source("src/app/en-cok-satanlar/page.tsx");
   const turkey = source("src/app/en-cok-satanlar/turkiye/page.tsx");
@@ -80,13 +80,13 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     overview,
-    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
-    "overview stays noindex until full publish gate passes",
+    'noIndex: context.model.turkey.availability !== "available"',
+    "overview noindexes unavailable Turkey data",
   );
   contains(
     overview,
     "searchIndexable ? (",
-    "overview structured data stays off during soft launch",
+    "overview schema requires available content",
   );
   notContains(
     overview,
@@ -122,13 +122,13 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     turkey,
-    "noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish",
-    "Turkey route stays noindex until full publish gate passes",
+    'noIndex: context.model.turkey.availability !== "available"',
+    "Turkey noindexes unavailable content",
   );
   contains(
     turkey,
     "searchIndexable ? (",
-    "Turkey structured data stays off during soft launch",
+    "Turkey schema requires available content",
   );
 
   contains(
@@ -138,8 +138,8 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   );
   contains(
     insight,
-    "noIndex: isSoftLaunchSearchExcludedPath(canonical(slug)) || !context.gate.canPublish || items.length === 0",
-    "trend routes stay noindex until publish gate and data are both ready",
+    "noIndex: items.length === 0",
+    "trend pages noindex empty lists",
   );
   notContains(
     insight,
@@ -154,7 +154,7 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
   contains(
     insight,
     "searchIndexable ? (",
-    "trend structured data stays off until publication is allowed",
+    "trend schema requires real rows",
   );
 
   const view = source("src/features/book-index/public/BookIndexPublicView.tsx");
@@ -195,14 +195,14 @@ test("Book Index soft-launch routes stay noindex while sitemap publication remai
 
   contains(
     sitemap,
-    'import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";',
-    "sitemap still consumes the strict publication gate",
+    'import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";',
+    "sitemap now reads the available public model",
   );
   contains(sitemap, "async function loadBookIndexSitemapEntries()", "isolated sitemap gate helper");
   contains(
     sitemap,
-    "const context = await getBookIndexPublicPageContext(100);",
-    "sitemap remains on strict publish context",
+    "const context = await getBookIndexSoftLaunchPageContext(100);",
+    "sitemap uses content availability",
   );
   contains(
     sitemap,
@@ -252,7 +252,7 @@ test("Book Index admin shows SEO gate evidence without publishing", () => {
   contains(page, "Publish switch", "separate publication state");
   contains(page, "Public kapalı", "truthful default public state");
 
-  contains(sitemap, "loadBookIndexSitemapEntries", "admin status does not bypass gated sitemap helper");
+  contains(sitemap, "loadBookIndexSitemapEntries", "admin visibility does not change sitemap availability checks");
   notContains(navigation, "/en-cok-satanlar", "admin status does not publish navigation");
 });
 

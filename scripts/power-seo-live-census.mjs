@@ -291,6 +291,54 @@ function normalize(url) {
   }
 }
 
+// Extract same-origin links from HTML already downloaded for the census.
+// Query strings and fragments do not create distinct sitemap vertices.
+function internalLinksFromHtml(html, sourceUrl) {
+  const targets = new Set();
+  for (const tag of html.match(/<a\b[^>]*>/giu) || []) {
+    const href = attribute(tag, "href");
+    if (!href || href.startsWith("#")) continue;
+    try {
+      const resolved = new URL(href, sourceUrl);
+      const target = normalize(resolved.toString());
+      if (target) targets.add(target);
+    } catch { /* Invalid href is not treated as a verified broken HTTP link. */ }
+  }
+  return [...targets].sort();
+}
+
+function buildInternalLinkReview(pages, sitemapUrls) {
+  const incoming = new Map([...sitemapUrls].map((url) => [url, 0]));
+  const offSitemap = new Map();
+  let internalEdges = 0;
+  const pageLinks = pages.map((page) => {
+    const inside = [];
+    const outside = [];
+    for (const link of page.internalLinks) {
+      if (sitemapUrls.has(link)) {
+        inside.push(link);
+        incoming.set(link, (incoming.get(link) || 0) + 1);
+        internalEdges += 1;
+      } else {
+        outside.push(link);
+        offSitemap.set(link, (offSitemap.get(link) || 0) + 1);
+      }
+    }
+    return { url: page.url, insideSitemap: inside, outsideSitemap: outside };
+  });
+  const noIncomingCandidates = [...incoming.entries()]
+    .filter(([url, count]) => url !== normalize(ORIGIN + "/") && count === 0)
+    .map(([url]) => url);
+  const outsideTargets = [...offSitemap.entries()]
+    .map(([url, sourcePages]) => ({ url, sourcePages, classification: "manual-review-only" }))
+    .sort((left, right) => right.sourcePages - left.sourcePages || left.url.localeCompare(right.url));
+  return {
+    scope: "Links extracted from the complete public XML sitemap cohort. Incoming links from outside this cohort are unknown; missing incoming links are candidates, not confirmed orphan pages. Off-sitemap URLs are not automatically broken.",
+    scannedPages: pages.length, internalEdges, noIncomingCandidates,
+    offSitemapTargets: outsideTargets, pageLinks,
+  };
+}
+
 async function read(url, limit) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -339,9 +387,10 @@ async function inspect(url, retry = 0) {
     const mainText = ok ? mainTextFromHtml(body) : "";
     const imageAlt = ok ? imageAltFromHtml(body) : null;
     const structuredData = ok ? structuredDataFromHtml(body) : null;
+    const internalLinks = ok ? internalLinksFromHtml(body, url) : [];
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt, structuredData,
+      url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt, structuredData, internalLinks,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       recoveredTransientFailure: retry > 0 && ok,
       error: ok ? "" : "Not HTTP 200 HTML",
@@ -354,7 +403,7 @@ async function inspect(url, retry = 0) {
       return inspect(url, 1);
     }
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
-      imageAlt: null, structuredData: null, canonicalMatches: false, recoveredTransientFailure: false,
+      imageAlt: null, structuredData: null, internalLinks: [], canonicalMatches: false, recoveredTransientFailure: false,
       error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
@@ -373,8 +422,9 @@ async function main() {
   const validPages = results.filter((item) => item.ok);
   const contentReview = compareMainContent(validPages);
   // Only summary metrics are persisted. Avoid duplicating entire article bodies in artifacts.
-  const publicResults = results.map(({ mainText, structuredData, ...page }) => page);
+  const publicResults = results.map(({ mainText, structuredData, internalLinks, ...page }) => page);
   const siteUrls = new Set(urls.map(normalize));
+  const linkReview = buildInternalLinkReview(validPages, siteUrls);
   const schemaReview = validPages.map((page) => {
     const audit = inspectBreadcrumbHierarchy(page.structuredData, page.url, siteUrls);
     return {
@@ -445,6 +495,9 @@ async function main() {
     errors: results.filter((x) => !x.ok).length,
     recoveredTransientRequests: results.filter((x) => x.recoveredTransientFailure).length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,
+    sitemapInternalLinkEdges: linkReview.internalEdges,
+    sitemapNoIncomingLinkCandidates: linkReview.noIncomingCandidates.length,
+    distinctOffSitemapLinkTargets: linkReview.offSitemapTargets.length,
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,
     mainContentAbsent: validPages.filter((x) => !x.mainText).length,
@@ -474,15 +527,22 @@ async function main() {
     nearDuplicateDescriptionPairs: nearDuplicateDescriptions.length,
     canonicalMissingOrDifferent: results.filter((x) => x.ok && !x.canonicalMatches).length,
     noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
-    scope: "Live sitemap-only census; not Google index status or complete internal-link graph",
+    scope: "Read-only full live-sitemap SEO and internal-link census; no external inbound or Google index status",
   };
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(summary));
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
+  }
+  // Non-sitemap destinations are only review candidates, not confirmed 404s.
+  for (const item of linkReview.offSitemapTargets.slice(0, 12)) {
+    console.log(JSON.stringify({ offSitemapLinkReview: item }));
+  }
+  for (const url of linkReview.noIncomingCandidates.slice(0, 12)) {
+    console.log(JSON.stringify({ noSitemapIncomingLinkReview: url }));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
   for (const item of schemaIssues.slice(0, 25)) {
@@ -508,7 +568,7 @@ async function main() {
       "| --- | ---: |",
       ...Object.entries(summary).filter(([,value]) => typeof value === "number").map(([k,v]) => "| " + k + " | " + v + " |"),
       "",
-      "> Sitemap-only metadata readiness review. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review. Schema/breadcrumb counts are factual; missing schema and multiple user-navigation breadcrumb trails are not automatic errors. A breadcrumb URL absent from the public sitemap is an editorial review signal, not proof of a broken link or Google indexing failure.",
+      "> Full public-sitemap metadata and same-origin link graph review. No external inbound link graph, sitewide PageRank, or verified HTTP 404 claim is inferred from absent sitemap links. Length and similarity thresholds are editorial review signals, not Google indexing requirements or penalties. Full per-page evidence is in the uploaded JSON artifact. Main-body overlap excludes common phrases present on four or more pages and flags candidates for editorial review only. Empty image alt can be intentional for decorative graphics; only absent alt attributes on non-explicitly-decorative images are flagged for human review. Schema/breadcrumb counts are factual; missing schema and multiple user-navigation breadcrumb trails are not automatic errors. A breadcrumb URL absent from the public sitemap is an editorial review signal, not proof of a broken link or Google indexing failure.",
       "",
     ].join("\n"));
   }

@@ -1675,3 +1675,33 @@ test("Power-SEO honors published Book Index routes and labels uncertain audit he
   assertContains(page, "imageReviewSignals: imageAudit.issues.length", "image heuristic retained as human review only");
   assertContains(page, "Yalnız doğrulanmış yayın/güncelleme tarihi varsa", "schema must not invent publication dates");
 });
+
+test("Power-SEO full sitemap link graph is factual, read-only and bounded to its cohort", async () => {
+  const { internalLinksFromHtml, buildInternalLinkReview } = await import("./power-seo-live-census.mjs");
+  const links = internalLinksFromHtml(
+    '<a href="/rehber?utm_source=test#one">Guide</a>' +
+    '<a href="https://ilkoku.com/rehber#two">Repeated guide</a>' +
+    '<a href="/yazar">Private area</a>' +
+    '<a href="mailto:hello@example.com">Email</a>' +
+    '<a href="https://example.com/article">External</a>',
+    "https://ilkoku.com/",
+  );
+  assert.deepEqual(links, ["https://ilkoku.com/rehber", "https://ilkoku.com/yazar"]);
+  const cohort = new Set([
+    "https://ilkoku.com",
+    "https://ilkoku.com/rehber",
+    "https://ilkoku.com/yeni-cikanlar",
+  ]);
+  const review = buildInternalLinkReview([
+    { url: "https://ilkoku.com/", internalLinks: links },
+    { url: "https://ilkoku.com/rehber", internalLinks: ["https://ilkoku.com"] },
+    { url: "https://ilkoku.com/yeni-cikanlar", internalLinks: [] },
+  ], cohort);
+  assert.equal(review.scannedPages, 3);
+  assert.equal(review.internalEdges, 2);
+  assert.deepEqual(review.noIncomingCandidates, ["https://ilkoku.com/yeni-cikanlar"]);
+  assert.equal(review.offSitemapTargets.length, 1);
+  assert.equal(review.offSitemapTargets[0].url, "https://ilkoku.com/yazar");
+  assert.equal(review.offSitemapTargets[0].classification, "manual-review-only");
+  assert.match(review.scope, /not confirmed orphan pages/u);
+});

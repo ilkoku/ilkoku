@@ -110,6 +110,7 @@ type AuditResult = {
   previewUrl: string;
   titleTruncated: boolean;
   imageAltIssues: number;
+  imageReviewSignals: number;
   schemaCount: number;
   schemaTypes: string[];
   schemaIssues: string[];
@@ -145,9 +146,18 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   const headings = [...html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map((m) => "h" + m[1] + ":" + textOnly(m[2]));
   const links = (html.match(/<a\b[^>]*>/gi) || []).map((t) => attr(t, "href")).filter(Boolean);
-  const images = (html.match(/<img\b[^>]*>/gi) || [])
-    .map((t) => ({ src: attr(t, "src"), alt: attr(t, "alt") }))
+  const imageTags = html.match(/<img\b[^>]*>/gi) || [];
+  const images = imageTags.map((t) => ({ src: attr(t, "src"), alt: attr(t, "alt") }))
     .filter((item) => item.src);
+  // Decorative images may intentionally use alt="". Missing alt on a
+  // non-presentational image is a more defensible actionable finding.
+  const imageAltIssues = imageTags.filter((tag) =>
+    attr(tag, "src") && !/\balt\s*=/i.test(tag) &&
+    attr(tag, "role").toLowerCase() !== "presentation" &&
+    attr(tag, "aria-hidden").toLowerCase() !== "true"
+  ).length;
+  const documentTag = /<html\b[^>]*>/i.exec(html)?.[0] || "";
+  const isTurkishPage = attr(documentTag, "lang").toLowerCase().startsWith("tr");
   const internalLinks = links.filter((href) => href.startsWith("/") || href.startsWith("https://ilkoku.com/"));
   const externalLinks = links.filter((href) => /^https?:\/\//.test(href) && !href.startsWith("https://ilkoku.com/"));
   const content = html.replace(/<head\b[^>]*>[\s\S]*?<\/head>/i, "")
@@ -193,7 +203,10 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
           const result = validateSchema(item as unknown as SchemaObject);
           schemaCount++;
           for (const issue of result.issues.slice(0, 10)) {
-            schemaIssues.push(label + " · " + issue.severity + " · " + issue.field + ": " + issue.message);
+            // Do not invent historical publication dates to appease a schema library.
+            const dateAdvice = issue.field === "datePublished" || issue.field === "dateModified";
+            schemaIssues.push(label + " · " + (dateAdvice ? "tarih önerisi" : issue.severity) +
+              " · " + issue.field + ": " + (dateAdvice ? "Yalnız doğrulanmış yayın/güncelleme tarihi varsa eklenmeli." : issue.message));
           }
         }
       }
@@ -201,21 +214,35 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
       schemaIssues.push("Bozuk JSON-LD: script JSON olarak okunamadı.");
     }
   }
+  // Independently parsed HTML outranks conflicting package heuristics.
+  const canonicalMatches = (() => {
+    try { return new URL(canonical, url).toString().replace(/\/$/, "") === url.toString().replace(/\/$/, ""); }
+    catch { return false; }
+  })();
+  const oneH1 = headings.filter((heading) => heading.startsWith("h1:")).length === 1;
+  const reliableRules = audit.rules.filter((rule) => {
+    if (canonicalMatches && /canonical url/i.test(rule.title)) return false;
+    if (oneH1 && /heading structure/i.test(rule.title)) return false;
+    // English lexical features are not evidence of a Turkish SEO defect.
+    if (isTurkishPage && /transition words|title sentiment|title power word|expert precision/i.test(rule.title)) return false;
+    return true;
+  });
   return {
     statusCode: response.status,
     elapsed, title, description, canonical, robots, xRobotsTag,
     h1Count: headings.filter((h) => h.startsWith("h1:")).length,
     linkCount: internalLinks.length, imageCount: images.length,
     score: audit.score,
-    rules: audit.rules.map(({ id, title: ruleTitle, description: detail, severity }) =>
+    rules: reliableRules.map(({ id, title: ruleTitle, description: detail, severity }) =>
       ({ id, title: ruleTitle, description: detail, severity })),
-    contentScore: contentAnalysis.maxScore > 0 && Number.isFinite(contentAnalysis.score)
+    contentScore: !isTurkishPage && contentAnalysis.maxScore > 0 && Number.isFinite(contentAnalysis.score)
       ? Math.round((contentAnalysis.score / contentAnalysis.maxScore) * 100)
       : null,
     previewTitle: preview.title,
     previewUrl: preview.displayUrl,
     titleTruncated: preview.titleTruncated,
-    imageAltIssues: imageAudit.issues.length,
+    imageAltIssues,
+    imageReviewSignals: imageAudit.issues.length,
     schemaCount, schemaTypes, schemaIssues,
     titlePrompt, descriptionPrompt,
     metadataTitle: typeof previewMetadata.title === "string" ? previewMetadata.title : title,
@@ -354,15 +381,16 @@ export default async function PowerSeoDashboard({
           <div className={styles.results}>
             <h3>{path} — HTTP {audit.statusCode}</h3>
             <div className={styles.stats}>
-              <div><strong>{audit.score}/100</strong><span>Power-SEO audit puanı</span></div>
-              <div><strong>{audit.contentScore === null ? "Veri yok" : audit.contentScore + "/100"}</strong><span>İçerik motoru (Türkçe için ihtiyatlı)</span></div>
+              <div><strong>{audit.score}/100</strong><span>Ham paket puanı (doğrulanmış SEO notu değil)</span></div>
+              <div><strong>{audit.contentScore === null ? "Türkçe için uygulanmaz" : audit.contentScore + "/100"}</strong><span>İngilizce odaklı içerik motoru</span></div>
               <div><strong>{audit.elapsed} ms</strong><span>Bu denetimde gözlenen yanıt</span></div>
             </div>
             <div className={styles.facts}>
               <p><b>Başlık:</b> {audit.title || "Eksik"}</p>
               <p><b>Açıklama:</b> {audit.description || "Eksik"}</p>
               <p><b>Canonical:</b> {audit.canonical || "Eksik"}</p>
-              <p><b>H1:</b> {audit.h1Count} · <b>İç bağlantı:</b> {audit.linkCount} · <b>Görsel:</b> {audit.imageCount} · <b>Alt metin bulgusu:</b> {audit.imageAltIssues}</p>
+              <p><b>H1:</b> {audit.h1Count} · <b>İç bağlantı:</b> {audit.linkCount} · <b>Görsel:</b> {audit.imageCount} · <b>Alt niteliği eksik görsel:</b> {audit.imageAltIssues}</p>
+              <p>Images paketinin ham inceleme sinyali: {audit.imageReviewSignals}. Boş alt niteliği dekoratif görsellerde geçerli olabilir; bu sayı otomatik hata değildir.</p>
             </div>
             <h3>Google arama sonucu önizlemesi</h3>
             <div className={styles.facts}>

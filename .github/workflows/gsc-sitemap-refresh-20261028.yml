@@ -1,0 +1,52 @@
+name: GSC one-time sitemap refresh 2026-10-28
+
+on:
+  push:
+    branches:
+      - seo/gsc-8-url-readonly-20261028
+    paths:
+      - ".github/workflows/gsc-sitemap-refresh-20261028.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Verify exactly eight public SEO targets in live XML
+        run: |
+          node --input-type=module <<'JS'
+          const paths = [
+            "/yeni-cikanlar",
+            "/en-cok-satanlar",
+            "/en-cok-satanlar/turkiye",
+            "/en-cok-satanlar/dunya",
+            "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+            "/en-cok-satanlar/cok-satanlarda-yukselenler",
+            "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+            "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+          ];
+          const response = await fetch("https://ilkoku.com/sitemap.xml", {signal: AbortSignal.timeout(20000)});
+          if (!response.ok) throw Error("Sitemap not available: HTTP "+response.status);
+          const xml = await response.text();
+          for (const path of paths) {
+            if (!xml.includes("<loc>https://ilkoku.com"+path+"</loc>")) throw Error("Absent target "+path);
+          }
+          console.log("PASS: All eight targets in current public sitemap.");
+          JS
+      - name: Submit and re-read same sitemap using existing checked-in script
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_WRITE_REFRESH_TOKEN: ${{ secrets.GSC_OAUTH_WRITE_REFRESH_TOKEN }}
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_WRITE_REFRESH_TOKEN"
+          node scripts/gsc-sitemap-submit.mjs

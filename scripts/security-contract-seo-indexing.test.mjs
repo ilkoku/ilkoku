@@ -1705,3 +1705,17 @@ test("Power-SEO full sitemap link graph is factual, read-only and bounded to its
   assert.equal(review.offSitemapTargets[0].classification, "manual-review-only");
   assert.match(review.scope, /not confirmed orphan pages/u);
 });
+
+
+test("Power-SEO census counts real HTML H1s without changing publication policy", async () => {
+  const { h1CountFromHtml } = await import("./power-seo-live-census.mjs");
+  assert.equal(h1CountFromHtml("<h1>Birinci</h1>"), 1);
+  assert.equal(h1CountFromHtml("<H1 class='title'>Başlık</H1><h1 id='second'>İkinci</h1>"), 2);
+  assert.equal(h1CountFromHtml("<h2>Alt başlık</h2><p>Metin</p>"), 0);
+  const census = source("scripts/power-seo-live-census.mjs");
+  assertContains(census, "pagesWithOneH1:", "full census reports factual one-H1 pages");
+  assertContains(census, "pagesWithoutH1:", "missing H1 pages are observable");
+  assertContains(census, "pagesWithMultipleH1:", "multiple H1 pages are observable");
+  assertContains(census, "h1Review, descriptionReview,", "per-page H1 review is in artifact");
+  assertContains(census, 'classification: "manual-technical-review"', "no invented Google indexing penalty");
+});

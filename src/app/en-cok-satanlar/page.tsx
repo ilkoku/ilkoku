@@ -3,7 +3,6 @@ import { BookIndexOverviewView } from "@/features/book-index/public/BookIndexPub
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { createBookIndexItemListSchema, getBookIndexLastObservedAt } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
-import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const baseUrl = "https://ilkoku.com";
 const canonical = "/en-cok-satanlar";
@@ -24,13 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: isSoftLaunchSearchExcludedPath(canonical) || !context.gate.canPublish,
+    noIndex: context.model.turkey.availability !== "available",
   });
 }
 
 export default async function BestsellersPage() {
   const context = await getBookIndexSoftLaunchPageContext(100);
-  const searchIndexable = context.gate.canPublish && !isSoftLaunchSearchExcludedPath(canonical);
+  const searchIndexable = context.model.turkey.availability === "available";
   const previewItems = context.model.turkey.items.filter((item) => item.rank <= 3);
   const lastObservedAt = getBookIndexLastObservedAt(context.model);
   const schema = [

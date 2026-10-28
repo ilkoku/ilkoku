@@ -2,6 +2,13 @@ name: Power-SEO Live Sitemap Census
 
 on:
   workflow_dispatch:
+  # Daily, read-only scan of the current public sitemap: never edits SEO content.
+  schedule:
+    - cron: "13 6 * * *"
+  pull_request:
+    paths:
+      - ".github/workflows/power-seo-live-census.yml"
+      - "scripts/power-seo-live-census.mjs"
   push:
     branches:
       - main
@@ -13,6 +20,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: power-seo-live-census
+  cancel-in-progress: false
 
 jobs:
   public-census:

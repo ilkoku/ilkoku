@@ -654,6 +654,27 @@ test("writer income dashboard is ledger and balance driven without reader paymen
 });
 
 
+test("writer payout history is writer-only, author-scoped and read-only", () => {
+  const page = source("src/app/satis-erisim/odemelerim/page.tsx");
+  const finance = source("src/features/commerce/finance-repository.ts");
+  const navigation = source("src/content/navigation.ts");
+  const income = source("src/app/gelirler/page.tsx");
+  const sales = source("src/app/satis-erisim/page.tsx");
+
+  contains(page, 'profile.role !== "writer"', "writer-only payout view");
+  contains(page, "getWriterPayoutOverview(profile.id)", "session-bound author payouts");
+  contains(finance, "export async function getWriterPayoutOverview(authorId: string)", "dedicated writer payout query");
+  contains(finance, 'where: { authorId, currency: "TRY" }', "payouts scoped to author");
+  contains(page, "Henüz gerçek ödeme kaydın yok", "no payout state");
+  contains(page, "0 TL TEST209 deneme erişimleri", "trial distinction");
+  notContains(page, "profitBeforeCorporateTax", "no platform profit on writer payout page");
+  notContains(page, 'action={', "writer cannot mutate payments");
+  notContains(page, "prisma.", "writer payout page uses scoped repository");
+  contains(navigation, 'label: "Ödemelerim", href: "/satis-erisim/odemelerim"', "author menu link");
+  contains(income, 'href="/satis-erisim/odemelerim"', "writer income link");
+  contains(sales, 'href="/satis-erisim/odemelerim"', "writer commerce link");
+});
+
 test("finance ledger remains the source of truth while author balance is a projection", () => {
   const overview = source("src/app/admin/finans-gelirler/page.tsx");
   const balances = source("src/app/admin/finans-gelirler/yazar-bakiyeleri/page.tsx");

@@ -82,15 +82,26 @@ test("Missing published work and missing public CMS page both fail", () => {
   ]) assert.equal(runCheck(testCase).status, 1);
 });
 
-test("Unexpected work or gated Book Index path fails", () => {
-  for (const url of [
-    "https://ilkoku.com/kitap/test-private",
-    "https://ilkoku.com/en-cok-satanlar/turkiye",
-  ]) {
-    assert.equal(runCheck({
-      workUrls: [], cmsUrls: [], urls: [...base, url],
-    }).status, 1);
-  }
+test("Unexpected work fails; approved public Book Index URLs remain eligible", () => {
+  assert.equal(runCheck({
+    workUrls: [], cmsUrls: [], urls: [...base, "https://ilkoku.com/kitap/test-private"],
+  }).status, 1);
+  const approved = [
+    "/yeni-cikanlar",
+    "/en-cok-satanlar",
+    "/en-cok-satanlar/turkiye",
+    "/en-cok-satanlar/dunya",
+    "/en-cok-satanlar/cok-satanlara-yeni-girenler",
+    "/en-cok-satanlar/cok-satanlarda-yukselenler",
+    "/en-cok-satanlar/birden-fazla-listede-cok-satanlar",
+    "/en-cok-satanlar/uzun-suredir-cok-satanlar",
+  ];
+  const result = runCheck({
+    workUrls: [], cmsUrls: [],
+    urls: [...base, ...approved.map((path) => "https://ilkoku.com" + path)],
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /"publicBookIndexUrlsInXml":8/u);
 });
 
 test("Static fallback cannot pass independent production DB evidence", () => {

@@ -25,7 +25,10 @@ const missingWorks = [...workSet].filter((url) => !actual.has(url));
 const missingCms = [...cmsSet].filter((url) => !actual.has(url));
 const unexpectedWorks = urls.filter((url) =>
   url.startsWith("https://ilkoku.com/kitap/") && !workSet.has(url));
-const gated = urls.filter((url) => {
+// These public Book Index paths were approved for indexing on 2026-10-28.
+// Their presence is not a data leak: route-level live data gates and the
+// live SEO census independently verify indexability before publication.
+const publicBookIndexUrls = urls.filter((url) => {
   const path = new URL(url).pathname;
   return path === "/yeni-cikanlar"
     || path === "/en-cok-satanlar"
@@ -44,7 +47,7 @@ const report = {
   missingWorkCount: missingWorks.length,
   missingCmsCount: missingCms.length,
   unexpectedWorkCount: unexpectedWorks.length,
-  gatedRouteLeakCount: gated.length,
+  publicBookIndexUrlsInXml: publicBookIndexUrls.length,
   missingWorkSamples: missingWorks.slice(0, 15),
   missingCmsSamples: missingCms.slice(0, 15),
   unexpectedWorkSamples: unexpectedWorks.slice(0, 15),
@@ -61,12 +64,12 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     "| Missing works | " + report.missingWorkCount + " |",
     "| Missing CMS pages | " + report.missingCmsCount + " |",
     "| Unexpected work URLs | " + report.unexpectedWorkCount + " |",
-    "| Gated route leaks | " + report.gatedRouteLeakCount + " |",
+    "| Public Book Index URLs in sitemap | " + report.publicBookIndexUrlsInXml + " |",
     "", "Authenticated production DB evidence is compared with live XML; no fallback cohort.", "",
   ];
   fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows.join("\n"));
 }
-if (missingWorks.length || missingCms.length || unexpectedWorks.length || gated.length) {
+if (missingWorks.length || missingCms.length || unexpectedWorks.length) {
   console.error("FAIL: sitemap/production DB disagreement");
   process.exitCode = 1;
 }

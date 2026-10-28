@@ -322,9 +322,15 @@ function parseSitemap(xml) {
   return urls;
 }
 
-async function inspect(url) {
+async function inspect(url, retry = 0) {
   try {
     const { response, body } = await read(url, MAX_HTML_BYTES);
+    // A single bounded retry for transient upstream 5xx. Persistent failures
+    // remain visible and fail the census; 403/429 are never retried.
+    if (response.status >= 500 && retry === 0) {
+      await new Promise((done) => setTimeout(done, 950));
+      return inspect(url, 1);
+    }
     const ok = response.status === 200 &&
       (response.headers.get("content-type") || "").toLowerCase().includes("text/html");
     const canonical = ok ? canonicalFromHtml(body) : "";
@@ -337,11 +343,19 @@ async function inspect(url) {
     return {
       url, status: response.status, ok, title, description, canonical, robots, mainText, imageAlt, structuredData,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
+      recoveredTransientFailure: retry > 0 && ok,
       error: ok ? "" : "Not HTTP 200 HTML",
     };
   } catch (e) {
+    // Socket resets and timeouts should receive one, and only one, bounded
+    // second attempt. Never retry permission, origin policy or parse failures.
+    if (retry === 0 && (e instanceof TypeError || e?.name === "TimeoutError")) {
+      await new Promise((done) => setTimeout(done, 950));
+      return inspect(url, 1);
+    }
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", mainText: "",
-      imageAlt: null, structuredData: null, canonicalMatches: false, error: e instanceof Error ? e.name : "Unknown error" };
+      imageAlt: null, structuredData: null, canonicalMatches: false, recoveredTransientFailure: false,
+      error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
 
@@ -429,6 +443,7 @@ async function main() {
     sitemapCount: urls.length,
     successfulHtml: results.filter((x) => x.ok).length,
     errors: results.filter((x) => !x.ok).length,
+    recoveredTransientRequests: results.filter((x) => x.recoveredTransientFailure).length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,

@@ -233,9 +233,49 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
   // The upstream package uses English lexical signals and generic E-E-A-T/AEO
   // templates. These are suggestions, not confirmed technical SEO failures,
   // especially when inspecting Turkish HTML and a separately parsed JSON-LD graph.
-  const editorialRule = /^(?:seo title|paragraph length|sentence length|title number|title sentiment|title power word|headline analyzer|table of contents|experience signals|multimedia evidence|case studies & examples|author schema|technical vocabulary|methodology transparency|author social presence|organization affiliation|published works & credentials|expert sourcing|editorial review|source quality|correction & update policy|privacy & safety|e-e-a-t overall score|word complexity|flesch reading ease|consecutive sentences|featured snippet readiness|rich result schema readiness|direct answer opening \\(aeo\\)|faq section \\(aeo\\)|fact density \\(aeo\\)|tl;dr \\/ summary section \\(aeo\\)|concise answer paragraphs \\(aeo\\)|structured content patterns \\(aeo\\)|citation readiness \\(aeo\\)|content size|transition words|expert precision)$/i;
-  const advisoryRules = reliableRules.filter((rule) => isTurkishPage && editorialRule.test(rule.title));
-  const technicalRules = reliableRules.filter((rule) => !(isTurkishPage && editorialRule.test(rule.title)));
+  const editorialTitles = new Set([
+    "seo title",
+    "paragraph length",
+    "sentence length",
+    "title number",
+    "title sentiment",
+    "title power word",
+    "headline analyzer",
+    "table of contents",
+    "experience signals",
+    "multimedia evidence",
+    "case studies & examples",
+    "author schema",
+    "technical vocabulary",
+    "methodology transparency",
+    "author social presence",
+    "organization affiliation",
+    "published works & credentials",
+    "expert sourcing",
+    "editorial review",
+    "source quality",
+    "correction & update policy",
+    "privacy & safety",
+    "e-e-a-t overall score",
+    "word complexity",
+    "flesch reading ease",
+    "consecutive sentences",
+    "featured snippet readiness",
+    "rich result schema readiness",
+    "direct answer opening (aeo)",
+    "faq section (aeo)",
+    "fact density (aeo)",
+    "tl;dr / summary section (aeo)",
+    "concise answer paragraphs (aeo)",
+    "structured content patterns (aeo)",
+    "citation readiness (aeo)",
+    "content size",
+    "transition words",
+    "expert precision",
+  ]);
+  const isEditorialRule = (title: string) => editorialTitles.has(title.toLowerCase().trim());
+  const advisoryRules = reliableRules.filter((rule) => isTurkishPage && isEditorialRule(rule.title));
+  const technicalRules = reliableRules.filter((rule) => !(isTurkishPage && isEditorialRule(rule.title)));
   return {
     statusCode: response.status,
     elapsed, title, description, canonical, robots, xRobotsTag,

@@ -2891,7 +2891,7 @@ test("writer payout history is private, readable, responsive and read-only", asy
     { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
   ]);
   await page.goto("/satis-erisim/odemelerim", { waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/\\/erisim-reddedildi/u);
+  await expect(page).toHaveURL(/erisim-reddedildi/u);
 });
 
 test("writer Gelirler readability: dark TEST209 tiles, bright text and no mobile overflow", async ({ page }) => {

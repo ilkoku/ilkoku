@@ -1733,6 +1733,7 @@ test("Power-SEO distinguishes actual HTML facts from English-first editorial aud
   assertContains(page, "audit.rules.filter((r) => r.severity !== \"pass\")", "technical failures remain visible");
   assertContains(page, "if (oneH1 &&", "H1 correction is conditional on actual count");
   assertContains(page, "if (schemaCount > 0", "schema correction is conditional on observed schema");
-  assertContains(page, "imageAltIssues === 0 && /^image alt text$/i", "missing-alt claim must be contradicted by verified image attributes");
+  assertContains(page, "imageAltIssues === 0 && /^(?:image alt text|image alt attributes)$/i", "both upstream alt rule titles cross-check actual img attributes");
+  assertContains(page, '"external links"', "unverified outbound-link suggestions are not technical failures");
   assertContains(page, '"people also ask coverage"', "English PAA heuristics remain editorial review only");
 });

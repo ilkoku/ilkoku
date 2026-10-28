@@ -58,7 +58,7 @@ export default async function WriterEarningIllustrationPage({
 
   return (
     <AppShell profile={profile}>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.writerCommercePage} ${styles.writerEarningsPage}`}>
         <header className={styles.hero}>
           <div>
             <span className={styles.eyebrow}>Satış öncesi · Bilgilendirme</span>

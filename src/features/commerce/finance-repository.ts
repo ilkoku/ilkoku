@@ -437,8 +437,8 @@ export async function getFinanceReconciliationSnapshot() {
         currency: true,
         entitlement: { select: { status: true } },
         financialLedgerEntries: {
-          where: { entryType: "sale_gross" },
-          select: { id: true },
+          where: { entryType: { in: ["sale_gross", "author_earning"] } },
+          select: { entryType: true },
         },
       },
       take: 500,
@@ -452,7 +452,18 @@ export async function getFinanceReconciliationSnapshot() {
   ]);
 
   const paidWithoutGrossLedger = paidOrders.filter(
-    (order) => order.financialLedgerEntries.length === 0,
+    (order) => !order.financialLedgerEntries.some(
+      (entry) => entry.entryType === "sale_gross",
+    ),
+  );
+  // Financial settlement is intentionally separate from a successful charge.
+  // This is a review queue, NOT an author debt, payout authorization or error
+  // in a 0 TL order. Only the newest 500 paid orders are examined here.
+  const paidAwaitingAuthorEarningReview = paidOrders.filter(
+    (order) => order.finalAmount > BigInt(0) &&
+      !order.financialLedgerEntries.some(
+        (entry) => entry.entryType === "author_earning",
+      ),
   );
   const paidWithoutActiveEntitlement = paidOrders.filter(
     (order) => order.entitlement?.status !== "active",
@@ -467,6 +478,7 @@ export async function getFinanceReconciliationSnapshot() {
     pendingOrderCount: pendingOrders,
     paidWithoutGrossLedger,
     paidWithoutActiveEntitlement,
+    paidAwaitingAuthorEarningReview,
   };
 }
 

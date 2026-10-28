@@ -13,7 +13,7 @@ function pageTitle() {
 }
 
 const description =
-  "Türkiye'deki kitap satış kanallarının çok satan listelerinde hangi kitabın hangi sırada yer aldığını karşılaştırın.";
+  "Türkiye'deki çok satan kitapların satış kanallarına göre sıralamasını inceleyin; kaynakları ve kitapların listedeki konumlarını karşılaştırın.";
 
 export const dynamic = "force-dynamic";
 

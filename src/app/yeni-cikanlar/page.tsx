@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { NewReleasePublicView } from "@/features/book-index/public/NewReleasePublicView";
 import { getTurkeyNewReleaseRows } from "@/lib/book-index/new-releases";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
-import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 
 const canonical = "/yeni-cikanlar";
 const description =
@@ -17,7 +16,7 @@ export function generateMetadata(): Metadata {
     description,
     canonical,
     image: "/en-cok-satanlar/opengraph-image",
-    noIndex: isSoftLaunchSearchExcludedPath(canonical),
+    noIndex: false,
   });
 }
 

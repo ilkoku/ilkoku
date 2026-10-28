@@ -86,6 +86,12 @@ export default async function WriterIncomePage() {
           </span>
         </header>
 
+        <div className={styles.heroActions}>
+          <Link className={styles.secondaryAction} href="/satis-erisim/odemelerim">
+            Ödemelerim
+          </Link>
+        </div>
+
         <div className={styles.notice} role="status">
           Fatura durumum:{" "}
           <strong>

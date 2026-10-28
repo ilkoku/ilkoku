@@ -1,0 +1,34 @@
+name: GSC eight URL read-only checkpoint 2026-10-28
+
+on:
+  push:
+    branches:
+      - seo/gsc-8-url-readonly-20261028
+    paths:
+      - ".github/workflows/gsc-8-url-readonly-20261028.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Inspect 8 submitted public URLs without indexing requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Read-only Google URL Inspection after eight manual submission requests
+        env:
+          GSC_OAUTH_CLIENT_ID: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_ID }}
+          GSC_OAUTH_CLIENT_SECRET: ${{ secrets.GSC_PRODUCTION_OAUTH_CLIENT_SECRET }}
+          GSC_OAUTH_REFRESH_TOKEN: ${{ secrets.GSC_PRODUCTION_OAUTH_REFRESH_TOKEN }}
+          GSC_SITE_URL: "sc-domain:ilkoku.com"
+          GSC_INSPECTION_URLS: "https://ilkoku.com/yeni-cikanlar,https://ilkoku.com/en-cok-satanlar,https://ilkoku.com/en-cok-satanlar/turkiye,https://ilkoku.com/en-cok-satanlar/dunya,https://ilkoku.com/en-cok-satanlar/cok-satanlara-yeni-girenler,https://ilkoku.com/en-cok-satanlar/cok-satanlarda-yukselenler,https://ilkoku.com/en-cok-satanlar/birden-fazla-listede-cok-satanlar,https://ilkoku.com/en-cok-satanlar/uzun-suredir-cok-satanlar"
+        run: |
+          test -n "$GSC_OAUTH_CLIENT_ID"
+          test -n "$GSC_OAUTH_CLIENT_SECRET"
+          test -n "$GSC_OAUTH_REFRESH_TOKEN"
+          node scripts/gsc-url-inspection.mjs

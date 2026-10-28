@@ -10,14 +10,11 @@ import {
 } from "./yandex-index-cleanup.mjs";
 
 test("noindex candidates exclude public training, help and legal pages", () => {
-  assert.equal(YANDEX_NOINDEX_URLS.length, 9);
+  assert.equal(YANDEX_NOINDEX_URLS.length, 1);
   for (const url of YANDEX_NOINDEX_URLS) {
     const path = new URL(url).pathname;
     assert.ok(
-      path === "/editorler" ||
-      path === "/yeni-cikanlar" ||
-      path === "/en-cok-satanlar" ||
-      path.startsWith("/en-cok-satanlar/"),
+      path === "/editorler",
       "Unexpected noindex candidate: " + url,
     );
   }
@@ -61,8 +58,8 @@ test("only live noindex candidates enter the IndexNow payload", async () => {
     assert.ok(posted);
     assert.ok(!posted.urlList.some((url) => url.endsWith("/editorler")));
     assert.ok(!posted.urlList.some((url) => url.endsWith("/turkiye/karsilastirma")));
-    assert.ok(posted.urlList.includes("https://ilkoku.com/en-cok-satanlar"));
-    assert.equal(posted.urlList.length, YANDEX_CLEANUP_URLS.length - 2);
+    assert.ok(!posted.urlList.some((url) => url.endsWith("/yeni-cikanlar") || url.includes("/en-cok-satanlar")));
+    assert.equal(posted.urlList.length, YANDEX_CLEANUP_URLS.length - 1);
   } finally {
     globalThis.fetch = previousFetch;
     if (previousKey === undefined) delete process.env.INDEXNOW_KEY;

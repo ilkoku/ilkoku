@@ -396,13 +396,13 @@ test("Germany SPIEGEL bestseller source is fail-closed and source-native", () =>
 });
 
 
-test("global bestseller page stays public but noindex during soft launch and source-native", () => {
+test("global bestseller page is indexable and source-native", () => {
   const page = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const view = source("src/features/book-index/public/GlobalBestsellerView.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   notContains(page, "notFound()", "global route is no longer gated");
-  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "global page follows soft-launch noindex policy");
+  contains(page, "noIndex: false", "global page follows soft-launch noindex policy");
   contains(
     sitemap,
     "filterSoftLaunchSitemapEntries",
@@ -527,12 +527,12 @@ test("global bestseller table groups matching source-native ranks without repeti
 });
 
 
-test("new releases page stays public but search-excluded during soft launch", () => {
+test("new releases page is indexable and source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const navigation = source("src/lib/cms-header-navigation.ts");
 
-  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "new releases route follows soft-launch noindex policy");
+  contains(page, "noIndex: false", "new releases route follows soft-launch noindex policy");
   contains(sitemap, "filterSoftLaunchSitemapEntries", "new releases XML sitemap output is soft-launch filtered");
   const line = navigation.split("\n").find((candidate) => candidate.includes('href: "/yeni-cikanlar"'));
   assert.ok(line, "new releases route exists in HTML sitemap inventory");
@@ -540,7 +540,7 @@ test("new releases page stays public but search-excluded during soft launch", ()
 });
 
 
-test("soft-launch Book Index discovery pages keep crawl-friendly ISR while noindex", () => {
+test("Book Index discovery pages keep crawl-friendly ISR and indexable metadata", () => {
   const globalPage = source("src/app/en-cok-satanlar/dunya/page.tsx");
   const newReleasesPage = source("src/app/yeni-cikanlar/page.tsx");
 
@@ -550,7 +550,7 @@ test("soft-launch Book Index discovery pages keep crawl-friendly ISR while noind
   ]) {
     contains(page, "export const revalidate = 300;", `${label} 5-minute ISR`);
     notContains(page, 'export const dynamic = "force-dynamic";', `${label} force-dynamic regression`);
-    contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", `${label} follows soft-launch noindex policy`);
+    contains(page, "noIndex: false", `${label} follows soft-launch noindex policy`);
   }
 });
 

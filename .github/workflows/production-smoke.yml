@@ -156,15 +156,24 @@ jobs:
               grep -Fq "$required" "$body" || { echo "Eksik sitemap hedefi: $required" >&2; rm -f "$body"; return 1; }
             done
 
-            for forbidden in \
-              '<loc>https://ilkoku.com/en-cok-satanlar' \
-              '<loc>https://ilkoku.com/yeni-cikanlar</loc>'; do
-              if grep -Fq "$forbidden" "$body"; then
-                echo "Beklenmeyen soft-launch sitemap hedefi: $forbidden" >&2
+            grep -Fq '<loc>https://ilkoku.com/yeni-cikanlar</loc>' "$body" || {
+              echo "Yeni Çıkanlar sitemap'te eksik" >&2
+              rm -f "$body"
+              return 1
+            }
+            grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/dunya</loc>' "$body" || {
+              echo "Dünya çok satanlar sitemap'te eksik" >&2
+              rm -f "$body"
+              return 1
+            }
+            # Turkey/analysis URLs appear only with live ranking data.
+            if grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar</loc>' "$body"; then
+              grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/turkiye</loc>' "$body" || {
+                echo "Türkiye çok satanlar sitemap'te eksik" >&2
                 rm -f "$body"
                 return 1
-              fi
-            done
+              }
+            fi
 
             rm -f "$body"
             pace

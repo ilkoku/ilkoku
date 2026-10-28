@@ -132,7 +132,7 @@ test("foundation does not publish Book Index sitemap entries before the public g
   );
   contains(
     sitemap,
-    "if (!context || context.model.turkey.availability !== \"available\")",
+    "if (context.model.turkey.availability !== \"available\")",
     "Book Index sitemap fails closed without publishable Turkey data",
   );
 

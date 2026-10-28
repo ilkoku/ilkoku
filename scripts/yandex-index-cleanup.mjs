@@ -14,14 +14,6 @@ export const YANDEX_DELETED_URLS = [
 // Candidate routes only; re-validate live robots before Yandex submission.
 export const YANDEX_NOINDEX_URLS = [
   `${SITE_ORIGIN}/editorler`,
-  `${SITE_ORIGIN}/en-cok-satanlar`,
-  `${SITE_ORIGIN}/en-cok-satanlar/birden-fazla-listede-cok-satanlar`,
-  `${SITE_ORIGIN}/en-cok-satanlar/cok-satanlara-yeni-girenler`,
-  `${SITE_ORIGIN}/en-cok-satanlar/cok-satanlarda-yukselenler`,
-  `${SITE_ORIGIN}/en-cok-satanlar/turkiye`,
-  `${SITE_ORIGIN}/en-cok-satanlar/turkiye/karsilastirma`,
-  `${SITE_ORIGIN}/en-cok-satanlar/uzun-suredir-cok-satanlar`,
-  `${SITE_ORIGIN}/yeni-cikanlar`,
 ];
 
 export const YANDEX_REFRESH_URLS = [

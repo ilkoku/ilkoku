@@ -196,7 +196,7 @@ test("retired comparison is permanently redirected with no exposed navigation or
     notContains(content, '"/en-cok-satanlar/turkiye/karsilastirma"', name);
   }
   notContains(fs, '"\u002fen-cok-satanlar/turkiye"', "no change to Book Index soft launch gate");
-  contains(fs, '"/en-cok-satanlar"', "Book Index remains noindex until editorial publication gate");
+  notContains(fs, '"/en-cok-satanlar"', "Book Index no longer globally excluded");
 });
 
 test("New-release read model stays source-native and isolated from generic list publication", () => {
@@ -423,7 +423,7 @@ test("New-release production exceptions stay source-specific and fail closed", (
   );
 });
 
-test("Yeni Çıkanlar page stays public but noindex during soft launch and remains source-native", () => {
+test("Yeni Çıkanlar page is indexable and remains source-native", () => {
   const page = source("src/app/yeni-cikanlar/page.tsx");
   const view = source("src/features/book-index/public/NewReleasePublicView.tsx");
   const overview = source("src/features/book-index/public/BookIndexPublicView.tsx");
@@ -432,7 +432,7 @@ test("Yeni Çıkanlar page stays public but noindex during soft launch and remai
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   contains(page, 'canonical = "/yeni-cikanlar"', "stable Yeni Çıkanlar canonical");
-  contains(page, "noIndex: isSoftLaunchSearchExcludedPath(canonical)", "Yeni Çıkanlar follows soft-launch noindex policy");
+  contains(page, "noIndex: false", "Yeni Çıkanlar is enabled for indexing");
   contains(page, "getTurkeyNewReleaseRows(500)", "Yeni Çıkanlar uses the isolated read model");
   contains(sitemap, "filterSoftLaunchSitemapEntries", "Yeni Çıkanlar sitemap output is filtered during soft launch");
 

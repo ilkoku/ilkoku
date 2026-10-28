@@ -1074,95 +1074,6 @@
 }
 
 
-/* Writer earnings illustration: use the writer site's dark/gold controls.
-   Restrict contrast/readability overrides to this single page. */
-.writerEarningsPage .hero {
-  align-items: flex-start;
-}
-
-.writerEarningsPage .hero p,
-.writerEarningsPage .panel p,
-.writerEarningsPage .helper,
-.writerEarningsPage .summaryGrid span {
-  color: #d2d8e2;
-  font-size: 0.96rem;
-  line-height: 1.6;
-}
-
-.writerEarningsPage .hero h1,
-.writerEarningsPage .panel h2,
-.writerEarningsPage .panel h3,
-.writerEarningsPage .summaryGrid strong {
-  color: #f2f4f8;
-}
-
-.writerEarningsPage .panel h3 {
-  margin-top: 1.4rem;
-  margin-bottom: 0.8rem;
-  font-size: 1.08rem;
-  line-height: 1.45;
-}
-
-.writerEarningsPage .summaryGrid > div {
-  min-width: 0;
-  border-color: var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.3));
-  background: var(--writer-custom-control-surface, #13161b);
-}
-
-.writerEarningsPage .summaryGrid strong {
-  font-size: 1.05rem;
-  overflow-wrap: anywhere;
-}
-
-.writerEarningsPage .priceField {
-  max-width: 100%;
-  min-width: 0;
-  color: #f2f4f8;
-  font-size: 0.96rem;
-  font-weight: 650;
-}
-
-.writerEarningsPage .priceField input,
-.writerEarningsPage .priceField select {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.4));
-  border-radius: 10px;
-  background: var(--writer-custom-control-surface, #13161b);
-  color: #f2f4f8;
-  font: inherit;
-}
-
-.writerEarningsPage .priceField input:focus-visible,
-.writerEarningsPage .priceField select:focus-visible,
-.writerEarningsPage .action:focus-visible,
-.writerEarningsPage .secondaryAction:focus-visible {
-  outline: 3px solid var(--writer-custom-primary, #d4af37);
-  outline-offset: 3px;
-}
-
-.writerEarningsPage .notice {
-  font-size: 0.98rem;
-  line-height: 1.65;
-}
-
-.writerEarningsPage .grid > .panel {
-  min-width: 0;
-}
-
-@media (max-width: 760px) {
-  .writerEarningsPage .heroActions {
-    align-items: stretch;
-  }
-
-  .writerEarningsPage .heroActions > a {
-    justify-content: center;
-    white-space: normal;
-    text-align: center;
-  }
-}
-
 /* Writer work-level commerce flow uses the same dark + gold shell as writer home. */
 .writerCommercePage > .hero {
   position: relative;
@@ -2646,3 +2557,93 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Writer earnings illustration: use the writer site's dark/gold controls.
+   Restrict contrast/readability overrides to this single page. */
+.writerEarningsPage .hero {
+  align-items: flex-start;
+}
+
+.writerEarningsPage .hero p,
+.writerEarningsPage .panel p,
+.writerEarningsPage .helper,
+.writerEarningsPage .summaryGrid span {
+  color: #d2d8e2;
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+.writerEarningsPage .hero h1,
+.writerEarningsPage .panel h2,
+.writerEarningsPage .panel h3,
+.writerEarningsPage .summaryGrid strong {
+  color: #f2f4f8;
+}
+
+.writerEarningsPage .panel h3 {
+  margin-top: 1.4rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.08rem;
+  line-height: 1.45;
+}
+
+.writerEarningsPage .summaryGrid > div {
+  min-width: 0;
+  border-color: var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.3));
+  background: var(--writer-custom-control-surface, #13161b);
+}
+
+.writerEarningsPage .summaryGrid strong {
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.writerEarningsPage .priceField {
+  max-width: 100%;
+  min-width: 0;
+  color: #f2f4f8;
+  font-size: 0.96rem;
+  font-weight: 650;
+}
+
+.writerEarningsPage .priceField input,
+.writerEarningsPage .priceField select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--writer-gold-frame-soft, rgba(215, 180, 63, 0.4));
+  border-radius: 10px;
+  background: var(--writer-custom-control-surface, #13161b);
+  color: #f2f4f8;
+  font: inherit;
+}
+
+.writerEarningsPage .priceField input:focus-visible,
+.writerEarningsPage .priceField select:focus-visible,
+.writerEarningsPage .action:focus-visible,
+.writerEarningsPage .secondaryAction:focus-visible {
+  outline: 3px solid var(--writer-custom-primary, #d4af37);
+  outline-offset: 3px;
+}
+
+.writerEarningsPage .notice {
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.writerEarningsPage .grid > .panel {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .writerEarningsPage .heroActions {
+    align-items: stretch;
+  }
+
+  .writerEarningsPage .heroActions > a {
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+}
+

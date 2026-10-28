@@ -2921,7 +2921,7 @@ test("writer earnings shows author deductions without exposing İlkOku profit or
       await expect(valueTile).toHaveCSS("background-color", "rgb(19, 22, 27)");
       await expect(valueTile.locator("span")).toHaveCSS("color", "rgb(210, 216, 226)");
       await expect(valueTile.locator("strong")).toHaveCSS("color", "rgb(242, 244, 248)");
-      const readableHeadingColor = /rgb\\((242, 244, 248|245, 241, 232)\\)/;
+      const readableHeadingColor = /rgb\((242, 244, 248|245, 241, 232)\)/;
       await expect(firstPanel.getByRole("heading", { name: "1. Eser, komisyon ve örnek satış fiyatı" }))
         .toHaveCSS("color", readableHeadingColor);
 

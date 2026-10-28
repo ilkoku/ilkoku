@@ -228,6 +228,8 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     if (oneH1 && /^(?:single h1|heading structure)$/i.test(rule.title)) return false;
     if (schemaCount > 0 && /^structured data$/i.test(rule.title)
       && /no structured data/i.test(rule.description)) return false;
+    if (imageAltIssues === 0 && /^image alt text$/i.test(rule.title)
+      && /missing alt text/i.test(rule.description)) return false;
     return true;
   });
   // The upstream package uses English lexical signals and generic E-E-A-T/AEO
@@ -261,6 +263,7 @@ async function inspectLivePage(path: string): Promise<AuditResult> {
     "flesch reading ease",
     "consecutive sentences",
     "featured snippet readiness",
+    "people also ask coverage",
     "rich result schema readiness",
     "direct answer opening (aeo)",
     "faq section (aeo)",

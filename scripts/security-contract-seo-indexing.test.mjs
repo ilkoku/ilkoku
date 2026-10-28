@@ -467,7 +467,7 @@ test("Madde 12 priority writing-guide Article schemas use the published brand im
   assertContains(roman, 'image: `https://ilkoku.com${romanVisuals.hero}`', "already-valid Roman page keeps its own image");
 });
 
-test("full public sitemap policy indexes education and trust but preserves private and Book Index gates", () => {
+test("full public sitemap policy indexes education, trust and available Book Index pages", () => {
   const policy = source("src/lib/soft-launch-search-policy.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
   const metadata = source("src/lib/public-page-metadata.ts");
@@ -492,8 +492,8 @@ test("full public sitemap policy indexes education and trust but preserves priva
   for (const route of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin/egitim"]) {
     assertNotContains(prefixBlock, `"${route}"`, `${route} education family opens`);
   }
-  assertContains(prefixBlock, '"/en-cok-satanlar"', "Book Index remains gate protected");
-  assertContains(noindexBlock, '"/yeni-cikanlar"', "new releases stays gated");
+  assertNotContains(prefixBlock, '"/en-cok-satanlar"', "Book Index is no longer globally excluded");
+  assertNotContains(noindexBlock, '"/yeni-cikanlar"', "new releases is indexable");
   assertContains(policy, "filterSoftLaunchSitemapEntries", "same central policy filters XML");
   assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([", "DB-backed sitemap still filtered and freshness-aware");
   assertContains(sitemap, "return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(staticFallbackEntries));", "fallback sitemap stays safe");
@@ -501,7 +501,7 @@ test("full public sitemap policy indexes education and trust but preserves priva
   assertContains(metadata, "const effectiveNoIndex = noIndex || isSoftLaunchSearchExcludedPath(canonical);", "metadata and XML use same policy");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/yazarlar-icin/kurgu/gerilim</loc>'", "long-tail guide required by live sitemap smoke");
   assertContains(productionSmoke, "'<loc>https://ilkoku.com/yasal/kvkk</loc>'", "public legal included by smoke");
-  assertContains(productionSmoke, "'<loc>https://ilkoku.com/en-cok-satanlar'", "Book Index remains excluded until ready");
+  assertContains(productionSmoke, 'en-cok-satanlar', "production smoke verifies live ranking pages conditionally");
 });
 
 test("active public help surfaces expose canonical social metadata", () => {

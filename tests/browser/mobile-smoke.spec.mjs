@@ -2891,3 +2891,38 @@ test("writer Gelirler readability: dark TEST209 tiles, bright text and no mobile
     await expectResponsiveDocument(page);
   }
 });
+
+test("writer earnings illustration matches dark/gold writer layout with readable contrast", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const writerToken = authFixture.sessions?.writer;
+  expect(writerToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: writerToken, url: authCookieUrl },
+  ]);
+
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/satis-erisim/kazanc-hesaplama?fiyat=0", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    const root = page.locator('[class*="writerEarningsPage"]');
+    await expect(root).toBeVisible();
+    await expect(root.getByRole("heading", { name: "Yazar kazancı hesaplama örneği" })).toBeVisible();
+    await expect(root.getByRole("heading", { name: "Faturalı yazar" })).toBeVisible();
+    await expect(root.getByRole("heading", { name: "Gider pusulasına uygun yazar" })).toBeVisible();
+    const header = root.locator('header[class*="hero"]').first();
+    const firstPanel = root.locator('section[class*="panel"]').first();
+    const valueTile = firstPanel.locator('[class*="summaryGrid"] > div').first();
+    await expect(header).toHaveCSS("background-color", "rgb(26, 31, 39)");
+    await expect(firstPanel).toHaveCSS("background-color", "rgb(26, 31, 39)");
+    await expect(valueTile).toHaveCSS("background-color", "rgb(19, 22, 27)");
+    await expect(valueTile.locator("span")).toHaveCSS("color", "rgb(210, 216, 226)");
+    await expect(valueTile.locator("strong")).toHaveCSS("color", "rgb(242, 244, 248)");
+    await expect(firstPanel.getByRole("heading", { name: "1. Eser, komisyon ve örnek satış fiyatı" }))
+      .toHaveCSS("color", "rgb(242, 244, 248)");
+    await expect(root.getByRole("heading", { name: "3. Vergiler ve İlkOku kârı" }).first())
+      .toHaveCSS("color", "rgb(242, 244, 248)");
+    await expect(root.getByRole("button", { name: "Hesaplamayı yenile" })).toBeVisible();
+    await expect(root.getByRole("textbox", { name: "KDV hariç satış bedeli" })).toHaveValue("0");
+    await expectResponsiveDocument(page);
+  }
+});

@@ -166,7 +166,6 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
             "3. Editör: Editör hesabını ve uygun profilini oluştur. Yetkin kapsamında açılan inceleme görevlerinde, belirli bir eser sürümü için gerekçeli değerlendirme hazırlayabilirsin.\n" +
             "4. Yayınevi: Yayınevi rolüyle başvur. Kurumsal erişim yetkisi verildiğinde, değerlendirmeye açılmış uygun eserleri kendi ölçütlerinle inceleyebilirsin."
           } />
-          <p>Genel eser ve yazar katalogları henüz herkese açık gezinmeye açılmadı; eseri yayımlamak veya editör incelemesi istemek de otomatik basım garantisi vermez.</p>
           <nav className="how-hero__actions" aria-label="Rolüne göre kaydol">
             <Link className="how-button how-button--primary" href="/kayit?rol=writer">Yazar olarak başla</Link>
             <Link className="how-button how-button--secondary" href="/kayit?rol=reader">Okur olarak başla</Link>

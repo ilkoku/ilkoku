@@ -273,6 +273,9 @@ test("complete 0 TL snapshots remain traceable but never enter taxable accountin
   for (const key of [
     "checkedGrossMinor", "checkedVatMinor",
     "reviewedCommissionIllustrationMinor", "reviewedServiceFeeIllustrationMinor",
+    "reviewedAuthorRoyaltyNetIllustrationMinor",
+    "reviewedAuthorDocumentVatIllustrationMinor",
+    "reviewedCommissionVatIllustrationMinor", "reviewedServiceFeeVatIllustrationMinor",
   ]) {
     assert.equal(result.manifest[key], "0", key);
   }

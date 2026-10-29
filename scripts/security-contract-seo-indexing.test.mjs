@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
-import { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy } from "./power-seo-live-census.mjs";
+import { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, publicOffSitemapPath, verifyPublicOffSitemapLinks } from "./power-seo-live-census.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -1765,4 +1765,66 @@ test("public Book Index metadata descriptions are unique, factual and within rev
   });
   assert.equal(new Set(descriptions).size, routes.length,
     "overview, Turkey and global ranking pages need distinct factual descriptions");
+});
+test("Power-SEO safely verifies only public off-sitemap HTTP targets without probing protected pages", async () => {
+  assert.equal(publicOffSitemapPath("https://ilkoku.com/giris"), "/giris");
+  assert.equal(publicOffSitemapPath("https://ilkoku.com/kitap/demo-kayip-harfler"), "/kitap/demo-kayip-harfler");
+  for (const unsafe of [
+    "https://evil.example/giris",
+    "https://ilkoku.com/hesabim",
+    "https://ilkoku.com/editor/talepler",
+    "https://ilkoku.com/oku/public-test/kapak",
+    "https://ilkoku.com/kitap/demo-kayip-harfler/pasaport",
+    "https://ilkoku.com/sistem-yonetimi/power-seo",
+    "https://ilkoku.com/giris?sonraki=%2Fhesabim",
+    "javascript:alert(1)",
+  ]) assert.equal(publicOffSitemapPath(unsafe), null, "never request private or unsafe URL: " + unsafe);
+
+  const candidateUrls = [
+    "https://ilkoku.com/giris",
+    "https://ilkoku.com/editorler",
+    "https://ilkoku.com/kitap/demo-kayip-harfler",
+    "https://ilkoku.com/hesabim",
+    "https://ilkoku.com/editor/talepler",
+  ];
+  const calls = [];
+  const report = await verifyPublicOffSitemapLinks({
+    offSitemapTargets: candidateUrls.map((url) => ({ url, sourcePages: 1 })),
+  }, {
+    requester: async (url, request) => {
+      calls.push(url);
+      assert.equal(request.redirect, "manual", "no redirect following");
+      assert.equal(request.method, "GET");
+      assert.equal(request.headers.Accept, "text/html");
+      const status = url.endsWith("/editorler") ? 302
+        : url.endsWith("/demo-kayip-harfler") ? 404 : 200;
+      return {
+        status,
+        headers: new Headers(status === 302 ? { location: "/giris?sonraki=%2Feditorler" } : {}),
+        body: { cancel: async () => {} },
+      };
+    },
+    pause: async () => {},
+  });
+  assert.equal(calls.length, 3, "private routes must never be requested");
+  assert.equal(report.publicCandidates, 3);
+  assert.equal(report.checked, 3);
+  assert.equal(report.skippedPrivateOrOther, 2);
+  assert.equal(report.halted, false);
+  assert.deepEqual(report.results.map((x) => x.outcome), ["reachable", "redirect", "missing"]);
+  assert.equal(report.results[1].redirectTo, "/giris", "redirect target is sanitized");
+
+  const stoppedCalls = [];
+  const stopped = await verifyPublicOffSitemapLinks({
+    offSitemapTargets: candidateUrls.slice(0, 3).map((url) => ({ url, sourcePages: 1 })),
+  }, {
+    requester: async (url) => {
+      stoppedCalls.push(url);
+      return { status: 403, headers: new Headers(), body: { cancel: async () => {} } };
+    },
+    pause: async () => {},
+  });
+  assert.equal(stopped.halted, true);
+  assert.equal(stopped.checked, 1);
+  assert.equal(stoppedCalls.length, 1, "WAF 403 must circuit-break all subsequent requests");
 });

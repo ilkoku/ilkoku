@@ -1320,7 +1320,7 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   await expect(page.getByRole("heading", { name: "Ödemelerim" })).toBeVisible();
   const payoutOverview = page.getByRole("region", { name: "Ödeme bakiyelerim" });
   await expect(payoutOverview).toBeVisible();
-  await expect(payoutOverview.getByText(/₺\\s?0,00/u)).toHaveCount(4);
+  await expect(payoutOverview.getByText(/₺\s?0,00/u)).toHaveCount(4);
   await expect(page.getByText("Henüz gerçek ödeme kaydın yok.", { exact: false })).toBeVisible();
 
   // Confirm the day-close screen stays an admin-only read-only export view.

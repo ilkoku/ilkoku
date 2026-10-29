@@ -272,7 +272,8 @@ test("how-it-works headline, actionable onboarding and truthful update date rema
 
   assertContains(experience, 'return <><span>{match[1]}{" "}</span><span>{match[2]}</span></>;', "readable split H1 spacing");
   assertContains(experience, "İlkOku&apos;ya nasıl başlanır?", "first-time visitor quick-start instructions");
-  assertContains(experience, "Genel eser ve yazar katalogları henüz", "honest catalogue availability");
+  assertNotContains(experience, "Genel eser ve yazar katalogları henüz", "user-approved removal of catalogue and publishing disclaimer");
+  assertContains(source("src/content/how-it-works.ts"), "İlkOku, yazarların eserlerini oluşturabildiği, geliştirebildiği ve yayımlayabildiği dijital bir yazar platformudur.", "user-approved hero summary");
   for (const role of ["writer", "reader", "editor", "publisher"]) {
     assertContains(experience, `href="/kayit?rol=${role}"`, `direct role-specific onboarding for ${role}`);
   }

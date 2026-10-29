@@ -265,7 +265,7 @@ test("CMS trust/legal defaults remain stable while sitemap applies route-level s
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
 });
 
-test("how-it-works headline, actionable onboarding and truthful update date remain visible", () => {
+test("how-it-works headline and onboarding remain visible without an unnecessary date label", () => {
   const experience = source("src/components/content/HowItWorksExperience.tsx");
   const page = source("src/app/nasil-calisir/page.tsx");
   const freshness = source("src/lib/search-content-freshness.ts");
@@ -279,8 +279,9 @@ test("how-it-works headline, actionable onboarding and truthful update date rema
   }
   assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "route-only content freshness");
   assertContains(page, 'getSearchCodeFreshness("/nasil-calisir")', "structured data uses actual route freshness");
-  assertContains(page, "dateModified: updatedAt.toISOString()", "WebPage dateModified matches visible content update");
-  assertContains(page, "updatedAt={updatedAt}", "visible last-updated label matches changed content");
+  assertContains(page, "dateModified: updatedAt.toISOString()", "WebPage dateModified remains available for crawlers");
+  assertNotContains(experience, "Son güncelleme:", "approved removal of visible last-updated label");
+  assertNotContains(page, "updatedAt={updatedAt}", "hero no longer receives a visible-update prop");
 });
 
 test("public pillar split hero headings keep semantic spaces without changing line-break design", () => {

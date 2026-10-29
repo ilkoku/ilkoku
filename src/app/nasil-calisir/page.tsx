@@ -130,7 +130,6 @@ export default async function HowItWorksPage() {
           title={page.title}
           summary={page.summary}
           body={page.body}
-          updatedAt={updatedAt}
         />
       </div>
       <PublicTrustFooter />

@@ -14,7 +14,6 @@ type HowItWorksExperienceProps = {
   body: string;
   summary: string;
   title: string;
-  updatedAt?: Date | string | null;
 };
 
 type JourneyIconName = "draft" | "publish" | "reader" | "review" | "passport" | "discover";
@@ -70,13 +69,6 @@ function splitSections(body: string, marker: "##" | "###") {
   return { intro: intro.join("\n").trim(), sections };
 }
 
-function formatUpdatedAt(value?: Date | string | null) {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "long" }).format(date);
-}
-
 function JourneyIcon({ name }: { name: JourneyIconName }) {
   const paths = {
     draft: <><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17l-1 3Z" /><path d="m14.5 7.5 3 3M4 4h7" /></>,
@@ -108,7 +100,7 @@ function GenericSection({ section, tone }: { section: ContentSection; tone?: "ni
   );
 }
 
-export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItWorksExperienceProps) {
+export function HowItWorksExperience({ body, summary, title }: HowItWorksExperienceProps) {
   const parsed = splitSections(body, "##");
   const sectionMap = new Map(parsed.sections.map((section) => [section.title, section]));
   const journey = sectionMap.get("Eser İlkOku'da nasıl ilerler?");
@@ -118,7 +110,6 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
   const roleContent = splitSections(roleSection?.body ?? "", "###");
   const roleParts = roleContent.sections;
   const unknownRoleParts = roleParts.filter((part) => !roles.some((role) => role.title === part.title));
-  const updatedLabel = formatUpdatedAt(updatedAt);
   const iconForStep = (index: number): JourneyIconName => index === 0 ? "draft" : index === 1 ? "publish" : index === 2 ? "reader" : index < 7 ? "review" : index === 7 ? "passport" : "discover";
   const extras = parsed.sections.filter((section) => !knownSectionTitles.has(section.title));
 
@@ -139,7 +130,6 @@ export function HowItWorksExperience({ body, summary, title, updatedAt }: HowItW
             <p>{summary}</p>
             <div className="how-hero__actions"><Link className="how-button how-button--primary" href="/kayit?rol=writer">Eserini oluşturmaya başla <span aria-hidden="true">→</span></Link><Link className="how-button how-button--secondary" href="/kayit?rol=reader">Okur olarak katıl</Link></div>
             <div className="how-hero__proof"><span><strong>9</strong> eser yolculuğu adımı</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>4</strong> rol tek ekosistemde</span></div>
-            {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
 
           <figure className="how-hero__visual">

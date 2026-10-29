@@ -54,16 +54,30 @@
 
 .admin-commerce-tabs a {
   padding: 0.55rem 0.75rem;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  color: #c6cee0;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: var(--radius-full);
   text-decoration: none;
 }
 
+.admin-commerce-tabs a:hover,
+.admin-commerce-tabs a:focus-visible {
+  color: #ffffff;
+  background: rgba(124, 58, 237, 0.16);
+  border-color: #8b5cf6;
+}
+
+.admin-commerce-tabs a:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
 .admin-commerce-tabs a[aria-current="page"] {
-  color: var(--color-background);
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  color: #f9f7ff;
+  background: #35246a;
+  border-color: #8b5cf6;
+  font-weight: 700;
 }
 
 .admin-commerce-table td {

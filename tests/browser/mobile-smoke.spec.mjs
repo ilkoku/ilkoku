@@ -2886,6 +2886,36 @@ test("admin reconciliation shows a separate nonzero paid-order accounting review
   }
 });
 
+test("admin entitlement selected filters are legible on mobile and desktop", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const adminToken = authFixture.sessions?.admin;
+  expect(adminToken).toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: adminToken, url: authCookieUrl },
+  ]);
+
+  for (const viewport of [viewports.phone390, viewports.desktop]) {
+    await page.setViewportSize(viewport);
+    const response = await page.goto(
+      "/sistem-yonetimi/odeme-sistemi/erisim-haklari?status=active",
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(response?.status()).toBe(200);
+    for (const name of ["Erişim durumu", "Erişim kaynağı"]) {
+      const selected = page.getByRole("navigation", { name })
+        .locator('a[aria-current="page"]');
+      await expect(selected).toHaveCount(1);
+      await expect(selected).toHaveCSS("color", "rgb(249, 247, 255)");
+      await expect(selected).toHaveCSS("background-color", "rgb(53, 36, 106)");
+      await expect(selected).toHaveCSS("border-top-color", "rgb(139, 92, 246)");
+    }
+    await expect(page.getByRole("navigation", { name: "Erişim durumu" })
+      .getByRole("link", { name: /Tümü/ })).toHaveCSS(
+        "color", "rgb(198, 206, 224)",
+      );
+  }
+});
+
 test("writer payout history is private, readable, responsive and read-only", async ({ page }) => {
   test.skip(!authFixture, "Authenticated browser fixture is not configured.");
   const writerToken = authFixture.sessions?.writer;

@@ -24,6 +24,7 @@ const FINANCIAL_FIELDS = [
   "reviewedCommissionIllustrationMinor", "reviewedServiceFeeIllustrationMinor",
   "reviewedCommissionVatIllustrationMinor", "reviewedCommissionGrossIllustrationMinor",
   "reviewedServiceFeeVatIllustrationMinor", "reviewedServiceFeeGrossIllustrationMinor",
+  "reviewedAuthorRoyaltyNetIllustrationMinor", "reviewedAuthorDocumentVatIllustrationMinor",
 ];
 const COUNT_FIELDS = [
   "salesCount", "readySalesCount", "flaggedSalesCount", "zeroAmountCount",

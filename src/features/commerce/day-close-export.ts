@@ -349,20 +349,28 @@ export function buildDayCloseFiles(input: {
       ledgerEntries[0].amount === order.originalAmount;
     if (!ledgerMatches) warnings.push("LEDGER_BRUT_SATIS_MUTABAKATSIZ");
     const capturedTotal = captures.reduce((sum,payment) => sum + payment.amount, BigInt(0));
-    const captureMatches = order.finalAmount > BigInt(0) &&
-      captures.length === 1 &&
-      captures[0].amount === order.finalAmount &&
-      captures[0].currency === order.currency;
-    if (order.finalAmount > BigInt(0) && !captureMatches)
+    // A completed 0 TL order must pass the SAME order/ledger reconciliation
+    // without inventing a bank/card Payment. Missing capture is expected
+    // ONLY when zero is actually owed and NO capture was claimed.
+    const noCharge = order.finalAmount === BigInt(0);
+    const captureMatches = noCharge
+      ? claimedCaptures.length === 0
+      : captures.length === 1 &&
+        captures[0].amount === order.finalAmount &&
+        captures[0].currency === order.currency;
+    if (!noCharge && !captureMatches)
       warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
-    if (order.finalAmount === BigInt(0) && captures.length > 0)
+    if (noCharge && claimedCaptures.length > 0)
       warnings.push("SIFIR_TL_GEREKSIZ_TAHSILAT");
+    const financialReconciliationPassed = ledgerMatches && captureMatches;
     reconciliation.push([
       order.orderNo,order.originalAmount,ledgerGross,ledgerEntries.length,
       capturedTotal,captures.length,
       ledgerMatches ? "LEDGER_KONTROLU_GECTI" : "INCELEME_GEREKLI",
-      captureMatches ? "TAHSILAT_KONTROLU_GECTI" : "INCELEME_GEREKLI",
-      ledgerMatches && captureMatches ? "TEMEL_MUTABAKAT_GECTI" : "INCELEME_GEREKLI",
+      !captureMatches ? "INCELEME_GEREKLI" :
+        noCharge ? "TAHSILAT_GEREKMEZ_0_TL" : "TAHSILAT_KONTROLU_GECTI",
+      !financialReconciliationPassed ? "INCELEME_GEREKLI" :
+        noCharge ? "SIFIR_TL_TEKNIK_MUTABAKAT_GECTI" : "TEMEL_MUTABAKAT_GECTI",
     ]);
     if (order.finalAmount === BigInt(0)) {
       details.zero++;

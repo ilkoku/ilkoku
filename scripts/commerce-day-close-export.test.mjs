@@ -281,10 +281,53 @@ test("complete 0 TL snapshots remain traceable but never enter taxable accountin
   }
   const csv = (name) => result.files.find(f => f.name === name).data;
   assert.ok(csv("siparisler.csv").includes(order.orderNo));
+  // Zero price is a complete, valid order with access and a zero-amount
+  // sale_gross audit row; no Payment should be fabricated for reconciliation.
+  const zeroReconciliation = csv("mutabakat.csv").split("\r\n")
+    .find(line => line.includes(order.orderNo));
+  assert.ok(zeroReconciliation?.includes("LEDGER_KONTROLU_GECTI"));
+  assert.ok(zeroReconciliation?.includes("TAHSILAT_GEREKMEZ_0_TL"));
+  assert.ok(zeroReconciliation?.includes("SIFIR_TL_TEKNIK_MUTABAKAT_GECTI"));
+  assert.ok(!zeroReconciliation?.includes("INCELEME_GEREKLI"));
   assert.ok(csv("uyarilar.csv").includes("SIFIR_TL_MALI_BELGE_DEGIL"));
   for (const name of ["muhasebe_on_hazirlik.csv", "yazar_hesap_ozeti.csv", "muhasebe_tl_inceleme.csv"]) {
     assert.ok(!csv(name).includes(order.orderNo), name);
   }
+});
+
+test("0 TL order with a claimed provider capture is flagged, not reconciled", () => {
+  const order = validOrder();
+  order.orderNo = "ILK-ZERO-INVALID-CAPTURE";
+  order.originalAmount = 0n;
+  order.discountAmount = 0n;
+  order.finalAmount = 0n;
+  order.quote = {
+    calculationVersion: "quote-v1", taxTreatment: "net_plus_vat",
+    vatRateBasisPoints: 2000, listNetAmount: 0n, listVatAmount: 0n,
+    listGrossAmount: 0n, discountGrossAmount: 0n, payableGrossAmount: 0n,
+  };
+  order.payments = [{
+    status: "succeeded", amount: 0n, currency: "TRY",
+    completedAt: order.paidAt,
+  }];
+  const result = exportModule.buildDayCloseFiles({
+    day: "2026-10-25",
+    orders: [order],
+    ledger: [{
+      id: "ledger-zero-claimed-capture", entryType: "sale_gross",
+      amount: 0n, currency: "TRY", createdAt: order.paidAt,
+      orderNo: order.orderNo, authorPublicId: order.authorPublicId,
+    }],
+    refunds: [],
+  });
+  const csv = name => result.files.find(f => f.name === name).data;
+  assert.ok(csv("uyarilar.csv").includes("SIFIR_TL_GEREKSIZ_TAHSILAT"));
+  const row = csv("mutabakat.csv").split("\r\n")
+    .find(line => line.includes(order.orderNo));
+  assert.ok(row?.includes("LEDGER_KONTROLU_GECTI"));
+  assert.ok(row?.includes("INCELEME_GEREKLI"));
+  assert.ok(!row?.includes("SIFIR_TL_TEKNIK_MUTABAKAT_GECTI"));
+  assert.equal(result.manifest.preparationRows, 0);
 });
 
 test("day close route is admin-only, ZIP-only, non-mutating and excludes customer fiscal identity",() => {

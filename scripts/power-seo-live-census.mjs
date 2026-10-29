@@ -345,6 +345,79 @@ function buildInternalLinkReview(pages, sitemapUrls) {
   };
 }
 
+// Only check known public routes from links found in live sitemap HTML.
+// Never probe private account, reading, admin, API, or editor workspaces.
+// A target outside sitemap is not a broken link on its own.
+const PUBLIC_OFF_SITEMAP_PATHS = new Set([
+  "/giris", "/kayit", "/sifremi-unuttum", "/editorler",
+]);
+const MAX_PUBLIC_OFF_SITEMAP_REQUESTS = 16;
+
+function publicOffSitemapPath(raw) {
+  try {
+    const url = new URL(raw);
+    if (url.origin !== ORIGIN || url.search || url.hash || url.username || url.password) return null;
+    if (PUBLIC_OFF_SITEMAP_PATHS.has(url.pathname) ||
+        /^\/kitap\/demo-[a-z0-9-]+$/u.test(url.pathname)) return url.pathname;
+  } catch { /* Unsafe or malformed target: never fetch it. */ }
+  return null;
+}
+
+async function verifyPublicOffSitemapLinks(linkReview, options = {}) {
+  const requester = options.requester || fetch;
+  const pause = options.pause || ((ms) => new Promise((done) => setTimeout(done, ms)));
+  const candidates = linkReview.offSitemapTargets
+    .map((target) => ({ url: target.url, path: publicOffSitemapPath(target.url) }))
+    .filter((target) => target.path !== null)
+    .slice(0, MAX_PUBLIC_OFF_SITEMAP_REQUESTS);
+  const results = [];
+  let halted = false;
+
+  for (const target of candidates) {
+    let status = null;
+    let redirectTo = null;
+    let outcome = "unverified";
+    try {
+      const response = await requester(target.url, {
+        method: "GET",
+        cache: "no-store",
+        redirect: "manual",
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        headers: { "User-Agent": "IlkOku-PowerSEO-Public-Link-Verify/1.0", Accept: "text/html" },
+      });
+      // Read only status/Location. No sessions, body parsing, or redirect following.
+      await response.body?.cancel().catch(() => undefined);
+      status = response.status;
+      const rawLocation = response.headers.get("location");
+      if (rawLocation) {
+        try {
+          const destination = new URL(rawLocation, ORIGIN);
+          if (destination.origin === ORIGIN) redirectTo = destination.pathname;
+        } catch { /* Never expose an untrusted redirect destination. */ }
+      }
+      if (status >= 200 && status < 300) outcome = "reachable";
+      else if (status >= 300 && status < 400) outcome = "redirect";
+      else if (status === 404 || status === 410) outcome = "missing";
+      else if (status === 401 || status === 403) outcome = "access-restricted";
+      else if (status === 429 || status >= 500) outcome = "temporary-error";
+    } catch { /* Timeouts/network errors are not 404s. */ }
+    results.push({ path: target.path, status, outcome, redirectTo });
+    if (status === 403 || status === 429) {
+      halted = true;
+      break;
+    }
+    await pause(300);
+  }
+  return {
+    scope: "Only allowlisted public off-sitemap paths; private/protected paths intentionally skipped; no authentication, redirects, or content changes.",
+    publicCandidates: candidates.length,
+    checked: results.length,
+    skippedPrivateOrOther: linkReview.offSitemapTargets.length - candidates.length,
+    halted,
+    results,
+  };
+}
+
 async function read(url, limit) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -436,6 +509,7 @@ async function main() {
   const publicResults = results.map(({ mainText, structuredData, internalLinks, ...page }) => page);
   const siteUrls = new Set(urls.map(normalize));
   const linkReview = buildInternalLinkReview(validPages, siteUrls);
+  const offSitemapHttp = await verifyPublicOffSitemapLinks(linkReview);
   const schemaReview = validPages.map((page) => {
     const audit = inspectBreadcrumbHierarchy(page.structuredData, page.url, siteUrls);
     return {
@@ -523,6 +597,11 @@ async function main() {
     sitemapInternalLinkEdges: linkReview.internalEdges,
     sitemapNoIncomingLinkCandidates: linkReview.noIncomingCandidates.length,
     distinctOffSitemapLinkTargets: linkReview.offSitemapTargets.length,
+    offSitemapPublicHttpChecked: offSitemapHttp.checked,
+    offSitemapPublicHttpMissing: offSitemapHttp.results.filter((item) => item.outcome === "missing").length,
+    offSitemapPublicHttpUnverified: offSitemapHttp.results.filter((item) => item.outcome === "unverified" || item.outcome === "temporary-error").length,
+    offSitemapPublicHttpSkippedPrivateOrOther: offSitemapHttp.skippedPrivateOrOther,
+    offSitemapPublicHttpHalted: Number(offSitemapHttp.halted),
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,
     mainContentAbsent: validPages.filter((x) => !x.mainText).length,
@@ -556,12 +635,13 @@ async function main() {
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
     .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, offSitemapHttp };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(summary));
   console.log(JSON.stringify({ firstAttemptFailuresByCause }));
+  console.log(JSON.stringify({ offSitemapHttp }));
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
   }
@@ -603,10 +683,10 @@ async function main() {
       "",
     ].join("\n"));
   }
-  if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap) process.exitCode = 1;
+  if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap || summary.offSitemapPublicHttpMissing || summary.offSitemapPublicHttpHalted) process.exitCode = 1;
 }
 
-export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview };
+export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicOffSitemapPath, verifyPublicOffSitemapLinks };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

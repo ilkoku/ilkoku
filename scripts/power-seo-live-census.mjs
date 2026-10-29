@@ -511,7 +511,7 @@ async function main() {
     successfulHtml: results.filter((x) => x.ok).length,
     errors: results.filter((x) => !x.ok).length,
     recoveredTransientRequests: results.filter((x) => x.recoveredTransientFailure).length,
-    firstAttemptHttp5xx: results.filter((x) => /^http-5\\d\\d$/u.test(x.firstAttemptFailure)).length,
+    firstAttemptHttp5xx: results.filter((x) => /^http-5\d\d$/u.test(x.firstAttemptFailure)).length,
     firstAttemptTimeouts: results.filter((x) => x.firstAttemptFailure === "timeout").length,
     firstAttemptNetworkErrors: results.filter((x) => x.firstAttemptFailure === "network-type-error").length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,

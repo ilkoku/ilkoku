@@ -28,19 +28,20 @@ export function calculateIllustrativeSettlement(
   const saleVat = percent(saleNetAmount, BigInt(20));
   const readerTotal = saleNetAmount + saleVat;
   const commissionNet = percentBps(saleNetAmount, commissionRateBps);
-  // The accounting-export VAT preview is deliberately separate from the
-  // unapproved cash/withholding settlement assumptions below.
-  const commissionVatIllustration = percent(commissionNet, BigInt(20));
+  // With İlkOku as principal (platform_direct), the contractual
+  // commission is the platform's retained share of the ex-VAT sale base.
+  // It is NOT a separate commission service invoice to the author.
+  const commissionVatIllustration = BigInt(0);
 
   if (mode === "invoice") {
-    // Assumes a VAT-registered commercial invoice from the author and a
-    // legally distinct commission service invoice from İlkOku.
-    const commissionVat = commissionVatIllustration;
-    const authorInvoiceVat = saleVat;
-    const authorGross = saleNetAmount;
-    const authorBankPayment =
-      authorGross + authorInvoiceVat - commissionNet - commissionVat;
-    const vat1Payment = saleVat + commissionVat - authorInvoiceVat;
+    // An invoice-capable writer bills İlkOku only for the agreed royalty
+    // AFTER the retained platform share. Illustration assumes 20% author VAT;
+    // actual tax document type/rate must be verified by an accountant.
+    const commissionVat = BigInt(0);
+    const authorGross = saleNetAmount - commissionNet;
+    const authorInvoiceVat = percent(authorGross, BigInt(20));
+    const authorBankPayment = authorGross + authorInvoiceVat;
+    const vat1Payment = saleVat - authorInvoiceVat;
     const vat2Payment = BigInt(0);
     const withholding = BigInt(0);
     const platformServiceNet = BigInt(0);
@@ -57,6 +58,8 @@ export function calculateIllustrativeSettlement(
     };
   }
 
+  // An eligible non-invoicing author does not issue a tax invoice.
+  // The appropriate external document and deductions require tax review.
   // Assumes eligible GVK 18 telif settlement: commission is an economic
   // revenue-share margin; the additional 5% is a separately invoiced
   // service (VAT excluded). 2 No VAT is paid and fully deducted in 1 No.

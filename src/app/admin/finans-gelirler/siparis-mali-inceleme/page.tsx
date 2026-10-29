@@ -40,7 +40,7 @@ export default async function OrderAccountingReviewPage({
 
   const cases = review?.scenarios ? [
     ...(review.scenarios.invoiced
-      ? [{ title: "Faturalı yazar", subtitle: "Siparişe kayıtlı komisyon + KDV; aracılık yok", data: review.scenarios.invoiced }]
+      ? [{ title: "Faturalı yazar", subtitle: "İlkOku doğrudan satıcı; yazar komisyon sonrası telif matrahını belgelendirir", data: review.scenarios.invoiced }]
       : []),
     ...(review.scenarios.expenseReceipt
       ? [{ title: "Gider pusulasına uygun telif – örnek", subtitle: "Siparişe kayıtlı komisyon + ayrıca %5 aracılık + KDV", data: review.scenarios.expenseReceipt }]
@@ -256,10 +256,10 @@ export default async function OrderAccountingReviewPage({
                     {([
                       ["Okur tahsilatı", "readerTotal"],
                       ["İlkOku komisyon geliri", "commissionNet"],
-                      ["Komisyon hizmet KDV'si (ön hesap)", "commissionVatIllustration"],
+                      ["Yazar belgesinin KDV tutarı (örnek)", "authorInvoiceVat"],
                       ["Ayrı aracılık hizmet geliri", "platformServiceNet"],
                       ["Aracılık hizmet KDV'si", "platformServiceVat"],
-                      ["Yazar brüt telifi / alış matrahı", "authorGross"],
+                      ["Komisyon sonrası yazar telifi / belge matrahı", "authorGross"],
                       ["Yazar stopajı", "withholding"],
                       ["Yazara örnek banka ödemesi", "authorBankPayment"],
                       ["1 No.lu KDV nakit çıkışı", "vat1Payment"],

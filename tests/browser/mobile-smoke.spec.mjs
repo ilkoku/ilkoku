@@ -3007,7 +3007,7 @@ test("writer earnings shows author deductions without exposing İlkOku profit or
       await expect(root).toBeVisible();
       await expect(root.getByRole("heading", { name: "Yazar kazancı hesaplama örneği" })).toBeVisible();
       await expect(root.getByRole("heading", { name: "Faturalı yazar" })).toBeVisible();
-      await expect(root.getByRole("heading", { name: "Gider pusulasına uygun yazar" })).toBeVisible();
+      await expect(root.getByRole("heading", { name: "Faturasız / gider pusulasına uygun yazar" })).toBeVisible();
       const header = root.locator('header[class*="hero"]').first();
       const firstPanel = root.locator('section[class*="panel"]').first();
       const valueTile = firstPanel.locator('[class*="summaryGrid"] > div').first();
@@ -3022,8 +3022,10 @@ test("writer earnings shows author deductions without exposing İlkOku profit or
 
       // The author sees their own commission, service fee, withholding and estimated payout.
       await expect(root.getByText("Yazara tahmini banka ödemesi", { exact: true })).toHaveCount(2);
-      await expect(root.getByText("Yazarın brüt telif/fatura matrahı", { exact: true })).toHaveCount(2);
+      await expect(root.getByText("Komisyon sonrası yazar telif/belge matrahı", { exact: true })).toHaveCount(2);
       await expect(root.getByText("Stopaj (uygun telifte %17)", { exact: true })).toHaveCount(2);
+      await expect(root.getByText("Yazar belgesindeki KDV (varsayımsal)", { exact: true })).toHaveCount(2);
+      await expect(root).not.toContainText("Komisyon KDV\u0027si");
 
       // Platform-only finance must remain available to admin, never on the writer preview.
       for (const internalLabel of [

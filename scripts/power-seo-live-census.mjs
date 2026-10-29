@@ -376,14 +376,14 @@ function parseSitemap(xml) {
   return urls;
 }
 
-async function inspect(url, retry = 0) {
+async function inspect(url, retry = 0, firstAttemptFailure = "") {
   try {
     const { response, body } = await read(url, MAX_HTML_BYTES);
     // A single bounded retry for transient upstream 5xx. Persistent failures
     // remain visible and fail the census; 403/429 are never retried.
     if (response.status >= 500 && retry === 0) {
       await new Promise((done) => setTimeout(done, 950));
-      return inspect(url, 1);
+      return inspect(url, 1, `http-${response.status}`);
     }
     const ok = response.status === 200 &&
       (response.headers.get("content-type") || "").toLowerCase().includes("text/html");
@@ -400,6 +400,7 @@ async function inspect(url, retry = 0) {
       url, status: response.status, ok, title, description, canonical, robots, h1Count, mainText, imageAlt, structuredData, internalLinks,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       recoveredTransientFailure: retry > 0 && ok,
+      firstAttemptFailure,
       error: ok ? "" : "Not HTTP 200 HTML",
     };
   } catch (e) {
@@ -407,10 +408,11 @@ async function inspect(url, retry = 0) {
     // second attempt. Never retry permission, origin policy or parse failures.
     if (retry === 0 && (e instanceof TypeError || e?.name === "TimeoutError")) {
       await new Promise((done) => setTimeout(done, 950));
-      return inspect(url, 1);
+      return inspect(url, 1, e?.name === "TimeoutError" ? "timeout" : "network-type-error");
     }
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", h1Count: null, mainText: "",
       imageAlt: null, structuredData: null, internalLinks: [], canonicalMatches: false, recoveredTransientFailure: false,
+      firstAttemptFailure,
       error: e instanceof Error ? e.name : "Unknown error" };
   }
 }
@@ -423,7 +425,9 @@ async function main() {
   const urls = parseSitemap(body);
   const results = [];
   for (let i = 0; i < urls.length; i += CONCURRENCY) {
-    results.push(...await Promise.all(urls.slice(i, i + CONCURRENCY).map(inspect)));
+    // Use an explicit callback: Array.map passes index and array as extra arguments,
+    // which would be mistaken for inspect retry and first-failure metadata.
+    results.push(...await Promise.all(urls.slice(i, i + CONCURRENCY).map((url) => inspect(url))));
     await new Promise((done) => setTimeout(done, 120));
   }
   const validPages = results.filter((item) => item.ok);
@@ -496,11 +500,22 @@ async function main() {
     return findings.length ? [{ url: page.url, description: page.description, length: page.description.length, findings }] : [];
   });
 
+  // Preserve only an allowlisted failure category, never raw network exception text.
+  // Successful retries must not erase evidence of initial HTTP 5xx or network problems.
+  const firstAttemptFailuresByCause = {};
+  for (const page of results.filter((item) => item.firstAttemptFailure)) {
+    const cause = page.firstAttemptFailure;
+    firstAttemptFailuresByCause[cause] = (firstAttemptFailuresByCause[cause] || 0) + 1;
+  }
+
   const summary = {
     sitemapCount: urls.length,
     successfulHtml: results.filter((x) => x.ok).length,
     errors: results.filter((x) => !x.ok).length,
     recoveredTransientRequests: results.filter((x) => x.recoveredTransientFailure).length,
+    firstAttemptHttp5xx: results.filter((x) => /^http-5\d\d$/u.test(x.firstAttemptFailure)).length,
+    firstAttemptTimeouts: results.filter((x) => x.firstAttemptFailure === "timeout").length,
+    firstAttemptNetworkErrors: results.filter((x) => x.firstAttemptFailure === "network-type-error").length,
     canonicalMatches: results.filter((x) => x.canonicalMatches).length,
     pagesWithOneH1: validPages.filter((x) => x.h1Count === 1).length,
     pagesWithoutH1: validPages.filter((x) => x.h1Count === 0).length,
@@ -541,11 +556,12 @@ async function main() {
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
     .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(summary));
+  console.log(JSON.stringify({ firstAttemptFailuresByCause }));
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
   }

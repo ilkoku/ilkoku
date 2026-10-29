@@ -1356,9 +1356,16 @@ test("Power-SEO provider readiness and independent live census are truthful and 
   assertContains(guide, "Hostinger", "hosting-only runtime secret guidance");
   assertContains(guide, "GitHub Actions secrets", "GitHub secrets are not hosting runtime secrets");
   assertContains(census, "const CONCURRENCY = 2", "safe production crawl concurrency");
+  assertContains(census, ".map((url) => inspect(url))", "array callback must not pass index and batch as retry metadata");
+  assertNotContains(census, ".map(inspect)", "direct callback falsely flags every second page as recovered retry");
   assertContains(census, 'redirect: "manual"', "no cross-site redirects");
   assertContains(census, "MAX_URLS = 400", "safe sitemap count cap");
   assertContains(census, "canonicalMatches", "real canonical comparison");
+  assertContains(census, "firstAttemptFailuresByCause", "recovered requests retain categorized first-attempt failure evidence");
+  assertContains(census, "firstAttemptHttp5xx", "initial HTTP 5xx is separated from timeouts");
+  assertContains(census, "firstAttemptTimeouts", "initial timeouts are reported separately");
+  assertContains(census, "firstAttemptNetworkErrors", "initial network errors are reported separately");
+  assertContains(census, "firstAttemptFailure,", "per-URL first failure evidence is retained");
   assertContains(census, "noindexPagesInSitemap", "live indexability gate");
   assertContains(census, "GITHUB_STEP_SUMMARY", "CI audit summary");
   assertNotContains(census, "GSC_OAUTH_REFRESH_TOKEN", "external public audit needs no private token");

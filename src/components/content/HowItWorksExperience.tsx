@@ -14,6 +14,7 @@ type HowItWorksExperienceProps = {
   body: string;
   summary: string;
   title: string;
+  updatedAt?: Date | string | null;
 };
 
 type JourneyIconName = "draft" | "publish" | "reader" | "review" | "passport" | "discover";

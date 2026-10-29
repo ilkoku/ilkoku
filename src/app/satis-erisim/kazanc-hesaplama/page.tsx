@@ -63,8 +63,9 @@ export default async function WriterEarningIllustrationPage({
           <div>
             <span className={styles.eyebrow}>Satış öncesi · Bilgilendirme</span>
             <h1>Yazar kazancı hesaplama örneği</h1>
-            <p>Bir kitap satıldığında faturalı ve gider pusulasına uygun
-              telif ödemesi arasında nasıl bir fark oluşabileceğini karşılaştır.</p>
+            <p>Okura satışı İlkOku yapar. Yazarın telif bedeli komisyon
+              düşüldükten sonra hesaplanır. Faturalı ve uygun faturasız
+              telif seçeneklerinin örneklerini karşılaştır.</p>
           </div>
           <Link className={styles.secondaryAction} href="/satis-erisim">
             Satış &amp; Erişim&apos;e dön
@@ -81,9 +82,10 @@ export default async function WriterEarningIllustrationPage({
         ) : null}
 
         <div className={styles.notice} role="status">
-          Bu sayfa yalnızca varsayımsal hesaplamadır. Belge tercihi, vergi
-          mükellefiyeti ve gider pusulasına uygunluk henüz sistemde doğrulanmıyor.
-          Burada gösterilen tutarlar gerçek hakediş, fatura veya ödeme emri değildir.
+          İlkOku okura doğrudan satıcıdır; yazarın belgesine esas
+          örnek telif matrahı, KDV hariç satış bedelinden komisyon düşülerek hesaplanır.
+          Bu sayfa yalnızca varsayımsaldır. Vergi ve belge uygunluğu ayrıca doğrulanır;
+          burada fatura, gider pusulası, hakediş veya ödeme oluşturulmaz.
         </div>
 
         <section className={styles.panel}>
@@ -140,8 +142,8 @@ export default async function WriterEarningIllustrationPage({
 
         <div className={styles.grid}>
           {([
-            { heading: "Faturalı yazar", detail: commissionLabel + " komisyon + komisyon KDV'si; ek aracılık yok", p: invoiced },
-            { heading: "Gider pusulasına uygun yazar", detail: commissionLabel + " gelir paylaşımı + ayrıca " + formatRate(serviceFeeRateBps) + " aracılık hizmeti + KDV", p: receipt },
+            { heading: "Faturalı yazar", detail: "İlkOku satıcıdır; yazar İlkOku'ya komisyon düşülmüş telif tutarı üzerinden belge düzenler. Ek aracılık yok.", p: invoiced },
+            { heading: "Faturasız / gider pusulasına uygun yazar", detail: "Yazar fatura kesmez. Komisyon sonrası telif, koşullu " + formatRate(serviceFeeRateBps) + " hizmet bedeli ve vergi kesintileri ayrı incelenir.", p: receipt },
           ] as const).map(({ heading, detail, p }) => (
             <section className={styles.panel} key={p.mode}>
               <span className={styles.eyebrow}>2. Yazar hakedişi</span>
@@ -149,10 +151,10 @@ export default async function WriterEarningIllustrationPage({
               <p className={styles.helper}>{detail}</p>
               <div className={styles.summaryGrid}>
                 <div><span>Komisyon ({commissionLabel})</span><strong>{money(p.commissionNet)}</strong></div>
-                <div><span>Komisyon KDV&apos;si</span><strong>{money(p.commissionVat)}</strong></div>
+                <div><span>Yazar belgesindeki KDV (varsayımsal)</span><strong>{money(p.authorInvoiceVat)}</strong></div>
                 <div><span>Ek aracılık ({formatRate(serviceFeeRateBps)}; yalnız uygun telifte)</span><strong>{money(p.platformServiceNet)}</strong></div>
                 <div><span>Aracılık KDV&apos;si</span><strong>{money(p.platformServiceVat)}</strong></div>
-                <div><span>Yazarın brüt telif/fatura matrahı</span><strong>{money(p.authorGross)}</strong></div>
+                <div><span>Komisyon sonrası yazar telif/belge matrahı</span><strong>{money(p.authorGross)}</strong></div>
                 <div><span>Stopaj (uygun telifte %17)</span><strong>{money(p.withholding)}</strong></div>
                 <div><span>Yazara tahmini banka ödemesi</span><strong>{money(p.authorBankPayment)}</strong></div>
               </div>
@@ -160,8 +162,9 @@ export default async function WriterEarningIllustrationPage({
           ))}
         </div>
         <div className={styles.notice}>
-          Kesin ödeme yapılmadan önce mali müşavir tarafından yazarın belge
-          statüsü, hizmetin vergisel niteliği, KDV indirimi ve stopaj koşulları doğrulanmalıdır.
+          Gerçek belge ve ödeme öncesinde mali müşavir; yazarın fatura/e-SMM
+          yükümlülüğünü, faturasız telifte gider pusulasına uygunluğu, stopajı,
+          KDV uygulamasını ve varsa ayrı hizmet bedelini doğrulamalıdır.
           İlkOku bu ekrandan fatura veya mali belge düzenlemez.
           0 TL siparişlerde gerçek para tahsilatı veya telif ödemesi oluşturulmaz.
         </div>

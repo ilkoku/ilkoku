@@ -729,7 +729,7 @@ export function buildDayCloseFiles(input: {
     ]);
   }
   const fieldMap = {
-    version: "generic-accounting-map-v1",
+    version: "generic-accounting-map-v2",
     status: "UNVERIFIED_VENDOR_MAPPING",
     purpose: "External bookkeeping preparation; never issue invoices in IlkOku",
     currencyUnit: "kurus",
@@ -776,6 +776,7 @@ export function buildDayCloseFiles(input: {
     fiscalApproval: "REQUIRED_EXTERNALLY",
     commissionField: "komisyon_net_ornek_kurus",
     commissionNotice: "Platform-direct retained sales share; NOT a separate writer commission service invoice",
+    authorRoyaltyNotice: "Net royalty is sale net minus frozen retained share; author document VAT is conditional and accountant approval is required",
     optionalServiceFee: "Verified internal GVK18 review: 5% illustration; verified commercial invoice/self-employed receipt: 0%; unknown fails closed. All amounts require accountant approval.",
     vendors: {
       logo: {

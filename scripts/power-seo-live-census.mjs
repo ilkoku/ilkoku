@@ -425,7 +425,9 @@ async function main() {
   const urls = parseSitemap(body);
   const results = [];
   for (let i = 0; i < urls.length; i += CONCURRENCY) {
-    results.push(...await Promise.all(urls.slice(i, i + CONCURRENCY).map(inspect)));
+    // Use an explicit callback: Array.map passes index and array as extra arguments,
+    // which would be mistaken for inspect retry and first-failure metadata.
+    results.push(...await Promise.all(urls.slice(i, i + CONCURRENCY).map((url) => inspect(url))));
     await new Promise((done) => setTimeout(done, 120));
   }
   const validPages = results.filter((item) => item.ok);

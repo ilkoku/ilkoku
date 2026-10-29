@@ -85,7 +85,7 @@ export default async function WriterEarningIllustrationPage({
           İlkOku okura doğrudan satıcıdır; yazarın belgesine esas
           örnek telif matrahı, KDV hariç satış bedelinden komisyon düşülerek hesaplanır.
           Bu sayfa yalnızca varsayımsaldır. Vergi ve belge uygunluğu ayrıca doğrulanır;
-          burada fatura, gider pusulası, hakediş veya ödeme oluşturulmaz.
+          burada gerçek hakediş, fatura, gider pusulası veya ödeme oluşturulmaz.
         </div>
 
         <section className={styles.panel}>

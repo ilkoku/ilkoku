@@ -1,6 +1,6 @@
 export const howItWorksPageContent = {
   title: "İlkOku Nasıl Çalışır?",
-  summary: "Bir fikrin yayımlanmış bir esere dönüşmesini; okurla buluşmasını, iki bağımsız editör görüşüyle gelişmesini ve yayınevi değerlendirmesine kadar uzanan İlkOku yolculuğunu adım adım görün.",
+  summary: "İlkOku, yazarların eserlerini oluşturabildiği, geliştirebildiği ve yayımlayabildiği dijital bir yazar platformudur. Okurlar yayımlanmış eserlerle buluşabilir, editörler bağımsız incelemeler yapabilir ve yetkili yayınevleri uygun eserleri değerlendirebilir.",
   seoTitle: "İlkOku Nasıl Çalışır? | Yazar, Okur, Editör ve Yayınevi",
   seoDescription: "İlkOku'da eser oluşturma, yayınlama, üyelikle okuma, okur geri bildirimi, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi süreçlerini inceleyin.",
   canonical: "/nasil-calisir",

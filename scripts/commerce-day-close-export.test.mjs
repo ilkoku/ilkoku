@@ -253,6 +253,7 @@ test("complete 0 TL snapshots remain traceable but never enter taxable accountin
     listGrossAmount: 0n, discountGrossAmount: 0n, payableGrossAmount: 0n,
   };
   order.payments = [];
+  order.taxReview = null; // 0 TL creates no payable royalty or fiscal document
   const result = exportModule.buildDayCloseFiles({
     day: "2026-10-25",
     orders: [order],
@@ -265,8 +266,8 @@ test("complete 0 TL snapshots remain traceable but never enter taxable accountin
   });
   assert.equal(result.manifest.salesCount, 1);
   assert.equal(result.manifest.zeroAmountCount, 1);
-  assert.equal(result.manifest.readySalesCount, 0);
-  assert.equal(result.manifest.flaggedSalesCount, 1);
+  assert.equal(result.manifest.readySalesCount, 1);
+  assert.equal(result.manifest.flaggedSalesCount, 0);
   assert.equal(result.manifest.preparationRows, 0);
   assert.equal(result.manifest.reviewedAuthorSummaryGroups, 0);
   assert.equal(result.manifest.liraWorksheetRows, 0);
@@ -289,7 +290,9 @@ test("complete 0 TL snapshots remain traceable but never enter taxable accountin
   assert.ok(zeroReconciliation?.includes("TAHSILAT_GEREKMEZ_0_TL"));
   assert.ok(zeroReconciliation?.includes("SIFIR_TL_TEKNIK_MUTABAKAT_GECTI"));
   assert.ok(!zeroReconciliation?.includes("INCELEME_GEREKLI"));
-  assert.ok(csv("uyarilar.csv").includes("SIFIR_TL_MALI_BELGE_DEGIL"));
+  assert.ok(csv("siparisler.csv").includes("SIFIR_TL_TAMAMLANDI_BELGE_HARIC"));
+  assert.ok(!csv("uyarilar.csv").includes(order.orderNo), "valid 0 TL needs no financial-warning ticket");
+  assert.ok(!csv("uyarilar.csv").includes("YAZAR_MALI_BELGE_DOGRULANAMADI"));
   for (const name of ["muhasebe_on_hazirlik.csv", "yazar_hesap_ozeti.csv", "muhasebe_tl_inceleme.csv"]) {
     assert.ok(!csv(name).includes(order.orderNo), name);
   }
@@ -325,6 +328,37 @@ test("0 TL order with a claimed provider capture is flagged, not reconciled", ()
   const row = csv("mutabakat.csv").split("\r\n")
     .find(line => line.includes(order.orderNo));
   assert.ok(row?.includes("LEDGER_KONTROLU_GECTI"));
+  assert.ok(row?.includes("INCELEME_GEREKLI"));
+  assert.ok(!row?.includes("SIFIR_TL_TEKNIK_MUTABAKAT_GECTI"));
+  assert.equal(result.manifest.preparationRows, 0);
+});
+
+test("0 TL with even a pending Payment remains an anomaly rather than a complete no-charge record", () => {
+  const order = validOrder();
+  order.orderNo = "ILK-ZERO-UNEXPECTED-PENDING";
+  order.originalAmount = 0n;
+  order.discountAmount = 0n;
+  order.finalAmount = 0n;
+  order.taxReview = null;
+  order.quote = {
+    calculationVersion: "quote-v1", taxTreatment: "net_plus_vat",
+    vatRateBasisPoints: 2000, listNetAmount: 0n, listVatAmount: 0n,
+    listGrossAmount: 0n, discountGrossAmount: 0n, payableGrossAmount: 0n,
+  };
+  order.payments = [{ status: "pending", amount: 0n, currency: "TRY", completedAt: null }];
+  const result = exportModule.buildDayCloseFiles({
+    day: "2026-10-25", orders: [order],
+    ledger: [{
+      id: "ledger-zero-pending", entryType: "sale_gross",
+      amount: 0n, currency: "TRY", createdAt: order.paidAt,
+      orderNo: order.orderNo, authorPublicId: order.authorPublicId,
+    }], refunds: [],
+  });
+  const csv = name => result.files.find(f => f.name === name).data;
+  assert.equal(result.manifest.readySalesCount, 0);
+  assert.equal(result.manifest.flaggedSalesCount, 1);
+  assert.ok(csv("uyarilar.csv").includes("SIFIR_TL_GEREKSIZ_ODEME_KAYDI"));
+  const row = csv("mutabakat.csv").split("\r\n").find(line => line.includes(order.orderNo));
   assert.ok(row?.includes("INCELEME_GEREKLI"));
   assert.ok(!row?.includes("SIFIR_TL_TEKNIK_MUTABAKAT_GECTI"));
   assert.equal(result.manifest.preparationRows, 0);

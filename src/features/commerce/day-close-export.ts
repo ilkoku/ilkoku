@@ -274,6 +274,7 @@ export function buildDayCloseFiles(input: {
     return created;
   };
   const details = { ready: 0, review: 0, zero: 0 };
+  let completedZeroWithoutFiscalDocument = 0;
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
   let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
   let commissionVatPreviewMinor = BigInt(0), serviceVatPreviewMinor = BigInt(0);
@@ -290,14 +291,22 @@ export function buildDayCloseFiles(input: {
     const warnings: string[] = [];
     const rate = order.commission, quote = order.quote;
     const tax = taxDocumentFeePreview(order);
+    // An actual no-charge acquisition is a completed order, not a taxable
+    // author settlement. Discounted-to-zero coupon cases are NOT in scope:
+    // they may carry a funded royalty or other economic obligation.
+    const plainZeroAcquisition = order.finalAmount === BigInt(0) &&
+      order.originalAmount === BigInt(0) &&
+      order.discountAmount === BigInt(0) && !order.couponCode;
     // Columns being present does not prove their required VALUES exist.
     // Fail closed for accounting review rather than exporting anonymous
     // writer lines or empty item descriptions as verified sale rows.
     if (!order.authorPublicId.trim()) warnings.push("YAZAR_KODU_EKSIK");
     if (!order.workTitle.trim()) warnings.push("ESER_ADI_EKSIK");
     if (!isOnBusinessDay(order.paidAt)) warnings.push("ODEME_TARIHI_IS_GUNU_DISINDA");
-    if (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
-        tax.appliedServiceFeeBps === null) warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
+    if (!plainZeroAcquisition &&
+        (tax.status !== "IC_KAYIT_INCELEMESI_GECTI" ||
+        tax.appliedServiceFeeBps === null))
+      warnings.push("YAZAR_MALI_BELGE_DOGRULANAMADI");
     if (order.currency !== "TRY") warnings.push("TRY_DISINDA_PARA_BIRIMI");
     // An author-seller is an expected intermediary model, not failed identity.
     // Keep financial posting closed until author-seller accounting is separately reviewed.
@@ -354,7 +363,7 @@ export function buildDayCloseFiles(input: {
     // ONLY when zero is actually owed and NO capture was claimed.
     const noCharge = order.finalAmount === BigInt(0);
     const captureMatches = noCharge
-      ? claimedCaptures.length === 0
+      ? order.payments.length === 0
       : captures.length === 1 &&
         captures[0].amount === order.finalAmount &&
         captures[0].currency === order.currency;
@@ -362,6 +371,8 @@ export function buildDayCloseFiles(input: {
       warnings.push("TAHSILAT_KAYDI_MUTABAKATSIZ");
     if (noCharge && claimedCaptures.length > 0)
       warnings.push("SIFIR_TL_GEREKSIZ_TAHSILAT");
+    if (noCharge && order.payments.length > 0 && claimedCaptures.length === 0)
+      warnings.push("SIFIR_TL_GEREKSIZ_ODEME_KAYDI");
     const financialReconciliationPassed = ledgerMatches && captureMatches;
     reconciliation.push([
       order.orderNo,order.originalAmount,ledgerGross,ledgerEntries.length,
@@ -374,9 +385,13 @@ export function buildDayCloseFiles(input: {
     ]);
     if (order.finalAmount === BigInt(0)) {
       details.zero++;
-      warnings.push("SIFIR_TL_MALI_BELGE_DEGIL");
+      // Informative fiscal exclusion must not turn a technically valid
+      // no-charge order into a misleading financial reconciliation error.
+      if (warnings.length > 0) warnings.push("SIFIR_TL_MALI_BELGE_DEGIL");
     }
-    const review = warnings.length > 0 ? "INCELEME_GEREKLI" : "VERI_KONTROLU_GECTI";
+    const review = warnings.length > 0 ? "INCELEME_GEREKLI" :
+      plainZeroAcquisition ? "SIFIR_TL_TAMAMLANDI_BELGE_HARIC" :
+      "VERI_KONTROLU_GECTI";
     if (isOnBusinessDay(order.paidAt)) {
       const group = groupFor(order.currency);
       group.saleRows++;
@@ -392,6 +407,7 @@ export function buildDayCloseFiles(input: {
       for (const warning of warnings) issues.push(["siparis",order.orderNo,warning,"Muhasebe kontrolu gerekli"]);
     } else {
       details.ready++;
+      if (plainZeroAcquisition) completedZeroWithoutFiscalDocument++;
       grossMinor += order.finalAmount;
       vatMinor += quote!.listVatAmount;
     }
@@ -828,7 +844,10 @@ export function buildDayCloseFiles(input: {
     royaltyNet: BigInt(0), authorDocumentVat: BigInt(0),
   });
   if (authorTotals.count !== preparation.length - 1 ||
-      authorTotals.count !== details.ready ||
+      // Complete 0 TL access orders are intentionally absent from the
+      // accountant's fiscal-preparation sheet, but remain valid completed
+      // transactions in the day-close archive and summary.
+      authorTotals.count !== details.ready - completedZeroWithoutFiscalDocument ||
       authorTotals.gross !== grossMinor ||
       authorTotals.vat !== vatMinor ||
       authorTotals.commission !== commissionPreviewMinor ||

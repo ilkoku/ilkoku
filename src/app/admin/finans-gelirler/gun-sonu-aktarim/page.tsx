@@ -90,11 +90,12 @@ export default async function DayCloseAccountingTransferPage() {
             hareketlerinin tür ve para birimi bazında toplamı.
             Ledger toplamı muhasebe kârı değildir.</p>
           <p><code>muhasebe_on_hazirlik.csv</code> — Yalnız temel veri
-            kontrollerini geçen satışlar için programdan bağımsız, kesin
-            mali belge sayılmayan aktarım alanları.</p>
-          <p><code>yazar_hesap_ozeti.csv</code> — Temel kontrolleri
-            geçen işlemlerin yazar ve mali belge türüne göre toplamları:
-            komisyon ve koşullu aracılık ayrı hesaplama örnekleridir.</p>
+            kontrollerini geçen satışlarda İlkOku&apos;nun komisyon sonrası
+            yazar telif matrahı ve yalnız uygun belge türünde koşullu KDV
+            ön hesabı. Fatura veya muhasebe fişi değildir.</p>
+          <p><code>yazar_hesap_ozeti.csv</code> — Kontrolden geçen işlemlerde
+            yazarın komisyon sonrası telif matrahını ve koşullu belge
+            KDV&apos;sini, yazar ve belge türü bazında ayrı toplar.</p>
           <p><code>muhasebe_tl_inceleme.csv</code> — Kontrolü geçen
             satışların TL tutarlarıyla, noktalı virgül ayracı ve
             virgüllü iki ondalık içeren muhasebeci inceleme tablosu.
@@ -111,14 +112,17 @@ export default async function DayCloseAccountingTransferPage() {
           <h2>Aktarım ve muhasebe kontrolü</h2>
           <p>Dosyalarda tutarlar <strong>kuruş</strong> olarak, tarihler
             UTC ISO 8601 biçiminde saklanır; iş günü Türkiye saatidir.</p>
-          <p>Eserin sahibi ve satıcısı yazar olduğunda İlkOku aracı platformdur.
-            Sipariş hukukî satıcı türü dışa aktarılır. Yazar satıcıya ait
-            ön inceleme tutarları mali aktarım onayı değildir.</p>
+          <p>Yeni satış modelinde İlkOku okurun doğrudan satıcısıdır.
+            Siparişteki komisyon İlkOku&apos;nun satıştan ayırdığı paydır;
+            ayrıca yazara verilen komisyon hizmeti sayılmaz. Yazarın
+            belgesine esas ön telif matrahı, net satıştan bu pay çıkarılarak
+            gösterilir. Önceki yazar-satıcı kayıtları ayrı işaretlenir.</p>
           <p>Genel komisyon %15, varsa siparişe sabitlenmiş yazar/eser
-            oranı kullanılır. Sipariş tarihinde geçerli yönetici incelemesi
-            bulunan ticari fatura veya serbest meslek makbuzu düzenleyen
-            yazarda aracılık oranı %0; doğrulanmış GVK 18 kapsamında
-            koşullu aracılık oranı %5 olarak ayrı hesaplanır.</p>
+            oranı kullanılır. Ticari faturalı yazarın belge KDV&apos;si
+            yalnız varsayımsal olarak gösterilir. GVK 18 veya e-SMM
+            durumunda belgenin KDV&apos;si belirlenmiş sayılmaz.
+            Uygun faturasız telifte ayrı %5 hizmet bedeli ve KDV&apos;si
+            yalnız mali müşavir incelemesine konu olur.</p>
           <p>Yazarın mali belge incelemesi yoksa, tarihi geçmişse,
             geri alınmışsa veya siparişten sonraysa işlem uyarıya ayrılır.
             Bu oranlar yalnız muhasebe aktarımında inceleme amaçlıdır:

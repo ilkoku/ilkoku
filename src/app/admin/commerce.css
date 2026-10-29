@@ -57,7 +57,7 @@
   color: #c6cee0;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   text-decoration: none;
 }
 

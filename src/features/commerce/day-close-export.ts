@@ -274,6 +274,7 @@ export function buildDayCloseFiles(input: {
     return created;
   };
   const details = { ready: 0, review: 0, zero: 0 };
+  let completedZeroWithoutFiscalDocument = 0;
   let grossMinor = BigInt(0), vatMinor = BigInt(0);
   let commissionPreviewMinor = BigInt(0), serviceFeePreviewMinor = BigInt(0);
   let commissionVatPreviewMinor = BigInt(0), serviceVatPreviewMinor = BigInt(0);
@@ -406,6 +407,7 @@ export function buildDayCloseFiles(input: {
       for (const warning of warnings) issues.push(["siparis",order.orderNo,warning,"Muhasebe kontrolu gerekli"]);
     } else {
       details.ready++;
+      if (plainZeroAcquisition) completedZeroWithoutFiscalDocument++;
       grossMinor += order.finalAmount;
       vatMinor += quote!.listVatAmount;
     }
@@ -842,7 +844,10 @@ export function buildDayCloseFiles(input: {
     royaltyNet: BigInt(0), authorDocumentVat: BigInt(0),
   });
   if (authorTotals.count !== preparation.length - 1 ||
-      authorTotals.count !== details.ready ||
+      // Complete 0 TL access orders are intentionally absent from the
+      // accountant's fiscal-preparation sheet, but remain valid completed
+      // transactions in the day-close archive and summary.
+      authorTotals.count !== details.ready - completedZeroWithoutFiscalDocument ||
       authorTotals.gross !== grossMinor ||
       authorTotals.vat !== vatMinor ||
       authorTotals.commission !== commissionPreviewMinor ||

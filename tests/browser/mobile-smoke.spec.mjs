@@ -755,8 +755,10 @@ test("provider-free 100% platform coupon: preview open, chapter 2 locked, order 
   const zeroAcceptance = page.locator("label").filter({
     has: page.locator('input[name="acceptDigitalContent"]'),
   });
-  await expect(zeroAcceptance).toContainText("dijital okuma erişimini toplam");
-  await expect(zeroAcceptance).toContainText("benden para tahsil edilmeyeceğini");
+  await expect(zeroAcceptance).toContainText("ödenecek toplam");
+  await expect(zeroAcceptance).toContainText("gerçek bir satın alma işlemiyle");
+  await expect(zeroAcceptance).toContainText("Bu işlem deneme erişimi değildir");
+  await expect(zeroAcceptance).toContainText("benden para tahsil edilmeyecektir");
   await expect(zeroAcceptance).toContainText("metnini okudum ve kabul ediyorum");
   await expect(page.locator('input[name="acceptDigitalContent"]')).toHaveAttribute("required", "");
 
@@ -1140,8 +1142,9 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
   )).toBeVisible();
   await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
   const zeroConsentReceipt = page.locator('[data-commerce-zero-consent="reader-order"]');
-  await expect(zeroConsentReceipt).toContainText("0 TL edinim onayı:");
-  await expect(zeroConsentReceipt).toContainText("Bu işlem için para tahsil edilmedi");
+  await expect(zeroConsentReceipt).toContainText("0 TL gerçek satış onayı:");
+  await expect(zeroConsentReceipt).toContainText("gerçek satın alma siparişi tamamlandı");
+  await expect(zeroConsentReceipt).toContainText("Bu satışta para tahsil edilmedi");
   await expect(zeroConsentReceipt).toContainText("sürümü ve kabul tarihiyle ilişkilidir");
   await expect(page.getByText("Doğrudan satıcı", { exact: true })).toHaveCount(2);
   await expect(page.getByText("CI ONLY MOCK SELLER - NOT A REAL ENTITY", { exact: true })).toBeVisible();

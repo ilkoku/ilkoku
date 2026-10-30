@@ -752,6 +752,15 @@ test("provider-free 100% platform coupon: preview open, chapter 2 locked, order 
   await expect(page.getByRole("radio", { name: /Kredi Kartı/u })).toBeDisabled();
   await expect(page.getByRole("radio", { name: /Telefon Faturası/u })).toBeDisabled();
   await expect(page.getByRole("button", { name: "0 TL ile satın al" })).toBeEnabled();
+  const zeroAcceptance = page.locator("label").filter({
+    has: page.locator('input[name="acceptDigitalContent"]'),
+  });
+  await expect(zeroAcceptance).toContainText("ödenecek toplam");
+  await expect(zeroAcceptance).toContainText("gerçek bir satın alma işlemiyle");
+  await expect(zeroAcceptance).toContainText("Bu işlem deneme erişimi değildir");
+  await expect(zeroAcceptance).toContainText("benden para tahsil edilmeyecektir");
+  await expect(zeroAcceptance).toContainText("metnini okudum ve kabul ediyorum");
+  await expect(page.locator('input[name="acceptDigitalContent"]')).toHaveAttribute("required", "");
 
   await page.locator('input[name="acceptDigitalContent"]').check();
   await page.getByRole("button", { name: "0 TL ile satın al" }).click();
@@ -1132,6 +1141,11 @@ test("authenticated zero-total commerce mutation smoke: reader completes provide
     "Sipariş numarası: " + completedZeroTotalOrderNo, { exact: true },
   )).toBeVisible();
   await expect(page.getByText("0 TL · Para tahsil edilmedi", { exact: true })).toBeVisible();
+  const zeroConsentReceipt = page.locator('[data-commerce-zero-consent="reader-order"]');
+  await expect(zeroConsentReceipt).toContainText("0 TL gerçek satış onayı:");
+  await expect(zeroConsentReceipt).toContainText("gerçek satın alma siparişi tamamlandı");
+  await expect(zeroConsentReceipt).toContainText("Bu satışta para tahsil edilmedi");
+  await expect(zeroConsentReceipt).toContainText("sürümü ve kabul tarihiyle ilişkilidir");
   await expect(page.getByText("Doğrudan satıcı", { exact: true })).toHaveCount(2);
   await expect(page.getByText("CI ONLY MOCK SELLER - NOT A REAL ENTITY", { exact: true })).toBeVisible();
   await expectResponsiveDocument(page);

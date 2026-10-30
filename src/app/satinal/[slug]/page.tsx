@@ -414,10 +414,13 @@ export default async function CheckoutPreparationPage({
                 <input name="returnTo" type="hidden" value={returnTo} />
 
                 <label className={styles.confirmation}>
-                  <input name="acceptDigitalContent" type="checkbox" />
+                  <input name="acceptDigitalContent" type="checkbox" required />
                   <span>
-                    {purchaseTerms.title} (sürüm {purchaseTerms.version}) metnini
-                    okudum ve kabul ediyorum.
+                    <strong>{work.title}</strong> eserinin dijital okuma erişimini toplam{" "}
+                    <strong>{formatMoney(pricing.finalAmount, effectiveCommerce.currency)}</strong>{" "}
+                    bedelle edinmeyi ve bu işlem için benden para tahsil edilmeyeceğini
+                    kabul ediyorum. {purchaseTerms.title} (sürüm {purchaseTerms.version})
+                    metnini okudum ve kabul ediyorum.
                   </span>
                 </label>
 

@@ -170,6 +170,14 @@ export default async function ReaderOrderDetailPage({
           ) : (
             <p className={styles.helper}>Sözleşme onay kaydı bu siparişte bulunamadı.</p>
           )}
+          {order.status === "paid" && order.finalAmount === BigInt(0) && order.consent ? (
+            <p className={styles.helper} data-commerce-zero-consent="reader-order">
+              0 TL edinim onayı: <strong>{order.work.title}</strong> eserinin dijital okuma
+              erişimi toplam <strong>{money(order.finalAmount, order.currency)}</strong>{" "}
+              bedelle edinildi. Bu işlem için para tahsil edilmedi. Sözleşme onayı,
+              bu siparişin kayıtlı sürümü ve kabul tarihiyle ilişkilidir.
+            </p>
+          ) : null}
         </section>
       </div>
     </AppShell>

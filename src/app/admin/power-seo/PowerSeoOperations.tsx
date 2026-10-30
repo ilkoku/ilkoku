@@ -160,7 +160,9 @@ export async function PowerSeoOperations({ mode, slice }: { mode: string; slice:
             {sample.failed.length ? <ul className={styles.issues}>{sample.failed.map((item) => <li key={item.url}><b>{item.url}</b><span>{item.error}</span></li>)}</ul> : null}
             <ul className={styles.issues}>
               {sample.pages.map((p) => {
-                const node = sample.graph.nodes.get(p.url.replace(/\/$/, ""));
+                const parsedUrl = new URL(p.url);
+                const graphKey = parsedUrl.pathname === "/" ? parsedUrl.origin + "/" : p.url.replace(/\/$/, "");
+                const node = sample.graph.nodes.get(graphKey);
                 return (
                   <li key={p.url}>
                     <b>{p.title || p.url}</b>

@@ -1231,6 +1231,12 @@ test("Power-SEO independent operational tabs stay read-only and bounded", async 
     { url: "https://ilkoku.com/nasil-calisir", links: ["https://ilkoku.com/"] },
   ]);
   assert.ok(graph.totalLinks > 0, "real internal link graph computed");
+  assert.equal(graph.nodes.get("https://ilkoku.com/")?.outboundCount, 1,
+    "root-page link counts must come from the slash-terminated graph node");
+  assertContains(operations, 'parsedUrl.pathname === "/" ? parsedUrl.origin + "/"',
+    "admin link audit must keep the root slash when finding the homepage graph node");
+  assertContains(operations, "sample.graph.nodes.get(graphKey)",
+    "render the graph counts from the correct normalized node");
   assert.equal(validateSitemapUrl({ loc: "https://ilkoku.com/" }).valid, true);
   assert.equal(validateSitemapUrl({ loc: "x" }).valid, false);
   assert.equal(validateSchema({ "@type": "Article" }).valid, false, "missing required article fields caught");

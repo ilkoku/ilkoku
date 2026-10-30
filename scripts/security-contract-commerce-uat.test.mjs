@@ -766,14 +766,16 @@ test("0 TL purchase consent explicitly acknowledges zero charge and remains orde
   const order = source("src/features/commerce/zero-total-checkout.ts");
   const receipt = source("src/app/hesabim/odeme-gecmisi/[orderNo]/page.tsx");
   has(checkout, 'name="acceptDigitalContent" type="checkbox" required', "browser requires consent");
-  has(checkout, "dijital okuma erişimini toplam", "0 TL access is in the confirmation copy");
-  has(checkout, "benden para tahsil edilmeyeceğini", "explicit no-charge acknowledgement");
+  has(checkout, "gerçek bir satın alma işlemiyle", "0 TL is a real purchase");
+  has(checkout, "Bu işlem deneme erişimi değildir", "no promotion presented as a sale");
+  has(checkout, "benden para tahsil edilmeyecektir", "explicit no-charge acknowledgement");
   has(checkout, "purchaseTerms.version", "currently active contract version remains visible");
   has(action, 'formData.get("acceptDigitalContent") !== "on"', "server never trusts client required flag");
   has(order, "transaction.orderConsent.create", "order-linked consent is stored");
   has(order, "transaction.financialLedger.create", "zero ledger audit is retained");
   lacks(order, "transaction.payment.create", "zero checkout never manufactures payment");
   has(receipt, 'data-commerce-zero-consent="reader-order"', "zero purchase receipt shows acknowledgment");
+  has(receipt, "0 TL gerçek satış onayı:", "receipt identifies a real zero-price sale");
   has(receipt, 'order.finalAmount === BigInt(0) && order.consent', "receipt is based on saved zero price and accepted terms");
 });
 

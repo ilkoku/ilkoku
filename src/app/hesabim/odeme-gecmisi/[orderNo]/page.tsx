@@ -172,10 +172,11 @@ export default async function ReaderOrderDetailPage({
           )}
           {order.status === "paid" && order.finalAmount === BigInt(0) && order.consent ? (
             <p className={styles.helper} data-commerce-zero-consent="reader-order">
-              0 TL edinim onayı: <strong>{order.work.title}</strong> eserinin dijital okuma
-              erişimi toplam <strong>{money(order.finalAmount, order.currency)}</strong>{" "}
-              bedelle edinildi. Bu işlem için para tahsil edilmedi. Sözleşme onayı,
-              bu siparişin kayıtlı sürümü ve kabul tarihiyle ilişkilidir.
+              0 TL gerçek satış onayı: <strong>{order.work.title}</strong> eserinin
+              dijital okuma erişimi için ödenecek toplam{" "}
+              <strong>{money(order.finalAmount, order.currency)}</strong> olan
+              gerçek satın alma siparişi tamamlandı. Bu satışta para tahsil edilmedi.
+              Sözleşme onayı, bu siparişin kayıtlı sürümü ve kabul tarihiyle ilişkilidir.
             </p>
           ) : null}
         </section>

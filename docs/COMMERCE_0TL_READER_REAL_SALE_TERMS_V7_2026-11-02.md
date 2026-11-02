@@ -51,7 +51,6 @@ SÜRÜM KABULÜ: Okuyucunun işlemi sırasında gösterilen ve kaydedilen sürü
 9.2. İşletmeciye ve satıcıya ilişkin mevzuatın zorunlu tuttuğu ek doğrulama/bilgilendirme unsurları söz konusuysa bunlar gerçek kayıtlarla sağlanmalıdır; doğrulanmış satıcı olmadan eser bazlı işlem başlatılamaz.
 9.3. Koşullar, geçerli sürümün yetkili İlkOku yöneticisi tarafından kayda alınan açık onayı ve ayrıca aktivasyonu sonrasında, okuyucunun işlem anında elektronik kabulü ile yalnız kapsamındaki yeni işlemlere uygulanabilir.
 
-
 ---
 
 ## Sürüm ve uygulama notu

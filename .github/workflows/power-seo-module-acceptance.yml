@@ -1,0 +1,35 @@
+name: Power-SEO 17 Module Acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/power-seo-module-acceptance.test.mjs"
+      - ".github/workflows/power-seo-module-acceptance.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/power-seo-module-acceptance.test.mjs"
+      - ".github/workflows/power-seo-module-acceptance.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: power-seo-module-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  offline-module-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install pinned dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Execute all 17 module acceptance tests (zero external API calls)
+        run: node --test scripts/power-seo-module-acceptance.test.mjs

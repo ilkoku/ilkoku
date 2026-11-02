@@ -165,3 +165,76 @@ test("0 TL terms v6 replace only matching v5 review draft and expose human admin
   contains(panel, "Admin Onayını ver ve Onaylı yap", "admin action remains only authenticated UI");
   contains(checkout, "row.lifecycleStatus !== \"active\"", "checkout rejects non-active terms");
 });
+
+
+test("v7 reader zero-price real sale terms include only approved changes and require fresh admin activation", () => {
+  const docBody = (path) => source(path).split("\n---\n")[0].split("\n").slice(2).join("\n");
+  const v6 = docBody("docs/COMMERCE_0TL_READER_TERMS_ADMIN_APPROVAL_V6_2026-10-26.md");
+  const v7 = docBody("docs/COMMERCE_0TL_READER_REAL_SALE_TERMS_V7_2026-11-02.md");
+  const changes = [
+    [
+        "İLKOKU — 0 TL DİJİTAL ESER EDİNİMİ VE ERİŞİM KOŞULLARI",
+        "İLKOKU — 0 TL DİJİTAL ESER SATIN ALMA VE ERİŞİM KOŞULLARI"
+    ],
+    [
+        "KAPSAM: GERÇEK TAHSİLAT OLMADAN YAPILAN 0,00 TL DİJİTAL ERİŞİM DENEMELERİ",
+        "KAPSAM: TOPLAM BEDELİ 0,00 TL OLAN GERÇEK DİJİTAL İÇERİK SATIŞLARI"
+    ],
+    [
+        "bu denemenin işletmeci tanımında",
+        "bu satın alma işleminin işletmeci tanımında"
+    ],
+    [
+        "0,00 TL tutarında kişisel erişim hakkı edinilmesini düzenler.",
+        "0,00 TL toplam bedelle gerçekleştirilen gerçek satın alma işlemi sonucunda kişisel dijital okuma erişimi sağlanmasını düzenler."
+    ],
+    [
+        "3.2. Banka/kredi kartı, mobil operatör üzerinden telefon faturasına yansıtma ve diğer gerçek ödeme yöntemleri bu denemede kullanılmaz.",
+        "3.2. Bu 0,00 TL bedelli gerçek satış işleminde banka/kredi kartı, telefon faturası veya başka bir tahsilat yöntemi kullanılmaz."
+    ],
+    [
+        "Başarılı 0 TL edinimde sistem",
+        "Tamamlanan 0,00 TL bedelli gerçek satışta sistem"
+    ],
+    [
+        "Edinim tamamlandığında uygun bölümler",
+        "Gerçek satın alma işlemi tamamlandığında uygun bölümler"
+    ],
+    [
+        "Bu denemede tahsil edilen bedel 0,00 TL olduğu için parasal iade tutarı yoktur.",
+        "Bu gerçek satışın toplam bedeli 0,00 TL olduğundan ve para tahsil edilmediğinden parasal iade tutarı yoktur."
+    ],
+    [
+        "Bu metin yalnızca 0 TL deneme erişimini kapsar.",
+        "Bu metin yalnızca toplam bedeli 0,00 TL olan gerçek dijital içerik satışlarını kapsar."
+    ]
+];
+  let expected = v6;
+  for (const [oldText, newText] of changes) {
+    assert.equal(expected.split(oldText).length - 1, 1, "old v6 phrase must occur exactly once");
+    expected = expected.replace(oldText, newText);
+  }
+  assert.equal(v7, expected, "v7 must preserve every non-approved clause from v6");
+  contains(v7, "gerçek dijital içerik satışlarını kapsar", "sale rather than demo");
+  notContains(v7, "bu denemede", "no demo payment language");
+  notContains(v7, "deneme erişimini kapsar", "no demo scope");
+  const sql = source("prisma/migrations/20261102120000_reader_0tl_real_sale_terms_v7/migration.sql");
+  const startMarker = "  `body` = '";
+  const endMarker = "',\n  `version`";
+  const start = sql.indexOf(startMarker);
+  const end = sql.indexOf(endMarker, start);
+  assert.ok(start >= 0 && end > start, "one SQL body assignment");
+  assert.equal(sql.slice(start + startMarker.length, end).replace(/''/gu, "'"), v7, "migration and approved document must match byte-for-byte after SQL escaping");
+  contains(sql, "WHERE `id` = 'c5000000-0000-4000-8000-000000000002'", "one reader terms template");
+  contains(sql, "AND `code` = 'ILKOKU_READER_DIGITAL_CONTENT_PURCHASE'", "canonical template code");
+  contains(sql, "AND `version` = 6", "stale version protection");
+  contains(sql, "AND `body` LIKE '%9.1. Bu metin yalnızca 0 TL deneme erişimini kapsar.%'", "original scope precondition");
+  contains(sql, "`version` = `version` + 1", "new version 7");
+  contains(sql, "`lifecycleStatus` = 'review'", "never auto-approved");
+  contains(sql, "`active` = false", "must be explicitly reactivated");
+  for (const field of ["approvedById", "approvedAt", "activatedAt"]) {
+    contains(sql, "`" + field + "` = NULL", "no inherited approval: " + field);
+  }
+  notContains(sql, "INSERT INTO `ContractTemplateReviewEvidence`", "no fabricated admin approval");
+  notContains(sql, "`lifecycleStatus` = 'active'", "no automatic activation");
+});

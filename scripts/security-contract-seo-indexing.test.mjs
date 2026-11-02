@@ -1715,10 +1715,23 @@ test("Power-SEO full sitemap link graph is factual, read-only and bounded to its
   assert.equal(review.scannedPages, 3);
   assert.equal(review.internalEdges, 2);
   assert.deepEqual(review.noIncomingCandidates, ["https://ilkoku.com/yeni-cikanlar"]);
+  assert.deepEqual(review.lowIncomingCandidates, [{
+    url: "https://ilkoku.com/rehber", sourcePages: 1, classification: "manual-link-review-only",
+  }]);
   assert.equal(review.offSitemapTargets.length, 1);
   assert.equal(review.offSitemapTargets[0].url, "https://ilkoku.com/yazar");
   assert.equal(review.offSitemapTargets[0].classification, "manual-review-only");
   assert.match(review.scope, /not confirmed orphan pages/u);
+  const selfOnly = buildInternalLinkReview([
+    { url: "https://ilkoku.com/", internalLinks: ["https://ilkoku.com"] },
+    { url: "https://ilkoku.com/yalniz", internalLinks: ["https://ilkoku.com/yalniz"] },
+  ], new Set(["https://ilkoku.com", "https://ilkoku.com/yalniz"]));
+  assert.equal(selfOnly.internalEdges, 2, "self-links remain factual graph edges");
+  assert.deepEqual(selfOnly.noIncomingCandidates, ["https://ilkoku.com/yalniz"],
+    "a self-link must not conceal a page with zero incoming sources");
+  assert.deepEqual(selfOnly.lowIncomingCandidates, []);
+  assertContains(source("scripts/power-seo-live-census.mjs"), "sitemapLowIncomingLinkCandidates:",
+    "daily report must expose low-incoming page count");
 });
 
 

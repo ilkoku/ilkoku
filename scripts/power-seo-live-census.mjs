@@ -346,7 +346,7 @@ function buildInternalLinkReview(pages, sitemapUrls) {
     .map(([url, sourcePages]) => ({ url, sourcePages, classification: "manual-review-only" }))
     .sort((left, right) => right.sourcePages - left.sourcePages || left.url.localeCompare(right.url));
   return {
-    scope: "Links extracted from the complete public XML sitemap cohort. Incoming counts exclude self-links; external inbound sources remain unknown. Zero and low incoming counts are review candidates, not Google indexing failures. Off-sitemap URLs are not automatically broken.",
+    scope: "Links extracted from the complete public XML sitemap cohort. Incoming counts exclude self-links; external inbound sources remain unknown. Zero and low incoming counts are review candidates, not confirmed orphan pages or Google indexing failures. Off-sitemap URLs are not automatically broken.",
     scannedPages: pages.length, internalEdges, noIncomingCandidates, lowIncomingCandidates,
     offSitemapTargets: outsideTargets, pageLinks,
   };

@@ -525,7 +525,7 @@ test("0 TL admin readiness cannot show ready for an ineligible work despite appr
 });
 
 
-test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
+test("TEST209 historical promotion remains distinct while new checkout only allows real 0 TL sales", () => {
   const demo = source("src/features/commerce/test209-demo-access.ts");
   const checkout = source("src/features/commerce/checkout-actions.ts");
   const page = source("src/app/satinal/[slug]/page.tsx");
@@ -548,12 +548,13 @@ test("TEST209 0 TL demo is a narrow non-sale reader access grant", () => {
   lacks(demo, "transaction.payment.create", "no payment");
   lacks(demo, "transaction.financialLedger.create", "no commercial ledger");
   lacks(demo, "transaction.orderLegalSnapshot.create", "no fabricated legal party snapshot");
-  has(checkout, "completeTest209ZeroTlDemoAction", "separate user-authorized trial action");
-  has(checkout, 'getActiveReaderPurchaseTerms()', "active reader terms still required");
-  has(checkout, 'formData.get("acceptDemoAccess")', "explicit reader consent to test");
-  has(page, "test209DemoReady", "demo is rendered only when qualified");
-  has(page, "0 TL denemeyi etkinleştir", "usable 0 TL test action");
-  has(page, "gerçek bir satış veya ödeme olmadığını", "non-sale disclosure");
+  lacks(checkout, "completeTest209ZeroTlDemoAction", "retired demo server action cannot be submitted");
+  has(checkout, 'getActiveReaderPurchaseTerms()', "active reader terms remain mandatory");
+  lacks(page, "test209DemoReady", "retired demo readiness path is absent");
+  lacks(page, "0 TL denemeyi etkinleştir", "no new promotional grant through checkout");
+  lacks(page, "acceptDemoAccess", "no demo consent or promotional order substitute");
+  has(page, "completeZeroTotalCheckoutAction", "only genuine zero-total checkout action is offered");
+  has(page, "stagedZeroPurchaseReady", "unverified works still fail closed");
   has(library, "deneme-erisim", "reader receipt state");
   has(library, "completedDemo.id.slice", "non-order test reference");
   has(normal, "getVerifiedWorkSeller(work.id, transaction)", "real purchases still need seller verification");

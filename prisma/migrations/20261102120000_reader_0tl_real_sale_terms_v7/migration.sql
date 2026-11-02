@@ -22,7 +22,7 @@ SÜRÜM KABULÜ: Okuyucunun işlemi sırasında gösterilen ve kaydedilen sürü
 
 3. BEDEL, İNDİRİM VE ÖDEME YÖNTEMLERİ
 3.1. Bu koşullar yalnızca tüm indirim ve kuponlardan sonra nihai toplam tutarı tam olarak 0,00 TL olan işlemlere uygulanır. Varsa başlangıç fiyatı, kupon kodu, indirim tutarı, vergiler ve toplam tutar işlem öncesinde ayrı ayrı gösterilir.
-3.2. Banka/kredi kartı, mobil operatör üzerinden telefon faturasına yansıtma ve bu 0,00 TL bedelli gerçek satış işleminde kart, telefon faturası veya başka bir tahsilat yöntemi kullanılmaz. Okuyucudan ödeme bilgisi alınmaz, hesaptan para çekilmez ve Payment/tahsilat işlemi oluşturulmaz.
+3.2. Bu 0,00 TL bedelli gerçek satış işleminde banka/kredi kartı, telefon faturası veya başka bir tahsilat yöntemi kullanılmaz. Okuyucudan ödeme bilgisi alınmaz, hesaptan para çekilmez ve Payment/tahsilat işlemi oluşturulmaz.
 3.3. İşlem sonucunda okuyucuya ileride kendiliğinden yenilenen ücretli abonelik, otomatik ödeme veya borç doğmaz. Sonradan pozitif bedelli bir kullanım ancak ayrı ön bilgilendirme, yeni geçerli satış koşulları ve açık işlem onayı ile mümkün olabilir.
 
 4. ÖN BİLGİLENDİRME VE ONAY

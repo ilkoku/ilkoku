@@ -320,10 +320,13 @@ function buildInternalLinkReview(pages, sitemapUrls) {
   const pageLinks = pages.map((page) => {
     const inside = [];
     const outside = [];
-    for (const link of page.internalLinks) {
+    for (const link of new Set(page.internalLinks)) {
       if (sitemapUrls.has(link)) {
         inside.push(link);
-        incoming.set(link, (incoming.get(link) || 0) + 1);
+        // A page's own self-link is not an incoming link from another page.
+        if (link !== normalize(page.url)) {
+          incoming.set(link, (incoming.get(link) || 0) + 1);
+        }
         internalEdges += 1;
       } else {
         outside.push(link);
@@ -335,12 +338,16 @@ function buildInternalLinkReview(pages, sitemapUrls) {
   const noIncomingCandidates = [...incoming.entries()]
     .filter(([url, count]) => url !== normalize(ORIGIN + "/") && count === 0)
     .map(([url]) => url);
+  const lowIncomingCandidates = [...incoming.entries()]
+    .filter(([url, count]) => url !== normalize(ORIGIN + "/") && count >= 1 && count <= 2)
+    .map(([url, sourcePages]) => ({ url, sourcePages, classification: "manual-link-review-only" }))
+    .sort((a, b) => a.sourcePages - b.sourcePages || a.url.localeCompare(b.url));
   const outsideTargets = [...offSitemap.entries()]
     .map(([url, sourcePages]) => ({ url, sourcePages, classification: "manual-review-only" }))
     .sort((left, right) => right.sourcePages - left.sourcePages || left.url.localeCompare(right.url));
   return {
-    scope: "Links extracted from the complete public XML sitemap cohort. Incoming links from outside this cohort are unknown; missing incoming links are candidates, not confirmed orphan pages. Off-sitemap URLs are not automatically broken.",
-    scannedPages: pages.length, internalEdges, noIncomingCandidates,
+    scope: "Links extracted from the complete public XML sitemap cohort. Incoming counts exclude self-links; external inbound sources remain unknown. Zero and low incoming counts are review candidates, not Google indexing failures. Off-sitemap URLs are not automatically broken.",
+    scannedPages: pages.length, internalEdges, noIncomingCandidates, lowIncomingCandidates,
     offSitemapTargets: outsideTargets, pageLinks,
   };
 }
@@ -596,6 +603,7 @@ async function main() {
     pagesWithMultipleH1: validPages.filter((x) => x.h1Count > 1).length,
     sitemapInternalLinkEdges: linkReview.internalEdges,
     sitemapNoIncomingLinkCandidates: linkReview.noIncomingCandidates.length,
+    sitemapLowIncomingLinkCandidates: linkReview.lowIncomingCandidates.length,
     distinctOffSitemapLinkTargets: linkReview.offSitemapTargets.length,
     offSitemapPublicHttpChecked: offSitemapHttp.checked,
     offSitemapPublicHttpMissing: offSitemapHttp.results.filter((item) => item.outcome === "missing").length,
@@ -654,6 +662,9 @@ async function main() {
   }
   for (const url of linkReview.noIncomingCandidates.slice(0, 12)) {
     console.log(JSON.stringify({ noSitemapIncomingLinkReview: url }));
+  }
+  for (const item of linkReview.lowIncomingCandidates.slice(0, 15)) {
+    console.log(JSON.stringify({ lowSitemapIncomingLinkReview: item }));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
   for (const item of schemaIssues.slice(0, 25)) {

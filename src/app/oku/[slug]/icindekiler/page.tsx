@@ -27,6 +27,18 @@ function safeReturnPath(candidate: string | undefined, slug: string) {
   return candidate;
 }
 
+function isRepeatedBookLabel(label: string, title: string): boolean {
+  const normalize = (value: string) =>
+    value.trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+  const normalizedLabel = normalize(label);
+  const normalizedTitle = normalize(title);
+  if (normalizedLabel === normalizedTitle) return true;
+
+  // "1. Bölüm" and "Bölüm 1" are the same heading, not two subtitles.
+  const chapterLabel = normalizedLabel.match(/^(\d+)\.\s*bölüm$/);
+  return chapterLabel !== null && normalizedTitle === `bölüm ${chapterLabel[1]}`;
+}
+
 export default async function ReaderBookContents({
   params,
   searchParams,
@@ -64,6 +76,7 @@ export default async function ReaderBookContents({
         return {
           href: publishedBookItemHref(work.slug, item),
           id: item.structureItemId,
+          isContents: item.type === "special" && item.kind === "toc",
           label: item.type === "chapter"
             ? `${item.chapterPosition}. Bölüm`
             : bookSectionDetails[item.kind].label,
@@ -71,7 +84,7 @@ export default async function ReaderBookContents({
           page,
           title: item.title,
         };
-      })
+      }).filter((item) => !item.isContents)
     : work.chapters
         .filter((chapter) => chapter.status === "published" && chapter.archivedAt === null)
         .sort((a, b) => a.position - b.position)
@@ -102,7 +115,9 @@ export default async function ReaderBookContents({
             {items.map((item) => (
               <li key={item.id}>
                 <Link href={`${item.href}?from=${encodedReturnTo}`}>
-                  <span className="reader-book-contents__label">{item.label}</span>
+                  {!isRepeatedBookLabel(item.label, item.title) && (
+                    <span className="reader-book-contents__label">{item.label}</span>
+                  )}
                   <strong>{item.title}</strong>
                   <span className="reader-book-contents__page">
                     {item.locked ? "Kilitli" : item.page === null ? "Oku" : `${item.page}`}

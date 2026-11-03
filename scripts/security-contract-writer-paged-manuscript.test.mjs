@@ -174,7 +174,7 @@ test("author master becomes one immutable full-book publication snapshot for Rea
   includes(reading, "PublishedManuscriptViewport", "fixed publication renderer selection");
   includes(renderer, "splitPublishedPages", "Reader uses author page boundaries");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "only active one/two page spread is rendered");
-  includes(renderer, "spreadMode ? [leftNumber, leftNumber + 1]", "book layout never mounts more than two pages");
+  includes(renderer, "? [leftNumber, leftNumber + 1]", "book layout never mounts more than two pages");
   assert.equal(
     renderer.includes("bookPages.map((page) => paper(page"),
     false,

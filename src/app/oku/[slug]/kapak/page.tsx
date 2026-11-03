@@ -62,7 +62,7 @@ export default async function LiveBookCoverPage({
   const firstPageHref = firstPublishedBookItem
     ? `${publishedBookItemHref(work.slug, firstPublishedBookItem)}?from=${encodedReturnTo}`
     : firstChapter
-      ? `/oku/${work.slug}/bolum-${firstChapter.position}?from=${encodedReturnTo}`
+      ? contentsHref
       : null;
 
   return (
@@ -96,7 +96,9 @@ export default async function LiveBookCoverPage({
               Bu eserde henüz okunabilir bir kitap sayfası bulunmuyor.
             </p>
           )}
-          <Link href={contentsHref}>İçindekiler →</Link>
+          {firstPageHref !== contentsHref ? (
+            <Link href={contentsHref}>İçindekiler →</Link>
+          ) : null}
         </div>
       </section>
 

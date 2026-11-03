@@ -120,6 +120,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(showcase, "firstPublishedBookItem", "book discovers the first authored publication item");
   includes(showcase, "/kapak?from=", "new Reader enters the live book through its front cover");
   includes(coverPage, "publishedBookItemHref", "front cover opens the first authored publication item");
+  includes(coverPage, "firstChapter\n      ? contentsHref", "legacy cover opens contents before first chapter");
+  includes(coverPage, "firstPageHref !== contentsHref", "legacy cover does not show duplicate contents link");
   includes(coverPage, 'data-book-surface="front-cover"', "front cover stays outside numbered body pages");
   includes(coverStyles, "aspect-ratio: 148 / 210;", "actual author cover is fitted into the A5 paper ratio");
   includes(coverStyles, "object-fit: contain;", "author cover image is not cropped");

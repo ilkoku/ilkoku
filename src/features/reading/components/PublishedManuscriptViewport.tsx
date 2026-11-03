@@ -777,7 +777,9 @@ export function PublishedManuscriptViewport({
       <div className={styles.pageFrame} key={page.globalNumber}
         style={{ width: `${renderWidth}px`, height: `${renderHeight}px` }}>
         <article
-          aria-label={`Yayın sayfası ${page.globalNumber} / ${globalPageTotal}`}
+          aria-label={inCurrentItem && usesReaderReflow
+            ? `Okuma sayfası ${page.localIndex + 1} / ${pages.length}`
+            : `Yayın sayfası ${page.globalNumber} / ${globalPageTotal}`}
           className={styles.page}
           data-reader-paper-format="a5"
           data-personal-book-tool={inCurrentItem ? (activeTool ?? "none") : "none"}
@@ -864,7 +866,9 @@ export function PublishedManuscriptViewport({
             ))}
           </div>
           <span aria-hidden="true" className={styles.pageNumber}>
-            {page.globalNumber} / {globalPageTotal}
+            {inCurrentItem && usesReaderReflow
+              ? `${page.localIndex + 1} / ${pages.length}`
+              : `${page.globalNumber} / ${globalPageTotal}`}
           </span>
         </article>
         {!inCurrentItem && (
@@ -885,7 +889,9 @@ export function PublishedManuscriptViewport({
       data-book-page-number={globalPageNumber}
       data-book-page-total={globalPageTotal}
       data-publication-layout-version={layout.version}
-      data-publication-page-count={pages.length}
+      data-publication-page-count={savedPages.length}
+      data-reader-page-count={pages.length}
+      data-reader-reflow={usesReaderReflow ? "true" : "false"}
     >
       {readerModesEnabled ? <nav aria-label="Kitap görünümü ve bölümler" className={styles.bookToolbar}>
         <div aria-label="Okuma görünümü" className={styles.modeOptions} role="group">
@@ -919,9 +925,14 @@ export function PublishedManuscriptViewport({
           <span aria-hidden="true">←</span> Önceki Sayfa
         </button>
         <div aria-live="polite" className={styles.status}>
-          <strong>{spreadMode
-            ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
-            : globalPageNumber} / {globalPageTotal}</strong>
+          <strong>{usesReaderReflow
+            ? `${spreadMode
+              ? visiblePages.filter((page): page is BookPage => page !== null && page.itemId === currentItemId)
+                .map((page) => page.localIndex + 1).join("–")
+              : pageIndex + 1} / ${pages.length} (bölüm)`
+            : `${spreadMode
+              ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
+              : globalPageNumber} / ${globalPageTotal}`}</strong>
         </div>
         <button disabled={atLastVisiblePage}
           onClick={goNext} type="button">

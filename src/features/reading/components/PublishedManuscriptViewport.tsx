@@ -336,33 +336,48 @@ export function PublishedManuscriptViewport({
     }
   }
 
-  // The published snapshot is already commerce-redacted on the server. Never
-  // regenerate page boundaries or expose text from a locked chapter here.
+  // The server has already redacted other book items. Reflow only the active
+  // item's authorized text; use untouched source pages for neighbouring items.
   const bookPages = useMemo<BookPage[]>(() => {
     if (bookItems?.length) {
-      let globalNumber = 0;
-      return bookItems.flatMap((item) => splitPublishedPages(item.content, item.layout).map((page, index) => ({
-        content: item.content,
-        formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
-        globalNumber: ++globalNumber,
-        itemId: item.structureItemId,
-        isContentsPage: item.type === "special" && item.kind === "toc",
-        isChapter: item.type === "chapter",
-        layout: item.layout,
-        localIndex: index,
-        pageEnd: page.end,
-        pageStart: page.start,
-        previewText: facingPreviews.find((candidate) =>
-          candidate.itemId === item.structureItemId && candidate.localIndex === index,
-        )?.text ?? null,
-        subtitle: item.subtitle,
-        title: item.title,
-      } satisfies BookPage)));
+      let displayGlobal = 0;
+      let publishedGlobal = 0;
+      return bookItems.flatMap((item) => {
+        const originalStart = publishedGlobal;
+        publishedGlobal += item.layout.pageEnds.length;
+        const current = item.structureItemId === currentItemId;
+        const sourcePages = splitPublishedPages(item.content, item.layout);
+        const itemPages = current ? pages : sourcePages;
+        return itemPages.map((page, index) => {
+          const publishedIndex = current
+            ? findReaderPageForOffset(sourcePages, page.start)
+            : index;
+          return {
+            content: item.content,
+            formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
+            globalNumber: ++displayGlobal,
+            publishedGlobalNumber: originalStart + publishedIndex + 1,
+            itemId: item.structureItemId,
+            isContentsPage: item.type === "special" && item.kind === "toc",
+            isChapter: item.type === "chapter",
+            layout: item.layout,
+            localIndex: index,
+            pageEnd: page.end,
+            pageStart: page.start,
+            previewText: current ? null : facingPreviews.find((candidate) =>
+              candidate.itemId === item.structureItemId && candidate.localIndex === index,
+            )?.text ?? null,
+            subtitle: item.subtitle,
+            title: item.title,
+          } satisfies BookPage;
+        });
+      });
     }
     return pages.map((page, index) => ({
       content,
       formatting,
       globalNumber: bookPageStart + index,
+      publishedGlobalNumber: bookPageStart + findReaderPageForOffset(savedPages, page.start),
       itemId: currentItemId,
       isContentsPage: false,
       isChapter: true,
@@ -374,10 +389,13 @@ export function PublishedManuscriptViewport({
       subtitle: subtitle ?? null,
       title: chapterTitle,
     } satisfies BookPage));
-  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, facingPreviews, formatting, layout, pages, subtitle]);
+  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, facingPreviews, formatting, layout, pages, savedPages, subtitle]);
 
-  const globalPageNumber = bookPageStart + pageIndex;
-  const globalPageTotal = Math.max(globalPageNumber, bookTotalPages ?? bookPages.length);
+  const currentDisplayStart = bookPages.find((page) => page.itemId === currentItemId)?.globalNumber ?? bookPageStart;
+  const globalPageNumber = currentDisplayStart + Math.min(pageIndex, pages.length - 1);
+  const globalPageTotal = bookItems?.length
+    ? bookPages.length
+    : Math.max(globalPageNumber, (bookTotalPages ?? bookPageStart + savedPages.length - 1) - savedPages.length + pages.length);
   const spreadMode = readerModesEnabled && displayMode === "book" && !isNarrow;
   const leftNumber = globalPageNumber % 2 === 0 ? globalPageNumber : globalPageNumber - 1;
   const visibleNumbers = useMemo(() => spreadMode

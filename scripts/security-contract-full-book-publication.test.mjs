@@ -187,13 +187,20 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   const chapterView = source("src/features/reading/components/FocusedReadingExperience.tsx");
   const specialView = source("src/features/reading/components/PublishedBookSpecialPageExperience.tsx");
   const tools = source("src/features/reading/components/PublishedBookToolsContinuity.tsx");
+  const outline = source("src/features/reading/reader-book-outline.ts");
 
   includes(renderer, "BOOK_MODE_STORAGE_KEY", "reader mode is a display preference, not a publication mutation");
+  includes(renderer, "readerModesEnabled = false", "writer preview remains unchanged by reader-only modes");
+  includes(renderer, "readerModesEnabled ? (spreadMode ? 1.55 : 1.8) : 1", "author preview scale is unchanged");
+  includes(outline, "item.structureItemId === activeItemId", "only active item may supply complete content");
+  includes(outline, '{ ...item, content: "" }', "all other chapter content is removed before client serialization");
+  includes(outline, "preceding.content.slice(start, end)", "at most preceding facing page excerpt");
+  includes(outline, "following.content.slice(0, following.layout.pageEnds[0])", "at most following facing page excerpt");
   includes(renderer, 'data-book-display-mode={spreadMode ? "book" : "single"}', "two selectable views");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "bounded visible physical pages");
   includes(renderer, "spreadMode ? [leftNumber, leftNumber + 1]", "two-page spreads follow global book parity");
   includes(renderer, "splitPublishedPages(item.content, item.layout)", "author snapshot page boundaries never reflow");
-  includes(renderer, "const locked = !page.content && page.pageEnd > page.pageStart;", "redacted locked text stays unreadable");
+  includes(renderer, "const locked = !visibleText && page.pageEnd > page.pageStart;", "redacted locked text stays unreadable");
   includes(renderer, "inCurrentItem ? annotations : []", "marks cannot leak between publication items");
   includes(renderer, "const nextScale = Math.min(", "scale is calculated from real reader viewport");
   includes(renderer, "page.itemId !== currentItemId", "notes and page anchors are owned by active item");
@@ -211,7 +218,9 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   includes(chapterRoute, "getPersonalBookAnnotations", "published chapters use canonical private book notes");
   includes(chapterRoute, "PublishedBookToolsContinuity", "published chapter tool provider matches special pages");
   includes(specialRoute, "getPersonalBookAnnotations", "special page notes remain scoped");
-  includes(chapterView, "bookItems={publishedBook?.items}", "chapter receives safe publication sequence");
-  includes(specialView, "bookItems={publicationBook.items}", "special pages receive safe publication sequence");
+  includes(chapterView, "bookItems={bookDisplay.outline}", "chapter passes only the safe publication outline");
+  includes(specialView, "bookItems={bookDisplay.outline}", "special pages pass only the safe publication outline");
+  includes(chapterView, "facingPreviews={bookDisplay.facingPreviews}", "chapter provides only adjacent page excerpts");
+  includes(specialView, "facingPreviews={bookDisplay.facingPreviews}", "special pages provide only adjacent page excerpts");
   includes(tools, "useState(true)", "book tools start minimized");
 });

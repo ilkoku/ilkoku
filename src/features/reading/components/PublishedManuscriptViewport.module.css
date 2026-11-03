@@ -247,6 +247,38 @@
   line-height: 1.12;
 }
 
+/* Editorial chapter headings belong to the book, not to the typewriter body. */
+.bookSectionHeader {
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  text-align: center;
+}
+
+.bookSectionHeader strong {
+  width: 100%;
+  max-width: 100%;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.28;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.bookSectionHeader::after {
+  width: min(38%, 92px);
+  height: 1px;
+  margin-top: 10px;
+  background: rgba(95, 77, 46, 0.32);
+  content: "";
+}
+
+.contentsHeader strong {
+  font-variant: small-caps;
+  font-weight: 600;
+  letter-spacing: 0.075em;
+}
+
 .pageHeader p {
   margin: 8.8px 0 0;
   color: rgba(47, 42, 36, 0.58);

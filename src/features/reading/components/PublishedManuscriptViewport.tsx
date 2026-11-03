@@ -555,13 +555,15 @@ export function PublishedManuscriptViewport({
             end: size.end - page.pageStart,
           })),
         };
+    const isPhysicalContentsPage = page.isContentsPage;
+    const physicalPageItemId = page.itemId;
     // Automatic physical contents text stays unchanged, but chapter titles
     // navigate directly to their published item when no annotation tool is active.
     function contentsText(text: string) {
-      if (!page.isContentsPage || !bookItems || !workSlug) return text;
+      if (!isPhysicalContentsPage || !bookItems || !workSlug) return text;
       return text.split(/(\n\n)/u).map((part, partIndex) => {
         const target = bookItems.find((item) =>
-          item.structureItemId !== page.itemId && item.title.trim() === part.trim(),
+          item.structureItemId !== physicalPageItemId && item.title.trim() === part.trim(),
         );
         if (!target) return part;
         return (

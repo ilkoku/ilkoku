@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -96,6 +97,7 @@ function projectedPointsAttribute(
 
 export function PagedReadingViewport({
   children,
+  encodedReturnTo,
   estimatedBookEndPage,
   estimatedBookStartPage,
   estimatedBookTotalPages,
@@ -103,8 +105,10 @@ export function PagedReadingViewport({
   nextChapterHref,
   previousChapterHref,
   startAtLastPage = false,
+  workSlug,
 }: {
   children: ReactNode;
+  encodedReturnTo: string;
   estimatedBookEndPage: number;
   estimatedBookStartPage: number;
   estimatedBookTotalPages: number;
@@ -112,6 +116,7 @@ export function PagedReadingViewport({
   nextChapterHref?: string | null;
   previousChapterHref?: string | null;
   startAtLastPage?: boolean;
+  workSlug: string;
 }) {
   const router = useRouter();
   const tools = usePersonalReadingTools();
@@ -548,6 +553,10 @@ export function PagedReadingViewport({
         <div aria-label="Kitap görünümü seçimi" role="group">
           <button aria-pressed={displayMode === "book"} onClick={() => chooseMode("book")} type="button">Kitap</button>
           <button aria-pressed={displayMode === "single"} onClick={() => chooseMode("single")} type="button">Tek Sayfa</button>
+        </div>
+        <div className={styles.bookLinks}>
+          <Link href={`/oku/${workSlug}/kapak?from=${encodedReturnTo}`}>Kapak</Link>
+          <Link href={`/oku/${workSlug}/icindekiler?from=${encodedReturnTo}`}>İçindekiler</Link>
         </div>
       </nav>
       <div className={styles.readingSurface}>

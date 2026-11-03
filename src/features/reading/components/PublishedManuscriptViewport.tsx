@@ -265,18 +265,16 @@ export function PublishedManuscriptViewport({
     } satisfies BookPage));
   }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, formatting, layout, pages, subtitle]);
 
-  const currentPage = pages[pageIndex] ?? pages[0];
-  if (!currentPage) return null;
   const globalPageNumber = bookPageStart + pageIndex;
   const globalPageTotal = Math.max(globalPageNumber, bookTotalPages ?? bookPages.length);
   const spreadMode = displayMode === "book" && !isNarrow;
   const leftNumber = globalPageNumber % 2 === 0 ? globalPageNumber : globalPageNumber - 1;
-  const visibleNumbers = spreadMode
+  const visibleNumbers = useMemo(() => spreadMode
     ? [leftNumber, leftNumber + 1]
-    : [globalPageNumber];
-  const visiblePages = visibleNumbers.map(
+    : [globalPageNumber], [spreadMode, leftNumber, globalPageNumber]);
+  const visiblePages = useMemo(() => visibleNumbers.map(
     (number) => bookPages.find((page) => page.globalNumber === number) ?? null,
-  );
+  ), [visibleNumbers, bookPages]);
   const visibleCurrentIndices = visiblePages
     .filter((page): page is BookPage => page !== null && page.itemId === currentItemId)
     .map((page) => page.localIndex);
@@ -300,7 +298,7 @@ export function PublishedManuscriptViewport({
       availableHeight / naturalHeight,
     );
     setScale(Math.max(0.2, nextScale));
-  }, [layout.page.width, layout.page.height, spreadMode, visibleNumbers.join(",")]);
+  }, [layout.page.width, layout.page.height, spreadMode, visiblePages]);
 
   useEffect(() => {
     const stage = stageRef.current;

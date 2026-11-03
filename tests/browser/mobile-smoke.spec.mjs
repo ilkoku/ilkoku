@@ -3103,10 +3103,32 @@ test("legacy published reader switches Kitap / Tek Sayfa without changing conten
   expect(bookGeometry.columnCount).toBe("2");
   expect(bookGeometry.viewportHeight).toBeGreaterThan(300);
   expect(bookGeometry.scrollWidth).toBeGreaterThanOrEqual(bookGeometry.viewportWidth);
+  expect(bookGeometry.viewportHeight / bookGeometry.viewportWidth).toBeCloseTo(210 / 296, 1);
+  const paper = legacy.locator('[class*="frame"]');
+  await expect(paper.locator('[class*="legacyChapterTitle"]')).toBeVisible();
+  const readerTypography = await paper.locator(".chapter__body p").first().evaluate((element) => {
+    const computed = window.getComputedStyle(element);
+    return {
+      fontFamily: computed.fontFamily,
+      fontSize: parseFloat(computed.fontSize),
+      lineHeight: parseFloat(computed.lineHeight),
+    };
+  });
+  expect(readerTypography.fontSize).toBeCloseTo(14.67, 1);
+  expect(readerTypography.lineHeight / readerTypography.fontSize).toBeCloseTo(1.15, 1);
+  expect(readerTypography.fontFamily).toMatch(/Courier/i);
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
 
   await legacy.getByRole("button", { name: "Tek Sayfa", exact: true }).click();
   await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
+  const singleGeometry = await legacy.evaluate((node) => {
+    const viewport = node.querySelector('[aria-label="Okuma alanı"]');
+    return {
+      width: viewport?.clientWidth ?? 0,
+      height: viewport?.clientHeight ?? 0,
+    };
+  });
+  expect(singleGeometry.height / singleGeometry.width).toBeCloseTo(210 / 148, 1);
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
 
   await page.setViewportSize(viewports.phone390);

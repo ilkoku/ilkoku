@@ -591,3 +591,52 @@
     padding: 1rem;
   }
 }
+/* Published manuscripts share a single, roomy book surface. Legacy text readers
+   keep their existing layout and dimensions. */
+.publishedLayout {
+  width: min(100%, 92rem);
+  padding: clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+}
+
+.publishedLayout .chapterHeader,
+.publishedLayout .chapterBody {
+  max-width: 100%;
+}
+
+.publishedLayout .chapterHeader {
+  padding: 1.35rem clamp(1rem, 3vw, 2rem);
+  border-radius: 1rem 1rem 0 0;
+}
+
+.publishedLayout .chapterHeader h1 {
+  font-size: clamp(1.65rem, 3vw, 2.65rem);
+}
+
+.publishedLayout .chapterBody {
+  padding: clamp(0.9rem, 3vw, 1.8rem);
+  border-radius: 0 0 1rem 1rem;
+}
+
+.publishedLayout .comments {
+  max-width: 100%;
+}
+
+@media (min-width: 80rem) {
+  .publishedLayout {
+    padding-left: clamp(10rem, 16vw, 15rem);
+  }
+}
+
+@media (max-width: 48rem) {
+  .publishedLayout {
+    padding-inline: 0.75rem;
+  }
+
+  .publishedLayout .chapterHeader {
+    padding: 1.2rem;
+  }
+
+  .publishedLayout .chapterBody {
+    padding: 0.85rem;
+  }
+}

@@ -120,7 +120,8 @@ test("writer semantic formatting survives preview and reader publication renderi
   );
   includes(publishExperience, "parsePreviewFormatting", "single-preview formatting handoff");
   includes(publishedViewport, "formatting?.fontSizes", "published font-size range rendering");
-  includes(publishedViewport, 'fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined', "published selected font size style");
+  includes(publishedViewport, "fontSize: undefined", "11 point reader body does not mutate author inline-size metadata");
+  includes(publishedViewport, "formatting?.fontSizes", "author inline sizes remain in saved metadata for editing");
   includes(publishedViewport, 'segment.marks.includes("bold")', "published bold semantic rendering");
   includes(reader, "formatting={publicationFormatting}", "reader publication formatting handoff");
 });

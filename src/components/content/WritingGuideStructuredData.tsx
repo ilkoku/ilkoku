@@ -5,6 +5,8 @@ type WritingGuideStructuredDataProps = {
   description: string;
   categoryName: string;
   categoryUrl: string;
+  publishedAt?: Date | null;
+  updatedAt?: Date | null;
 };
 
 export function WritingGuideStructuredData({
@@ -13,6 +15,8 @@ export function WritingGuideStructuredData({
   description,
   categoryName,
   categoryUrl,
+  publishedAt,
+  updatedAt,
 }: WritingGuideStructuredDataProps) {
   const schema = [
     {
@@ -23,6 +27,8 @@ export function WritingGuideStructuredData({
       description,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
+      ...(publishedAt ? { datePublished: publishedAt.toISOString() } : {}),
+      ...(updatedAt ? { dateModified: updatedAt.toISOString() } : {}),
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },

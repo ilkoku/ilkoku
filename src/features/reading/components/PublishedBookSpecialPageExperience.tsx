@@ -12,6 +12,7 @@ import type { PublicWorkDetail } from "@/features/works/types";
 import { PublishedBookSelector } from "./PublishedBookSelector";
 import { PublishedBookToolsContinuity } from "./PublishedBookToolsContinuity";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
+import { buildReaderBookOutline } from "../reader-book-outline";
 import styles from "./FocusedReadingExperience.module.css";
 
 export function PublishedBookSpecialPageExperience({
@@ -56,6 +57,7 @@ export function PublishedBookSpecialPageExperience({
       : 1;
   const activeBookPageEnd =
     activeBookPageStart + item.layout.pageEnds.length - 1;
+  const bookDisplay = buildReaderBookOutline(publicationBook.items, item.structureItemId);
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${work.slug}`;
   const returnIsBookPage =
@@ -171,7 +173,8 @@ export function PublishedBookSpecialPageExperience({
             >
               <PublishedManuscriptViewport
                 activeItemId={item.structureItemId}
-                bookItems={publicationBook.items}
+                bookItems={bookDisplay.outline}
+                facingPreviews={bookDisplay.facingPreviews}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publicationBook.totalPages}
                 chapterTitle={item.title}

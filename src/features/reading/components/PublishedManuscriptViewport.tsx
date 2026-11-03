@@ -50,6 +50,7 @@ type BookPage = {
   globalNumber: number;
   itemId: string;
   isContentsPage: boolean;
+  isChapter: boolean;
   layout: PublicationLayoutSnapshot;
   localIndex: number;
   pageEnd: number;
@@ -260,6 +261,7 @@ export function PublishedManuscriptViewport({
         globalNumber: ++globalNumber,
         itemId: item.structureItemId,
         isContentsPage: item.type === "special" && item.kind === "toc",
+        isChapter: item.type === "chapter",
         layout: item.layout,
         localIndex: index,
         pageEnd: page.end,
@@ -277,6 +279,7 @@ export function PublishedManuscriptViewport({
       globalNumber: bookPageStart + index,
       itemId: currentItemId,
       isContentsPage: false,
+      isChapter: true,
       layout,
       localIndex: index,
       pageEnd: page.end,
@@ -556,15 +559,26 @@ export function PublishedManuscriptViewport({
     // Publication subtitles are platform editor instructions, not authored book text.
     // Keep them in immutable snapshots; do not print them in the Reader.
     // Fit the physical page title inside the actual space before the authored body.
-    const headerShowsWorkTitle = headerHeight >= 64;
+    const isBookSectionHeading = page.isContentsPage || page.isChapter;
+    // Contents and chapters are typeset as book section headings, not as
+    // an oversized duplicate of the writer's typewriter-format body.
+    const headerShowsWorkTitle = !isBookSectionHeading && headerHeight >= 64;
     const availableTitleHeight = Math.max(0, headerHeight - (headerShowsWorkTitle ? 24 : 0));
-    const titleFontSize = Math.min(
-      39.2,
-      Math.max(14, Math.min(
-        availableTitleHeight / 1.12,
-        bodyBox.width / Math.max(1, page.title.length * 0.55),
-      )),
-    );
+    const titleFontSize = isBookSectionHeading
+      ? Math.min(
+          page.isContentsPage ? 27 : 25,
+          Math.max(16, Math.min(
+            availableTitleHeight / 1.35,
+            bodyBox.width / Math.max(1, page.title.length * 0.62),
+          )),
+        )
+      : Math.min(
+          39.2,
+          Math.max(14, Math.min(
+            availableTitleHeight / 1.12,
+            bodyBox.width / Math.max(1, page.title.length * 0.55),
+          )),
+        );
     const ownAnnotations = inCurrentItem ? annotations : [];
     const visibleText = inCurrentItem ? page.content : (page.previewText ?? "");
     // A facing item carries only one physical-page excerpt, never its full text.
@@ -644,8 +658,8 @@ export function PublishedManuscriptViewport({
           }}
         >
           {page.localIndex === 0 && headerHeight >= 24 ? (
-            <header className={styles.pageHeader} style={{
-              fontFamily,
+            <header className={`${styles.pageHeader} ${isBookSectionHeading ? styles.bookSectionHeader : ""} ${page.isContentsPage ? styles.contentsHeader : ""}`} style={{
+              fontFamily: isBookSectionHeading ? 'Georgia, "Times New Roman", serif' : fontFamily,
               height: `${headerHeight}px`,
               left: `${bodyBox.left}px`,
               top: `${headerTop}px`,

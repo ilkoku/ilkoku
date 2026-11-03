@@ -121,7 +121,7 @@ export function PagedReadingViewport({
   const router = useRouter();
   const tools = usePersonalReadingTools();
   const annotations = tools?.annotations ?? [];
-  const [displayMode, setDisplayMode] = useState<BookDisplayMode>("single");
+  const [displayMode, setDisplayMode] = useState<BookDisplayMode>("book");
   const [isNarrow, setIsNarrow] = useState(false);
   const bookMode = displayMode === "book" && !isNarrow;
   const [pageCount, setPageCount] = useState(1);
@@ -553,8 +553,8 @@ export function PagedReadingViewport({
     <div className={styles.shell} data-legacy-book-layout={bookMode ? "book" : "single"}>
       <nav aria-label="Okuma görünümü" className={styles.modeToolbar}>
         <div aria-label="Kitap görünümü seçimi" role="group">
-          <button aria-pressed={displayMode === "book"} onClick={() => chooseMode("book")} type="button">Kitap</button>
-          <button aria-pressed={displayMode === "single"} onClick={() => chooseMode("single")} type="button">Tek Sayfa</button>
+          <button aria-pressed={bookMode} onClick={() => chooseMode("book")} type="button">Kitap</button>
+          <button aria-pressed={!bookMode} onClick={() => chooseMode("single")} type="button">Tek Sayfa</button>
         </div>
         <div className={styles.bookLinks}>
           <Link href={`/oku/${workSlug}/kapak?from=${encodedReturnTo}`}>Kapak</Link>

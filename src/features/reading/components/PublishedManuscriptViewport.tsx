@@ -460,18 +460,15 @@ export function PublishedManuscriptViewport({
     if (!request) return;
     const frame = window.requestAnimationFrame(() => {
       if (typeof request.pageIndex === "number") {
-        setPageIndex(Math.min(Math.max(0, request.pageIndex), Math.max(0, pages.length - 1)));
+        // Personal page points are stored against ORIGINAL author page indices.
+        const old = savedPages[Math.max(0, Math.min(savedPages.length - 1, request.pageIndex))];
+        setPageIndex(findReaderPageForOffset(pages, old?.start ?? 0));
       } else if (typeof request.startOffset === "number") {
-        const targetIndex = pages.findIndex((page, index) =>
-          request.startOffset! >= page.start &&
-          (request.startOffset! < page.end ||
-            (index === pages.length - 1 && request.startOffset === page.end)),
-        );
-        if (targetIndex >= 0) setPageIndex(targetIndex);
+        setPageIndex(findReaderPageForOffset(pages, request.startOffset));
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [pages, tools?.navigateRequest]);
+  }, [pages, savedPages, tools?.navigateRequest]);
 
   function blockInteraction(event: SyntheticEvent) {
     event.preventDefault();
@@ -510,7 +507,7 @@ export function PublishedManuscriptViewport({
     const item = bookItems?.find((candidate) => candidate.structureItemId === destination.itemId);
     if (item && workSlug) {
       router.push(
-        `${publishedBookItemHref(workSlug, item)}?from=${encodedBookReturn}&sayfa=${target}`,
+        `${publishedBookItemHref(workSlug, item)}?from=${encodedBookReturn}&sayfa=${destination.publishedGlobalNumber}`,
       );
     }
   }

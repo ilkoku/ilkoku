@@ -109,6 +109,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const renderer = source(
     "src/features/reading/components/PublishedManuscriptViewport.tsx",
   );
+  const readerReflow = source("src/features/reading/reader-a5-reflow.ts");
 
   includes(snapshots, "getLatestPublishedBookSnapshot", "full-book snapshot reader");
   includes(snapshots, "parsePublishedBookFromAuditMetadata", "audit-backed publication truth");
@@ -145,7 +146,24 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(continuityTools, 'title: "Kişisel işaretlere', "special page eraser icon keeps the canonical tool selector contract");
   includes(continuityTools, "aria-expanded={isListOpen}", "special page annotations-list icon uses canonical selector contract");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
-  includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
+  includes(renderer, "splitPublishedPages", "Reader retains immutable author pageEnds as source truth");
+  // Browser-measured reading pages do not change the signed publication
+  // snapshot, protected chapter access, or canonical personal annotations.
+  includes(readerReflow, "measureReaderA5PageEnds", "A5 reader-only content pagination");
+  includes(readerReflow, "probe.scrollHeight <= permittedHeight", "real measured text fitting instead of word-count estimates");
+  includes(readerReflow, "return start === content.length ? ends : null", "never publish a partial or truncated page layout");
+  includes(readerReflow, "probe.remove()", "temporary text measurement leaves no DOM copy");
+  includes(readerReflow, "sourceOffsetForPagePoint", "stored pins resolve to original source offsets");
+  includes(renderer, "const savedPages = useMemo(() => splitPublishedPages(content, layout)", "original publication pages remain intact");
+  includes(renderer, "const itemPages = current ? pages : sourcePages", "only authorized active book item can reflow");
+  includes(renderer, 'item.type === "special" && item.kind === "toc"', "table of contents links retain published positions");
+  includes(renderer, "destination.publishedGlobalNumber", "cross-section deep links preserve original page numbers");
+  includes(renderer, "sourceOffsetForPagePoint(savedPages", "existing page-point coordinates remain mapped");
+  includes(renderer, "findReaderPageForOffset(savedPages, sourceOffset)", "new personal pins persist against published pages");
+  includes(renderer, 'data-reader-reflow={usesReaderReflow ? "true" : "false"}', "reader reflow status available for browser QA");
+  includes(renderer, "fontFamily,", "original font family remains unmodified");
+  includes(renderer, "READER_BODY_FONT_SIZE_PX", "reader remains 11pt");
+  includes(renderer, "READER_BODY_LINE_HEIGHT_PX", "reader remains Word-like 1.15 spacing");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
   includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "legacy books can switch display layouts");
   includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "legacy books share the published-book preference");

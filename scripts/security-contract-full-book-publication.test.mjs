@@ -89,6 +89,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const queries = source("src/features/works/member-public-queries.ts");
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
   const coverPage = source("src/app/oku/[slug]/kapak/page.tsx");
+  const contentsPage = source("src/app/oku/[slug]/icindekiler/page.tsx");
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
   );
@@ -114,6 +115,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(showcase, "/kapak?from=", "new Reader enters the live book through its front cover");
   includes(coverPage, "publishedBookItemHref", "front cover opens the first authored publication item");
   includes(coverPage, 'data-book-surface="front-cover"', "front cover stays outside numbered body pages");
+  includes(coverPage, "href={bookInfoHref}", "cover returns to the actual work page");
+  includes(contentsPage, "href={bookInfoHref}", "contents returns to the actual work page");
   includes(showcase, "publicationBook?.totalPages", "exact physical published page count");
   includes(chapterReader, "publishedBookItemHref", "chapter-to-book-item navigation");
   includes(chapterReader, "previousBookItem", "previous authored book item");
@@ -139,7 +142,12 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
-  includes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published header renders Writer subtitle");
+  excludes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published Reader must not print platform editor helper text");
+  includes(renderer, "headerShowsWorkTitle", "published page heading adapts to available space");
+  includes(renderer, "titleFontSize", "published page heading avoids clipping on short header boxes");
+  includes(renderer, "isContentsPage: item.type === \"special\" && item.kind === \"toc\"", "automatic physical contents page identified from book snapshot");
+  includes(renderer, "contentsText(segment.text)", "contents lines retain original text while linking to book items");
+  includes(renderer, "if (activeTool) event.preventDefault()", "personal annotation tools do not trigger contents navigation");
 });
 
 test("published special pages persist private marks against immutable publication items", () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -48,6 +49,7 @@ type BookPage = {
   formatting: ChapterFormatting | null;
   globalNumber: number;
   itemId: string;
+  isContentsPage: boolean;
   layout: PublicationLayoutSnapshot;
   localIndex: number;
   pageEnd: number;
@@ -257,6 +259,7 @@ export function PublishedManuscriptViewport({
         formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
         globalNumber: ++globalNumber,
         itemId: item.structureItemId,
+        isContentsPage: item.type === "special" && item.kind === "toc",
         layout: item.layout,
         localIndex: index,
         pageEnd: page.end,
@@ -273,6 +276,7 @@ export function PublishedManuscriptViewport({
       formatting,
       globalNumber: bookPageStart + index,
       itemId: currentItemId,
+      isContentsPage: false,
       layout,
       localIndex: index,
       pageEnd: page.end,
@@ -519,6 +523,18 @@ export function PublishedManuscriptViewport({
     const fontFamily = fontFamilies[pageLayout.typography.font];
     const headerTop = Math.max(24, bodyBox.top - 118);
     const headerHeight = Math.max(0, bodyBox.top - headerTop - 10);
+    // Publication subtitles are platform editor instructions, not authored book text.
+    // Keep them in immutable snapshots; do not print them in the Reader.
+    // Fit the physical page title inside the actual space before the authored body.
+    const headerShowsWorkTitle = headerHeight >= 64;
+    const availableTitleHeight = Math.max(0, headerHeight - (headerShowsWorkTitle ? 24 : 0));
+    const titleFontSize = Math.min(
+      39.2,
+      Math.max(14, Math.min(
+        availableTitleHeight / 1.12,
+        bodyBox.width / Math.max(1, page.title.length * 0.55),
+      )),
+    );
     const ownAnnotations = inCurrentItem ? annotations : [];
     const visibleText = inCurrentItem ? page.content : (page.previewText ?? "");
     // A facing item carries only one physical-page excerpt, never its full text.
@@ -539,6 +555,30 @@ export function PublishedManuscriptViewport({
             end: size.end - page.pageStart,
           })),
         };
+    const isPhysicalContentsPage = page.isContentsPage;
+    const physicalPageItemId = page.itemId;
+    // Automatic physical contents text stays unchanged, but chapter titles
+    // navigate directly to their published item when no annotation tool is active.
+    function contentsText(text: string) {
+      if (!isPhysicalContentsPage || !bookItems || !workSlug) return text;
+      return text.split(/(\n\n)/u).map((part, partIndex) => {
+        const target = bookItems.find((item) =>
+          item.structureItemId !== physicalPageItemId && item.title.trim() === part.trim(),
+        );
+        if (!target) return part;
+        return (
+          <Link
+            className={styles.contentsLink}
+            href={`${publishedBookItemHref(workSlug, target)}?from=${encodedBookReturn}`}
+            key={`${target.structureItemId}-${partIndex}`}
+            onClick={(event) => { if (activeTool) event.preventDefault(); }}
+          >
+            {part}
+          </Link>
+        );
+      });
+    }
+
     const pageSegments = buildPageSegments({
       annotations: ownAnnotations,
       content: visibleText,
@@ -573,7 +613,7 @@ export function PublishedManuscriptViewport({
             transform: `scale(${scale})`,
           }}
         >
-          {page.localIndex === 0 ? (
+          {page.localIndex === 0 && headerHeight >= 24 ? (
             <header className={styles.pageHeader} style={{
               fontFamily,
               height: `${headerHeight}px`,
@@ -581,9 +621,8 @@ export function PublishedManuscriptViewport({
               top: `${headerTop}px`,
               width: `${bodyBox.width}px`,
             }}>
-              <span>{workTitle}</span>
-              <strong>{page.title}</strong>
-              {page.subtitle ? <p>{page.subtitle}</p> : null}
+              {headerShowsWorkTitle ? <span>{workTitle}</span> : null}
+              <strong style={{ fontSize: `${titleFontSize}px` }}>{page.title}</strong>
             </header>
           ) : null}
           {locked ? (
@@ -615,7 +654,7 @@ export function PublishedManuscriptViewport({
                   }}
                   style={segmentStyle(segment)}
                 >
-                  {segment.text}
+                  {contentsText(segment.text)}
                 </span>
               ))}
             </div>

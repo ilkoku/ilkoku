@@ -38,6 +38,7 @@ export default async function ReaderBookContents({
   const returnTo = safeReturnPath(query.from, slug);
   const encodedReturnTo = encodeURIComponent(returnTo);
   const contentsPath = `/oku/${slug}/icindekiler?from=${encodedReturnTo}`;
+  const bookInfoHref = `/kitap/${slug}?from=${encodedReturnTo}`;
   const session = await getCurrentSessionContext();
   if (!session) {
     redirect(`/giris?sonraki=${encodeURIComponent(contentsPath)}`);
@@ -89,7 +90,7 @@ export default async function ReaderBookContents({
   return (
     <main className="reader-book-contents">
       <nav className="reader-book-contents__top" aria-label="Kitap üst menüsü">
-        <Link href={returnTo}>← Eser sayfası</Link>
+        <Link href={bookInfoHref}>← Eser sayfası</Link>
         <Link href={`/oku/${work.slug}/kapak?from=${encodedReturnTo}`}>Kapak</Link>
       </nav>
       <div className="reader-book-contents__paper">

@@ -37,6 +37,7 @@ export default async function LiveBookCoverPage({
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const returnTo = getSafeReturnPath(query.from, slug);
   const returnPath = `/oku/${slug}/kapak?from=${encodeURIComponent(returnTo)}`;
+  const bookInfoHref = `/kitap/${slug}?from=${encodeURIComponent(returnTo)}`;
   const auth = await getCurrentSessionContext();
 
   if (!auth) {
@@ -71,7 +72,7 @@ export default async function LiveBookCoverPage({
       aria-labelledby="live-book-title"
     >
       <div className="live-book-cover__toolbar">
-        <Link href={returnTo}>← Eser bilgilerine dön</Link>
+        <Link href={bookInfoHref}>← Eser bilgilerine dön</Link>
         <span>Numarasız ön kapak</span>
       </div>
 

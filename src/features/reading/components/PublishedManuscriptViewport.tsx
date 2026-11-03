@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -48,6 +49,7 @@ type BookPage = {
   formatting: ChapterFormatting | null;
   globalNumber: number;
   itemId: string;
+  isContentsPage: boolean;
   layout: PublicationLayoutSnapshot;
   localIndex: number;
   pageEnd: number;
@@ -257,6 +259,7 @@ export function PublishedManuscriptViewport({
         formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
         globalNumber: ++globalNumber,
         itemId: item.structureItemId,
+        isContentsPage: item.type === "special" && item.kind === "toc",
         layout: item.layout,
         localIndex: index,
         pageEnd: page.end,
@@ -273,6 +276,7 @@ export function PublishedManuscriptViewport({
       formatting,
       globalNumber: bookPageStart + index,
       itemId: currentItemId,
+      isContentsPage: false,
       layout,
       localIndex: index,
       pageEnd: page.end,
@@ -551,6 +555,28 @@ export function PublishedManuscriptViewport({
             end: size.end - page.pageStart,
           })),
         };
+    // Automatic physical contents text stays unchanged, but chapter titles
+    // navigate directly to their published item when no annotation tool is active.
+    function contentsText(text: string) {
+      if (!page.isContentsPage || !bookItems || !workSlug) return text;
+      return text.split(/(\n\n)/u).map((part, partIndex) => {
+        const target = bookItems.find((item) =>
+          item.structureItemId !== page.itemId && item.title.trim() === part.trim(),
+        );
+        if (!target) return part;
+        return (
+          <Link
+            className={styles.contentsLink}
+            href={`${publishedBookItemHref(workSlug, target)}?from=${encodedBookReturn}`}
+            key={`${target.structureItemId}-${partIndex}`}
+            onClick={(event) => { if (activeTool) event.preventDefault(); }}
+          >
+            {part}
+          </Link>
+        );
+      });
+    }
+
     const pageSegments = buildPageSegments({
       annotations: ownAnnotations,
       content: visibleText,
@@ -626,7 +652,7 @@ export function PublishedManuscriptViewport({
                   }}
                   style={segmentStyle(segment)}
                 >
-                  {segment.text}
+                  {contentsText(segment.text)}
                 </span>
               ))}
             </div>

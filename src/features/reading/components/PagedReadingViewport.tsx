@@ -210,7 +210,9 @@ export function PagedReadingViewport({
   useEffect(() => {
     // Legacy point/drawing coordinates depend on the original single-page viewport.
     // Never rewrite saved anchors or position them inaccurately on a reflowed spread.
-    if (bookMode && (pointMode || drawingMode)) chooseMode("single");
+    if (!bookMode || (!pointMode && !drawingMode)) return;
+    const frame = window.requestAnimationFrame(() => chooseMode("single"));
+    return () => window.cancelAnimationFrame(frame);
   }, [bookMode, pointMode, drawingMode, chooseMode]);
 
   const syncViewportMetrics = useCallback((viewport: HTMLDivElement) => {

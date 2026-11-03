@@ -30,6 +30,12 @@ import type { PersonalBookAnnotationRecord } from "../personal-book-annotation-t
 import type { ReaderFacingPagePreview } from "../reader-book-outline";
 import { parsePersonalPagePointAnchor } from "../personal-page-point-anchor";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
+import {
+  findReaderPageForOffset,
+  measureReaderA5PageEnds,
+  readerTextPages,
+  sourceOffsetForPagePoint,
+} from "../reader-a5-reflow";
 import { usePublishedBookTools } from "./PublishedBookToolsContinuity";
 import styles from "./PublishedManuscriptViewport.module.css";
 
@@ -73,6 +79,7 @@ type BookPage = {
   content: string;
   formatting: ChapterFormatting | null;
   globalNumber: number;
+  publishedGlobalNumber: number;
   itemId: string;
   isContentsPage: boolean;
   isChapter: boolean;
@@ -223,15 +230,69 @@ export function PublishedManuscriptViewport({
 }) {
   const router = useRouter();
   const tools = usePublishedBookTools();
-  const pages = useMemo(() => splitPublishedPages(content, layout), [content, layout]);
+  const savedPages = useMemo(() => splitPublishedPages(content, layout), [content, layout]);
   const currentItemId = activeItemId ?? "current-publication-item";
-  const initialIndex = () => startAtLastPage
-    ? Math.max(0, pages.length - 1)
-    : typeof initialBookPage === "number" &&
-      initialBookPage >= bookPageStart &&
-      initialBookPage < bookPageStart + pages.length
+  const isContentsItem = bookItems?.some(
+    (item) => item.structureItemId === currentItemId &&
+      item.type === "special" && item.kind === "toc",
+  ) ?? false;
+  const paginationKey = [
+    currentItemId,
+    content.length,
+    layout.pageEnds.join(","),
+    layout.typography.font,
+    layout.typography.letterSpacing,
+  ].join("|");
+  const [measuredReaderPages, setMeasuredReaderPages] = useState<{
+    key: string;
+    ends: number[];
+  } | null>(null);
+  const readerEnds = measuredReaderPages?.key === paginationKey
+    ? measuredReaderPages.ends
+    : null;
+  const pages = useMemo(
+    () => readerEnds ? readerTextPages(readerEnds) : savedPages,
+    [readerEnds, savedPages],
+  );
+  const usesReaderReflow = readerEnds !== null;
+
+  // This measurement consumes only the already-authorized current item.
+  // Other/locked book sections remain redacted, and published pageEnds persist.
+  useEffect(() => {
+    if (!content || isContentsItem) return;
+    let cancelled = false;
+    let frame = 0;
+    const measure = () => {
+      if (cancelled) return;
+      const fontFamily = fontFamilies[layout.typography.font];
+      const ends = measureReaderA5PageEnds({
+        content,
+        firstBody: canonicalBodyBox(layout.page.firstBody, layout),
+        continuationBody: canonicalBodyBox(layout.page.continuationBody, layout),
+        fontFamily,
+        letterSpacing: layout.typography.letterSpacing,
+      });
+      if (cancelled || !ends) return;
+      const changed = ends.length !== layout.pageEnds.length ||
+        ends.some((end, index) => end !== layout.pageEnds[index]);
+      if (changed) setMeasuredReaderPages({ key: paginationKey, ends });
+    };
+    void document.fonts.ready.then(() => {
+      if (!cancelled) frame = window.requestAnimationFrame(measure);
+    });
+    return () => {
+      cancelled = true;
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [content, isContentsItem, layout, paginationKey]);
+  const initialIndex = () => {
+    if (startAtLastPage) return Math.max(0, pages.length - 1);
+    const publishedIndex = typeof initialBookPage === "number"
       ? initialBookPage - bookPageStart
       : 0;
+    const originalOffset = savedPages[Math.max(0, Math.min(savedPages.length - 1, publishedIndex))]?.start ?? 0;
+    return findReaderPageForOffset(pages, originalOffset);
+  };
   const [pageIndex, setPageIndex] = useState(initialIndex);
   const [displayMode, setDisplayMode] = useState<BookDisplayMode>(readerModesEnabled ? "book" : "single");
   const [isNarrow, setIsNarrow] = useState(false);
@@ -264,7 +325,7 @@ export function PublishedManuscriptViewport({
     const frame = window.requestAnimationFrame(() => setPageIndex(initialIndex()));
     return () => window.cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialBookPage, startAtLastPage, bookPageStart, content]);
+  }, [initialBookPage, startAtLastPage, bookPageStart, content, pages]);
 
   function chooseMode(next: BookDisplayMode) {
     setDisplayMode(next);

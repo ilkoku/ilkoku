@@ -142,6 +142,11 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
+  includes(renderer, "const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth", "facing pages meet at one book spine");
+  includes(renderer, "lastVisiblePageNumber", "reader computes final visible page instead of only active page");
+  includes(renderer, "disabled={atLastVisiblePage}", "last facing spread does not offer a dead next-page button");
+  includes(renderer, 'data-page-spread={spreadMode ? "facing" : "single"}', "reader exposes the physical book layout state");
+
   excludes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published Reader must not print platform editor helper text");
   includes(renderer, "headerShowsWorkTitle", "published page heading adapts to available space");
   includes(renderer, "titleFontSize", "published page heading avoids clipping on short header boxes");

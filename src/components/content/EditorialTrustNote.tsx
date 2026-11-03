@@ -1,8 +1,11 @@
 import Link from "next/link";
 
+import type { AuthoritativeGuideSource } from "@/lib/authoritative-guide-sources";
+
 type EditorialTrustNoteProps = {
   context: "writing" | "reading" | "editing";
   expertVerificationRequired?: boolean;
+  authoritativeSources?: readonly AuthoritativeGuideSource[];
 };
 
 const contextCopy = {
@@ -26,6 +29,7 @@ const contextCopy = {
 export function EditorialTrustNote({
   context,
   expertVerificationRequired = false,
+  authoritativeSources = [],
 }: EditorialTrustNoteProps) {
   const copy = contextCopy[context];
 
@@ -66,6 +70,33 @@ export function EditorialTrustNote({
           <p className="mt-2 text-sm leading-7 text-[#696270]">{copy.firstParty}</p>
         </section>
       </div>
+
+      {authoritativeSources.length > 0 ? (
+        <section className="mt-4 rounded-[1.3rem] border border-[#2d6f56]/15 bg-[#f3fbf7] p-5" aria-labelledby="authoritative-sources-heading">
+          <h3 id="authoritative-sources-heading" className="text-sm font-extrabold text-[#214f40]">
+            Yetkili ve birincil kaynaklar
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-[#536b62]">
+            Olgusal bilgiler yayımlanmadan önce aşağıdaki güncel resmî kaynaklarla karşılaştırılmalıdır.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {authoritativeSources.map((source) => (
+              <li className="rounded-xl border border-[#2d6f56]/10 bg-white p-4" key={source.url}>
+                <a
+                  className="font-extrabold text-[#23624d] underline decoration-[#23624d]/25 underline-offset-4"
+                  href={source.url}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  {source.title}
+                </a>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#6a7d76]">{source.publisher}</p>
+                <p className="mt-2 text-sm leading-6 text-[#5d6f68]">{source.purpose}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {expertVerificationRequired ? (
         <div className="mt-4 rounded-[1.3rem] border border-[#b86b2c]/20 bg-[#fff8ef] p-5">

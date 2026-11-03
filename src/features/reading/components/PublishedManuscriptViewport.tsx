@@ -595,10 +595,23 @@ export function PublishedManuscriptViewport({
       event.target.closest("[data-personal-book-annotation='true']")
     ) return;
     const rectangle = event.currentTarget.getBoundingClientRect();
+    const clickY = clamp01((event.clientY - rectangle.top) / Math.max(1, rectangle.height));
+    const clickX = clamp01((event.clientX - rectangle.left) / Math.max(1, rectangle.width));
+    // Store NEW reader points in original page coordinates, so the signed
+    // publication, bookmark list, and previously saved annotation IDs survive.
+    const sourceOffset = page.pageStart +
+      Math.round((page.pageEnd - page.pageStart) * clickY);
+    const sourcePageIndex = usesReaderReflow
+      ? findReaderPageForOffset(savedPages, sourceOffset)
+      : page.localIndex;
+    const sourcePage = savedPages[sourcePageIndex];
+    const sourceY = usesReaderReflow && sourcePage
+      ? clamp01((sourceOffset - sourcePage.start) / Math.max(1, sourcePage.end - sourcePage.start))
+      : clickY;
     void tools.applyPagePointAnchor({
-      pageIndex: page.localIndex,
-      x: clamp01((event.clientX - rectangle.left) / Math.max(1, rectangle.width)),
-      y: clamp01((event.clientY - rectangle.top) / Math.max(1, rectangle.height)),
+      pageIndex: sourcePageIndex,
+      x: clickX,
+      y: sourceY,
     });
   }
 

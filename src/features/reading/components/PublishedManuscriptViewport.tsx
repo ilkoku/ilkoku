@@ -748,12 +748,30 @@ export function PublishedManuscriptViewport({
       pageEnd: inCurrentItem ? page.pageEnd : visibleText.length,
       pageStart: inCurrentItem ? page.pageStart : 0,
     });
-    const pagePointAnnotations = ownAnnotations
-      .map((annotation) => ({
+    const pagePointAnnotations = ownAnnotations.flatMap((annotation) => {
+      const point = parsePersonalPagePointAnchor(annotation.pathData);
+      if (!point) return [];
+      if (!usesReaderReflow) {
+        return point.pageIndex === page.localIndex
+          ? [{ annotation, x: point.x, y: point.y }]
+          : [];
+      }
+      // A legacy point can be re-anchored visually without mutating its
+      // original pageIndex, path data, or note. Its position is approximate.
+      const sourceOffset = sourceOffsetForPagePoint(savedPages, point.pageIndex, point.y);
+      const readerIndex = findReaderPageForOffset(pages, sourceOffset);
+      if (readerIndex !== page.localIndex) return [];
+      const position = clamp01(
+        (sourceOffset - page.pageStart) / Math.max(1, page.pageEnd - page.pageStart),
+      );
+      const relativeTop = bodyBox.top / A5_PAGE_HEIGHT_PX;
+      const relativeHeight = bodyBox.height / A5_PAGE_HEIGHT_PX;
+      return [{
         annotation,
-        point: parsePersonalPagePointAnchor(annotation.pathData),
-      }))
-      .filter((entry) => entry.point && entry.point.pageIndex === page.localIndex);
+        x: point.x,
+        y: clamp01(relativeTop + relativeHeight * (0.05 + 0.9 * position)),
+      }];
+    });
     const locked = !visibleText && page.pageEnd > page.pageStart;
     return (
       <div className={styles.pageFrame} key={page.globalNumber}
@@ -822,7 +840,7 @@ export function PublishedManuscriptViewport({
               ))}
             </div>
           )}
-          {pagePointAnnotations.map(({ annotation, point }) => point ? (
+          {pagePointAnnotations.map(({ annotation, x, y }) => (
             <button
               aria-label={annotation.type === "reading_position" ? "Kaldığım yer işareti" : "Kişisel iğne"}
               className={styles.pointAnnotation}
@@ -834,12 +852,12 @@ export function PublishedManuscriptViewport({
                 event.stopPropagation();
                 if (eraserMode) void tools?.deleteAnnotation(annotation.id);
               }}
-              style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }}
+              style={{ left: `${x * 100}%`, top: `${y * 100}%` }}
               type="button"
             >
               <span aria-hidden="true">{annotation.type === "reading_position" ? "⌑" : "⌖"}</span>
             </button>
-          ) : null)}
+          ))}
           <div aria-hidden="true" className={styles.watermarkLayer}>
             {watermarkCopies.map((copy) => (
               <span key={copy}>{identity} · İlkOku güvenli okuma</span>

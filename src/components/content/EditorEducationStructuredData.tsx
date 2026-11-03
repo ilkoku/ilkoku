@@ -1,3 +1,4 @@
+import { getEditorEducationArticleDates } from "@/lib/cms-editor-education";
 import { publicBrandSocialImage } from "@/lib/public-brand";
 
 const siteUrl = "https://ilkoku.com";
@@ -14,12 +15,22 @@ function absoluteUrl(value: string) {
   return `${siteUrl}${path}`;
 }
 
-export function EditorEducationStructuredData({
+export async function EditorEducationStructuredData({
   title,
   description,
   canonical,
 }: EditorEducationStructuredDataProps) {
   const pageUrl = absoluteUrl(canonical);
+  const categorySlug = canonical.split("/").filter(Boolean).at(-1) ?? "";
+  let publicationDates: Awaited<ReturnType<typeof getEditorEducationArticleDates>> = {
+    publishedAt: null,
+    updatedAt: null,
+  };
+  try {
+    publicationDates = await getEditorEducationArticleDates(categorySlug);
+  } catch {
+    // Structured-data freshness is optional; a CMS outage must not hide the public lesson.
+  }
   const schema = [
     {
       "@context": "https://schema.org",
@@ -31,6 +42,12 @@ export function EditorEducationStructuredData({
         "@type": "WebPage",
         "@id": pageUrl,
       },
+      ...(publicationDates.publishedAt
+        ? { datePublished: publicationDates.publishedAt.toISOString() }
+        : {}),
+      ...(publicationDates.updatedAt
+        ? { dateModified: publicationDates.updatedAt.toISOString() }
+        : {}),
       image: `${siteUrl}${publicBrandSocialImage}`,
       author: {
         "@type": "Organization",

@@ -289,7 +289,12 @@
 .pageText {
   position: absolute;
   z-index: 1;
-  overflow: hidden;
+  /* Existing immutable pageEnds remain the source of truth. If a rare old
+     authored page exceeds the new A5 body, keep every word reachable. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
   color: #2f2a24;
   font-weight: 400;
   overflow-wrap: break-word;

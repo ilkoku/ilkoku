@@ -26,6 +26,7 @@ import type {
   InlineMarkType,
 } from "@/features/works/rich-text-formatting";
 import type { PersonalBookAnnotationRecord } from "../personal-book-annotation-types";
+import type { ReaderFacingPagePreview } from "../reader-book-outline";
 import { parsePersonalPagePointAnchor } from "../personal-page-point-anchor";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
 import { usePublishedBookTools } from "./PublishedBookToolsContinuity";
@@ -51,6 +52,7 @@ type BookPage = {
   localIndex: number;
   pageEnd: number;
   pageStart: number;
+  previewText: string | null;
   subtitle: string | null;
   title: string;
 };
@@ -154,6 +156,7 @@ export function PublishedManuscriptViewport({
   chapterTitle,
   content,
   encodedReturnTo,
+  facingPreviews = [],
   formatting = null,
   identity,
   initialBookPage = null,
@@ -175,6 +178,7 @@ export function PublishedManuscriptViewport({
   chapterTitle: string;
   content: string;
   encodedReturnTo?: string;
+  facingPreviews?: ReaderFacingPagePreview[];
   formatting?: ChapterFormatting | null;
   identity: string;
   initialBookPage?: number | null;
@@ -250,6 +254,9 @@ export function PublishedManuscriptViewport({
         localIndex: index,
         pageEnd: page.end,
         pageStart: page.start,
+        previewText: facingPreviews.find((candidate) =>
+          candidate.itemId === item.structureItemId && candidate.localIndex === index,
+        )?.text ?? null,
         subtitle: item.subtitle,
         title: item.title,
       } satisfies BookPage)));
@@ -263,10 +270,11 @@ export function PublishedManuscriptViewport({
       localIndex: index,
       pageEnd: page.end,
       pageStart: page.start,
+      previewText: null,
       subtitle: subtitle ?? null,
       title: chapterTitle,
     } satisfies BookPage));
-  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, formatting, layout, pages, subtitle]);
+  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, facingPreviews, formatting, layout, pages, subtitle]);
 
   const globalPageNumber = bookPageStart + pageIndex;
   const globalPageTotal = Math.max(globalPageNumber, bookTotalPages ?? bookPages.length);
@@ -505,12 +513,31 @@ export function PublishedManuscriptViewport({
     const headerTop = Math.max(24, bodyBox.top - 118);
     const headerHeight = Math.max(0, bodyBox.top - headerTop - 10);
     const ownAnnotations = inCurrentItem ? annotations : [];
+    const visibleText = inCurrentItem ? page.content : (page.previewText ?? "");
+    // A facing item carries only one physical-page excerpt, never its full text.
+    // Shift formatting offsets to that excerpt without altering the author snapshot.
+    const segmentFormatting = inCurrentItem || !page.formatting
+      ? page.formatting
+      : {
+          ...page.formatting,
+          contentLength: visibleText.length,
+          marks: page.formatting.marks.map((mark) => ({
+            ...mark,
+            start: mark.start - page.pageStart,
+            end: mark.end - page.pageStart,
+          })),
+          fontSizes: page.formatting.fontSizes.map((size) => ({
+            ...size,
+            start: size.start - page.pageStart,
+            end: size.end - page.pageStart,
+          })),
+        };
     const pageSegments = buildPageSegments({
       annotations: ownAnnotations,
-      content: page.content,
-      formatting: page.formatting,
-      pageEnd: page.pageEnd,
-      pageStart: page.pageStart,
+      content: visibleText,
+      formatting: segmentFormatting,
+      pageEnd: inCurrentItem ? page.pageEnd : visibleText.length,
+      pageStart: inCurrentItem ? page.pageStart : 0,
     });
     const pagePointAnnotations = ownAnnotations
       .map((annotation) => ({
@@ -518,7 +545,7 @@ export function PublishedManuscriptViewport({
         point: parsePersonalPagePointAnchor(annotation.pathData),
       }))
       .filter((entry) => entry.point && entry.point.pageIndex === page.localIndex);
-    const locked = !page.content && page.pageEnd > page.pageStart;
+    const locked = !visibleText && page.pageEnd > page.pageStart;
     return (
       <div className={styles.pageFrame} key={page.globalNumber}
         style={{ width: `${renderWidth}px`, height: `${renderHeight}px` }}>

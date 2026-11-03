@@ -233,6 +233,10 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   includes(contents, "enforceAdultWorkGate", "adult work restriction is kept");
   includes(contents, "getMemberPublicWorkBySlug", "TOC uses commerce-aware published snapshot");
   includes(contents, "work.publicationBook.items.map", "special pages and chapters retain authored order");
+  includes(contents, 'isContents: item.type === "special" && item.kind === "toc"', "contents entry is identified before filtering");
+  includes(contents, ".filter((item) => !item.isContents)", "separate contents index does not list itself");
+  includes(contents, "isRepeatedBookLabel(item.label, item.title)", "only distinct contents labels are displayed");
+  includes(contents, 'normalizedTitle === `bölüm ${chapterLabel[1]}`', "generic chapter numbering is not duplicated");
   includes(contents, "chapterAccess[item.chapterId]", "locked chapters are labeled without content exposure");
   includes(contentsCss, ".reader-book-contents__paper", "large readable contents design");
   includes(chapterRoute, "getPersonalBookAnnotations", "published chapters use canonical private book notes");

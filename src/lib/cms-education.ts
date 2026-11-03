@@ -109,11 +109,14 @@ export type EducationGuideRecord = {
   title: string;
   summary: string;
   visuals: Partial<Record<EducationVisualSlotKey, EducationVisual>>;
+  publishedAt: Date | null;
+  updatedAt: Date | null;
 };
 
 type EducationGuideRow = {
   contentKey: string;
   valueJson: string;
+  publishedAt: Date | null;
   updatedAt: Date;
 };
 
@@ -150,6 +153,8 @@ export function educationGuideDefault(genre: Genre): EducationGuideRecord {
     title: `${genre.label} Nasıl Yazılır?`,
     summary: `${genre.label} için adım adım yazarlık ve üretim rehberi.`,
     visuals: {},
+    publishedAt: null,
+    updatedAt: null,
   };
 }
 
@@ -201,6 +206,8 @@ export function parseEducationGuide(valueJson: string, genre: Genre): EducationG
       title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim().slice(0, 220) : fallback.title,
       summary: typeof raw.summary === "string" && raw.summary.trim() ? raw.summary.trim().slice(0, 1200) : fallback.summary,
       visuals,
+      publishedAt: null,
+      updatedAt: null,
     };
   } catch {
     return fallback;
@@ -211,19 +218,25 @@ export async function getEducationGuideRecord(genreSlug: string) {
   const genre = getGenreBySlug(genreSlug);
   if (!genre) return null;
   const rows = await prisma.$queryRaw<EducationGuideRow[]>`
-    SELECT contentKey, valueJson, updatedAt
+    SELECT contentKey, valueJson, publishedAt, updatedAt
     FROM SiteContent
     WHERE namespace = ${EDUCATION_GUIDE_NAMESPACE}
       AND contentKey = ${genre.slug}
       AND status = 'published'
     LIMIT 1
   `;
-  return rows[0] ? parseEducationGuide(rows[0].valueJson, genre) : educationGuideDefault(genre);
+  const row = rows[0];
+  if (!row) return educationGuideDefault(genre);
+  return {
+    ...parseEducationGuide(row.valueJson, genre),
+    publishedAt: row.publishedAt,
+    updatedAt: row.updatedAt,
+  };
 }
 
 export async function listEducationGuideRecords() {
   const rows = await prisma.$queryRaw<EducationGuideRow[]>`
-    SELECT contentKey, valueJson, updatedAt
+    SELECT contentKey, valueJson, publishedAt, updatedAt
     FROM SiteContent
     WHERE namespace = ${EDUCATION_GUIDE_NAMESPACE}
       AND status = 'published'
@@ -232,7 +245,13 @@ export async function listEducationGuideRecords() {
   const bySlug = new Map(rows.map((row) => [row.contentKey, row]));
   return GENRES.map((genre) => {
     const row = bySlug.get(genre.slug);
-    const guide = row ? parseEducationGuide(row.valueJson, genre) : educationGuideDefault(genre);
+    const guide = row
+      ? {
+          ...parseEducationGuide(row.valueJson, genre),
+          publishedAt: row.publishedAt,
+          updatedAt: row.updatedAt,
+        }
+      : educationGuideDefault(genre);
     return { genre, guide, updatedAt: row?.updatedAt ?? null };
   });
 }

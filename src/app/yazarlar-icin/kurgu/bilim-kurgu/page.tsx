@@ -354,6 +354,8 @@ export default async function BilimKurguYazarlikRehberiPage() {
         description={summary}
         categoryName="Kurgu"
         categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+        publishedAt={guide?.publishedAt}
+        updatedAt={guide?.updatedAt}
       />
       <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="bilim-kurgu">
       <div className="bilim-kurgu-writing-guide">

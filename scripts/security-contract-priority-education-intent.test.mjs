@@ -44,8 +44,9 @@ test("priority editor lessons expose structured data without changing visible co
   assert.ok(structuredData.includes('"@type": "BreadcrumbList"'));
   assert.ok(structuredData.includes('"@id": pageUrl'));
   assert.ok(structuredData.includes('name: "Editörler İçin"'));
-  assert.ok(!structuredData.includes("datePublished"));
-  assert.ok(!structuredData.includes("dateModified"));
+  assert.ok(structuredData.includes("datePublished"));
+  assert.ok(structuredData.includes("dateModified"));
+  assert.ok(structuredData.includes("getEditorEducationArticleDates"));
 
   for (const path of [
     "src/app/editorler-icin/egitim/editorluge-baslama/page.tsx",

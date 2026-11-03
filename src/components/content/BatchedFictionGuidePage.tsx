@@ -271,6 +271,8 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
+      ...(guide?.publishedAt ? { datePublished: guide.publishedAt.toISOString() } : {}),
+      ...(guide?.updatedAt ? { dateModified: guide.updatedAt.toISOString() } : {}),
       author: {
         "@type": "Organization",
         "@id": "https://ilkoku.com/#organization",

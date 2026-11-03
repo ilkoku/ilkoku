@@ -335,6 +335,8 @@ export default async function DistopyaYazarlikRehberiPage() {
         description={summary}
         categoryName="Kurgu"
         categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+        publishedAt={guide?.publishedAt}
+        updatedAt={guide?.updatedAt}
       />
       <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="distopya">
       <div className="distopya-writing-guide">

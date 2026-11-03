@@ -314,6 +314,8 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
+      ...(guide?.publishedAt ? { datePublished: guide.publishedAt.toISOString() } : {}),
+      ...(guide?.updatedAt ? { dateModified: guide.updatedAt.toISOString() } : {}),
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },

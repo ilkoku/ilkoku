@@ -299,6 +299,10 @@
 .contentsLink {
   color: #74551b;
   cursor: pointer;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05em;
+  font-weight: 500;
+  letter-spacing: 0.012em;
   text-decoration: underline;
   text-decoration-color: rgba(116, 85, 27, 0.5);
   text-underline-offset: 0.16em;

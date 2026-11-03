@@ -212,9 +212,12 @@ export function PublishedManuscriptViewport({
 
   useEffect(() => {
     if (!readerModesEnabled) return;
+    let preferenceFrame = 0;
     try {
       const saved = window.localStorage.getItem(BOOK_MODE_STORAGE_KEY);
-      if (saved === "book" || saved === "single") setDisplayMode(saved);
+      if (saved === "book" || saved === "single") {
+        preferenceFrame = window.requestAnimationFrame(() => setDisplayMode(saved));
+      }
     } catch {
       // Private browsing without storage still supports both reader modes.
     }
@@ -222,12 +225,16 @@ export function PublishedManuscriptViewport({
     const update = () => setIsNarrow(media.matches);
     update();
     media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    return () => {
+      if (preferenceFrame) window.cancelAnimationFrame(preferenceFrame);
+      media.removeEventListener("change", update);
+    };
   }, [readerModesEnabled]);
 
   useEffect(() => {
-    setPageIndex(initialIndex());
-    // The route may change the physical page without remounting this component.
+    // A route can change the physical page without remounting this component.
+    const frame = window.requestAnimationFrame(() => setPageIndex(initialIndex()));
+    return () => window.cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialBookPage, startAtLastPage, bookPageStart, content]);
 
@@ -242,7 +249,7 @@ export function PublishedManuscriptViewport({
 
   // The published snapshot is already commerce-redacted on the server. Never
   // regenerate page boundaries or expose text from a locked chapter here.
-  const bookPages = useMemo(() => {
+  const bookPages = useMemo<BookPage[]>(() => {
     if (bookItems?.length) {
       let globalNumber = 0;
       return bookItems.flatMap((item) => splitPublishedPages(item.content, item.layout).map((page, index) => ({

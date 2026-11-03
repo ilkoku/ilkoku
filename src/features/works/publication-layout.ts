@@ -3,7 +3,7 @@ export const PUBLICATION_LAYOUT_VERSION = 1 as const;
 export const PUBLICATION_VERSION_DESCRIPTION_PREFIX =
   "@ilkoku:publication-layout:v1:";
 
-export type PublicationFont = "typewriter" | "serif" | "sans";
+export type PublicationFont = "typewriter" | "serif" | "sans" | "word";
 
 export type PublicationBox = {
   height: number;
@@ -34,6 +34,7 @@ const publicationFonts = new Set<PublicationFont>([
   "typewriter",
   "serif",
   "sans",
+  "word",
 ]);
 
 function finiteNumber(

@@ -603,18 +603,73 @@
   max-width: 100%;
 }
 
+/* Published books show their own headings on the paper. The outer chapter
+   dashboard becomes discreet reading context instead of another title page. */
 .publishedLayout .chapterHeader {
-  padding: 1.35rem clamp(1rem, 3vw, 2rem);
-  border-radius: 1rem 1rem 0 0;
+  display: flex;
+  min-height: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem 1rem;
+  padding: 0.35rem 0.6rem 0.9rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.publishedLayout .chapterHeader::before {
+  display: none;
 }
 
 .publishedLayout .chapterHeader h1 {
-  font-size: clamp(1.65rem, 3vw, 2.65rem);
+  order: -1;
+  margin: 0;
+  color: rgba(247, 245, 239, 0.9);
+  font-size: clamp(1rem, 1.65vw, 1.32rem);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.publishedLayout .chapterMeta {
+  gap: 0.3rem;
+  color: rgba(225, 208, 161, 0.66);
+  font-size: 0.6rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.publishedLayout .chapterHeader :global(.reading-progress-tracker) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+}
+
+.publishedLayout .chapterHeader :global(.reading-progress-tracker progress) {
+  width: clamp(4.5rem, 7vw, 7.5rem);
+  height: 0.2rem;
+}
+
+.publishedLayout .chapterHeader :global(.reading-progress-tracker > div) {
+  gap: 0.4rem;
+}
+
+.publishedLayout .chapterHeader :global(.reading-progress-tracker span) {
+  max-width: 9rem;
 }
 
 .publishedLayout .chapterBody {
-  padding: clamp(0.9rem, 3vw, 1.8rem);
-  border-radius: 0 0 1rem 1rem;
+  padding: 0.35rem 0 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .publishedLayout .comments {
@@ -633,10 +688,14 @@
   }
 
   .publishedLayout .chapterHeader {
-    padding: 1.2rem;
+    padding: 0.55rem 0.25rem 0.9rem;
+  }
+
+  .publishedLayout .chapterHeader :global(.reading-progress-tracker) {
+    margin-left: 0;
   }
 
   .publishedLayout .chapterBody {
-    padding: 0.85rem;
+    padding: 0.25rem 0 1rem;
   }
 }

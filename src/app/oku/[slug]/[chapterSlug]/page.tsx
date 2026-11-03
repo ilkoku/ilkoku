@@ -16,6 +16,8 @@ import { getFavoriteStatus } from "@/features/reader/favorites";
 import { recordReadingAccessSafely } from "@/features/reading/access";
 import { FocusedReadingExperience } from "@/features/reading/components/FocusedReadingExperience";
 import { PersonalReadingToolsProvider } from "@/features/reading/components/PersonalReadingToolsProvider";
+import { PublishedBookToolsContinuity } from "@/features/reading/components/PublishedBookToolsContinuity";
+import { getPersonalBookAnnotations } from "@/features/reading/personal-book-annotation-queries";
 import { ReadingExperience } from "@/features/reading/components/ReadingExperience";
 import { getPersonalAnnotations } from "@/features/reading/personal-annotation-queries";
 import { getReadingProgress } from "@/features/reading/progress";
@@ -65,7 +67,12 @@ export default async function DynamicReadingPage({
   const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
   const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
-  const pageEdgeParameter = query.sayfa === "son" ? "&sayfa=son" : "";
+  const requestedBookPage = /^\d{1,5}$/u.test(query.sayfa ?? "")
+    ? Number(query.sayfa)
+    : null;
+  const pageEdgeParameter = query.sayfa === "son"
+    ? "&sayfa=son"
+    : requestedBookPage !== null ? `&sayfa=${requestedBookPage}` : "";
   const returnPath = `/oku/${slug}/${chapterSlug}?from=${encodeURIComponent(publicReturnTo)}${reviewModeParameter}${pageEdgeParameter}`;
 
   if (!auth) {
@@ -131,11 +138,20 @@ export default async function DynamicReadingPage({
     workId: chapter.work.id,
   });
 
-  const [comments, personalAnnotations] = await Promise.all([
+  const publishedItem = chapter.publicationLayout && chapter.work.publicationBook
+    ? chapter.work.publicationBook.items.find((item) =>
+        item.type === "chapter" && item.chapterId === chapter.id,
+      ) ?? null
+    : null;
+
+  const [comments, personalAnnotations, bookAnnotations] = await Promise.all([
     isReviewReading
       ? Promise.resolve({ items: [], total: 0 })
       : getChapterComments(chapter.id),
-    getPersonalAnnotations(user.id, chapter.id),
+    publishedItem ? Promise.resolve([]) : getPersonalAnnotations(user.id, chapter.id),
+    publishedItem
+      ? getPersonalBookAnnotations(user.id, chapter.work.id, publishedItem.structureItemId)
+      : Promise.resolve([]),
   ]);
 
   const readerUser =
@@ -191,22 +207,38 @@ export default async function DynamicReadingPage({
       : publicReturnTo;
 
   if (!isReviewReading) {
-    return (
+    const readerExperience = (
+      <FocusedReadingExperience
+        canComment={Boolean(readerUser)}
+        canTrackReading={Boolean(readerUser)}
+        chapter={chapter}
+        comments={comments}
+        protectionIdentity={user.publicId}
+        readingProgress={readingProgress?.progressPercent ?? null}
+        initialBookPage={requestedBookPage}
+        returnTo={returnTo}
+        startAtLastPage={query.sayfa === "son"}
+      />
+    );
+
+    // Published chapters must use the same immutable-book annotation system
+    // as authored special pages. Legacy chapter annotations remain untouched.
+    return publishedItem ? (
+      <PublishedBookToolsContinuity
+        initialAnnotations={bookAnnotations}
+        publicationItemId={publishedItem.structureItemId}
+        userKey={user.publicId}
+        workId={chapter.work.id}
+      >
+        {readerExperience}
+      </PublishedBookToolsContinuity>
+    ) : (
       <PersonalReadingToolsProvider
         chapterId={chapter.id}
         initialAnnotations={personalAnnotations}
         userKey={user.publicId}
       >
-        <FocusedReadingExperience
-          canComment={Boolean(readerUser)}
-          canTrackReading={Boolean(readerUser)}
-          chapter={chapter}
-          comments={comments}
-          protectionIdentity={user.publicId}
-          readingProgress={readingProgress?.progressPercent ?? null}
-          returnTo={returnTo}
-          startAtLastPage={query.sayfa === "son"}
-        />
+        {readerExperience}
       </PersonalReadingToolsProvider>
     );
   }

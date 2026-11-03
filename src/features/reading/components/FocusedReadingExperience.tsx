@@ -30,6 +30,7 @@ import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { PublishedBookSelector } from "./PublishedBookSelector";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
+import { buildReaderBookOutline } from "../reader-book-outline";
 import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
@@ -55,6 +56,7 @@ export function FocusedReadingExperience({
   comments,
   protectionIdentity,
   readingProgress,
+  initialBookPage = null,
   returnTo = "/kesfet",
   startAtLastPage = false,
 }: {
@@ -64,6 +66,7 @@ export function FocusedReadingExperience({
   comments: ReaderCommentFeed;
   protectionIdentity: string;
   readingProgress?: number | null;
+  initialBookPage?: number | null;
   returnTo?: string;
   startAtLastPage?: boolean;
 }) {
@@ -143,6 +146,8 @@ export function FocusedReadingExperience({
     activeBookItem?.type === "chapter"
       ? activeBookItem.formatting ?? storedChapterFormatting
       : storedChapterFormatting;
+
+  const bookDisplay = buildReaderBookOutline(publishedBook?.items, activeBookItem?.structureItemId);
 
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
@@ -267,7 +272,7 @@ export function FocusedReadingExperience({
         </nav>
       </header>
 
-      <main className={styles.layout}>
+      <main className={`${styles.layout} ${hasAuthorPublication ? styles.publishedLayout : ""}`}>
         <article
           className={styles.article}
           aria-labelledby="bolum-basligi"
@@ -313,17 +318,24 @@ export function FocusedReadingExperience({
           >
             {chapter.publicationLayout ? (
               <PublishedManuscriptViewport
+                activeItemId={activeBookItem?.structureItemId}
+                bookItems={bookDisplay.outline}
+                facingPreviews={bookDisplay.facingPreviews}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publishedBook?.totalPages}
                 chapterTitle={chapter.title}
                 content={chapter.content}
+                encodedReturnTo={encodedReturnTo}
                 formatting={publicationFormatting}
+                initialBookPage={initialBookPage}
+                readerModesEnabled
                 identity={protectionIdentity}
                 layout={chapter.publicationLayout}
                 nextChapterHref={nextChapterHref}
                 previousChapterHref={previousChapterHref}
                 startAtLastPage={startAtLastPage}
                 subtitle={activeBookItem?.subtitle}
+                workSlug={chapter.work.slug}
                 workTitle={chapter.work.title}
               />
             ) : (

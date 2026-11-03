@@ -12,12 +12,14 @@ import type { PublicWorkDetail } from "@/features/works/types";
 import { PublishedBookSelector } from "./PublishedBookSelector";
 import { PublishedBookToolsContinuity } from "./PublishedBookToolsContinuity";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
+import { buildReaderBookOutline } from "../reader-book-outline";
 import styles from "./FocusedReadingExperience.module.css";
 
 export function PublishedBookSpecialPageExperience({
   initialAnnotations,
   item,
   protectionIdentity,
+  initialBookPage = null,
   returnTo = "/kesfet",
   startAtLastPage = false,
   userKey,
@@ -26,6 +28,7 @@ export function PublishedBookSpecialPageExperience({
   initialAnnotations: PersonalBookAnnotationRecord[];
   item: PublishedBookSpecialItem;
   protectionIdentity: string;
+  initialBookPage?: number | null;
   returnTo?: string;
   startAtLastPage?: boolean;
   userKey: string;
@@ -54,6 +57,7 @@ export function PublishedBookSpecialPageExperience({
       : 1;
   const activeBookPageEnd =
     activeBookPageStart + item.layout.pageEnds.length - 1;
+  const bookDisplay = buildReaderBookOutline(publicationBook.items, item.structureItemId);
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${work.slug}`;
   const returnIsBookPage =
@@ -141,7 +145,7 @@ export function PublishedBookSpecialPageExperience({
         </nav>
       </header>
 
-      <main className={styles.layout}>
+      <main className={`${styles.layout} ${styles.publishedLayout}`}>
         <article className={styles.article} aria-labelledby="bolum-basligi">
           <header className={styles.chapterHeader}>
             <p className={styles.chapterMeta}>
@@ -168,16 +172,23 @@ export function PublishedBookSpecialPageExperience({
               workId={work.id}
             >
               <PublishedManuscriptViewport
+                activeItemId={item.structureItemId}
+                bookItems={bookDisplay.outline}
+                facingPreviews={bookDisplay.facingPreviews}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publicationBook.totalPages}
                 chapterTitle={item.title}
                 content={item.content}
+                encodedReturnTo={encodedReturnTo}
                 identity={protectionIdentity}
+                initialBookPage={initialBookPage}
+                readerModesEnabled
                 layout={item.layout}
                 nextChapterHref={nextHref}
                 previousChapterHref={previousHref}
                 startAtLastPage={startAtLastPage}
                 subtitle={item.subtitle}
+                workSlug={work.slug}
                 workTitle={publicationBook.workTitle}
               />
             </PublishedBookToolsContinuity>

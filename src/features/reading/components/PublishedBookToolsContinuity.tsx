@@ -152,7 +152,7 @@ export function PublishedBookToolsContinuity({
     useState<PublishedBookReadingActiveTool>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [isListOpen, setIsListOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [isCompact, setIsCompact] = useState(false);
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);
   const [pendingNote, setPendingNote] = useState<PersonalBookTextAnchor | null>(null);

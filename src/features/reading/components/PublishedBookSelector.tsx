@@ -36,6 +36,16 @@ export function PublishedBookSelector({
 
   if (!activeItem) return null;
 
+  const numberedItems = items.map((item, index) => ({
+    item,
+    page: 1 + items.slice(0, index).reduce(
+      (total, earlier) => total + earlier.layout.pageEnds.length,
+      0,
+    ),
+  }));
+  const coverHref = `/oku/${workSlug}/kapak?from=${encodedReturnTo}`;
+  const contentsHref = `/oku/${workSlug}/icindekiler?from=${encodedReturnTo}`;
+
   return (
     <details className={styles.selector}>
       <summary aria-label="Kitap sayfası seç">
@@ -53,12 +63,20 @@ export function PublishedBookSelector({
 
       <div className={styles.popover}>
         <header className={styles.heading}>
-          <strong>Kitap sırası</strong>
-          <small>Yazarın yayımladığı sayfa ve bölümlere doğrudan geç.</small>
+          <strong>İçindekiler</strong>
+          <small>Kapak, özel sayfalar ve bölümler yazarın yayın sırasıyla gösterilir.</small>
         </header>
 
         <nav aria-label="Yayımlanmış kitap sırası" className={styles.list}>
-          {items.map((item) => {
+          <Link className={styles.chapter} href={coverHref}>
+            <span className={styles.number}>Kapak</span>
+            <strong className={styles.chapterTitle}>Ön kapak</strong>
+          </Link>
+          <Link className={styles.chapter} href={contentsHref}>
+            <span className={styles.number}>Gezinme</span>
+            <strong className={styles.chapterTitle}>İçindekiler listesi</strong>
+          </Link>
+          {numberedItems.map(({ item, page }) => {
             const active = item.structureItemId === activeStructureItemId;
             return (
               <Link
@@ -69,6 +87,7 @@ export function PublishedBookSelector({
               >
                 <span className={styles.number}>{itemLabel(item)}</span>
                 <strong className={styles.chapterTitle}>{item.title}</strong>
+                <span className={styles.number}>s. {page}</span>
                 {active ? <span className={styles.current}>Şu an</span> : null}
               </Link>
             );

@@ -40,7 +40,12 @@ export default async function PublishedSpecialBookPage({
   const { itemId, slug } = await params;
   const query = await searchParams;
   const returnTo = getSafeReturnPath(query.from);
-  const pageEdgeParameter = query.sayfa === "son" ? "&sayfa=son" : "";
+  const requestedBookPage = /^\d{1,5}$/u.test(query.sayfa ?? "")
+    ? Number(query.sayfa)
+    : null;
+  const pageEdgeParameter = query.sayfa === "son"
+    ? "&sayfa=son"
+    : requestedBookPage !== null ? `&sayfa=${requestedBookPage}` : "";
   const returnPath =
     `/oku/${slug}/sayfa/${encodeURIComponent(itemId)}?from=${encodeURIComponent(returnTo)}${pageEdgeParameter}`;
   const auth = await getCurrentSessionContext();
@@ -77,6 +82,7 @@ export default async function PublishedSpecialBookPage({
       initialAnnotations={personalAnnotations}
       item={item}
       protectionIdentity={user.publicId}
+      initialBookPage={requestedBookPage}
       returnTo={returnTo}
       startAtLastPage={query.sayfa === "son"}
       userKey={user.publicId}

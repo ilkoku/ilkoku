@@ -312,7 +312,8 @@ export function PublishedManuscriptViewport({
     const referenceHeight = Math.max(layout.page.height, ...referencePages.map((page) => page.layout.page.height));
     const availableWidth = Math.max(1, stage.clientWidth - 8);
     const availableHeight = Math.max(540, window.innerHeight - 180);
-    const naturalWidth = spreadMode ? referenceWidth * 2 + 24 : referenceWidth;
+    // Facing sheets share a spine; reserve no artificial gap between them.
+    const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth;
     const naturalHeight = referenceHeight;
     const nextScale = Math.min(
       readerModesEnabled ? (spreadMode ? 1.55 : 1.8) : 1,
@@ -415,6 +416,14 @@ export function PublishedManuscriptViewport({
   function goNext() {
     navigateToGlobal(spreadMode ? leftNumber + 2 : globalPageNumber + 1);
   }
+
+  // The final right-hand page can be visible while the active left page is
+  // one page earlier. Do not offer a next turn into a non-existent spread.
+  const lastVisiblePageNumber = spreadMode
+    ? Math.min(globalPageTotal, leftNumber + 1)
+    : globalPageNumber;
+  const hasNextBookPage = Boolean(onNextBookPage || nextChapterHref);
+  const atLastVisiblePage = lastVisiblePageNumber >= globalPageTotal && !hasNextBookPage;
 
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
@@ -722,7 +731,7 @@ export function PublishedManuscriptViewport({
       </nav> : null}
       <div aria-label={spreadMode ? "Açık kitap" : "Tek kitap sayfası"}
         className={styles.stage} ref={stageRef}>
-        <div className={spreadMode ? styles.spread : styles.singlePage}>
+        <div className={spreadMode ? styles.spread : styles.singlePage} data-page-spread={spreadMode ? "facing" : "single"}>
           {visiblePages.map((page, slot) => paper(page, slot))}
         </div>
       </div>
@@ -736,7 +745,7 @@ export function PublishedManuscriptViewport({
             ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
             : globalPageNumber} / {globalPageTotal}</strong>
         </div>
-        <button disabled={globalPageNumber >= globalPageTotal && !onNextBookPage && !nextChapterHref}
+        <button disabled={atLastVisiblePage}
           onClick={goNext} type="button">
           Sonraki Sayfa <span aria-hidden="true">→</span>
         </button>

@@ -36,12 +36,13 @@ export function PublishedBookSelector({
 
   if (!activeItem) return null;
 
-  let startPage = 1;
-  const numberedItems = items.map((item) => {
-    const page = startPage;
-    startPage += item.layout.pageEnds.length;
-    return { item, page };
-  });
+  const numberedItems = items.map((item, index) => ({
+    item,
+    page: 1 + items.slice(0, index).reduce(
+      (total, earlier) => total + earlier.layout.pageEnds.length,
+      0,
+    ),
+  }));
   const coverHref = `/oku/${workSlug}/kapak?from=${encodedReturnTo}`;
   const contentsHref = `/oku/${workSlug}/icindekiler?from=${encodedReturnTo}`;
 

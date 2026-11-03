@@ -120,6 +120,16 @@
   min-width: 0;
 }
 
+.page:has([data-legacy-book-layout="book"]) .layout {
+  width: min(100%, 100rem);
+}
+
+.page:has([data-legacy-book-layout="book"]) .chapterHeader,
+.page:has([data-legacy-book-layout="book"]) .chapterBody {
+  max-width: 86rem;
+}
+
+
 .chapterHeader {
   position: relative;
   width: 100%;

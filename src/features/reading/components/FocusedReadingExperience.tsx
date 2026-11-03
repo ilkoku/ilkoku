@@ -340,6 +340,9 @@ export function FocusedReadingExperience({
               />
             ) : (
               <PagedReadingViewport
+                encodedReturnTo={encodedReturnTo}
+                identity={protectionIdentity}
+                workSlug={chapter.work.slug}
                 estimatedBookEndPage={estimatedPages.endPage}
                 estimatedBookStartPage={estimatedPages.startPage}
                 estimatedBookTotalPages={estimatedPages.totalPages}

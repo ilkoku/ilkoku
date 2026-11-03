@@ -56,7 +56,83 @@
 }
 
 .spread {
-  gap: 1.5rem;
+  position: relative;
+  isolation: isolate;
+  gap: 0;
+  border-radius: 0.32rem;
+  background: #f7f2e9;
+  box-shadow:
+    0 0 0 1px rgba(90, 72, 46, 0.22),
+    0 0.45rem 0 rgba(237, 230, 215, 0.84),
+    0 0.62rem 0 rgba(139, 115, 78, 0.25),
+    0 1.65rem 3.5rem rgba(0, 0, 0, 0.46);
+}
+
+/* A continuous, non-interactive book gutter: never block annotation targets. */
+.spread::after {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3.1rem;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg,
+    rgba(30, 22, 14, 0) 0%,
+    rgba(45, 32, 19, 0.11) 29%,
+    rgba(44, 29, 14, 0.24) 47%,
+    rgba(255, 255, 255, 0.36) 56%,
+    rgba(36, 26, 18, 0.05) 100%);
+  content: "";
+  pointer-events: none;
+}
+
+.spread .pageFrame,
+.spread .blankFrame {
+  z-index: 1;
+}
+
+.spread .page,
+.spread .blankFrame {
+  border: 0;
+  box-shadow: none;
+}
+
+.spread .pageFrame:first-child .page,
+.spread .blankFrame:first-child {
+  border-radius: 0.32rem 0 0 0.32rem;
+  background:
+    linear-gradient(to left, rgba(85, 66, 39, 0.11), transparent 12%),
+    #fcfaf5;
+}
+
+.spread .pageFrame:last-child .page,
+.spread .blankFrame:last-child {
+  border-radius: 0 0.32rem 0.32rem 0;
+  background:
+    linear-gradient(to right, rgba(85, 66, 39, 0.12), transparent 12%),
+    #fffefb;
+}
+
+.singlePage {
+  padding: 0.2rem 0.2rem 0.5rem;
+}
+
+.singlePage .page {
+  border-radius: 0.45rem;
+}
+
+.pageFrame {
+  animation: pageSettle 180ms ease-out both;
+}
+
+@keyframes pageSettle {
+  from { opacity: 0.78; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageFrame { animation: none; }
 }
 
 .pageFrame,
@@ -68,7 +144,9 @@
 .blankFrame {
   border: 1px solid rgba(97, 82, 60, 0.18);
   border-radius: 0.22rem;
-  background: #f7f2e9;
+  background:
+    linear-gradient(110deg, rgba(156, 131, 89, 0.035), transparent 58%),
+    #f7f2e9;
   box-shadow: 0 1.3rem 3.25rem rgba(20, 16, 12, 0.25);
 }
 

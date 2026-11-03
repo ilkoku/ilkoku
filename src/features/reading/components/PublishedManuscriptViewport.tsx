@@ -230,6 +230,10 @@ export function PublishedManuscriptViewport({
 }) {
   const router = useRouter();
   const tools = usePublishedBookTools();
+  const latestAnnotationsRef = useRef(tools?.annotations ?? []);
+  useEffect(() => {
+    latestAnnotationsRef.current = tools?.annotations ?? [];
+  }, [tools?.annotations]);
   const savedPages = useMemo(() => splitPublishedPages(content, layout), [content, layout]);
   const currentItemId = activeItemId ?? "current-publication-item";
   const isContentsItem = bookItems?.some(
@@ -461,7 +465,7 @@ export function PublishedManuscriptViewport({
     const frame = window.requestAnimationFrame(() => {
       if (typeof request.pageIndex === "number") {
         // A saved point's y coordinate refines its text location when reflowed.
-        const storedPoint = tools?.annotations.find((item) => item.id === request.annotationId);
+        const storedPoint = latestAnnotationsRef.current.find((item) => item.id === request.annotationId);
         const originalPoint = storedPoint
           ? parsePersonalPagePointAnchor(storedPoint.pathData)
           : null;
@@ -475,7 +479,7 @@ export function PublishedManuscriptViewport({
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [pages, savedPages, tools?.navigateRequest, tools?.annotations]);
+  }, [pages, savedPages, tools?.navigateRequest]);
 
   function blockInteraction(event: SyntheticEvent) {
     event.preventDefault();

@@ -158,6 +158,7 @@ export function PublishedManuscriptViewport({
   identity,
   initialBookPage = null,
   layout,
+  readerModesEnabled = false,
   nextChapterHref,
   onNextBookPage,
   onPreviousBookPage,
@@ -178,6 +179,7 @@ export function PublishedManuscriptViewport({
   identity: string;
   initialBookPage?: number | null;
   layout: PublicationLayoutSnapshot;
+  readerModesEnabled?: boolean;
   nextChapterHref?: string | null;
   onNextBookPage?: (() => void) | null;
   onPreviousBookPage?: (() => void) | null;
@@ -199,12 +201,13 @@ export function PublishedManuscriptViewport({
       ? initialBookPage - bookPageStart
       : 0;
   const [pageIndex, setPageIndex] = useState(initialIndex);
-  const [displayMode, setDisplayMode] = useState<BookDisplayMode>("book");
+  const [displayMode, setDisplayMode] = useState<BookDisplayMode>(readerModesEnabled ? "book" : "single");
   const [isNarrow, setIsNarrow] = useState(false);
   const [scale, setScale] = useState(1);
   const stageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!readerModesEnabled) return;
     try {
       const saved = window.localStorage.getItem(BOOK_MODE_STORAGE_KEY);
       if (saved === "book" || saved === "single") setDisplayMode(saved);
@@ -216,7 +219,7 @@ export function PublishedManuscriptViewport({
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
-  }, []);
+  }, [readerModesEnabled]);
 
   useEffect(() => {
     setPageIndex(initialIndex());
@@ -267,7 +270,7 @@ export function PublishedManuscriptViewport({
 
   const globalPageNumber = bookPageStart + pageIndex;
   const globalPageTotal = Math.max(globalPageNumber, bookTotalPages ?? bookPages.length);
-  const spreadMode = displayMode === "book" && !isNarrow;
+  const spreadMode = readerModesEnabled && displayMode === "book" && !isNarrow;
   const leftNumber = globalPageNumber % 2 === 0 ? globalPageNumber : globalPageNumber - 1;
   const visibleNumbers = useMemo(() => spreadMode
     ? [leftNumber, leftNumber + 1]
@@ -293,12 +296,12 @@ export function PublishedManuscriptViewport({
     const naturalWidth = spreadMode ? referenceWidth * 2 + 24 : referenceWidth;
     const naturalHeight = referenceHeight;
     const nextScale = Math.min(
-      spreadMode ? 1.55 : 1.8,
+      readerModesEnabled ? (spreadMode ? 1.55 : 1.8) : 1,
       availableWidth / naturalWidth,
       availableHeight / naturalHeight,
     );
     setScale(Math.max(0.2, nextScale));
-  }, [layout.page.width, layout.page.height, spreadMode, visiblePages]);
+  }, [layout.page.width, layout.page.height, readerModesEnabled, spreadMode, visiblePages]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -630,7 +633,7 @@ export function PublishedManuscriptViewport({
       data-publication-layout-version={layout.version}
       data-publication-page-count={pages.length}
     >
-      <nav aria-label="Kitap görünümü ve bölümler" className={styles.bookToolbar}>
+      {readerModesEnabled ? <nav aria-label="Kitap görünümü ve bölümler" className={styles.bookToolbar}>
         <div aria-label="Okuma görünümü" className={styles.modeOptions} role="group">
           <button aria-pressed={displayMode === "book"} onClick={() => chooseMode("book")} type="button">
             Kitap
@@ -643,7 +646,7 @@ export function PublishedManuscriptViewport({
           {coverHref ? <button onClick={() => router.push(coverHref)} type="button">Kapak</button> : null}
           {contentsHref ? <button onClick={() => router.push(contentsHref)} type="button">İçindekiler</button> : null}
         </div>
-      </nav>
+      </nav> : null}
       <div aria-label={spreadMode ? "Açık kitap" : "Tek kitap sayfası"}
         className={styles.stage} ref={stageRef}>
         <div className={spreadMode ? styles.spread : styles.singlePage}>

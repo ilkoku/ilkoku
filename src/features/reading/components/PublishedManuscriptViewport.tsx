@@ -519,6 +519,18 @@ export function PublishedManuscriptViewport({
     const fontFamily = fontFamilies[pageLayout.typography.font];
     const headerTop = Math.max(24, bodyBox.top - 118);
     const headerHeight = Math.max(0, bodyBox.top - headerTop - 10);
+    // Publication subtitles are platform editor instructions, not authored book text.
+    // Keep them in immutable snapshots; do not print them in the Reader.
+    // Fit the physical page title inside the actual space before the authored body.
+    const headerShowsWorkTitle = headerHeight >= 64;
+    const availableTitleHeight = Math.max(0, headerHeight - (headerShowsWorkTitle ? 24 : 0));
+    const titleFontSize = Math.min(
+      39.2,
+      Math.max(14, Math.min(
+        availableTitleHeight / 1.12,
+        bodyBox.width / Math.max(1, page.title.length * 0.55),
+      )),
+    );
     const ownAnnotations = inCurrentItem ? annotations : [];
     const visibleText = inCurrentItem ? page.content : (page.previewText ?? "");
     // A facing item carries only one physical-page excerpt, never its full text.
@@ -573,7 +585,7 @@ export function PublishedManuscriptViewport({
             transform: `scale(${scale})`,
           }}
         >
-          {page.localIndex === 0 ? (
+          {page.localIndex === 0 && headerHeight >= 24 ? (
             <header className={styles.pageHeader} style={{
               fontFamily,
               height: `${headerHeight}px`,
@@ -581,9 +593,8 @@ export function PublishedManuscriptViewport({
               top: `${headerTop}px`,
               width: `${bodyBox.width}px`,
             }}>
-              <span>{workTitle}</span>
-              <strong>{page.title}</strong>
-              {page.subtitle ? <p>{page.subtitle}</p> : null}
+              {headerShowsWorkTitle ? <span>{workTitle}</span> : null}
+              <strong style={{ fontSize: `${titleFontSize}px` }}>{page.title}</strong>
             </header>
           ) : null}
           {locked ? (

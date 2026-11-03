@@ -137,6 +137,20 @@
   white-space: pre-wrap;
 }
 
+.contentsLink {
+  color: #74551b;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(116, 85, 27, 0.5);
+  text-underline-offset: 0.16em;
+}
+
+.contentsLink:hover,
+.contentsLink:focus-visible {
+  color: #493309;
+  text-decoration-color: currentColor;
+}
+
 .page[data-text-selection="true"] .pageText {
   cursor: text;
   -webkit-user-select: text;

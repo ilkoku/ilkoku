@@ -115,6 +115,8 @@ export function parseReaderEducationGuide(valueJson: string, category: ReaderEdu
       title: typeof raw.title === "string" && raw.title.trim() ? raw.title.trim().slice(0, 220) : fallback.title,
       summary: typeof raw.summary === "string" && raw.summary.trim() ? raw.summary.trim().slice(0, 1200) : fallback.summary,
       visuals,
+      publishedAt: null,
+      updatedAt: null,
     };
   } catch {
     return fallback;

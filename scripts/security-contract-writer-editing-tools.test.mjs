@@ -36,6 +36,8 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(css, "--writer-manuscript-font-family: var(--writer-typewriter)", "existing font face remains unchanged");
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
+  includes(tools, 'book: "35rem"', "new writer paper is A5 physical width");
+  includes(css, "--writer-manuscript-width: 35rem", "new writer stylesheet matches A5 paper width");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
   includes(tools, 'pageFlow: "pageTurn"', "book view default");
   includes(tools, '<option value="pageTurn">Kitap</option>', "book page-turn view preset");

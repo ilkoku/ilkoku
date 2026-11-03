@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (path) => readFileSync(join(ROOT, path), "utf8");
@@ -296,4 +298,63 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   includes(chapterView, "facingPreviews={bookDisplay.facingPreviews}", "chapter provides only adjacent page excerpts");
   includes(specialView, "facingPreviews={bookDisplay.facingPreviews}", "special pages provide only adjacent page excerpts");
   includes(tools, "useState(true)", "book tools start minimized");
+});
+
+
+test("A5 reader reflow fills measured sheets without modifying source or original point anchors", () => {
+  // Execute the production TypeScript helper with a deterministic fake layout
+  // probe; this exercises the algorithm beyond string-based contract checks.
+  let removed = false;
+  const document = {
+    body: { appendChild() {} },
+    createElement() {
+      return {
+        style: {},
+        textContent: "",
+        get scrollHeight() {
+          const charsPerLine = Math.max(6, Math.floor(Number.parseFloat(this.style.width) / 7.6));
+          const lines = this.textContent.split("\n").reduce(
+            (sum, line) => sum + Math.max(1, Math.ceil(line.length / charsPerLine)), 0,
+          );
+          return Math.ceil(lines * Number.parseFloat(this.style.lineHeight));
+        },
+        remove() { removed = true; },
+      };
+    },
+  };
+  const result = ts.transpileModule(
+    source("src/features/reading/reader-a5-reflow.ts"),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } },
+  ).outputText;
+  const exports = {};
+  runInNewContext(result, { exports, document });
+
+  const content = Array.from({ length: 24 }, (_, index) =>
+    `Bölümün ${index + 1}. paragrafı. ` +
+    "Bu kitap gerçek A5 okuma sayfalarında eksiksiz ve dengeli yer almalıdır. ".repeat(6),
+  ).join("\n\n");
+  const firstBody = { left: 45, top: 155, width: 385, height: 540 };
+  const continuationBody = { left: 45, top: 85, width: 385, height: 620 };
+  const ends = exports.measureReaderA5PageEnds({
+    content, firstBody, continuationBody,
+    fontFamily: '"Courier New", monospace',
+    letterSpacing: 0,
+  });
+
+  assert.ok(Array.isArray(ends) && ends.length > 1 && ends.length < 17,
+    "the same manuscript should occupy fewer genuinely filled 11pt A5 pages than an old 17-page snapshot");
+  assert.equal(ends.at(-1), content.length, "every source character must be on a visible page");
+  const pages = exports.readerTextPages(ends);
+  assert.equal(pages.map((page) => content.slice(page.start, page.end)).join(""), content,
+    "reflow preserves exact punctuation and original line breaks");
+  assert.ok(pages.every((page, index) =>
+    page.end > page.start && (index === 0 || page.start === pages[index - 1].end)),
+    "pages are contiguous with no gaps or overlaps");
+  assert.equal(removed, true, "temporary measurement DOM is removed");
+
+  const originals = [{ start: 0, end: 250 }, { start: 250, end: 500 }];
+  assert.equal(exports.sourceOffsetForPagePoint(originals, 1, 0.4), 350,
+    "existing saved point retains its original source offset");
+  assert.equal(exports.findReaderPageForOffset([{ start: 0, end: 300 }, { start: 300, end: 500 }], 350), 1,
+    "original saved point can navigate to its new reader page");
 });

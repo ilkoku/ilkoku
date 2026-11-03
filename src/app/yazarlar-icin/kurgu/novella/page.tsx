@@ -346,6 +346,8 @@ export default async function NovellaYazarlikRehberiPage() {
         description={summary}
         categoryName="Kurgu"
         categoryUrl="https://ilkoku.com/yazarlar-icin/kurgu"
+        publishedAt={guide?.publishedAt}
+        updatedAt={guide?.updatedAt}
       />
       <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="novella">
       <div className="novella-writing-guide">

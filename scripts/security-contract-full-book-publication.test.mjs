@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (path) => readFileSync(join(ROOT, path), "utf8");
@@ -109,6 +111,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const renderer = source(
     "src/features/reading/components/PublishedManuscriptViewport.tsx",
   );
+  const readerReflow = source("src/features/reading/reader-a5-reflow.ts");
 
   includes(snapshots, "getLatestPublishedBookSnapshot", "full-book snapshot reader");
   includes(snapshots, "parsePublishedBookFromAuditMetadata", "audit-backed publication truth");
@@ -145,7 +148,27 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(continuityTools, 'title: "Kişisel işaretlere', "special page eraser icon keeps the canonical tool selector contract");
   includes(continuityTools, "aria-expanded={isListOpen}", "special page annotations-list icon uses canonical selector contract");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
-  includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
+  includes(renderer, "splitPublishedPages", "Reader retains immutable author pageEnds as source truth");
+  // Browser-measured reading pages do not change the signed publication
+  // snapshot, protected chapter access, or canonical personal annotations.
+  includes(readerReflow, "measureReaderA5PageEnds", "A5 reader-only content pagination");
+  includes(readerReflow, "probe.scrollHeight <= permittedHeight", "real measured text fitting instead of word-count estimates");
+  includes(readerReflow, "return start === content.length ? ends : null", "never publish a partial or truncated page layout");
+  includes(readerReflow, "probe.remove()", "temporary text measurement leaves no DOM copy");
+  includes(readerReflow, "sourceOffsetForPagePoint", "stored pins resolve to original source offsets");
+  includes(renderer, "const savedPages = useMemo(() => splitPublishedPages(content, layout)", "original publication pages remain intact");
+  includes(renderer, "const itemPages = current ? pages : sourcePages", "only authorized active book item can reflow");
+  includes(renderer, "if (!readerModesEnabled || !content || isContentsItem) return;", "writer publication previews never reflow");
+  includes(renderer, 'item.type === "special" && item.kind === "toc"', "table of contents links retain published positions");
+  includes(renderer, "destination.publishedGlobalNumber", "cross-section deep links preserve original page numbers");
+  includes(renderer, "sourceOffsetForPagePoint(savedPages", "existing page-point coordinates remain mapped");
+  includes(continuityTools, "annotationId: annotation.id", "personal pin navigation retains the saved point identity");
+  includes(renderer, "originalPoint.pageIndex, originalPoint.y", "point-list navigation uses original source-page y offset");
+  includes(renderer, "findReaderPageForOffset(savedPages, sourceOffset)", "new personal pins persist against published pages");
+  includes(renderer, 'data-reader-reflow={usesReaderReflow ? "true" : "false"}', "reader reflow status available for browser QA");
+  includes(renderer, "fontFamily,", "original font family remains unmodified");
+  includes(renderer, "READER_BODY_FONT_SIZE_PX", "reader remains 11pt");
+  includes(renderer, "READER_BODY_LINE_HEIGHT_PX", "reader remains Word-like 1.15 spacing");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
   includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "legacy books can switch display layouts");
   includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "legacy books share the published-book preference");
@@ -276,4 +299,63 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   includes(chapterView, "facingPreviews={bookDisplay.facingPreviews}", "chapter provides only adjacent page excerpts");
   includes(specialView, "facingPreviews={bookDisplay.facingPreviews}", "special pages provide only adjacent page excerpts");
   includes(tools, "useState(true)", "book tools start minimized");
+});
+
+
+test("A5 reader reflow fills measured sheets without modifying source or original point anchors", () => {
+  // Execute the production TypeScript helper with a deterministic fake layout
+  // probe; this exercises the algorithm beyond string-based contract checks.
+  let removed = false;
+  const document = {
+    body: { appendChild() {} },
+    createElement() {
+      return {
+        style: {},
+        textContent: "",
+        get scrollHeight() {
+          const charsPerLine = Math.max(6, Math.floor(Number.parseFloat(this.style.width) / 7.6));
+          const lines = this.textContent.split("\n").reduce(
+            (sum, line) => sum + Math.max(1, Math.ceil(line.length / charsPerLine)), 0,
+          );
+          return Math.ceil(lines * Number.parseFloat(this.style.lineHeight));
+        },
+        remove() { removed = true; },
+      };
+    },
+  };
+  const result = ts.transpileModule(
+    source("src/features/reading/reader-a5-reflow.ts"),
+    { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } },
+  ).outputText;
+  const exports = {};
+  runInNewContext(result, { exports, document });
+
+  const content = Array.from({ length: 24 }, (_, index) =>
+    `Bölümün ${index + 1}. paragrafı. ` +
+    "Bu kitap gerçek A5 okuma sayfalarında eksiksiz ve dengeli yer almalıdır. ".repeat(6),
+  ).join("\n\n");
+  const firstBody = { left: 45, top: 155, width: 385, height: 540 };
+  const continuationBody = { left: 45, top: 85, width: 385, height: 620 };
+  const ends = exports.measureReaderA5PageEnds({
+    content, firstBody, continuationBody,
+    fontFamily: '"Courier New", monospace',
+    letterSpacing: 0,
+  });
+
+  assert.ok(Array.isArray(ends) && ends.length > 1 && ends.length < 17,
+    "the same manuscript should occupy fewer genuinely filled 11pt A5 pages than an old 17-page snapshot");
+  assert.equal(ends.at(-1), content.length, "every source character must be on a visible page");
+  const pages = exports.readerTextPages(ends);
+  assert.equal(pages.map((page) => content.slice(page.start, page.end)).join(""), content,
+    "reflow preserves exact punctuation and original line breaks");
+  assert.ok(pages.every((page, index) =>
+    page.end > page.start && (index === 0 || page.start === pages[index - 1].end)),
+    "pages are contiguous with no gaps or overlaps");
+  assert.equal(removed, true, "temporary measurement DOM is removed");
+
+  const originals = [{ start: 0, end: 250 }, { start: 250, end: 500 }];
+  assert.equal(exports.sourceOffsetForPagePoint(originals, 1, 0.4), 350,
+    "existing saved point retains its original source offset");
+  assert.equal(exports.findReaderPageForOffset([{ start: 0, end: 300 }, { start: 300, end: 500 }], 350), 1,
+    "original saved point can navigate to its new reader page");
 });

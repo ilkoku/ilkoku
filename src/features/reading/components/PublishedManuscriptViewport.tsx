@@ -30,6 +30,12 @@ import type { PersonalBookAnnotationRecord } from "../personal-book-annotation-t
 import type { ReaderFacingPagePreview } from "../reader-book-outline";
 import { parsePersonalPagePointAnchor } from "../personal-page-point-anchor";
 import { READING_PAGE_PROGRESS_EVENT } from "../reading-display-mode";
+import {
+  findReaderPageForOffset,
+  measureReaderA5PageEnds,
+  readerTextPages,
+  sourceOffsetForPagePoint,
+} from "../reader-a5-reflow";
 import { usePublishedBookTools } from "./PublishedBookToolsContinuity";
 import styles from "./PublishedManuscriptViewport.module.css";
 
@@ -73,6 +79,7 @@ type BookPage = {
   content: string;
   formatting: ChapterFormatting | null;
   globalNumber: number;
+  publishedGlobalNumber: number;
   itemId: string;
   isContentsPage: boolean;
   isChapter: boolean;
@@ -223,15 +230,73 @@ export function PublishedManuscriptViewport({
 }) {
   const router = useRouter();
   const tools = usePublishedBookTools();
-  const pages = useMemo(() => splitPublishedPages(content, layout), [content, layout]);
+  const latestAnnotationsRef = useRef(tools?.annotations ?? []);
+  useEffect(() => {
+    latestAnnotationsRef.current = tools?.annotations ?? [];
+  }, [tools?.annotations]);
+  const savedPages = useMemo(() => splitPublishedPages(content, layout), [content, layout]);
   const currentItemId = activeItemId ?? "current-publication-item";
-  const initialIndex = () => startAtLastPage
-    ? Math.max(0, pages.length - 1)
-    : typeof initialBookPage === "number" &&
-      initialBookPage >= bookPageStart &&
-      initialBookPage < bookPageStart + pages.length
+  const isContentsItem = bookItems?.some(
+    (item) => item.structureItemId === currentItemId &&
+      item.type === "special" && item.kind === "toc",
+  ) ?? false;
+  const paginationKey = [
+    currentItemId,
+    content.length,
+    layout.pageEnds.join(","),
+    layout.typography.font,
+    layout.typography.letterSpacing,
+  ].join("|");
+  const [measuredReaderPages, setMeasuredReaderPages] = useState<{
+    key: string;
+    ends: number[];
+  } | null>(null);
+  const readerEnds = readerModesEnabled && measuredReaderPages?.key === paginationKey
+    ? measuredReaderPages.ends
+    : null;
+  const pages = useMemo(
+    () => readerEnds ? readerTextPages(readerEnds) : savedPages,
+    [readerEnds, savedPages],
+  );
+  const usesReaderReflow = readerEnds !== null;
+
+  // This measurement consumes only the already-authorized current item.
+  // Other/locked book sections remain redacted, and published pageEnds persist.
+  useEffect(() => {
+    if (!readerModesEnabled || !content || isContentsItem) return;
+    let cancelled = false;
+    let frame = 0;
+    const measure = () => {
+      if (cancelled) return;
+      const fontFamily = fontFamilies[layout.typography.font];
+      const ends = measureReaderA5PageEnds({
+        content,
+        firstBody: canonicalBodyBox(layout.page.firstBody, layout),
+        continuationBody: canonicalBodyBox(layout.page.continuationBody, layout),
+        fontFamily,
+        letterSpacing: layout.typography.letterSpacing,
+      });
+      if (cancelled || !ends) return;
+      const changed = ends.length !== layout.pageEnds.length ||
+        ends.some((end, index) => end !== layout.pageEnds[index]);
+      if (changed) setMeasuredReaderPages({ key: paginationKey, ends });
+    };
+    void document.fonts.ready.then(() => {
+      if (!cancelled) frame = window.requestAnimationFrame(measure);
+    });
+    return () => {
+      cancelled = true;
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [content, isContentsItem, layout, paginationKey, readerModesEnabled]);
+  const initialIndex = () => {
+    if (startAtLastPage) return Math.max(0, pages.length - 1);
+    const publishedIndex = typeof initialBookPage === "number"
       ? initialBookPage - bookPageStart
       : 0;
+    const originalOffset = savedPages[Math.max(0, Math.min(savedPages.length - 1, publishedIndex))]?.start ?? 0;
+    return findReaderPageForOffset(pages, originalOffset);
+  };
   const [pageIndex, setPageIndex] = useState(initialIndex);
   const [displayMode, setDisplayMode] = useState<BookDisplayMode>(readerModesEnabled ? "book" : "single");
   const [isNarrow, setIsNarrow] = useState(false);
@@ -264,7 +329,7 @@ export function PublishedManuscriptViewport({
     const frame = window.requestAnimationFrame(() => setPageIndex(initialIndex()));
     return () => window.cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialBookPage, startAtLastPage, bookPageStart, content]);
+  }, [initialBookPage, startAtLastPage, bookPageStart, content, pages]);
 
   function chooseMode(next: BookDisplayMode) {
     setDisplayMode(next);
@@ -275,33 +340,48 @@ export function PublishedManuscriptViewport({
     }
   }
 
-  // The published snapshot is already commerce-redacted on the server. Never
-  // regenerate page boundaries or expose text from a locked chapter here.
+  // The server has already redacted other book items. Reflow only the active
+  // item's authorized text; use untouched source pages for neighbouring items.
   const bookPages = useMemo<BookPage[]>(() => {
     if (bookItems?.length) {
-      let globalNumber = 0;
-      return bookItems.flatMap((item) => splitPublishedPages(item.content, item.layout).map((page, index) => ({
-        content: item.content,
-        formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
-        globalNumber: ++globalNumber,
-        itemId: item.structureItemId,
-        isContentsPage: item.type === "special" && item.kind === "toc",
-        isChapter: item.type === "chapter",
-        layout: item.layout,
-        localIndex: index,
-        pageEnd: page.end,
-        pageStart: page.start,
-        previewText: facingPreviews.find((candidate) =>
-          candidate.itemId === item.structureItemId && candidate.localIndex === index,
-        )?.text ?? null,
-        subtitle: item.subtitle,
-        title: item.title,
-      } satisfies BookPage)));
+      let displayGlobal = 0;
+      let publishedGlobal = 0;
+      return bookItems.flatMap((item) => {
+        const originalStart = publishedGlobal;
+        publishedGlobal += item.layout.pageEnds.length;
+        const current = item.structureItemId === currentItemId;
+        const sourcePages = splitPublishedPages(item.content, item.layout);
+        const itemPages = current ? pages : sourcePages;
+        return itemPages.map((page, index) => {
+          const publishedIndex = current
+            ? findReaderPageForOffset(sourcePages, page.start)
+            : index;
+          return {
+            content: item.content,
+            formatting: item.type === "chapter" ? (item.formatting ?? null) : null,
+            globalNumber: ++displayGlobal,
+            publishedGlobalNumber: originalStart + publishedIndex + 1,
+            itemId: item.structureItemId,
+            isContentsPage: item.type === "special" && item.kind === "toc",
+            isChapter: item.type === "chapter",
+            layout: item.layout,
+            localIndex: index,
+            pageEnd: page.end,
+            pageStart: page.start,
+            previewText: current ? null : facingPreviews.find((candidate) =>
+              candidate.itemId === item.structureItemId && candidate.localIndex === index,
+            )?.text ?? null,
+            subtitle: item.subtitle,
+            title: item.title,
+          } satisfies BookPage;
+        });
+      });
     }
     return pages.map((page, index) => ({
       content,
       formatting,
       globalNumber: bookPageStart + index,
+      publishedGlobalNumber: bookPageStart + findReaderPageForOffset(savedPages, page.start),
       itemId: currentItemId,
       isContentsPage: false,
       isChapter: true,
@@ -313,10 +393,13 @@ export function PublishedManuscriptViewport({
       subtitle: subtitle ?? null,
       title: chapterTitle,
     } satisfies BookPage));
-  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, facingPreviews, formatting, layout, pages, subtitle]);
+  }, [bookItems, bookPageStart, chapterTitle, content, currentItemId, facingPreviews, formatting, layout, pages, savedPages, subtitle]);
 
-  const globalPageNumber = bookPageStart + pageIndex;
-  const globalPageTotal = Math.max(globalPageNumber, bookTotalPages ?? bookPages.length);
+  const currentDisplayStart = bookPages.find((page) => page.itemId === currentItemId)?.globalNumber ?? bookPageStart;
+  const globalPageNumber = currentDisplayStart + Math.min(pageIndex, pages.length - 1);
+  const globalPageTotal = bookItems?.length
+    ? bookPages.length
+    : Math.max(globalPageNumber, (bookTotalPages ?? bookPageStart + savedPages.length - 1) - savedPages.length + pages.length);
   const spreadMode = readerModesEnabled && displayMode === "book" && !isNarrow;
   const leftNumber = globalPageNumber % 2 === 0 ? globalPageNumber : globalPageNumber - 1;
   const visibleNumbers = useMemo(() => spreadMode
@@ -381,18 +464,22 @@ export function PublishedManuscriptViewport({
     if (!request) return;
     const frame = window.requestAnimationFrame(() => {
       if (typeof request.pageIndex === "number") {
-        setPageIndex(Math.min(Math.max(0, request.pageIndex), Math.max(0, pages.length - 1)));
+        // A saved point's y coordinate refines its text location when reflowed.
+        const storedPoint = latestAnnotationsRef.current.find((item) => item.id === request.annotationId);
+        const originalPoint = storedPoint
+          ? parsePersonalPagePointAnchor(storedPoint.pathData)
+          : null;
+        const old = savedPages[Math.max(0, Math.min(savedPages.length - 1, request.pageIndex))];
+        const offset = originalPoint
+          ? sourceOffsetForPagePoint(savedPages, originalPoint.pageIndex, originalPoint.y)
+          : (old?.start ?? 0);
+        setPageIndex(findReaderPageForOffset(pages, offset));
       } else if (typeof request.startOffset === "number") {
-        const targetIndex = pages.findIndex((page, index) =>
-          request.startOffset! >= page.start &&
-          (request.startOffset! < page.end ||
-            (index === pages.length - 1 && request.startOffset === page.end)),
-        );
-        if (targetIndex >= 0) setPageIndex(targetIndex);
+        setPageIndex(findReaderPageForOffset(pages, request.startOffset));
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [pages, tools?.navigateRequest]);
+  }, [pages, savedPages, tools?.navigateRequest]);
 
   function blockInteraction(event: SyntheticEvent) {
     event.preventDefault();
@@ -431,7 +518,7 @@ export function PublishedManuscriptViewport({
     const item = bookItems?.find((candidate) => candidate.structureItemId === destination.itemId);
     if (item && workSlug) {
       router.push(
-        `${publishedBookItemHref(workSlug, item)}?from=${encodedBookReturn}&sayfa=${target}`,
+        `${publishedBookItemHref(workSlug, item)}?from=${encodedBookReturn}&sayfa=${destination.publishedGlobalNumber}`,
       );
     }
   }
@@ -519,10 +606,23 @@ export function PublishedManuscriptViewport({
       event.target.closest("[data-personal-book-annotation='true']")
     ) return;
     const rectangle = event.currentTarget.getBoundingClientRect();
+    const clickY = clamp01((event.clientY - rectangle.top) / Math.max(1, rectangle.height));
+    const clickX = clamp01((event.clientX - rectangle.left) / Math.max(1, rectangle.width));
+    // Store NEW reader points in original page coordinates, so the signed
+    // publication, bookmark list, and previously saved annotation IDs survive.
+    const sourceOffset = page.pageStart +
+      Math.round((page.pageEnd - page.pageStart) * clickY);
+    const sourcePageIndex = usesReaderReflow
+      ? findReaderPageForOffset(savedPages, sourceOffset)
+      : page.localIndex;
+    const sourcePage = savedPages[sourcePageIndex];
+    const sourceY = usesReaderReflow && sourcePage
+      ? clamp01((sourceOffset - sourcePage.start) / Math.max(1, sourcePage.end - sourcePage.start))
+      : clickY;
     void tools.applyPagePointAnchor({
-      pageIndex: page.localIndex,
-      x: clamp01((event.clientX - rectangle.left) / Math.max(1, rectangle.width)),
-      y: clamp01((event.clientY - rectangle.top) / Math.max(1, rectangle.height)),
+      pageIndex: sourcePageIndex,
+      x: clickX,
+      y: sourceY,
     });
   }
 
@@ -659,18 +759,38 @@ export function PublishedManuscriptViewport({
       pageEnd: inCurrentItem ? page.pageEnd : visibleText.length,
       pageStart: inCurrentItem ? page.pageStart : 0,
     });
-    const pagePointAnnotations = ownAnnotations
-      .map((annotation) => ({
+    const pagePointAnnotations = ownAnnotations.flatMap((annotation) => {
+      const point = parsePersonalPagePointAnchor(annotation.pathData);
+      if (!point) return [];
+      if (!usesReaderReflow) {
+        return point.pageIndex === page.localIndex
+          ? [{ annotation, x: point.x, y: point.y }]
+          : [];
+      }
+      // A legacy point can be re-anchored visually without mutating its
+      // original pageIndex, path data, or note. Its position is approximate.
+      const sourceOffset = sourceOffsetForPagePoint(savedPages, point.pageIndex, point.y);
+      const readerIndex = findReaderPageForOffset(pages, sourceOffset);
+      if (readerIndex !== page.localIndex) return [];
+      const position = clamp01(
+        (sourceOffset - page.pageStart) / Math.max(1, page.pageEnd - page.pageStart),
+      );
+      const relativeTop = bodyBox.top / A5_PAGE_HEIGHT_PX;
+      const relativeHeight = bodyBox.height / A5_PAGE_HEIGHT_PX;
+      return [{
         annotation,
-        point: parsePersonalPagePointAnchor(annotation.pathData),
-      }))
-      .filter((entry) => entry.point && entry.point.pageIndex === page.localIndex);
+        x: point.x,
+        y: clamp01(relativeTop + relativeHeight * (0.05 + 0.9 * position)),
+      }];
+    });
     const locked = !visibleText && page.pageEnd > page.pageStart;
     return (
       <div className={styles.pageFrame} key={page.globalNumber}
         style={{ width: `${renderWidth}px`, height: `${renderHeight}px` }}>
         <article
-          aria-label={`Yayın sayfası ${page.globalNumber} / ${globalPageTotal}`}
+          aria-label={inCurrentItem && usesReaderReflow
+            ? `Okuma sayfası ${page.localIndex + 1} / ${pages.length}`
+            : `Yayın sayfası ${page.globalNumber} / ${globalPageTotal}`}
           className={styles.page}
           data-reader-paper-format="a5"
           data-personal-book-tool={inCurrentItem ? (activeTool ?? "none") : "none"}
@@ -733,7 +853,7 @@ export function PublishedManuscriptViewport({
               ))}
             </div>
           )}
-          {pagePointAnnotations.map(({ annotation, point }) => point ? (
+          {pagePointAnnotations.map(({ annotation, x, y }) => (
             <button
               aria-label={annotation.type === "reading_position" ? "Kaldığım yer işareti" : "Kişisel iğne"}
               className={styles.pointAnnotation}
@@ -745,19 +865,21 @@ export function PublishedManuscriptViewport({
                 event.stopPropagation();
                 if (eraserMode) void tools?.deleteAnnotation(annotation.id);
               }}
-              style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }}
+              style={{ left: `${x * 100}%`, top: `${y * 100}%` }}
               type="button"
             >
               <span aria-hidden="true">{annotation.type === "reading_position" ? "⌑" : "⌖"}</span>
             </button>
-          ) : null)}
+          ))}
           <div aria-hidden="true" className={styles.watermarkLayer}>
             {watermarkCopies.map((copy) => (
               <span key={copy}>{identity} · İlkOku güvenli okuma</span>
             ))}
           </div>
           <span aria-hidden="true" className={styles.pageNumber}>
-            {page.globalNumber} / {globalPageTotal}
+            {inCurrentItem && usesReaderReflow
+              ? `${page.localIndex + 1} / ${pages.length}`
+              : `${page.globalNumber} / ${globalPageTotal}`}
           </span>
         </article>
         {!inCurrentItem && (
@@ -778,7 +900,9 @@ export function PublishedManuscriptViewport({
       data-book-page-number={globalPageNumber}
       data-book-page-total={globalPageTotal}
       data-publication-layout-version={layout.version}
-      data-publication-page-count={pages.length}
+      data-publication-page-count={savedPages.length}
+      data-reader-page-count={pages.length}
+      data-reader-reflow={usesReaderReflow ? "true" : "false"}
     >
       {readerModesEnabled ? <nav aria-label="Kitap görünümü ve bölümler" className={styles.bookToolbar}>
         <div aria-label="Okuma görünümü" className={styles.modeOptions} role="group">
@@ -812,9 +936,14 @@ export function PublishedManuscriptViewport({
           <span aria-hidden="true">←</span> Önceki Sayfa
         </button>
         <div aria-live="polite" className={styles.status}>
-          <strong>{spreadMode
-            ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
-            : globalPageNumber} / {globalPageTotal}</strong>
+          <strong>{usesReaderReflow
+            ? `${spreadMode
+              ? visiblePages.filter((page): page is BookPage => page !== null && page.itemId === currentItemId)
+                .map((page) => page.localIndex + 1).join("–")
+              : pageIndex + 1} / ${pages.length} (bölüm)`
+            : `${spreadMode
+              ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
+              : globalPageNumber} / ${globalPageTotal}`}</strong>
         </div>
         <button disabled={atLastVisiblePage}
           onClick={goNext} type="button">

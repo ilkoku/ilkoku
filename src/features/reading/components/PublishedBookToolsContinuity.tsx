@@ -39,6 +39,7 @@ export type PublishedBookReadingActiveTool =
 
 export type PublishedBookNavigateRequest = {
   nonce: number;
+  annotationId?: string;
   pageIndex?: number;
   startOffset?: number;
 };
@@ -405,6 +406,7 @@ export function PublishedBookToolsContinuity({
       setNavigateRequest((current) => ({
         nonce: (current?.nonce ?? 0) + 1,
         pageIndex: point.pageIndex,
+        annotationId: annotation.id,
       }));
     } else if (typeof annotation.startOffset === "number") {
       setNavigateRequest((current) => ({

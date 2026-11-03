@@ -138,8 +138,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(continuityTools, "aria-expanded={isListOpen}", "special page annotations-list icon uses canonical selector contract");
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
-  includes(renderer, "const activePage = pages[pageIndex]", "only one active publication page rendered");
-  includes(renderer, "{subtitle ? <p>{subtitle}</p> : null}", "published header renders Writer subtitle");
+  includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
+  includes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published header renders Writer subtitle");
 });
 
 test("published special pages persist private marks against immutable publication items", () => {
@@ -174,4 +174,44 @@ test("published special pages persist private marks against immutable publicatio
   includes(renderer, "handlePagePoint", "published pages support pin and reading-position anchors");
   includes(renderer, "annotationHighlight", "published renderer paints private highlights without reflow");
   includes(runtimeContracts, '"PersonalBookAnnotation"', "migration-only annotation table is acknowledged");
+});
+
+test("reader-wide cover, contents, published sections and dual page modes preserve immutable access", () => {
+  const renderer = source("src/features/reading/components/PublishedManuscriptViewport.tsx");
+  const selector = source("src/features/reading/components/PublishedBookSelector.tsx");
+  const contents = source("src/app/oku/[slug]/icindekiler/page.tsx");
+  const contentsCss = source("src/app/oku/[slug]/icindekiler/book-contents.css");
+  const cover = source("src/app/oku/[slug]/kapak/page.tsx");
+  const chapterRoute = source("src/app/oku/[slug]/[chapterSlug]/page.tsx");
+  const specialRoute = source("src/app/oku/[slug]/sayfa/[itemId]/page.tsx");
+  const chapterView = source("src/features/reading/components/FocusedReadingExperience.tsx");
+  const specialView = source("src/features/reading/components/PublishedBookSpecialPageExperience.tsx");
+  const tools = source("src/features/reading/components/PublishedBookToolsContinuity.tsx");
+
+  includes(renderer, "BOOK_MODE_STORAGE_KEY", "reader mode is a display preference, not a publication mutation");
+  includes(renderer, 'data-book-display-mode={spreadMode ? "book" : "single"}', "two selectable views");
+  includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "bounded visible physical pages");
+  includes(renderer, "spreadMode ? [leftNumber, leftNumber + 1]", "two-page spreads follow global book parity");
+  includes(renderer, "splitPublishedPages(item.content, item.layout)", "author snapshot page boundaries never reflow");
+  includes(renderer, "const locked = !page.content && page.pageEnd > page.pageStart;", "redacted locked text stays unreadable");
+  includes(renderer, "inCurrentItem ? annotations : []", "marks cannot leak between publication items");
+  includes(renderer, "const nextScale = Math.min(", "scale is calculated from real reader viewport");
+  includes(renderer, "page.itemId !== currentItemId", "notes and page anchors are owned by active item");
+  includes(renderer, "publishedBookItemHref(workSlug, item)", "cross-section page activation routes securely");
+  includes(renderer, "const activeChapterProgress", "reading progress derived from bounded visible pages");
+  includes(selector, "numberedItems", "whole book physical page positions");
+  includes(selector, "contentsHref", "table of contents is available from every chapter");
+  includes(cover, "contentsHref", "front cover links to complete book index");
+  includes(contents, "getCurrentSessionContext()", "table of contents requires a reader session");
+  includes(contents, "enforceAdultWorkGate", "adult work restriction is kept");
+  includes(contents, "getMemberPublicWorkBySlug", "TOC uses commerce-aware published snapshot");
+  includes(contents, "work.publicationBook.items.map", "special pages and chapters retain authored order");
+  includes(contents, "chapterAccess[item.chapterId]", "locked chapters are labeled without content exposure");
+  includes(contentsCss, ".reader-book-contents__paper", "large readable contents design");
+  includes(chapterRoute, "getPersonalBookAnnotations", "published chapters use canonical private book notes");
+  includes(chapterRoute, "PublishedBookToolsContinuity", "published chapter tool provider matches special pages");
+  includes(specialRoute, "getPersonalBookAnnotations", "special page notes remain scoped");
+  includes(chapterView, "bookItems={publishedBook?.items}", "chapter receives safe publication sequence");
+  includes(specialView, "bookItems={publicationBook.items}", "special pages receive safe publication sequence");
+  includes(tools, "useState(true)", "book tools start minimized");
 });

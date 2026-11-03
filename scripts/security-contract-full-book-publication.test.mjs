@@ -198,7 +198,7 @@ test("reader-wide cover, contents, published sections and dual page modes preser
   includes(outline, "following.content.slice(0, following.layout.pageEnds[0])", "at most following facing page excerpt");
   includes(renderer, 'data-book-display-mode={spreadMode ? "book" : "single"}', "two selectable views");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "bounded visible physical pages");
-  includes(renderer, "spreadMode ? [leftNumber, leftNumber + 1]", "two-page spreads follow global book parity");
+  includes(renderer, "? [leftNumber, leftNumber + 1]", "two-page spreads follow global book parity");
   includes(renderer, "splitPublishedPages(item.content, item.layout)", "author snapshot page boundaries never reflow");
   includes(renderer, "const locked = !visibleText && page.pageEnd > page.pageStart;", "redacted locked text stays unreadable");
   includes(renderer, "inCurrentItem ? annotations : []", "marks cannot leak between publication items");

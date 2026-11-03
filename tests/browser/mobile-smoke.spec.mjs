@@ -3136,3 +3136,37 @@ test("legacy published reader switches Kitap / Tek Sayfa without changing conten
   await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
 });
+
+
+test("book opening initial appears only in the first protected paragraph", async ({ page }) => {
+  // Production ProtectedChapterContent renders each paragraph inside a wrapper.
+  // A generic p:first-child selector matches ALL such paragraphs and must not recur.
+  await page.setContent([
+    '<section class="chapter__body">',
+    '  <div data-annotation-paragraph="0"><p id="opening">Birinci paragraf.</p></div>',
+    '  <div data-annotation-paragraph="1"><p id="second">İkinci paragraf.</p></div>',
+    '  <div data-annotation-paragraph="2"><p id="third">Üçüncü paragraf.</p></div>',
+    '</section>',
+    '<section class="chapter__body">',
+    '  <p id="plain-opening">Doğrudan ilk paragraf.</p>',
+    '  <p id="plain-second">Doğrudan ikinci paragraf.</p>',
+    '</section>',
+  ].join("\n"));
+  await page.addStyleTag({ path: "src/features/reading/reading.css" });
+
+  const sizes = await page.evaluate(() =>
+    ["opening", "second", "third", "plain-opening", "plain-second"].map((id) => {
+      const element = document.getElementById(id);
+      if (!element) throw new Error("Missing chapter paragraph: " + id);
+      return {
+        base: parseFloat(getComputedStyle(element).fontSize),
+        initial: parseFloat(getComputedStyle(element, "::first-letter").fontSize),
+      };
+    }),
+  );
+  expect(sizes[0].initial).toBeGreaterThan(sizes[0].base * 3);
+  expect(sizes[1].initial).toBeCloseTo(sizes[1].base, 1);
+  expect(sizes[2].initial).toBeCloseTo(sizes[2].base, 1);
+  expect(sizes[3].initial).toBeGreaterThan(sizes[3].base * 3);
+  expect(sizes[4].initial).toBeCloseTo(sizes[4].base, 1);
+});

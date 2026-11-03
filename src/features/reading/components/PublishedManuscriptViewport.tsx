@@ -52,11 +52,16 @@ function canonicalBodyBox(
 ) {
   const widthScale = A5_PAGE_WIDTH_PX / publication.page.width;
   const heightScale = A5_PAGE_HEIGHT_PX / publication.page.height;
+  const top = box.top * heightScale;
+  // Use all of the available A5 body down to the footer. Earlier large
+  // manuscript pages may contain more text, but their immutable pageEnds
+  // and paragraph offsets must not change when the Reader standardizes.
+  const bodyBottomMargin = 42;
   return {
     left: box.left * widthScale,
-    top: box.top * heightScale,
+    top,
     width: box.width * widthScale,
-    height: box.height * heightScale,
+    height: Math.max(1, A5_PAGE_HEIGHT_PX - top - bodyBottomMargin),
   };
 }
 

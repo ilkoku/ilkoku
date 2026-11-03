@@ -89,6 +89,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const queries = source("src/features/works/member-public-queries.ts");
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
   const coverPage = source("src/app/oku/[slug]/kapak/page.tsx");
+  const coverStyles = source("src/app/oku/[slug]/kapak/live-book-cover.css");
   const contentsPage = source("src/app/oku/[slug]/icindekiler/page.tsx");
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
@@ -117,6 +118,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(showcase, "/kapak?from=", "new Reader enters the live book through its front cover");
   includes(coverPage, "publishedBookItemHref", "front cover opens the first authored publication item");
   includes(coverPage, 'data-book-surface="front-cover"', "front cover stays outside numbered body pages");
+  includes(coverStyles, "aspect-ratio: 148 / 210;", "actual author cover is fitted into the A5 paper ratio");
+  includes(coverStyles, "object-fit: contain;", "author cover image is not cropped");
   includes(coverPage, "href={bookInfoHref}", "cover returns to the actual work page");
   includes(contentsPage, "href={bookInfoHref}", "contents returns to the actual work page");
   includes(showcase, "publicationBook?.totalPages", "exact physical published page count");

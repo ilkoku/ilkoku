@@ -150,8 +150,8 @@ test("reader manuscript keeps canonical writer paper typography and measured pag
   includes(indicator, "Kitap sayfası", "reader page status label");
 
   includes(parity, '"Courier New"', "canonical typewriter family");
-  includes(parity, "--reader-manuscript-font-size: 17px", "canonical 17px manuscript size");
-  includes(parity, "--reader-manuscript-line-height: 1.9", "canonical manuscript line spacing");
+  includes(parity, "--reader-manuscript-font-size: 14.67px", "Word 11-point equivalent manuscript default size");
+  includes(parity, "--reader-manuscript-line-height: 1.15", "Word-like manuscript line spacing");
   includes(parity, "white-space: pre-wrap", "hard line-break preservation");
   includes(parity, 'aria-label="Sayfa geçişleri"', "legacy estimated page status suppression scope");
 });

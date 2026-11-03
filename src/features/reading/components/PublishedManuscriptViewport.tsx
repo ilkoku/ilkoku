@@ -312,7 +312,8 @@ export function PublishedManuscriptViewport({
     const referenceHeight = Math.max(layout.page.height, ...referencePages.map((page) => page.layout.page.height));
     const availableWidth = Math.max(1, stage.clientWidth - 8);
     const availableHeight = Math.max(540, window.innerHeight - 180);
-    const naturalWidth = spreadMode ? referenceWidth * 2 + 24 : referenceWidth;
+    // Facing sheets share a spine; reserve no artificial gap between them.
+    const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth;
     const naturalHeight = referenceHeight;
     const nextScale = Math.min(
       readerModesEnabled ? (spreadMode ? 1.55 : 1.8) : 1,
@@ -416,12 +417,41 @@ export function PublishedManuscriptViewport({
     navigateToGlobal(spreadMode ? leftNumber + 2 : globalPageNumber + 1);
   }
 
+  // The final right-hand page can be visible while the active left page is
+  // one page earlier. Do not offer a next turn into a non-existent spread.
+  const lastVisiblePageNumber = spreadMode
+    ? Math.min(globalPageTotal, leftNumber + 1)
+    : globalPageNumber;
+  const hasNextBookPage = Boolean(onNextBookPage || nextChapterHref);
+  const atLastVisiblePage = lastVisiblePageNumber >= globalPageTotal && !hasNextBookPage;
+  const atFirstVisiblePage = globalPageNumber <= 1 && !coverHref && !onPreviousBookPage && !previousChapterHref;
+
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
   const textSelectionMode =
     activeTool === "highlight" || activeTool === "underline" || activeTool === "note";
   const pointMode = activeTool === "pin" || activeTool === "reading_position";
   const eraserMode = activeTool === "eraser";
+
+  // Navigation never captures typing, dialogs or active personal annotations.
+  useEffect(() => {
+    if (!readerModesEnabled) return;
+    function handlePageKeys(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || activeTool) return;
+      if (event.target instanceof Element && event.target.closest("input,textarea,select,button,a,summary,[contenteditable='true'],[role='dialog']")) return;
+      if (event.key === "ArrowLeft" && !atFirstVisiblePage) {
+        event.preventDefault();
+        goPrevious();
+      } else if (event.key === "ArrowRight" && !atLastVisiblePage) {
+        event.preventDefault();
+        goNext();
+      }
+    }
+    window.addEventListener("keydown", handlePageKeys);
+    return () => window.removeEventListener("keydown", handlePageKeys);
+  // Navigation functions intentionally capture the current physical spread.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readerModesEnabled, activeTool, atFirstVisiblePage, atLastVisiblePage, globalPageNumber, spreadMode]);
 
   function handleTextSelectionEnd(
     event: ReactPointerEvent<HTMLDivElement>,
@@ -722,12 +752,18 @@ export function PublishedManuscriptViewport({
       </nav> : null}
       <div aria-label={spreadMode ? "Açık kitap" : "Tek kitap sayfası"}
         className={styles.stage} ref={stageRef}>
-        <div className={spreadMode ? styles.spread : styles.singlePage}>
+        <div className={spreadMode ? styles.spread : styles.singlePage} data-page-spread={spreadMode ? "facing" : "single"}>
           {visiblePages.map((page, slot) => paper(page, slot))}
         </div>
+        {readerModesEnabled ? (
+          <div className={styles.pageTurnRail} aria-label="Kitap sayfası çevirme araçları" role="group">
+            <button className={styles.turnPrevious} aria-label="Önceki sayfayı çevir" disabled={atFirstVisiblePage} onClick={goPrevious} type="button">←</button>
+            <button className={styles.turnNext} aria-label="Sonraki sayfayı çevir" disabled={atLastVisiblePage} onClick={goNext} type="button">→</button>
+          </div>
+        ) : null}
       </div>
       <nav aria-label="Yayın sayfası geçişleri" className={styles.controls}>
-        <button disabled={globalPageNumber <= 1 && !coverHref && !onPreviousBookPage && !previousChapterHref}
+        <button disabled={atFirstVisiblePage}
           onClick={goPrevious} type="button">
           <span aria-hidden="true">←</span> Önceki Sayfa
         </button>
@@ -736,7 +772,7 @@ export function PublishedManuscriptViewport({
             ? visiblePages.filter((page): page is BookPage => page !== null).map((page) => page.globalNumber).join("–")
             : globalPageNumber} / {globalPageTotal}</strong>
         </div>
-        <button disabled={globalPageNumber >= globalPageTotal && !onNextBookPage && !nextChapterHref}
+        <button disabled={atLastVisiblePage}
           onClick={goNext} type="button">
           Sonraki Sayfa <span aria-hidden="true">→</span>
         </button>

@@ -93,6 +93,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
   );
+  const legacyReader = source("src/features/reading/components/PagedReadingViewport.tsx");
+  const legacyReaderStyles = source("src/features/reading/components/PagedReadingViewport.module.css");
   const specialReader = source(
     "src/features/reading/components/PublishedBookSpecialPageExperience.tsx",
   );
@@ -142,6 +144,13 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
+  includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "legacy books can switch display layouts");
+  includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "legacy books share the published-book preference");
+  includes(legacyReader, 'pendingBookmarkRef', "legacy page point anchors stay in original coordinates");
+  includes(legacyReader, 'if (!bookMode || (!pointMode && !drawingMode)) return;', "annotation drawing remains anchored safely");
+  includes(legacyReader, 'window.requestAnimationFrame(() => chooseMode("single"))', "legacy point-tool fallback avoids render time state updates");
+  includes(legacyReader, 'workSlug', "legacy reader keeps cover and contents navigation");
+  includes(legacyReaderStyles, 'column-fill: auto;', "legacy book flows as facing columns without content mutation");
   includes(renderer, "const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth", "facing pages meet at one book spine");
   includes(renderer, "lastVisiblePageNumber", "reader computes final visible page instead of only active page");
   includes(renderer, "disabled={atLastVisiblePage}", "last facing spread does not offer a dead next-page button");

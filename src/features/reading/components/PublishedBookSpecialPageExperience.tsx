@@ -179,6 +179,7 @@ export function PublishedBookSpecialPageExperience({
                 encodedReturnTo={encodedReturnTo}
                 identity={protectionIdentity}
                 initialBookPage={initialBookPage}
+                readerModesEnabled
                 layout={item.layout}
                 nextChapterHref={nextHref}
                 previousChapterHref={previousHref}

@@ -1,0 +1,110 @@
+.reader-book-contents {
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 3rem) 5rem;
+  background: #090d10;
+  color: #f4f2ea;
+}
+
+.reader-book-contents__top {
+  display: flex;
+  width: min(100%, 72rem);
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 auto 2rem;
+}
+
+.reader-book-contents__top a {
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(215, 180, 63, 0.45);
+  border-radius: 0.65rem;
+  color: #f4d16a;
+  text-decoration: none;
+}
+
+.reader-book-contents__paper {
+  width: min(100%, 47rem);
+  min-height: 55rem;
+  margin: 0 auto;
+  padding: clamp(1.6rem, 5vw, 4rem);
+  border: 1px solid #d0c8b9;
+  border-radius: 0.2rem;
+  background: #fffdf7;
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.35);
+  color: #29251f;
+}
+
+.reader-book-contents__eyebrow {
+  color: #8c7527;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reader-book-contents__paper h1 {
+  margin: 2.5rem 0 0.75rem;
+  font: 500 clamp(2.25rem, 5vw, 3.7rem)/1.16 Georgia, "Times New Roman", serif;
+}
+
+.reader-book-contents__work {
+  margin: 0 0 3rem;
+  color: #665f53;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.reader-book-contents__list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reader-book-contents__list li {
+  border-bottom: 1px solid #e5e0d8;
+}
+
+.reader-book-contents__list li a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 1rem;
+  padding: 1rem 0.3rem;
+  color: #29251f;
+  text-decoration: none;
+}
+
+.reader-book-contents__list a:hover,
+.reader-book-contents__list a:focus-visible {
+  background: #f3efdf;
+  outline-color: #8c7527;
+}
+
+.reader-book-contents__label {
+  grid-column: 1 / -1;
+  margin-bottom: 0.3rem;
+  color: #9a7f36;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.reader-book-contents__list strong {
+  font: 500 1.12rem/1.45 Georgia, "Times New Roman", serif;
+}
+
+.reader-book-contents__page {
+  color: #746c5c;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 36rem) {
+  .reader-book-contents {
+    padding-inline: 0.75rem;
+  }
+
+  .reader-book-contents__paper {
+    min-height: 70vh;
+    padding: 1.4rem;
+  }
+}

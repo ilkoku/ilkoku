@@ -403,6 +403,8 @@ test("public writing guides stay ISR-cacheable and CMS reads stay published-only
 test("bespoke fiction guides use the shared organization-authored structured data renderer", () => {
   const helper = source("src/components/content/WritingGuideStructuredData.tsx");
   assertContains(helper, '"@type": "Article"', "shared bespoke Article schema");
+  assertContains(helper, "datePublished", "shared bespoke real publication date");
+  assertContains(helper, "dateModified", "shared bespoke real modification date");
   assertContains(helper, 'author: {', "shared bespoke author relation");
   assertContains(helper, 'publisher: {', "shared bespoke publisher relation");
   assertContains(helper, '"@id": "https://ilkoku.com/#organization"', "shared bespoke organization identity");
@@ -434,6 +436,8 @@ test("all writing guide renderers expose organization-authored Article structure
     ["story", story],
   ]) {
     assertContains(guide, '"@type": "Article"', `${label} Article schema`);
+    assertContains(guide, "datePublished", `${label} real publication date`);
+    assertContains(guide, "dateModified", `${label} real modification date`);
     assertContains(guide, 'author: {', `${label} author relation`);
     assertContains(guide, 'publisher: {', `${label} publisher relation`);
     assertContains(guide, '"@id": "https://ilkoku.com/#organization"', `${label} organization identity`);
@@ -458,6 +462,8 @@ test("roman guide exposes Article and breadcrumb structured data", () => {
   assertContains(roman, '"@type": "Article"', "Roman Article schema");
   assertContains(roman, '"@type": "BreadcrumbList"', "Roman breadcrumb schema");
   assertContains(roman, 'mainEntityOfPage: canonical', "Roman canonical schema binding");
+  assertContains(roman, "datePublished", "Roman real publication date");
+  assertContains(roman, "dateModified", "Roman real modification date");
   assertContains(roman, 'author: { "@type": "Organization", name: "İlkOku"', "Roman author schema");
   assertContains(roman, 'publisher: { "@type": "Organization", name: "İlkOku"', "Roman publisher schema");
 });

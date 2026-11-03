@@ -30,6 +30,7 @@ import { PagedReadingViewport } from "./PagedReadingViewport";
 import { ProtectedChapterContent } from "./ProtectedChapterContent";
 import { PublishedBookSelector } from "./PublishedBookSelector";
 import { PublishedManuscriptViewport } from "./PublishedManuscriptViewport";
+import { buildReaderBookOutline } from "../reader-book-outline";
 import { ReadingPageIndicator } from "./ReadingPageIndicator";
 import { ReadingProgressTracker } from "./ReadingProgressTracker";
 import styles from "./FocusedReadingExperience.module.css";
@@ -145,6 +146,8 @@ export function FocusedReadingExperience({
     activeBookItem?.type === "chapter"
       ? activeBookItem.formatting ?? storedChapterFormatting
       : storedChapterFormatting;
+
+  const bookDisplay = buildReaderBookOutline(publishedBook?.items, activeBookItem?.structureItemId);
 
   const encodedReturnTo = encodeURIComponent(returnTo);
   const currentBookPath = `/kitap/${chapter.work.slug}`;
@@ -316,7 +319,8 @@ export function FocusedReadingExperience({
             {chapter.publicationLayout ? (
               <PublishedManuscriptViewport
                 activeItemId={activeBookItem?.structureItemId}
-                bookItems={publishedBook?.items}
+                bookItems={bookDisplay.outline}
+                facingPreviews={bookDisplay.facingPreviews}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publishedBook?.totalPages}
                 chapterTitle={chapter.title}

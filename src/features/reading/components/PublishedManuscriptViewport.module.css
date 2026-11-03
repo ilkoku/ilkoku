@@ -1,19 +1,75 @@
 .shell {
   width: 100%;
-  max-width: 52rem;
+  max-width: 82rem;
   margin: 0 auto;
+}
+
+.bookToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin: 0 auto 1.2rem;
+}
+
+.modeOptions,
+.bookLinks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bookToolbar button {
+  min-height: 2.55rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(215, 180, 63, 0.38);
+  border-radius: 0.7rem;
+  background: #101216;
+  color: rgba(238, 241, 246, 0.86);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.bookToolbar button:hover,
+.bookToolbar button[aria-pressed="true"] {
+  border-color: rgba(215, 180, 63, 0.78);
+  background: rgba(215, 180, 63, 0.12);
+  color: #f4d16a;
 }
 
 .stage {
   display: grid;
   width: 100%;
+  min-width: 0;
   place-items: start center;
   overflow: hidden;
 }
 
-.pageFrame {
+.spread,
+.singlePage {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.spread {
+  gap: 1.5rem;
+}
+
+.pageFrame,
+.blankFrame {
   position: relative;
   flex: 0 0 auto;
+}
+
+.blankFrame {
+  border: 1px solid rgba(97, 82, 60, 0.18);
+  border-radius: 0.22rem;
+  background: #f7f2e9;
+  box-shadow: 0 1.3rem 3.25rem rgba(20, 16, 12, 0.25);
 }
 
 .page {
@@ -155,7 +211,7 @@
   display: block;
   overflow: hidden;
   padding: 0 0.45rem;
-  color: rgba(104, 71, 232, 0.08);
+  color: rgba(104, 71, 232, 0.045);
   font: 700 10px/1.2 sans-serif;
   letter-spacing: 0.05em;
   text-align: center;
@@ -253,5 +309,71 @@
   .controls button {
     width: 100%;
     justify-content: center;
+  }
+}
+
+.lockedPage {
+  position: absolute;
+  z-index: 1;
+  top: 45%;
+  left: 7%;
+  width: 86%;
+  color: #665a45;
+  font: 600 16px/1.6 Georgia, "Times New Roman", serif;
+  text-align: center;
+}
+
+.activatePage {
+  position: absolute;
+  z-index: 5;
+  right: 0.4rem;
+  bottom: 0.4rem;
+  max-width: 80%;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #c5a446;
+  border-radius: 0.45rem;
+  background: rgba(250, 248, 242, 0.96);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.13);
+  color: #483e28;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.activatePage:focus-visible,
+.bookToolbar button:focus-visible,
+.controls button:focus-visible {
+  outline: 3px solid #d7b43f;
+  outline-offset: 2px;
+}
+
+@media (max-width: 58rem) {
+  .shell {
+    max-width: 100%;
+  }
+
+  .spread {
+    gap: 0;
+  }
+}
+
+@media (max-width: 36rem) {
+  .bookToolbar {
+    gap: 0.5rem;
+  }
+
+  .bookToolbar button {
+    min-height: 2.35rem;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  .controls {
+    gap: 0.35rem;
+  }
+
+  .controls button {
+    padding-inline: 0.45rem;
+    font-size: 0.68rem;
   }
 }

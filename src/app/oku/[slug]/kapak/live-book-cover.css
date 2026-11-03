@@ -140,13 +140,26 @@
 }
 
 .live-book-cover__stage .showcase-cover {
-  max-width: min(100%, 420px);
-  min-height: 0;
+  width: min(100%, 420px);
+  max-width: 420px;
+  min-height: min(64vh, 620px);
+  aspect-ratio: 2 / 3;
   border-radius: 0.3rem;
   box-shadow:
     0 0 0 1px rgba(209, 191, 147, 0.22),
     0.5rem 0.45rem 0 rgba(214, 205, 184, 0.25),
     0 1.5rem 4rem rgba(0, 0, 0, 0.58);
+}
+
+.live-book-cover__stage .showcase-cover--image {
+  padding: 0;
+}
+
+.live-book-cover__stage .showcase-cover__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .live-book-cover__meta {
@@ -173,8 +186,9 @@
 
 @media (max-width: 760px) {
   .live-book-cover__stage .showcase-cover {
-    max-width: min(100%, 330px);
-    min-height: 0;
+    width: min(100%, 330px);
+    max-width: 330px;
+    min-height: min(60vh, 500px);
   }
 
   .live-book-cover__meta h1 {

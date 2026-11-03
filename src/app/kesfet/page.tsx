@@ -143,8 +143,12 @@ function mapReaderWork(
     saleDisclosure,
     paidAccessRestricted,
     purchaseAction,
+    // A new reading session starts at the author's real cover. Genuine
+    // reading progress still resumes at the saved chapter.
     readingHref: readableChapter
-      ? `/oku/${work.slug}/bolum-${readableChapter.position}`
+      ? progress && (progress.progressPercent > 0 || progress.chapter.position > 1)
+        ? `/oku/${work.slug}/bolum-${readableChapter.position}`
+        : `/oku/${work.slug}/kapak`
       : null,
     readingState: progress
       ? progress.completed

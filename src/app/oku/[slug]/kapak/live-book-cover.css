@@ -115,3 +115,69 @@
     max-width: 18ch;
   }
 }
+
+
+/* The author's actual cover opens the book; metadata no longer competes with it. */
+.live-book-cover {
+  background: #0c0e10;
+  color: #f2ece0;
+}
+
+.live-book-cover__toolbar {
+  max-width: 52rem;
+}
+
+.live-book-cover__toolbar span,
+.live-book-cover__page-note {
+  color: rgba(242, 236, 224, 0.57);
+}
+
+.live-book-cover__stage {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 1.5rem;
+  max-width: 52rem;
+}
+
+.live-book-cover__stage .showcase-cover {
+  max-width: min(100%, 420px);
+  min-height: 0;
+  border-radius: 0.3rem;
+  box-shadow:
+    0 0 0 1px rgba(209, 191, 147, 0.22),
+    0.5rem 0.45rem 0 rgba(214, 205, 184, 0.25),
+    0 1.5rem 4rem rgba(0, 0, 0, 0.58);
+}
+
+.live-book-cover__meta {
+  justify-items: center;
+  gap: 0.65rem;
+  text-align: center;
+}
+
+.live-book-cover__meta > p:first-child,
+.live-book-cover__meta > span {
+  color: rgba(242, 236, 224, 0.58);
+}
+
+.live-book-cover__meta h1 {
+  max-width: 36ch;
+  font-size: clamp(1.15rem, 2.4vw, 1.65rem);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.live-book-cover__open {
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 760px) {
+  .live-book-cover__stage .showcase-cover {
+    max-width: min(100%, 330px);
+    min-height: 0;
+  }
+
+  .live-book-cover__meta h1 {
+    max-width: 26ch;
+  }
+}

@@ -158,6 +158,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(readerReflow, "sourceOffsetForPagePoint", "stored pins resolve to original source offsets");
   includes(renderer, "const savedPages = useMemo(() => splitPublishedPages(content, layout)", "original publication pages remain intact");
   includes(renderer, "const itemPages = current ? pages : sourcePages", "only authorized active book item can reflow");
+  includes(renderer, "if (!readerModesEnabled || !content || isContentsItem) return;", "writer publication previews never reflow");
   includes(renderer, 'item.type === "special" && item.kind === "toc"', "table of contents links retain published positions");
   includes(renderer, "destination.publishedGlobalNumber", "cross-section deep links preserve original page numbers");
   includes(renderer, "sourceOffsetForPagePoint(savedPages", "existing page-point coordinates remain mapped");

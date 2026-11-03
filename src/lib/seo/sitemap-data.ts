@@ -143,10 +143,6 @@ const writingGenreHrefs = GENRES.map((genre) => {
   return `${categoryHref}/${genre.slug}`;
 });
 
-// PR #1789 updated the visible related-guide links on all 85 writing guides.
-// Category hubs were not changed by that PR and retain their own truthful lastmod.
-const WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z");
-
 const writingEducationEntries: MetadataRoute.Sitemap = [
   ...WRITING_CATEGORY_HUBS.map((hub) => ({
     url: `${baseUrl}${hub.href}`,
@@ -161,7 +157,7 @@ const writingEducationEntries: MetadataRoute.Sitemap = [
     }
     return {
       url: `${baseUrl}${categoryHref}/${genre.slug}`,
-      lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT,
+      // Per-guide lastModified is merged below only from a published CMS row.
       changeFrequency: "monthly" as const,
       priority: 0.7,
     };

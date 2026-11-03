@@ -111,9 +111,9 @@ test("Static fallback cannot pass independent production DB evidence", () => {
 });
 
 
-test("85 writing-guide sitemap lastmod tracks PR #1789 without falsely refreshing category hubs", () => {
+test("writing-guide sitemap lastmod uses only per-guide CMS freshness without falsely refreshing category hubs", () => {
   const body = fs.readFileSync("src/lib/seo/sitemap-data.ts", "utf8");
-  assert.match(body, /const WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date\("2026-10-18T22:43:29Z"\)/u);
+  assert.doesNotMatch(body, /WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/u);
   const hubStart = body.indexOf("...WRITING_CATEGORY_HUBS.map((hub) => ({");
   const guideStart = body.indexOf("...GENRES.map((genre) => {", hubStart);
   const guideEnd = body.indexOf("const readerEducationHrefs", guideStart);
@@ -121,7 +121,7 @@ test("85 writing-guide sitemap lastmod tracks PR #1789 without falsely refreshin
   const hubBlock = body.slice(hubStart, guideStart);
   const guideBlock = body.slice(guideStart, guideEnd);
   assert.match(hubBlock, /lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/u);
-  assert.doesNotMatch(hubBlock, /WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/u);
-  assert.match(guideBlock, /lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/u);
-  assert.doesNotMatch(guideBlock, /lastModified: WRITING_INTERNAL_LINKS_UPDATED_AT/u);
+  assert.match(guideBlock, /Per-guide lastModified is merged below only from a published CMS row/u);
+  assert.doesNotMatch(guideBlock, /lastModified:/u);
+  assert.match(body, /educationLastModifiedByUrl\.get\(entry\.url\)/u);
 });

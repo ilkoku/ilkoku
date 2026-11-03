@@ -151,15 +151,15 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     2,
     "writing hubs and explicit Webtoon fallback share the approved internal-link update date",
   );
-  assert.equal(
-    (sitemap.match(/lastModified: WRITING_RELATED_GUIDE_LINKS_UPDATED_AT/g) ?? []).length,
-    1,
-    "all 85 guide entries reflect their October 18 visible related-link update",
+  assertNotContains(
+    sitemap,
+    "WRITING_RELATED_GUIDE_LINKS_UPDATED_AT",
+    "writing guides must not share one bulk fallback lastmod",
   );
   assertContains(
     sitemap,
-    'WRITING_RELATED_GUIDE_LINKS_UPDATED_AT = new Date("2026-10-18T22:43:29Z")',
-    "writing guides use the truthful PR #1789 release date",
+    "Per-guide lastModified is merged below only from a published CMS row.",
+    "writing guides use only their published per-page CMS freshness",
   );
   assertContains(
     searchFreshness,

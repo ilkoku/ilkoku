@@ -55,6 +55,7 @@ export function FocusedReadingExperience({
   comments,
   protectionIdentity,
   readingProgress,
+  initialBookPage = null,
   returnTo = "/kesfet",
   startAtLastPage = false,
 }: {
@@ -64,6 +65,7 @@ export function FocusedReadingExperience({
   comments: ReaderCommentFeed;
   protectionIdentity: string;
   readingProgress?: number | null;
+  initialBookPage?: number | null;
   returnTo?: string;
   startAtLastPage?: boolean;
 }) {
@@ -267,7 +269,7 @@ export function FocusedReadingExperience({
         </nav>
       </header>
 
-      <main className={styles.layout}>
+      <main className={`${styles.layout} ${hasAuthorPublication ? styles.publishedLayout : ""}`}>
         <article
           className={styles.article}
           aria-labelledby="bolum-basligi"
@@ -313,17 +315,22 @@ export function FocusedReadingExperience({
           >
             {chapter.publicationLayout ? (
               <PublishedManuscriptViewport
+                activeItemId={activeBookItem?.structureItemId}
+                bookItems={publishedBook?.items}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publishedBook?.totalPages}
                 chapterTitle={chapter.title}
                 content={chapter.content}
+                encodedReturnTo={encodedReturnTo}
                 formatting={publicationFormatting}
+                initialBookPage={initialBookPage}
                 identity={protectionIdentity}
                 layout={chapter.publicationLayout}
                 nextChapterHref={nextChapterHref}
                 previousChapterHref={previousChapterHref}
                 startAtLastPage={startAtLastPage}
                 subtitle={activeBookItem?.subtitle}
+                workSlug={chapter.work.slug}
                 workTitle={chapter.work.title}
               />
             ) : (

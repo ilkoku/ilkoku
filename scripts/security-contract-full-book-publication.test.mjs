@@ -151,6 +151,23 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(legacyReader, 'window.requestAnimationFrame(() => chooseMode("single"))', "legacy point-tool fallback avoids render time state updates");
   includes(legacyReader, 'workSlug', "legacy reader keeps cover and contents navigation");
   includes(legacyReaderStyles, 'column-fill: auto;', "legacy book flows as facing columns without content mutation");
+
+  // Uniform physical book surfaces preserve the underlying immutable snapshots.
+  includes(legacyReaderStyles, 'width: min(100%, 35rem);', "legacy single A5 width");
+  includes(legacyReaderStyles, 'width: min(100%, 70rem);', "legacy facing A5 width");
+  includes(legacyReaderStyles, 'aspect-ratio: 296 / 210;', "legacy facing A5 aspect ratio");
+  includes(legacyReaderStyles, 'aspect-ratio: 148 / 210;', "legacy single A5 aspect ratio");
+  includes(legacyReaderStyles, 'font-size: 14.67px !important;', "legacy body uses 11pt");
+  includes(legacyReaderStyles, 'line-height: 1.15 !important;', "legacy body uses Word line spacing");
+  includes(legacyReader, 'className={styles.legacyChapterTitle}', "legacy chapter title is on paper");
+  includes(chapterReader, 'chapterTitle={chapter.title}', "authored chapter headings reach old A5 pages");
+  includes(renderer, 'const A5_PAGE_WIDTH_PX = 559.37;', "published page standard is A5 width");
+  includes(renderer, 'const A5_PAGE_HEIGHT_PX = 793.7;', "published page standard is A5 height");
+  includes(renderer, 'const READER_BODY_FONT_SIZE_PX = 14.67;', "published page uses 11pt");
+  includes(renderer, 'READER_BODY_FONT_SIZE_PX * 1.15', "published page uses Word spacing");
+  includes(renderer, 'canonicalBodyBox(', "old authored text boxes scale to the common paper");
+  includes(renderer, 'splitPublishedPages(content, layout)', "authored page boundaries remain unchanged");
+  includes(renderer, 'fontFamily,', "original author-selected font family stays intact");
   includes(renderer, "const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth", "facing pages meet at one book spine");
   includes(renderer, "lastVisiblePageNumber", "reader computes final visible page instead of only active page");
   includes(renderer, "disabled={atLastVisiblePage}", "last facing spread does not offer a dead next-page button");

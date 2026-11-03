@@ -77,6 +77,14 @@
   column-fill: auto;
 }
 
+/* The first authored page opens on the right, as in the fixed-page Reader. */
+.shell[data-legacy-book-layout="book"] .frame::before {
+  display: block;
+  height: 0;
+  break-after: column;
+  content: "";
+}
+
 .shell[data-legacy-book-layout="book"] .frame > * {
   width: 100%;
   max-width: none;

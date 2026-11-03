@@ -33,11 +33,14 @@ export type ReaderEducationGuideRecord = {
   title: string;
   summary: string;
   visuals: Partial<Record<ReaderEducationVisualSlotKey, ReaderEducationVisual>>;
+  publishedAt: Date | null;
+  updatedAt: Date | null;
 };
 
 type ReaderEducationGuideRow = {
   contentKey: string;
   valueJson: string;
+  publishedAt: Date | null;
   updatedAt: Date;
 };
 
@@ -55,6 +58,8 @@ export function readerEducationGuideDefault(category: ReaderEducationCategory): 
     title: category.title,
     summary: category.shortDescription,
     visuals: {},
+    publishedAt: null,
+    updatedAt: null,
   };
 }
 
@@ -122,7 +127,7 @@ export async function getReaderEducationGuideRecord(categorySlug: string) {
 
   try {
     const rows = await prisma.$queryRaw<ReaderEducationGuideRow[]>`
-      SELECT contentKey, valueJson, updatedAt
+      SELECT contentKey, valueJson, publishedAt, updatedAt
       FROM SiteContent
       WHERE namespace = ${READER_EDUCATION_GUIDE_NAMESPACE}
         AND contentKey = ${category.slug}
@@ -130,7 +135,13 @@ export async function getReaderEducationGuideRecord(categorySlug: string) {
       LIMIT 1
     `;
 
-    return rows[0] ? parseReaderEducationGuide(rows[0].valueJson, category) : readerEducationGuideDefault(category);
+    const row = rows[0];
+    if (!row) return readerEducationGuideDefault(category);
+    return {
+      ...parseReaderEducationGuide(row.valueJson, category),
+      publishedAt: row.publishedAt,
+      updatedAt: row.updatedAt,
+    };
   } catch {
     // Reader education is public code-owned content. CMS visuals are optional,
     // so a CMS/storage failure must not make the public page unavailable.
@@ -140,7 +151,7 @@ export async function getReaderEducationGuideRecord(categorySlug: string) {
 
 export async function listReaderEducationGuideRecords() {
   const rows = await prisma.$queryRaw<ReaderEducationGuideRow[]>`
-    SELECT contentKey, valueJson, updatedAt
+    SELECT contentKey, valueJson, publishedAt, updatedAt
     FROM SiteContent
     WHERE namespace = ${READER_EDUCATION_GUIDE_NAMESPACE}
       AND status = 'published'
@@ -150,7 +161,13 @@ export async function listReaderEducationGuideRecords() {
 
   return READER_EDUCATION_CATEGORIES.map((category) => {
     const row = bySlug.get(category.slug);
-    const guide = row ? parseReaderEducationGuide(row.valueJson, category) : readerEducationGuideDefault(category);
+    const guide = row
+      ? {
+          ...parseReaderEducationGuide(row.valueJson, category),
+          publishedAt: row.publishedAt,
+          updatedAt: row.updatedAt,
+        }
+      : readerEducationGuideDefault(category);
     return { category, guide, updatedAt: row?.updatedAt ?? null };
   });
 }

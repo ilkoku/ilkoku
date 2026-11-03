@@ -18,6 +18,7 @@ test("every work uses its real cover and new readers enter through the cover", (
   const showcase = source(
     "src/features/showcase/components/BookShowcase.tsx",
   );
+  const discovery = source("src/app/kesfet/page.tsx");
 
   includes(
     showcase,
@@ -33,6 +34,16 @@ test("every work uses its real cover and new readers enter through the cover", (
     showcase,
     "readingProgress && resumeChapter",
     "existing reader resume gate",
+  );
+  includes(
+    discovery,
+    '`/oku/${work.slug}/kapak`',
+    "discovery new reading begins with cover instead of chapter",
+  );
+  includes(
+    discovery,
+    "progress.progressPercent > 0",
+    "real reading progress still resumes in the last chapter",
   );
   includes(
     showcase,

@@ -153,6 +153,10 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   excludes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published Reader must not print platform editor helper text");
   includes(renderer, "headerShowsWorkTitle", "published page heading adapts to available space");
   includes(renderer, "titleFontSize", "published page heading avoids clipping on short header boxes");
+  includes(renderer, 'isChapter: item.type === "chapter"', "published chapter heading is styled independently of manuscript text");
+  includes(renderer, "isBookSectionHeading", "book chapter and contents use intentional editorial typography");
+  includes(renderer, "styles.bookSectionHeader", "reader applies centered literary heading style");
+
   includes(renderer, "isContentsPage: item.type === \"special\" && item.kind === \"toc\"", "automatic physical contents page identified from book snapshot");
   includes(renderer, "contentsText(segment.text)", "contents lines retain original text while linking to book items");
   includes(renderer, "if (activeTool) event.preventDefault()", "personal annotation tools do not trigger contents navigation");

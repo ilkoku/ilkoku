@@ -40,7 +40,7 @@ export default async function PublishedSpecialBookPage({
   const { itemId, slug } = await params;
   const query = await searchParams;
   const returnTo = getSafeReturnPath(query.from);
-  const requestedBookPage = /^\\d{1,5}$/u.test(query.sayfa ?? "")
+  const requestedBookPage = /^\d{1,5}$/u.test(query.sayfa ?? "")
     ? Number(query.sayfa)
     : null;
   const pageEdgeParameter = query.sayfa === "son"

@@ -170,6 +170,10 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(renderer, "READER_BODY_FONT_SIZE_PX", "reader remains 11pt");
   includes(renderer, "READER_BODY_LINE_HEIGHT_PX", "reader remains Word-like 1.15 spacing");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
+  includes(renderer, 'aria-pressed={spreadMode} disabled={isNarrow}', "narrow reader cannot claim facing pages while showing one A5 page");
+  includes(renderer, 'aria-pressed={!spreadMode}', "the active single-page mode is accurately selected on phones");
+  includes(renderer, 'const spreadMode = readerModesEnabled && displayMode === "book" && !isNarrow;', "tablet/phone effective display mode is derived consistently");
+  includes(legacyReader, 'aria-pressed={bookMode}', "legacy reader also reports its effective rather than saved facing mode");
   includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "legacy books can switch display layouts");
   includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "legacy books share the published-book preference");
   includes(legacyReader, 'pendingBookmarkRef', "legacy page point anchors stay in original coordinates");

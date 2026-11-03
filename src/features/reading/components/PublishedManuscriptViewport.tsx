@@ -906,10 +906,10 @@ export function PublishedManuscriptViewport({
     >
       {readerModesEnabled ? <nav aria-label="Kitap görünümü ve bölümler" className={styles.bookToolbar}>
         <div aria-label="Okuma görünümü" className={styles.modeOptions} role="group">
-          <button aria-pressed={displayMode === "book"} onClick={() => chooseMode("book")} type="button">
+          <button aria-pressed={spreadMode} disabled={isNarrow} onClick={() => chooseMode("book")} type="button">
             Kitap
           </button>
-          <button aria-pressed={displayMode === "single"} onClick={() => chooseMode("single")} type="button">
+          <button aria-pressed={!spreadMode} onClick={() => chooseMode("single")} type="button">
             Tek Sayfa
           </button>
         </div>

@@ -32,11 +32,16 @@
   cursor: pointer;
 }
 
-.bookToolbar button:hover,
+.bookToolbar button:hover:not(:disabled),
 .bookToolbar button[aria-pressed="true"] {
   border-color: rgba(215, 180, 63, 0.78);
   background: rgba(215, 180, 63, 0.12);
   color: #f4d16a;
+}
+
+.bookToolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .stage {

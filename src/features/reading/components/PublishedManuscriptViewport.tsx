@@ -460,15 +460,22 @@ export function PublishedManuscriptViewport({
     if (!request) return;
     const frame = window.requestAnimationFrame(() => {
       if (typeof request.pageIndex === "number") {
-        // Personal page points are stored against ORIGINAL author page indices.
+        // A saved point's y coordinate refines its text location when reflowed.
+        const storedPoint = tools?.annotations.find((item) => item.id === request.annotationId);
+        const originalPoint = storedPoint
+          ? parsePersonalPagePointAnchor(storedPoint.pathData)
+          : null;
         const old = savedPages[Math.max(0, Math.min(savedPages.length - 1, request.pageIndex))];
-        setPageIndex(findReaderPageForOffset(pages, old?.start ?? 0));
+        const offset = originalPoint
+          ? sourceOffsetForPagePoint(savedPages, originalPoint.pageIndex, originalPoint.y)
+          : (old?.start ?? 0);
+        setPageIndex(findReaderPageForOffset(pages, offset));
       } else if (typeof request.startOffset === "number") {
         setPageIndex(findReaderPageForOffset(pages, request.startOffset));
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [pages, savedPages, tools?.navigateRequest]);
+  }, [pages, savedPages, tools?.navigateRequest, tools?.annotations]);
 
   function blockInteraction(event: SyntheticEvent) {
     event.preventDefault();

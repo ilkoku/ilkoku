@@ -59,6 +59,6 @@ test("Reader still renders the immutable author publication snapshot page by pag
   includes(queries, "publication?.content ?? chapter.content", "published content precedence");
   includes(queries, "publicationLayout: publication?.layout ?? null", "published layout precedence");
   includes(reader, "splitPublishedPages", "author page split source");
-  includes(reader, "const activePage = pages[pageIndex]", "single active publication page");
-  includes(reader, "pageIndex + 1} / ${pages.length}", "all author pages remain navigable");
+  includes(reader, "visiblePages.map((page, slot) => paper(page, slot))", "bounded one/two page display");
+  includes(reader, "navigateToGlobal", "all physical author pages remain navigable");
 });

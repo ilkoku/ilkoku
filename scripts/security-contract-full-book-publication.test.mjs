@@ -93,6 +93,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
   );
+  const legacyReader = source("src/features/reading/components/PagedReadingViewport.tsx");
+  const legacyReaderStyles = source("src/features/reading/components/PagedReadingViewport.module.css");
   const specialReader = source(
     "src/features/reading/components/PublishedBookSpecialPageExperience.tsx",
   );
@@ -142,6 +144,13 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(specialRoute, 'candidate.type === "special"', "special page immutable item boundary");
   includes(renderer, "splitPublishedPages", "Reader uses author pageEnds instead of reflow");
   includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "one/two page reader rendering");
+  includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "existing non-snapshot works can switch reader layouts");
+  includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "existing works share published-book display preference");
+  includes(legacyReader, 'pendingBookmarkRef', "legacy point anchors remain in original single-page coordinates");
+  includes(legacyReader, 'if (bookMode && (pointMode || drawingMode)) chooseMode("single")', "drawing and point tools retain original anchor geometry");
+  includes(legacyReader, 'workSlug', "legacy reader preserves cover and contents navigation");
+  includes(legacyReaderStyles, 'column-fill: auto;', "legacy open book flows across facing columns without mutating stored content");
+  includes(chapterReader, 'identity={protectionIdentity}', "legacy book watermark includes reader identity");
   excludes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published Reader must not print platform editor helper text");
   includes(renderer, "headerShowsWorkTitle", "published page heading adapts to available space");
   includes(renderer, "titleFontSize", "published page heading avoids clipping on short header boxes");

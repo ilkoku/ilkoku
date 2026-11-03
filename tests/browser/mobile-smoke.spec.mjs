@@ -3083,9 +3083,11 @@ test("legacy published reader switches Kitap / Tek Sayfa without changing conten
   expect(response?.status()).toBe(200);
 
   const legacy = page.locator('[data-legacy-book-layout]');
-  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "book");
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
 
+  await legacy.getByRole("button", { name: "Tek Sayfa", exact: true }).click();
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
   await legacy.getByRole("button", { name: "Kitap", exact: true }).click();
   await expect(legacy).toHaveAttribute("data-legacy-book-layout", "book");
   const bookGeometry = await legacy.evaluate((node) => {

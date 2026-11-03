@@ -543,7 +543,14 @@ export function PagedReadingViewport({
   const atLastBookPage = pageIndex >= pageCount - 1 && !nextChapterHref;
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-legacy-book-layout={bookMode ? "book" : "single"}>
+      <nav aria-label="Okuma görünümü" className={styles.modeToolbar}>
+        <div aria-label="Kitap görünümü seçimi" role="group">
+          <button aria-pressed={displayMode === "book"} onClick={() => chooseMode("book")} type="button">Kitap</button>
+          <button aria-pressed={displayMode === "single"} onClick={() => chooseMode("single")} type="button">Tek Sayfa</button>
+        </div>
+      </nav>
+      <div className={styles.readingSurface}>
       <div
         aria-label="Okuma alanı"
         className={styles.viewport}
@@ -654,6 +661,14 @@ export function PagedReadingViewport({
           );
         })}
       </div>
+      {bookMode ? (
+        <div aria-hidden="true" className={styles.bookWatermark}>
+          {Array.from({ length: 6 }, (_, index) => (
+            <span key={index}>{identity} · İlkOku güvenli okuma</span>
+          ))}
+        </div>
+      ) : null}
+      </div>
 
       <nav aria-label="Sayfa geçişleri" className={styles.pageControls}>
         <button
@@ -667,7 +682,7 @@ export function PagedReadingViewport({
 
         <div aria-live="polite" className={styles.pageStatus}>
           <small>Sayfa</small>
-          <strong>{pageIndex + 1} / {pageCount}</strong>
+          <strong>{bookMode ? `${pageIndex * 2 + 1}–${pageIndex * 2 + 2} / ${pageCount * 2}` : `${pageIndex + 1} / ${pageCount}`}</strong>
           <span>
             Tahmini kitap sayfası {estimatedCurrentBookPage} / {estimatedBookTotalPages}
           </span>

@@ -18,6 +18,7 @@ export function PublishedBookSpecialPageExperience({
   initialAnnotations,
   item,
   protectionIdentity,
+  initialBookPage = null,
   returnTo = "/kesfet",
   startAtLastPage = false,
   userKey,
@@ -26,6 +27,7 @@ export function PublishedBookSpecialPageExperience({
   initialAnnotations: PersonalBookAnnotationRecord[];
   item: PublishedBookSpecialItem;
   protectionIdentity: string;
+  initialBookPage?: number | null;
   returnTo?: string;
   startAtLastPage?: boolean;
   userKey: string;
@@ -141,7 +143,7 @@ export function PublishedBookSpecialPageExperience({
         </nav>
       </header>
 
-      <main className={styles.layout}>
+      <main className={`${styles.layout} ${styles.publishedLayout}`}>
         <article className={styles.article} aria-labelledby="bolum-basligi">
           <header className={styles.chapterHeader}>
             <p className={styles.chapterMeta}>
@@ -168,16 +170,21 @@ export function PublishedBookSpecialPageExperience({
               workId={work.id}
             >
               <PublishedManuscriptViewport
+                activeItemId={item.structureItemId}
+                bookItems={publicationBook.items}
                 bookPageStart={activeBookPageStart}
                 bookTotalPages={publicationBook.totalPages}
                 chapterTitle={item.title}
                 content={item.content}
+                encodedReturnTo={encodedReturnTo}
                 identity={protectionIdentity}
+                initialBookPage={initialBookPage}
                 layout={item.layout}
                 nextChapterHref={nextHref}
                 previousChapterHref={previousHref}
                 startAtLastPage={startAtLastPage}
                 subtitle={item.subtitle}
+                workSlug={work.slug}
                 workTitle={publicationBook.workTitle}
               />
             </PublishedBookToolsContinuity>

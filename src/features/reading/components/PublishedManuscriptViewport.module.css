@@ -40,11 +40,60 @@
 }
 
 .stage {
+  position: relative;
   display: grid;
   width: 100%;
   min-width: 0;
   place-items: start center;
   overflow: hidden;
+}
+
+.pageTurnRail {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.pageTurnRail button {
+  display: grid;
+  width: 2.55rem;
+  height: 3.2rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(210, 172, 79, 0.44);
+  border-radius: 999px;
+  background: rgba(19, 18, 16, 0.76);
+  color: #f6e9cb;
+  font: 600 1.15rem/1 serif;
+  cursor: pointer;
+  opacity: 0.7;
+  pointer-events: auto;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+
+.pageTurnRail button:hover,
+.pageTurnRail button:focus-visible {
+  background: rgba(19, 18, 16, 0.96);
+  opacity: 1;
+  outline-color: #d7b43f;
+}
+
+.pageTurnRail button:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 36rem) {
+  .pageTurnRail button {
+    width: 2rem;
+    height: 2.65rem;
+    background: rgba(19, 18, 16, 0.55);
+    opacity: 0.57;
+  }
 }
 
 .spread,

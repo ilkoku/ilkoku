@@ -142,6 +142,9 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   excludes(renderer, "{page.subtitle ? <p>{page.subtitle}</p> : null}", "published Reader must not print platform editor helper text");
   includes(renderer, "headerShowsWorkTitle", "published page heading adapts to available space");
   includes(renderer, "titleFontSize", "published page heading avoids clipping on short header boxes");
+  includes(renderer, "isContentsPage: item.type === \"special\" && item.kind === \"toc\"", "automatic physical contents page identified from book snapshot");
+  includes(renderer, "contentsText(segment.text)", "contents lines retain original text while linking to book items");
+  includes(renderer, "if (activeTool) event.preventDefault()", "personal annotation tools do not trigger contents navigation");
 });
 
 test("published special pages persist private marks against immutable publication items", () => {

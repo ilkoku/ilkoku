@@ -159,6 +159,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(renderer, 'item.type === "special" && item.kind === "toc"', "table of contents links retain published positions");
   includes(renderer, "destination.publishedGlobalNumber", "cross-section deep links preserve original page numbers");
   includes(renderer, "sourceOffsetForPagePoint(savedPages", "existing page-point coordinates remain mapped");
+  includes(continuityTools, "annotationId: annotation.id", "personal pin navigation retains the saved point identity");
+  includes(renderer, "originalPoint.pageIndex, originalPoint.y", "point-list navigation uses original source-page y offset");
   includes(renderer, "findReaderPageForOffset(savedPages, sourceOffset)", "new personal pins persist against published pages");
   includes(renderer, 'data-reader-reflow={usesReaderReflow ? "true" : "false"}', "reader reflow status available for browser QA");
   includes(renderer, "fontFamily,", "original font family remains unmodified");

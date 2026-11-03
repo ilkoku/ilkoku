@@ -3066,3 +3066,51 @@ test("writer earnings shows author deductions without exposing İlkOku profit or
     }
   }
 });
+
+test("legacy published reader switches Kitap / Tek Sayfa without changing content or anchors", async ({ page }) => {
+  test.skip(!authFixture, "Authenticated browser fixture is not configured.");
+  const readerToken = authFixture.sessions?.reader;
+  expect(readerToken, "Missing authenticated reader fixture").toBeTruthy();
+  await page.context().addCookies([
+    { name: authFixture.cookieName, value: readerToken, url: authCookieUrl },
+  ]);
+  await page.setViewportSize(viewports.desktop);
+
+  // The CI coupon preview intentionally has no immutable author pageEnds layout.
+  const response = await page.goto("/oku/ci-browser-coupon-work/bolum-1", {
+    waitUntil: "domcontentloaded",
+  });
+  expect(response?.status()).toBe(200);
+
+  const legacy = page.locator('[data-legacy-book-layout]');
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "book");
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+
+  await legacy.getByRole("button", { name: "Tek Sayfa", exact: true }).click();
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
+  await legacy.getByRole("button", { name: "Kitap", exact: true }).click();
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "book");
+  const bookGeometry = await legacy.evaluate((node) => {
+    const viewport = node.querySelector('[aria-label="Okuma alanı"]');
+    const frame = viewport?.querySelector('[class*="frame"]');
+    return {
+      columnCount: frame ? window.getComputedStyle(frame).columnCount : null,
+      viewportWidth: viewport?.clientWidth ?? 0,
+      viewportHeight: viewport?.clientHeight ?? 0,
+      scrollWidth: viewport?.scrollWidth ?? 0,
+    };
+  });
+  expect(bookGeometry.columnCount).toBe("2");
+  expect(bookGeometry.viewportHeight).toBeGreaterThan(300);
+  expect(bookGeometry.scrollWidth).toBeGreaterThanOrEqual(bookGeometry.viewportWidth);
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+
+  await legacy.getByRole("button", { name: "Tek Sayfa", exact: true }).click();
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+
+  await page.setViewportSize(viewports.phone390);
+  await legacy.getByRole("button", { name: "Kitap", exact: true }).click();
+  await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
+  await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
+});

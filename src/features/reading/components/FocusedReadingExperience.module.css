@@ -697,3 +697,13 @@
     padding: 0.25rem 0 1rem;
   }
 }
+
+/* Legacy chapter text keeps its protected reading tools, but opens wider as a book. */
+.page:has([data-legacy-book-layout="book"]) .layout {
+  width: min(100%, 100rem);
+}
+
+.page:has([data-legacy-book-layout="book"]) .chapterHeader,
+.page:has([data-legacy-book-layout="book"]) .chapterBody {
+  max-width: 86rem;
+}

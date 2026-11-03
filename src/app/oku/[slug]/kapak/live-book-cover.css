@@ -140,9 +140,11 @@
 }
 
 .live-book-cover__stage .showcase-cover {
-  width: min(100%, 420px);
-  max-width: 420px;
-  min-height: min(64vh, 620px);
+  /* Keep the author's cover and the primary Kitabı Aç action together
+     in the first viewport, including shorter desktop browser windows. */
+  width: min(100%, 340px, 31vh);
+  max-width: 340px;
+  min-height: 0;
   aspect-ratio: 2 / 3;
   border-radius: 0.3rem;
   box-shadow:
@@ -168,7 +170,10 @@
   text-align: center;
 }
 
-.live-book-cover__meta > p:first-child,
+.live-book-cover__meta > p:first-child {
+  display: none;
+}
+
 .live-book-cover__meta > span {
   color: rgba(242, 236, 224, 0.58);
 }
@@ -186,9 +191,9 @@
 
 @media (max-width: 760px) {
   .live-book-cover__stage .showcase-cover {
-    width: min(100%, 330px);
-    max-width: 330px;
-    min-height: min(60vh, 500px);
+    width: min(100%, 300px, 35vh);
+    max-width: 300px;
+    min-height: 0;
   }
 
   .live-book-cover__meta h1 {

@@ -67,7 +67,7 @@ export default async function DynamicReadingPage({
   const publicReturnTo = getSafeReturnPath(query.from);
   const auth = await getCurrentSessionContext();
   const reviewModeParameter = query.inceleme === "1" ? "&inceleme=1" : "";
-  const requestedBookPage = /^\\d{1,5}$/u.test(query.sayfa ?? "")
+  const requestedBookPage = /^\d{1,5}$/u.test(query.sayfa ?? "")
     ? Number(query.sayfa)
     : null;
   const pageEdgeParameter = query.sayfa === "son"

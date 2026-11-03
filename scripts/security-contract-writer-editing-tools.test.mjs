@@ -26,6 +26,14 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(formatting, "fontSizes", "semantic selected font size metadata");
   includes(formatting, "ChapterInlineFontSize", "selected font size range type");
   includes(tools, "Satır aralığını azalt", "line spacing decrease control");
+  includes(tools, "fontSize: 14.67,", "new writer 11 point equivalent default size");
+  includes(tools, "lineHeight: 1.15,", "new writer Word-like default line spacing");
+  includes(tools, 'font: "typewriter",', "original default font family remains unchanged");
+  includes(tools, "clamp(parsed.lineHeight, 1.15, 2.3)", "persisted 1.15 spacing is not coerced on reload");
+  includes(tools, "preferences.lineHeight.toFixed(2)", "1.15 shown accurately in writer toolbar");
+  includes(css, "--writer-manuscript-font-size: 14.67px", "new writer base font size");
+  includes(css, "--writer-manuscript-line-height: 1.15", "new writer base line spacing");
+  includes(css, "--writer-manuscript-font-family: var(--writer-typewriter)", "existing font face remains unchanged");
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
@@ -150,8 +158,8 @@ test("reader manuscript keeps canonical writer paper typography and measured pag
   includes(indicator, "Kitap sayfası", "reader page status label");
 
   includes(parity, '"Courier New"', "canonical typewriter family");
-  includes(parity, "--reader-manuscript-font-size: 17px", "canonical 17px manuscript size");
-  includes(parity, "--reader-manuscript-line-height: 1.9", "canonical manuscript line spacing");
+  includes(parity, "--reader-manuscript-font-size: 14.67px", "Word 11-point equivalent manuscript default size");
+  includes(parity, "--reader-manuscript-line-height: 1.15", "Word-like manuscript line spacing");
   includes(parity, "white-space: pre-wrap", "hard line-break preservation");
   includes(parity, 'aria-label="Sayfa geçişleri"', "legacy estimated page status suppression scope");
 });

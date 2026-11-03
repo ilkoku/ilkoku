@@ -36,8 +36,8 @@ const EMPTY_GOAL_SNAPSHOT = "";
 const WRITER_FONT_SIZE_STEP_EVENT = "ilkoku:writer-font-size-step";
 
 const defaultPreferences: WriterPreferences = {
-  fontSize: 17,
-  lineHeight: 1.9,
+  fontSize: 14.67,
+  lineHeight: 1.15,
   font: "typewriter",
   width: "book",
   pageFlow: "pageTurn",
@@ -84,7 +84,7 @@ function loadPreferences(): WriterPreferences {
           : defaultPreferences.fontSize,
       lineHeight:
         typeof parsed.lineHeight === "number"
-          ? clamp(parsed.lineHeight, 1.5, 2.3)
+          ? clamp(parsed.lineHeight, 1.15, 2.3)
           : defaultPreferences.lineHeight,
       font:
         parsed.font && parsed.font in fontFamilies
@@ -307,23 +307,23 @@ export function WriterEditingTools() {
               onClick={() =>
                 updatePreferences({
                   lineHeight: Number(
-                    clamp(preferences.lineHeight - 0.1, 1.5, 2.3).toFixed(1),
+                    clamp(preferences.lineHeight - 0.1, 1.15, 2.3).toFixed(2),
                   ),
                 })
               }
-              disabled={preferences.lineHeight <= 1.5}
+              disabled={preferences.lineHeight <= 1.15}
               title="Satır aralığını azalt"
               aria-label="Satır aralığını azalt"
             >
               −
             </button>
-            <output aria-label="Satır aralığı">{preferences.lineHeight.toFixed(1)}</output>
+            <output aria-label="Satır aralığı">{preferences.lineHeight.toFixed(2)}</output>
             <button
               type="button"
               onClick={() =>
                 updatePreferences({
                   lineHeight: Number(
-                    clamp(preferences.lineHeight + 0.1, 1.5, 2.3).toFixed(1),
+                    clamp(preferences.lineHeight + 0.1, 1.15, 2.3).toFixed(2),
                   ),
                 })
               }

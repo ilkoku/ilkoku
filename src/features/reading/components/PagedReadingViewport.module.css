@@ -96,8 +96,8 @@
 
 .shell[data-legacy-book-layout="book"] .frame :global(.chapter__body p) {
   color: #302b22 !important;
-  font-size: clamp(1rem, 1.35vw, 1.18rem) !important;
-  line-height: 1.78 !important;
+  font-size: 14.67px !important;
+  line-height: 1.15 !important;
 }
 
 .shell[data-legacy-book-layout="book"] .frame :global(.chapter__body) {

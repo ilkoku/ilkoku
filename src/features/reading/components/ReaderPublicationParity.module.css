@@ -1,8 +1,8 @@
 .publicationParity {
   --reader-manuscript-font-family: "Courier New", Courier, ui-monospace,
     "SFMono-Regular", Menlo, Consolas, monospace;
-  --reader-manuscript-font-size: 17px;
-  --reader-manuscript-line-height: 1.9;
+  --reader-manuscript-font-size: 14.67px;
+  --reader-manuscript-line-height: 1.15;
 }
 
 .publicationParity :global(.chapter__body p),

@@ -1,8 +1,8 @@
 /* Compact manuscript controls shared by writer routes. */
 
 .writer-screen {
-  --writer-manuscript-font-size: 17px;
-  --writer-manuscript-line-height: 1.9;
+  --writer-manuscript-font-size: 14.67px;
+  --writer-manuscript-line-height: 1.15;
   --writer-manuscript-font-family: var(--writer-typewriter);
   --writer-manuscript-width: 48rem;
   --writer-page-zoom: 1;

@@ -145,7 +145,8 @@
   width: min(100%, 340px, 31vh);
   max-width: 340px;
   min-height: 0;
-  aspect-ratio: 2 / 3;
+  /* The actual author cover remains unchanged inside the A5 book frame. */
+  aspect-ratio: 148 / 210;
   border-radius: 0.3rem;
   box-shadow:
     0 0 0 1px rgba(209, 191, 147, 0.22),

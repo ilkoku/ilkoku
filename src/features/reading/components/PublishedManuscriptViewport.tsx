@@ -40,6 +40,31 @@ const fontFamilies: Record<PublicationFont, string> = {
   sans: 'var(--font-inter), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 };
 
+// Reader-only paper standard. No authored publication snapshot or pageEnds is rewritten.
+const A5_PAGE_WIDTH_PX = 559.37;
+const A5_PAGE_HEIGHT_PX = 793.7;
+const READER_BODY_FONT_SIZE_PX = 14.67; // 11 pt at 96 CSS pixels/inch
+const READER_BODY_LINE_HEIGHT_PX = READER_BODY_FONT_SIZE_PX * 1.15;
+
+function canonicalBodyBox(
+  box: { left: number; top: number; width: number; height: number },
+  publication: PublicationLayoutSnapshot,
+) {
+  const widthScale = A5_PAGE_WIDTH_PX / publication.page.width;
+  const heightScale = A5_PAGE_HEIGHT_PX / publication.page.height;
+  const top = box.top * heightScale;
+  // Use all of the available A5 body down to the footer. Earlier large
+  // manuscript pages may contain more text, but their immutable pageEnds
+  // and paragraph offsets must not change when the Reader standardizes.
+  const bodyBottomMargin = 42;
+  return {
+    left: box.left * widthScale,
+    top,
+    width: box.width * widthScale,
+    height: Math.max(1, A5_PAGE_HEIGHT_PX - top - bodyBottomMargin),
+  };
+}
+
 const watermarkCopies = Array.from({ length: 12 }, (_, index) => index);
 const BOOK_MODE_STORAGE_KEY = "ilkoku:published-book-display-mode:v1";
 type BookDisplayMode = "book" | "single";
@@ -310,9 +335,8 @@ export function PublishedManuscriptViewport({
   const measureScale = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return;
-    const referencePages = visiblePages.filter((page): page is BookPage => page !== null);
-    const referenceWidth = Math.max(layout.page.width, ...referencePages.map((page) => page.layout.page.width));
-    const referenceHeight = Math.max(layout.page.height, ...referencePages.map((page) => page.layout.page.height));
+    const referenceWidth = A5_PAGE_WIDTH_PX;
+    const referenceHeight = A5_PAGE_HEIGHT_PX;
     const availableWidth = Math.max(1, stage.clientWidth - 8);
     const availableHeight = Math.max(540, window.innerHeight - 180);
     // Facing sheets share a spine; reserve no artificial gap between them.
@@ -513,7 +537,9 @@ export function PublishedManuscriptViewport({
 
   function segmentStyle(segment: PageTextSegment) {
     return {
-      fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined,
+      // Authored per-range point sizes remain in saved metadata, but body text
+      // is displayed consistently at 11 pt. Bold/italic/underline remain.
+      fontSize: undefined,
       fontStyle: segment.marks.includes("italic") ? "italic" : undefined,
       fontWeight: segment.marks.includes("bold") ? 700 : undefined,
       textDecorationLine: segment.marks.includes("underline") ? "underline" : undefined,
@@ -542,17 +568,20 @@ export function PublishedManuscriptViewport({
   function paper(page: BookPage | null, slot: number) {
     const inCurrentItem = page?.itemId === currentItemId;
     const pageLayout = page?.layout ?? layout;
-    const renderWidth = pageLayout.page.width * scale;
-    const renderHeight = pageLayout.page.height * scale;
+    const renderWidth = A5_PAGE_WIDTH_PX * scale;
+    const renderHeight = A5_PAGE_HEIGHT_PX * scale;
     if (!page) {
       return (
         <div aria-hidden="true" className={styles.blankFrame} key={`blank-${slot}`}
           style={{ width: `${renderWidth}px`, height: `${renderHeight}px` }} />
       );
     }
-    const bodyBox = page.localIndex === 0
-      ? pageLayout.page.firstBody
-      : pageLayout.page.continuationBody;
+    const bodyBox = canonicalBodyBox(
+      page.localIndex === 0
+        ? pageLayout.page.firstBody
+        : pageLayout.page.continuationBody,
+      pageLayout,
+    );
     const fontFamily = fontFamilies[pageLayout.typography.font];
     const headerTop = Math.max(24, bodyBox.top - 118);
     const headerHeight = Math.max(0, bodyBox.top - headerTop - 10);
@@ -643,6 +672,7 @@ export function PublishedManuscriptViewport({
         <article
           aria-label={`Yayın sayfası ${page.globalNumber} / ${globalPageTotal}`}
           className={styles.page}
+          data-reader-paper-format="a5"
           data-personal-book-tool={inCurrentItem ? (activeTool ?? "none") : "none"}
           data-text-selection={inCurrentItem && textSelectionMode ? "true" : "false"}
           data-book-visible-page={page.globalNumber}
@@ -652,8 +682,8 @@ export function PublishedManuscriptViewport({
           onDragStart={blockInteraction}
           onPointerUp={(event) => handlePagePoint(event, page)}
           style={{
-            width: `${pageLayout.page.width}px`,
-            height: `${pageLayout.page.height}px`,
+            width: `${A5_PAGE_WIDTH_PX}px`,
+            height: `${A5_PAGE_HEIGHT_PX}px`,
             transform: `scale(${scale})`,
           }}
         >
@@ -683,8 +713,8 @@ export function PublishedManuscriptViewport({
                 width: `${bodyBox.width}px`,
                 height: `${bodyBox.height}px`,
                 fontFamily,
-                fontSize: `${pageLayout.typography.fontSize}px`,
-                lineHeight: `${pageLayout.typography.lineHeight}px`,
+                fontSize: `${READER_BODY_FONT_SIZE_PX}px`,
+                lineHeight: `${READER_BODY_LINE_HEIGHT_PX}px`,
                 letterSpacing: `${pageLayout.typography.letterSpacing}px`,
               }}
             >

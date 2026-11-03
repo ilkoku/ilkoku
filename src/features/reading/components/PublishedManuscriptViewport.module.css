@@ -289,6 +289,8 @@
 .pageText {
   position: absolute;
   z-index: 1;
+  /* Fixed author page endings remain physical: never nest a text scroller
+     inside an A5 sheet or silently create extra pages. */
   overflow: hidden;
   color: #2f2a24;
   font-weight: 400;

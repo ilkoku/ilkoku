@@ -707,3 +707,37 @@
 .page:has([data-legacy-book-layout="book"]) .chapterBody {
   max-width: 86rem;
 }
+
+/* Older publications now place their actual heading on the first A5 sheet.
+   Keep the semantic h1 accessible without displaying a second giant title. */
+.page:has([data-legacy-book-layout]) .chapterHeader {
+  max-width: 70rem;
+  padding: 0.9rem clamp(1rem, 3vw, 1.8rem);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page:has([data-legacy-book-layout]) .chapterHeader::before {
+  display: none;
+}
+
+.page:has([data-legacy-book-layout]) .chapterHeader h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.page:has([data-legacy-book-layout]) .chapterBody {
+  max-width: 70rem;
+  padding: 1rem 0 2rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}

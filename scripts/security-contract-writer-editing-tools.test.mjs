@@ -36,6 +36,8 @@ test("writer editing tools expose compact manuscript comfort controls", () => {
   includes(css, "--writer-manuscript-font-family: var(--writer-typewriter)", "existing font face remains unchanged");
   includes(tools, "Satır aralığını artır", "line spacing increase control");
   includes(tools, '<option value="book">Kitap</option>', "book manuscript width preset");
+  includes(tools, 'book: "35rem"', "new writer paper is A5 physical width");
+  includes(css, "--writer-manuscript-width: 35rem", "new writer stylesheet matches A5 paper width");
   includes(tools, '<option value="serif">Kitap</option>', "book serif preset");
   includes(tools, 'pageFlow: "pageTurn"', "book view default");
   includes(tools, '<option value="pageTurn">Kitap</option>', "book page-turn view preset");
@@ -120,7 +122,8 @@ test("writer semantic formatting survives preview and reader publication renderi
   );
   includes(publishExperience, "parsePreviewFormatting", "single-preview formatting handoff");
   includes(publishedViewport, "formatting?.fontSizes", "published font-size range rendering");
-  includes(publishedViewport, 'fontSize: segment.fontSize ? `${segment.fontSize}px` : undefined', "published selected font size style");
+  includes(publishedViewport, "fontSize: undefined", "11 point reader body does not mutate author inline-size metadata");
+  includes(publishedViewport, "formatting?.fontSizes", "author inline sizes remain in saved metadata for editing");
   includes(publishedViewport, 'segment.marks.includes("bold")', "published bold semantic rendering");
   includes(reader, "formatting={publicationFormatting}", "reader publication formatting handoff");
 });

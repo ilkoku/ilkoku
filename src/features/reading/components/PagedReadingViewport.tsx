@@ -96,6 +96,7 @@ function projectedPointsAttribute(
 }
 
 export function PagedReadingViewport({
+  chapterTitle,
   children,
   encodedReturnTo,
   estimatedBookEndPage,
@@ -107,6 +108,7 @@ export function PagedReadingViewport({
   startAtLastPage = false,
   workSlug,
 }: {
+  chapterTitle: string;
   children: ReactNode;
   encodedReturnTo: string;
   estimatedBookEndPage: number;
@@ -569,6 +571,7 @@ export function PagedReadingViewport({
         ref={viewportRef}
       >
         <div className={styles.frame} ref={frameRef}>
+          <h2 aria-hidden="true" className={styles.legacyChapterTitle}>{chapterTitle}</h2>
           {children}
         </div>
       </div>

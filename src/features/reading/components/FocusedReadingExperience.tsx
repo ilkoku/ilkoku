@@ -340,6 +340,7 @@ export function FocusedReadingExperience({
               />
             ) : (
               <PagedReadingViewport
+                chapterTitle={chapter.title}
                 encodedReturnTo={encodedReturnTo}
                 identity={protectionIdentity}
                 workSlug={chapter.work.slug}

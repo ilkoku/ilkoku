@@ -89,6 +89,7 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   const queries = source("src/features/works/member-public-queries.ts");
   const showcase = source("src/features/showcase/components/BookShowcase.tsx");
   const coverPage = source("src/app/oku/[slug]/kapak/page.tsx");
+  const coverStyles = source("src/app/oku/[slug]/kapak/live-book-cover.css");
   const contentsPage = source("src/app/oku/[slug]/icindekiler/page.tsx");
   const chapterReader = source(
     "src/features/reading/components/FocusedReadingExperience.tsx",
@@ -117,6 +118,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(showcase, "/kapak?from=", "new Reader enters the live book through its front cover");
   includes(coverPage, "publishedBookItemHref", "front cover opens the first authored publication item");
   includes(coverPage, 'data-book-surface="front-cover"', "front cover stays outside numbered body pages");
+  includes(coverStyles, "aspect-ratio: 148 / 210;", "actual author cover is fitted into the A5 paper ratio");
+  includes(coverStyles, "object-fit: contain;", "author cover image is not cropped");
   includes(coverPage, "href={bookInfoHref}", "cover returns to the actual work page");
   includes(contentsPage, "href={bookInfoHref}", "contents returns to the actual work page");
   includes(showcase, "publicationBook?.totalPages", "exact physical published page count");
@@ -151,6 +154,23 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(legacyReader, 'window.requestAnimationFrame(() => chooseMode("single"))', "legacy point-tool fallback avoids render time state updates");
   includes(legacyReader, 'workSlug', "legacy reader keeps cover and contents navigation");
   includes(legacyReaderStyles, 'column-fill: auto;', "legacy book flows as facing columns without content mutation");
+
+  // Uniform physical book surfaces preserve the underlying immutable snapshots.
+  includes(legacyReaderStyles, 'width: min(100%, 35rem);', "legacy single A5 width");
+  includes(legacyReaderStyles, 'width: min(100%, 70rem);', "legacy facing A5 width");
+  includes(legacyReaderStyles, 'aspect-ratio: 296 / 210;', "legacy facing A5 aspect ratio");
+  includes(legacyReaderStyles, 'aspect-ratio: 148 / 210;', "legacy single A5 aspect ratio");
+  includes(legacyReaderStyles, 'font-size: 14.67px !important;', "legacy body uses 11pt");
+  includes(legacyReaderStyles, 'line-height: 1.15 !important;', "legacy body uses Word line spacing");
+  includes(legacyReader, 'className={styles.legacyChapterTitle}', "legacy chapter title is on paper");
+  includes(chapterReader, 'chapterTitle={chapter.title}', "authored chapter headings reach old A5 pages");
+  includes(renderer, 'const A5_PAGE_WIDTH_PX = 559.37;', "published page standard is A5 width");
+  includes(renderer, 'const A5_PAGE_HEIGHT_PX = 793.7;', "published page standard is A5 height");
+  includes(renderer, 'const READER_BODY_FONT_SIZE_PX = 14.67;', "published page uses 11pt");
+  includes(renderer, 'READER_BODY_FONT_SIZE_PX * 1.15', "published page uses Word spacing");
+  includes(renderer, 'canonicalBodyBox(', "old authored text boxes scale to the common paper");
+  includes(renderer, 'splitPublishedPages(content, layout)', "authored page boundaries remain unchanged");
+  includes(renderer, 'fontFamily,', "original author-selected font family stays intact");
   includes(renderer, "const naturalWidth = spreadMode ? referenceWidth * 2 : referenceWidth", "facing pages meet at one book spine");
   includes(renderer, "lastVisiblePageNumber", "reader computes final visible page instead of only active page");
   includes(renderer, "disabled={atLastVisiblePage}", "last facing spread does not offer a dead next-page button");

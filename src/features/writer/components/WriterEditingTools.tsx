@@ -53,7 +53,7 @@ const fontFamilies: Record<WriterFont, string> = {
 };
 
 const manuscriptWidths: Record<WriterWidth, string> = {
-  book: "48rem",
+  book: "35rem",
   comfortable: "54rem",
   wide: "58rem",
 };

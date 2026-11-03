@@ -111,6 +111,8 @@ test("reader education exposes Article and one shared breadcrumb structured data
   assert.equal(publicRoute.includes('"@type": "BreadcrumbList"'), false, "reader route must not duplicate shell breadcrumbs");
   assertContains(readerShell, '"@type": "BreadcrumbList"', "reader breadcrumb schema is preserved in shell");
   assertContains(publicRoute, 'mainEntityOfPage: canonical', "reader canonical schema binding");
+  assertContains(publicRoute, "datePublished", "reader real publication date");
+  assertContains(publicRoute, "dateModified", "reader real modification date");
   assertContains(publicRoute, 'publisher: { "@type": "Organization", name: "İlkOku"', "reader publisher schema");
 });
 

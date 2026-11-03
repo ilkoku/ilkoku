@@ -324,6 +324,7 @@ export function FocusedReadingExperience({
                 encodedReturnTo={encodedReturnTo}
                 formatting={publicationFormatting}
                 initialBookPage={initialBookPage}
+                readerModesEnabled
                 identity={protectionIdentity}
                 layout={chapter.publicationLayout}
                 nextChapterHref={nextChapterHref}

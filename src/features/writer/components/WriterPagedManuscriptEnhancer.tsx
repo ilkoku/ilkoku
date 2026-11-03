@@ -171,9 +171,9 @@ function writerFont(): PublicationFont {
     'select[aria-label="Yazı tipi"]',
   )?.value;
 
-  return value === "serif" || value === "sans" || value === "typewriter"
+  return value === "serif" || value === "sans" || value === "typewriter" || value === "word"
     ? value
-    : "typewriter";
+    : "word";
 }
 
 function capturePublicationLayout(target: EditorTarget) {

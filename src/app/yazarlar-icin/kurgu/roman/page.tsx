@@ -169,6 +169,8 @@ export default async function RomanYazarlikRehberiPage() {
       description: summary,
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
+      ...(guide?.publishedAt ? { datePublished: guide.publishedAt.toISOString() } : {}),
+      ...(guide?.updatedAt ? { dateModified: guide.updatedAt.toISOString() } : {}),
       author: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       publisher: { "@type": "Organization", name: "İlkOku", url: "https://ilkoku.com/" },
       image: `https://ilkoku.com${romanVisuals.hero}`,

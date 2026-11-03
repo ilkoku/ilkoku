@@ -251,7 +251,7 @@ export function PublishedManuscriptViewport({
     key: string;
     ends: number[];
   } | null>(null);
-  const readerEnds = measuredReaderPages?.key === paginationKey
+  const readerEnds = readerModesEnabled && measuredReaderPages?.key === paginationKey
     ? measuredReaderPages.ends
     : null;
   const pages = useMemo(
@@ -263,7 +263,7 @@ export function PublishedManuscriptViewport({
   // This measurement consumes only the already-authorized current item.
   // Other/locked book sections remain redacted, and published pageEnds persist.
   useEffect(() => {
-    if (!content || isContentsItem) return;
+    if (!readerModesEnabled || !content || isContentsItem) return;
     let cancelled = false;
     let frame = 0;
     const measure = () => {
@@ -288,7 +288,7 @@ export function PublishedManuscriptViewport({
       cancelled = true;
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [content, isContentsItem, layout, paginationKey]);
+  }, [content, isContentsItem, layout, paginationKey, readerModesEnabled]);
   const initialIndex = () => {
     if (startAtLastPage) return Math.max(0, pages.length - 1);
     const publishedIndex = typeof initialBookPage === "number"

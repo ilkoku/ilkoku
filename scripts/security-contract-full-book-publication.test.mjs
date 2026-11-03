@@ -147,7 +147,8 @@ test("Reader consumes full-book snapshot and navigates special pages plus chapte
   includes(legacyReader, 'data-legacy-book-layout={bookMode ? "book" : "single"}', "existing non-snapshot works can switch reader layouts");
   includes(legacyReader, 'BOOK_MODE_STORAGE_KEY', "existing works share published-book display preference");
   includes(legacyReader, 'pendingBookmarkRef', "legacy point anchors remain in original single-page coordinates");
-  includes(legacyReader, 'if (bookMode && (pointMode || drawingMode)) chooseMode("single")', "drawing and point tools retain original anchor geometry");
+  includes(legacyReader, 'if (!bookMode || (!pointMode && !drawingMode)) return;', "point/drawing tools retain original anchor geometry");
+  includes(legacyReader, 'window.requestAnimationFrame(() => chooseMode("single"))', "legacy tool fallback schedules without a render-time state update");
   includes(legacyReader, 'workSlug', "legacy reader preserves cover and contents navigation");
   includes(legacyReaderStyles, 'column-fill: auto;', "legacy open book flows across facing columns without mutating stored content");
   includes(chapterReader, 'identity={protectionIdentity}', "legacy book watermark includes reader identity");

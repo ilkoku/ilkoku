@@ -424,6 +424,7 @@ export function PublishedManuscriptViewport({
     : globalPageNumber;
   const hasNextBookPage = Boolean(onNextBookPage || nextChapterHref);
   const atLastVisiblePage = lastVisiblePageNumber >= globalPageTotal && !hasNextBookPage;
+  const atFirstVisiblePage = globalPageNumber <= 1 && !coverHref && !onPreviousBookPage && !previousChapterHref;
 
   const annotations = tools?.annotations ?? [];
   const activeTool = tools?.activeTool ?? null;
@@ -431,6 +432,26 @@ export function PublishedManuscriptViewport({
     activeTool === "highlight" || activeTool === "underline" || activeTool === "note";
   const pointMode = activeTool === "pin" || activeTool === "reading_position";
   const eraserMode = activeTool === "eraser";
+
+  // Navigation never captures typing, dialogs or active personal annotations.
+  useEffect(() => {
+    if (!readerModesEnabled) return;
+    function handlePageKeys(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || activeTool) return;
+      if (event.target instanceof Element && event.target.closest("input,textarea,select,button,a,summary,[contenteditable='true'],[role='dialog']")) return;
+      if (event.key === "ArrowLeft" && !atFirstVisiblePage) {
+        event.preventDefault();
+        goPrevious();
+      } else if (event.key === "ArrowRight" && !atLastVisiblePage) {
+        event.preventDefault();
+        goNext();
+      }
+    }
+    window.addEventListener("keydown", handlePageKeys);
+    return () => window.removeEventListener("keydown", handlePageKeys);
+  // Navigation functions intentionally capture the current physical spread.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readerModesEnabled, activeTool, atFirstVisiblePage, atLastVisiblePage, globalPageNumber, spreadMode]);
 
   function handleTextSelectionEnd(
     event: ReactPointerEvent<HTMLDivElement>,
@@ -734,9 +755,15 @@ export function PublishedManuscriptViewport({
         <div className={spreadMode ? styles.spread : styles.singlePage} data-page-spread={spreadMode ? "facing" : "single"}>
           {visiblePages.map((page, slot) => paper(page, slot))}
         </div>
+        {readerModesEnabled ? (
+          <div className={styles.pageTurnRail} aria-label="Kitap sayfası çevirme araçları" role="group">
+            <button className={styles.turnPrevious} aria-label="Önceki sayfayı çevir" disabled={atFirstVisiblePage} onClick={goPrevious} type="button">←</button>
+            <button className={styles.turnNext} aria-label="Sonraki sayfayı çevir" disabled={atLastVisiblePage} onClick={goNext} type="button">→</button>
+          </div>
+        ) : null}
       </div>
       <nav aria-label="Yayın sayfası geçişleri" className={styles.controls}>
-        <button disabled={globalPageNumber <= 1 && !coverHref && !onPreviousBookPage && !previousChapterHref}
+        <button disabled={atFirstVisiblePage}
           onClick={goPrevious} type="button">
           <span aria-hidden="true">←</span> Önceki Sayfa
         </button>

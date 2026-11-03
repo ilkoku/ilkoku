@@ -173,11 +173,12 @@ test("author master becomes one immutable full-book publication snapshot for Rea
   includes(queries, "getLatestPublicationSnapshot", "Reader publication snapshot query");
   includes(reading, "PublishedManuscriptViewport", "fixed publication renderer selection");
   includes(renderer, "splitPublishedPages", "Reader uses author page boundaries");
-  includes(renderer, "const activePage = pages[pageIndex]", "Reader renders one active author page at a time");
+  includes(renderer, "visiblePages.map((page, slot) => paper(page, slot))", "only active one/two page spread is rendered");
+  includes(renderer, "spreadMode ? [leftNumber, leftNumber + 1]", "book layout never mounts more than two pages");
   assert.equal(
-    renderer.includes("pages.map("),
+    renderer.includes("bookPages.map((page) => paper(page"),
     false,
-    "Reader must not stack multiple author pages in the DOM",
+    "Reader must never mount the entire published book in the DOM",
   );
   includes(renderer, "transform: `scale(${scale})`", "device scaling without reflow");
   includes(renderer, "data-book-page-number", "whole-book page number contract");

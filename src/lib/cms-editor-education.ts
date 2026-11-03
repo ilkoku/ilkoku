@@ -61,6 +61,38 @@ type EditorEducationTextRow = {
   updatedAt: Date;
 };
 
+type EditorEducationArticleDateRow = {
+  publishedAt: Date | null;
+  updatedAt: Date;
+};
+
+export async function getEditorEducationArticleDates(categorySlug: string) {
+  const category = getEditorEducationCategory(categorySlug);
+  if (!category) return { publishedAt: null, updatedAt: null };
+
+  const rows = await prisma.$queryRaw<EditorEducationArticleDateRow[]>`
+    SELECT publishedAt, updatedAt
+    FROM SiteContent
+    WHERE namespace IN (
+      ${EDITOR_EDUCATION_GUIDE_NAMESPACE},
+      ${EDITOR_EDUCATION_TEXT_NAMESPACE}
+    )
+      AND contentKey = ${category.slug}
+      AND status = 'published'
+  `;
+
+  const publishedAt = rows
+    .map((row) => row.publishedAt)
+    .filter((value): value is Date => value instanceof Date)
+    .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
+  const updatedAt = rows
+    .map((row) => row.updatedAt)
+    .filter((value): value is Date => value instanceof Date)
+    .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+
+  return { publishedAt, updatedAt };
+}
+
 export function editorEducationMediaFolder(category: Pick<EditorEducationCategory, "slug">) {
   return `editor-education/${category.slug}`;
 }

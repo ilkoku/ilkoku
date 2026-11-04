@@ -30,7 +30,7 @@ const SOURCES_BY_GUIDE: Readonly<Record<string, readonly AuthoritativeGuideSourc
     {
       title: "Elektronik Veri Dağıtım Sistemi",
       publisher: "Türkiye Cumhuriyet Merkez Bankası",
-      url: "https://evds2.tcmb.gov.tr/",
+      url: "https://evds3.tcmb.gov.tr/",
       purpose: "Faiz, kur, fiyat ve diğer ekonomik veriler için birincil veri kaynağı.",
     },
   ],

@@ -25,17 +25,34 @@ test("education surfaces expose visible editorial methodology without removing l
   assert.match(note, /uzman görüşünün ve güncel yetkili kaynakların yerine geçmez/u);
 
   assert.match(writing, /expertVerificationRequired\?: boolean/u);
-  assert.match(writing, /<EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} \/>/u);
+  assert.match(writing, /authoritativeSources={authoritativeSources}/u);
+  assert.match(writing, /expertVerificationRequired={expertVerificationRequired}/u);
   assert.match(reading, /<EditorialTrustNote context="reading" \/>/u);
   assert.match(editing, /<EditorialTrustNote context="editing" \/>/u);
 });
 
 test("sensitive informational writing guides expose the expert-verification layer", () => {
   const education = source("src/components/content/BatchedEducationGuidePage.tsx");
+  const sources = source("src/lib/authoritative-guide-sources.ts");
+  const note = source("src/components/content/EditorialTrustNote.tsx");
 
   for (const slug of ["psikoloji", "finans", "hukuk", "saglik"]) {
     assert.match(education, new RegExp(`"${slug}"`, "u"));
   }
   assert.match(education, /EXPERT_VERIFICATION_GUIDE_SLUGS\.has\(definition\.slug\)/u);
   assert.match(education, /expertVerificationRequired={expertVerificationRequired}/u);
+  assert.match(education, /citation: authoritativeSources\.map/u);
+  assert.match(note, /Yetkili ve birincil kaynaklar/u);
+  assert.match(note, /authoritativeSources\.map/u);
+  for (const hostname of [
+    "who.int",
+    "icd.who.int",
+    "spk.gov.tr",
+    "evds3.tcmb.gov.tr",
+    "mevzuat.gov.tr",
+    "resmigazete.gov.tr",
+    "sggm.saglik.gov.tr",
+  ]) {
+    assert.match(sources, new RegExp(hostname.replaceAll(".", "\\."), "u"));
+  }
 });

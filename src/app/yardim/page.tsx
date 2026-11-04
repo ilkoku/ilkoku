@@ -15,7 +15,7 @@ type Faq = {
 const baseUrl = "https://ilkoku.com";
 const title = "Yardım Merkezi | İlkOku";
 const description = "İlkOku'da okur, yazar, editör ve yayınevi olarak doğru adıma ulaşın; süreç, güven, telif ve sık sorulan sorular için yardım yollarını keşfedin.";
-const socialImage = "/opengraph-image";
+const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 const audienceLabels: Record<string, string> = {
   all: "Herkes için",

@@ -5,7 +5,7 @@ import { hasPublishedEditorProfiles } from "@/features/editors/data";
 const baseUrl = "https://ilkoku.com";
 const title = "Editörleri Keşfet | İlkOku";
 const description = "İlkOku'da doğrulanmış editör profillerini, uzmanlıklarını ve editoryal yaklaşımı keşfedin; editör modelini ve değerlendirme standartlarını inceleyin.";
-const socialImage = "/opengraph-image";
+const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 export const metadata: Metadata = {
   title,

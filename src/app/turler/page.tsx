@@ -10,7 +10,7 @@ const baseUrl = "https://ilkoku.com";
 const title = "Eser Türleri | İlkOku";
 const description =
   "İlkOku’da keşfe açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
-const socialImage = "/opengraph-image";
+const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 type PublicGenresPageProps = {
   searchParams: Promise<{

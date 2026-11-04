@@ -15,7 +15,7 @@ const baseUrl = "https://ilkoku.com";
 const title = "Yazarlar | İlkOku";
 const description =
   "İlkOku’da keşfe açık Türkçe eseri bulunan yazarları ve yayımlanmış eser vitrinlerini keşfedin.";
-const socialImage = "/opengraph-image";
+const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 type PublicAuthorsPageProps = {
   searchParams: Promise<{

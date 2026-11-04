@@ -25,7 +25,7 @@ test("contact remains canonical and indexable under the complete public SEO poli
   contains(page, "robots: { index: true, follow: true }", "public contact index/follow policy");
   contains(page, "openGraph:", "contact Open Graph metadata");
   contains(page, "twitter:", "contact Twitter metadata");
-  contains(page, 'const socialImage = "/opengraph-image"', "contact social image fallback");
+  contains(page, 'const socialImage = "/og/ilkoku-social-selected-2026.webp"', "contact social image fallback");
   contains(sitemap, "filterSoftLaunchSitemapEntries", "contact sitemap output is soft-launch filtered");
   contains(technical, "publicCodeOwnedIndexRoutes", "technical SEO consumes canonical code-owned route inventory");
   contains(publicSeoRoutes, '"/iletisim"', "contact remains in the code-owned public candidate inventory");

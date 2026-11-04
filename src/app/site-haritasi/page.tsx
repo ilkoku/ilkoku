@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     url: "/site-haritasi",
     title,
     description,
-    images: [{ url: "/opengraph-image", alt: "İlkOku Site Haritası" }],
+    images: [{ url: "/og/ilkoku-social-selected-2026.webp", alt: "İlkOku Site Haritası" }],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
-    images: ["/opengraph-image"],
+    images: ["/og/ilkoku-social-selected-2026.webp"],
   },
 };
 

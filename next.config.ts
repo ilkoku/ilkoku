@@ -192,6 +192,11 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [
         {
+          // Preserve existing shared Open Graph image links without a redirect or 404.
+          source: "/opengraph-image",
+          destination: "/og/ilkoku-social-selected-2026.webp",
+        },
+        {
           source: "/sistem-yonetimi",
           destination: "/admin",
         },

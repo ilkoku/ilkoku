@@ -515,7 +515,7 @@ test("active public help surfaces expose canonical social metadata", () => {
     assertContains(page, `canonical: "${canonical}"`, `${canonical} canonical`);
     assertContains(page, "openGraph:", `${canonical} Open Graph metadata`);
     assertContains(page, "twitter:", `${canonical} Twitter metadata`);
-    assertContains(page, 'const socialImage = "/opengraph-image"', `${canonical} social image fallback`);
+    assertContains(page, 'const socialImage = "/og/ilkoku-social-selected-2026.webp"', `${canonical} social image fallback`);
   }
 
   const help = source("src/app/yardim/page.tsx");
@@ -1846,4 +1846,25 @@ test("Power-SEO safely verifies only public off-sitemap HTTP targets without pro
   assert.equal(stopped.halted, true);
   assert.equal(stopped.checked, 1);
   assert.equal(stoppedCalls.length, 1, "WAF 403 must circuit-break all subsequent requests");
+});
+
+
+test("public social images resolve to an actual branded asset", () => {
+  const config = source("next.config.ts");
+  assertContains(config, 'source: "/opengraph-image"', "legacy OG image URL has a route");
+  assertContains(config, 'destination: "/og/ilkoku-social-selected-2026.webp"', "legacy OG image serves existing image");
+  for (const path of [
+    "src/app/editorler/page.tsx",
+    "src/app/eserler/yeni/page.tsx",
+    "src/app/eserler/guncellenen/page.tsx",
+    "src/app/turler/page.tsx",
+    "src/app/site-haritasi/page.tsx",
+    "src/app/yazarlar/page.tsx",
+    "src/app/iletisim/page.tsx",
+    "src/app/yardim/page.tsx"
+]) {
+    const page = source(path);
+    assert.ok(!page.includes('"/opengraph-image"'), `${path} must not link to obsolete OG URL`);
+    assertContains(page, '"/og/ilkoku-social-selected-2026.webp"', `${path} references published OG image`);
+  }
 });

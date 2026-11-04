@@ -5,6 +5,7 @@ import { EditorialTrustNote } from "@/components/content/EditorialTrustNote";
 import { PriorityGuideIntentPanel } from "@/components/content/PriorityGuideIntentPanel";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
+import { getAuthoritativeGuideSources } from "@/lib/authoritative-guide-sources";
 import { getGenreBySlug, getGenresByCategory, type GenreCategory } from "@/lib/genres";
 import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 import { getRelatedWritingGuideSlugs } from "@/lib/writing-guide-related-links";
@@ -154,6 +155,7 @@ export function WritingGuideShell({
   const showOriginalFooter = activeGenreSlug.length > 0 && ORIGINAL_FOOTER_GENRE_CATEGORIES.has(activeCategory);
   const categoryHub = WRITING_CATEGORY_HUBS.find((category) => category.category === activeCategory) ?? null;
   const contextualBridge = activeGenreSlug ? CONTEXTUAL_GUIDE_BRIDGES[activeGenreSlug] : undefined;
+  const authoritativeSources = getAuthoritativeGuideSources(activeGenreSlug);
   const relatedGenres = getRelatedWritingGuideSlugs(activeGenreSlug)
     .map((slug) => getGenreBySlug(slug))
     .filter((genre): genre is NonNullable<typeof genre> => Boolean(genre));
@@ -221,7 +223,11 @@ export function WritingGuideShell({
         <ContentLandmark className="min-w-0">
           <PriorityGuideIntentPanel slug={activeGenreSlug} />
           {children}
-          <EditorialTrustNote context="writing" expertVerificationRequired={expertVerificationRequired} />
+          <EditorialTrustNote
+            authoritativeSources={authoritativeSources}
+            context="writing"
+            expertVerificationRequired={expertVerificationRequired}
+          />
           {activeGenreSlug && categoryHub ? (
             <aside
               aria-label="İlgili yazarlık eğitimleri"

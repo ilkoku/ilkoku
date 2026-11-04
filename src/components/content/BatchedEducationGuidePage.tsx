@@ -1,3 +1,4 @@
+import { getAuthoritativeGuideSources } from "@/lib/authoritative-guide-sources";
 import { publicBrandSocialImage } from "@/lib/public-brand";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
@@ -289,6 +290,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     ? `https://ilkoku.com${categoryHub.href}/${definition.slug}`
     : `https://ilkoku.com/yazarlar-icin`;
   const expertVerificationRequired = EXPERT_VERIFICATION_GUIDE_SLUGS.has(definition.slug);
+  const authoritativeSources = getAuthoritativeGuideSources(definition.slug);
   const schema = [
     {
       "@context": "https://schema.org",
@@ -319,6 +321,9 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
+      ...(authoritativeSources.length > 0
+        ? { citation: authoritativeSources.map((source) => source.url) }
+        : {}),
       about: [
         { "@type": "Thing", name: definition.label },
         { "@type": "Thing", name: `${definition.category} yazarlığı` },

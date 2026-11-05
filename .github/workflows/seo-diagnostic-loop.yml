@@ -7,6 +7,13 @@ on:
     types: [completed]
   # Manual rerun does not submit indexing requests or modify content.
   workflow_dispatch:
+  # Bootstrap once on merge; future runs follow the full GSC census automatically.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/seo-diagnostic-loop.yml"
+      - "scripts/seo-audit-loop.mjs"
+      - "tests/seo-audit-loop.test.mjs"
 
 permissions:
   actions: read

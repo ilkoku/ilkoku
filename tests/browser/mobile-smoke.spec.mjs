@@ -3135,7 +3135,7 @@ test("legacy published reader switches Kitap / Tek Sayfa without changing conten
   const mobileTools = page.locator('aside[aria-label="Kişisel okuma araçları"]');
   await expect(mobileTools).toHaveAttribute("data-minimized", "true");
   const mobileDockWidth = await mobileTools.evaluate((element) => element.getBoundingClientRect().width);
-  expect(mobileDockWidth, "Minimized tools must occupy only a narrow portion of the mobile width").toBeLessThan(220);
+  expect(mobileDockWidth, "Minimized tools must be a small button without covering page navigation").toBeLessThan(70);
   const footerClearance = await page.locator(".reading-page").evaluate(
     (element) => Number.parseFloat(window.getComputedStyle(element).paddingBottom),
   );

@@ -44,13 +44,13 @@ jobs:
           mkdir -p inputs/gsc inputs/previous-gsc inputs/power
           mapfile -t GSC_RUNS < <(gh run list --repo "$GITHUB_REPOSITORY" --workflow gsc-full-index-census.yml --branch main --limit 30 --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success") | .databaseId][0:2][]')
           mapfile -t POWER_RUNS < <(gh run list --repo "$GITHUB_REPOSITORY" --workflow power-seo-live-census.yml --branch main --limit 30 --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success") | .databaseId][0:1][]')
-          if [ "#{GSC_RUNS[@]}" = "" ] || [ "#{POWER_RUNS[@]}" = "" ]; then
+          if [ "${#GSC_RUNS[@]}" -eq 0 ] || [ "${#POWER_RUNS[@]}" -eq 0 ]; then
             echo "::error::Missing successful upstream GSC or Power-SEO report"
             exit 1
           fi
           gh run download "${GSC_RUNS[0]}" --repo "$GITHUB_REPOSITORY" -n gsc-full-index-census -D inputs/gsc
           gh run download "${POWER_RUNS[0]}" --repo "$GITHUB_REPOSITORY" -n power-seo-live-census -D inputs/power
-          if [ "${#{GSC_RUNS[@]}}" != "" ] && [ "${#{GSC_RUNS[@]}}" != "${GSC_RUNS[0]}" ]; then
+          if [ "${#GSC_RUNS[@]}" -gt 1 ]; then
             gh run download "${GSC_RUNS[1]}" --repo "$GITHUB_REPOSITORY" -n gsc-full-index-census -D inputs/previous-gsc || true
           fi
           GSC_FILE=$(find inputs/gsc -name 'ilkoku-gsc-full-index-census.json' -type f -print -quit)

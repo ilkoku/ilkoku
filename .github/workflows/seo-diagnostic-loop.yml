@@ -1,0 +1,86 @@
+name: SEO Diagnostic Loop — Evidence Merge
+
+on:
+  # Run when the existing full GSC census completes; reuse prior live Power-SEO scan.
+  workflow_run:
+    workflows: ["GSC full index census"]
+    types: [completed]
+  # Manual rerun does not submit indexing requests or modify content.
+  workflow_dispatch:
+  # Bootstrap once on merge; future runs follow the full GSC census automatically.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/seo-diagnostic-loop.yml"
+      - "scripts/seo-audit-loop.mjs"
+      - "tests/seo-audit-loop.test.mjs"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: seo-diagnostic-loop
+  cancel-in-progress: false
+
+jobs:
+  merge-evidence:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout main diagnostics
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Run isolated merge tests
+        run: node --test tests/seo-audit-loop.test.mjs
+
+      - name: Download last successful GSC and live Power-SEO evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p inputs/gsc inputs/previous-gsc inputs/power
+          mapfile -t GSC_RUNS < <(gh run list --repo "$GITHUB_REPOSITORY" --workflow gsc-full-index-census.yml --branch main --limit 30 --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success") | .databaseId][0:2][]')
+          mapfile -t POWER_RUNS < <(gh run list --repo "$GITHUB_REPOSITORY" --workflow power-seo-live-census.yml --branch main --limit 30 --json databaseId,conclusion --jq '[.[] | select(.conclusion == "success") | .databaseId][0:1][]')
+          if [ "${#GSC_RUNS[@]}" -eq 0 ] || [ "${#POWER_RUNS[@]}" -eq 0 ]; then
+            echo "::error::Missing successful upstream GSC or Power-SEO report"
+            exit 1
+          fi
+          gh run download "${GSC_RUNS[0]}" --repo "$GITHUB_REPOSITORY" -n gsc-full-index-census -D inputs/gsc
+          gh run download "${POWER_RUNS[0]}" --repo "$GITHUB_REPOSITORY" -n power-seo-live-census -D inputs/power
+          if [ "${#GSC_RUNS[@]}" -gt 1 ]; then
+            gh run download "${GSC_RUNS[1]}" --repo "$GITHUB_REPOSITORY" -n gsc-full-index-census -D inputs/previous-gsc || true
+          fi
+          GSC_FILE=$(find inputs/gsc -name 'ilkoku-gsc-full-index-census.json' -type f -print -quit)
+          POWER_FILE=$(find inputs/power -name 'power-seo-live-census.json' -type f -print -quit)
+          test -n "$GSC_FILE" && test -n "$POWER_FILE"
+          echo "GSC_FILE=$GSC_FILE" >> "$GITHUB_ENV"
+          echo "POWER_FILE=$POWER_FILE" >> "$GITHUB_ENV"
+          PREVIOUS_FILE=$(find inputs/previous-gsc -name 'ilkoku-gsc-full-index-census.json' -type f -print -quit)
+          echo "PREVIOUS_FILE=$PREVIOUS_FILE" >> "$GITHUB_ENV"
+
+      - name: Generate verified joint report (no website writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS=(--gsc "$GSC_FILE" --power "$POWER_FILE" --output artifacts/seo-diagnostic-loop)
+          if [ -n "$PREVIOUS_FILE" ]; then ARGS+=(--previous-gsc "$PREVIOUS_FILE"); fi
+          node scripts/seo-audit-loop.mjs "${ARGS[@]}"
+
+      - name: Preserve JSON, CSV and Markdown reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: seo-diagnostic-loop
+          path: artifacts/seo-diagnostic-loop/
+          if-no-files-found: warn
+          retention-days: 30

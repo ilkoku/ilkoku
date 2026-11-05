@@ -34,6 +34,16 @@ function cohort(url) {
   return "Diğer sayfalar";
 }
 
+function priorityFamily(url) {
+  const p = url.slice(SITE_ORIGIN.length);
+  if (p === "/yazarlar-icin" || p.startsWith("/yazarlar-icin/")) return "Yazarlar";
+  if (p === "/okurlar-icin" || p.startsWith("/okurlar-icin/")) return "Okurlar";
+  if (p === "/editorler-icin" || p.startsWith("/editorler-icin/")) return "Editörler";
+  if (p === "/yayinevleri-icin") return "Yayınevleri";
+  if (["/hakkimizda", "/nasil-calisir", "/editoryal-standartlar"].includes(p)) return "Kurumsal";
+  return null;
+}
+
 function googleState(row) {
   if (row.error) return "inspection_error";
   if (row.verdict === "PASS" || row.coverageState === GSC_INDEXED) return "indexed";
@@ -96,6 +106,7 @@ export function buildAudit({ gsc, power, previousGsc = null, now = new Date() })
     const state = googleState(google);
     const previous = previousByUrl.get(url);
     const previousState = previous ? googleState(previous) : null;
+    const priority = priorityFamily(url);
     const incomingSources = incoming.get(url)?.size ?? 0;
     const pathName = url.slice(SITE_ORIGIN.length);
     const latestCrawl = watch.get(pathName);
@@ -109,7 +120,7 @@ export function buildAudit({ gsc, power, previousGsc = null, now = new Date() })
       (google.pageFetchState && google.pageFetchState !== "SUCCESSFUL")
     );
     return {
-      url, path: pathName, group: cohort(url), googleState: state,
+      url, path: pathName, group: cohort(url), priorityFamily: priority, googleState: state,
       previousGoogleState: previousState,
       googleChanged: previousState !== null && previousState !== state,
       lastGoogleCrawl: google.lastCrawlTime || "",
@@ -135,6 +146,24 @@ export function buildAudit({ gsc, power, previousGsc = null, now = new Date() })
       medianSitemapIncoming: incomingSorted[Math.floor((incomingSorted.length - 1) / 2)] ?? null,
     });
   }
+  const priorityRows = rows.filter((row) => row.priorityFamily !== null);
+  const priorityStats = {
+    total: priorityRows.length,
+    indexed: priorityRows.filter((row) => row.googleState === "indexed").length,
+    crawledNotIndexed: priorityRows.filter((row) => row.googleState === "crawled_not_indexed").length,
+    unknown: priorityRows.filter((row) => row.googleState === "unknown").length,
+    discoveredNotIndexed: priorityRows.filter((row) => row.googleState === "discovered_not_indexed").length,
+  };
+  const priorityGroups = ["Yazarlar", "Okurlar", "Editörler", "Yayınevleri", "Kurumsal"].map((group) => {
+    const subset = priorityRows.filter((row) => row.priorityFamily === group);
+    return {
+      group, total: subset.length,
+      indexed: subset.filter((row) => row.googleState === "indexed").length,
+      crawledNotIndexed: subset.filter((row) => row.googleState === "crawled_not_indexed").length,
+      unknown: subset.filter((row) => row.googleState === "unknown").length,
+      discoveredNotIndexed: subset.filter((row) => row.googleState === "discovered_not_indexed").length,
+    };
+  });
   const sourceAge = {
     gscHours: dateAgeHours(gsc.generatedAt, now),
     powerHours: dateAgeHours(power.checkedAt, now),
@@ -170,7 +199,7 @@ export function buildAudit({ gsc, power, previousGsc = null, now = new Date() })
       sourceAge, incomplete,
     },
     scope: "READ ONLY: GSC URL Inspection + Power-SEO live public sitemap graph. No indexed guarantee, no Google attribution inferred from empty referral fields, no external link authority measured.",
-    stats, groupTable, changes: changingPages.map((row) => ({
+    stats, priorityStats, priorityGroups, groupTable, changes: changingPages.map((row) => ({
       path: row.path, from: row.previousGoogleState, to: row.googleState,
     })),
     technicalReview: mismatchedUrls.map((row) => ({
@@ -200,7 +229,16 @@ export function markdownReport(audit) {
     "| Keşfedildi, dizinde değil | " + s.discoveredNotIndexed + " |",
     "| Diğer/inceleme hatası | " + s.other + " |",
     "",
-    "## Kanıtların ayrımı",
+    "## Birinci öncelik: İlkOku temel sayfaları",
+    "",
+    "| Grup | Toplam | İndekste | Tarandı ama eklenmedi | Google bilmiyor | Keşfedildi ama eklenmedi |",
+    "| --- | ---: | ---: | ---: | ---: | ---: |",
+    ...audit.priorityGroups.map((row) => "| " + row.group + " | " + row.total + " | " + row.indexed + " | " + row.crawledNotIndexed + " | " + row.unknown + " | " + row.discoveredNotIndexed + " |"),
+    "| **Toplam** | **" + audit.priorityStats.total + "** | **" + audit.priorityStats.indexed + "** | **" + audit.priorityStats.crawledNotIndexed + "** | **" + audit.priorityStats.unknown + "** | **" + audit.priorityStats.discoveredNotIndexed + "** |",
+    "",
+    "> Kitap satış listeleri bu tablonun dışındadır; tam veri ve teknik kontroller saklanır.",
+    "",
+        "## Kanıtların ayrımı",
     "",
     "- Google bilinmiyor ancak sitemap HTML grafiğinde en az 2 farklı sayfadan bağlantılı: **" + s.unknownWithMultipleInlinks + "**. Bu bağlantı sayısı Google'ın sayfayı kesin keşfettiği anlamına gelmez.",
     "- Teknik değerlendirme gerektiren canlı URL: **" + s.technicalReviewUrls + "**. Bu sayfalar kanıtlı kontrol gerektirir; otomatik içerik değişikliği yapılmaz.",
@@ -233,7 +271,7 @@ export function markdownReport(audit) {
 
 export function csvReport(audit) {
   const cols = [
-    "url", "path", "group", "googleState", "previousGoogleState",
+    "url", "path", "group", "priorityFamily", "googleState", "previousGoogleState",
     "googleChanged", "lastGoogleCrawl", "incomingSitemapPages",
     "liveHtmlVerified", "canonicalVerified", "structuralIssue",
     "newContentCrawledNotIndexed"

@@ -40,6 +40,16 @@ function sample() {
 test("merges Google and live sitemap evidence without treating missing Google attribution as missing HTML links", () => {
   const data = buildAudit({ ...sample(), now });
   assert.equal(data.stats.total, 3);
+  // Homepage remains in the full inventory, while main writing/institutional
+  // pages drive the priority view. The sales lists remain out of priority.
+  assert.deepEqual(data.priorityStats, {
+    total: 2, indexed: 0, crawledNotIndexed: 1, unknown: 1, discoveredNotIndexed: 0,
+  });
+  assert.equal(data.rows.find((row) => row.url === home).priorityFamily, null);
+  assert.equal(data.rows.find((row) => row.url === read).priorityFamily, "Kurumsal");
+  assert.equal(data.rows.find((row) => row.url === unknown).priorityFamily, "Yazarlar");
+  assert.match(markdownReport(data), /Birinci öncelik: İlkOku temel sayfaları/);
+  assert.match(csvReport(data), /priorityFamily/);
   assert.equal(data.stats.indexed, 1);
   assert.equal(data.stats.unknown, 1);
   assert.equal(data.stats.crawledNotIndexed, 1);

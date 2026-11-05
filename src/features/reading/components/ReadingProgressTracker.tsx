@@ -80,6 +80,9 @@ export function ReadingProgressTracker({
   const lastSentAtRef = useRef(0);
   const requestInProgressRef = useRef(false);
   const hasStartedRef = useRef(initialProgress !== null);
+  const completionAttemptedForChapterRef = useRef<string | null>(
+    initialProgress === 100 ? chapterId : null,
+  );
 
   const saveProgress = useCallback(
     async (complete = false) => {
@@ -109,6 +112,7 @@ export function ReadingProgressTracker({
         typeof result.progressPercent === "number"
       ) {
         hasStartedRef.current = true;
+        if (complete) completionAttemptedForChapterRef.current = chapterId;
         setHasStarted(true);
         lastSentChapterProgressRef.current =
           currentChapterProgressRef.current;
@@ -214,17 +218,20 @@ export function ReadingProgressTracker({
 
       /*
        * İlk kayıt aynı anda tamamlanamaz.
-       * Tamamlama yalnızca daha önce başlamış bir okumada
-       * yüzde 90 eşiği sonradan geçildiğinde gönderilir.
+       * İlk kayıt yüzde 90 üzerinde gerçekleşse bile, sonraki
+       * kayıtta tamamlama bir kez ayrıca gönderilebilir.
        */
-      const shouldComplete =
+      const completionPending =
         hasStartedRef.current &&
-        completionThresholdReached;
+        chapterProgress >= 90 &&
+        completionAttemptedForChapterRef.current !== chapterId;
+      const shouldComplete = completionPending;
 
       if (
         firstSave ||
         meaningfulProgress ||
         completionThresholdReached ||
+        completionPending ||
         periodicSave
       ) {
         void saveProgress(shouldComplete);

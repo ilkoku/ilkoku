@@ -741,3 +741,10 @@
   background: transparent;
   box-shadow: none;
 }
+
+/* On small screens allow scrolling reader controls above the fixed tools dock. */
+@media (max-width: 48rem) {
+  .page {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

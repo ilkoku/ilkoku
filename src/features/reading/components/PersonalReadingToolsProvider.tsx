@@ -175,7 +175,11 @@ export function PersonalReadingToolsProvider({
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 48rem)");
-    const sync = () => setIsCompact(media.matches);
+    const sync = () => {
+      setIsCompact(media.matches);
+      // On phones, keep reader text visible until tools are explicitly opened.
+      if (media.matches) setIsMinimized(true);
+    };
     sync();
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);

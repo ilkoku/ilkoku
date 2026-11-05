@@ -445,6 +445,12 @@
     max-height: min(31rem, calc(100vh - 1.3rem));
   }
 
+  /* Minimized mobile tools must not hide the entire book footer. */
+  .palette[data-minimized="true"] {
+    left: auto !important;
+    width: min(11.5rem, calc(100vw - 1.3rem));
+  }
+
   .dragHandle {
     display: none;
   }

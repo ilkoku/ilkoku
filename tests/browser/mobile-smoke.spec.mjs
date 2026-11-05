@@ -3132,6 +3132,18 @@ test("legacy published reader switches Kitap / Tek Sayfa without changing conten
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();
 
   await page.setViewportSize(viewports.phone390);
+  const mobileTools = page.locator('aside[aria-label="Kişisel okuma araçları"]');
+  await expect(mobileTools).toHaveAttribute("data-minimized", "true");
+  const mobileDockWidth = await mobileTools.evaluate((element) => element.getBoundingClientRect().width);
+  expect(mobileDockWidth, "Minimized tools must occupy only a narrow portion of the mobile width").toBeLessThan(220);
+  const footerClearance = await page.locator(".reading-page").evaluate(
+    (element) => Number.parseFloat(window.getComputedStyle(element).paddingBottom),
+  );
+  expect(footerClearance, "Reader content should scroll clear of the tools dock").toBeGreaterThan(70);
+  await mobileTools.getByRole("button", { name: "Araçları aç" }).click();
+  await expect(mobileTools).toHaveAttribute("data-minimized", "false");
+  await mobileTools.getByRole("button", { name: "Araçları küçült" }).click();
+  await expect(mobileTools).toHaveAttribute("data-minimized", "true");
   await legacy.getByRole("button", { name: "Kitap", exact: true }).click();
   await expect(legacy).toHaveAttribute("data-legacy-book-layout", "single");
   await expect(page.getByText("CI browser preview chapter is readable before purchase.")).toBeVisible();

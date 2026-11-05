@@ -49,3 +49,15 @@ test("production error boundary exposes only the safe Next digest", () => {
     "production error page must not expose stack traces",
   );
 });
+
+test("reader completing a chapter before the first 20-second save still completes later", () => {
+  const tracker = source("src/features/reading/components/ReadingProgressTracker.tsx");
+  const server = source("src/features/reading/progress.ts");
+  assert.match(tracker, /completionAttemptedForChapterRef = useRef<string \| null>/);
+  assert.match(tracker, /initialProgress === 100 \? chapterId : null/);
+  assert.match(tracker, /if \(complete\) completionAttemptedForChapterRef\.current = chapterId/);
+  assert.match(tracker, /const completionPending =\s*hasStartedRef\.current &&\s*chapterProgress >= 90 &&\s*completionAttemptedForChapterRef\.current !== chapterId/);
+  assert.match(tracker, /firstSave \|\|\s*meaningfulProgress \|\|\s*completionThresholdReached \|\|\s*completionPending/);
+  assert.match(server, /complete && isLastChapter && chapterProgressPercent >= 90/);
+  assert.match(server, /activeSeconds >= 20 && chapterProgressPercent >= 10/);
+});

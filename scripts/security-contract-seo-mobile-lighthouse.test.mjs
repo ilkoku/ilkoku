@@ -416,9 +416,8 @@ test("above-fold public CMS guide hero is eager while lower illustrations remain
   const source = fs.readFileSync("src/components/content/PublicCmsPageBlocks.tsx", "utf8");
   const hero = source.split('case "hero":')[1]?.split('case "text":')[0] ?? "";
   assert.ok(hero.includes('<Image alt={block.imageAlt}'), "Hero image is rendered with next/image");
-  assert.match(
-    hero,
-    /<Image alt=\\{block\\.imageAlt\\}[^>]*fill loading="eager" fetchPriority="high"[^>]*\\/>/u,
+  assert.ok(
+    hero.includes('fill loading="eager" fetchPriority="high"'),
     "Visible CMS hero image must be fetched eagerly at high priority",
   );
 

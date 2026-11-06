@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { parseSitemapUrls, selectIndexNowUrls } from "./prepare-indexnow-payload.mjs";
-import { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, publicOffSitemapPath, verifyPublicOffSitemapLinks } from "./power-seo-live-census.mjs";
+import { mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks } from "./power-seo-live-census.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(join(ROOT, relativePath), "utf8");
@@ -1867,4 +1867,65 @@ test("public social images resolve to an actual branded asset", () => {
     assert.ok(!page.includes('"/opengraph-image"'), `${path} must not link to obsolete OG URL`);
     assertContains(page, '"/og/ilkoku-social-selected-2026.webp"', `${path} references published OG image`);
   }
+});
+
+test("sitewide crawlability census detects menu buttons and invalid hrefs from initial HTML", () => {
+  const healthy = [
+    '<header class="public-site-header">',
+    '<nav class="public-site-header__navigation">',
+    '<a class="public-site-header__menu-trigger" href="/yazarlar-icin">Yazar</a>',
+    '<a class="public-site-header__menu-trigger" href="/okurlar-icin">Okur</a>',
+    '</nav></header>',
+  ].join("");
+  const good = publicHeaderMenuLinksFromHtml(healthy);
+  assert.equal(good.hasHeader, true);
+  assert.equal(good.realMenuLinks, 2);
+  assert.equal(good.nonLinkTriggers, 0);
+  assert.equal(good.invalidMenuHrefs, 0);
+  assert.deepEqual(good.targets, ["https://ilkoku.com/yazarlar-icin", "https://ilkoku.com/okurlar-icin"]);
+
+  const broken = healthy.replace(
+    '<a class="public-site-header__menu-trigger" href="/okurlar-icin">Okur</a>',
+    '<button class="public-site-header__menu-trigger">Okur</button>' +
+    '<a class="public-site-header__menu-trigger" href="javascript:alert(1)">Bad</a>',
+  );
+  const findings = publicHeaderMenuLinksFromHtml(broken);
+  assert.equal(findings.realMenuLinks, 1);
+  assert.equal(findings.nonLinkTriggers, 1);
+  assert.equal(findings.invalidMenuHrefs, 1);
+  assert.equal(publicHeaderMenuLinksFromHtml("<main>Indexable page without shared header</main>").hasHeader, false);
+});
+
+test("sitewide crawlability measures homepage reachability, not only incoming-link counts", () => {
+  const origin = "https://ilkoku.com";
+  const home = origin;
+  const writer = origin + "/yazarlar-icin";
+  const kurgu = origin + "/yazarlar-icin/kurgu";
+  const roman = origin + "/yazarlar-icin/kurgu/roman";
+  const island = origin + "/iletisim";
+  const urls = new Set([home, writer, kurgu, roman, island]);
+  const pages = [
+    { url: origin + "/", internalLinks: [writer] },
+    { url: writer, internalLinks: [kurgu] },
+    { url: kurgu, internalLinks: [roman] },
+    { url: roman, internalLinks: [home] },
+    { url: island, internalLinks: [island] },
+  ];
+  const reachability = buildHomeReachability(pages, urls);
+  assert.equal(reachability.reachableCount, 4);
+  assert.equal(reachability.sitemapUrlCount, 5);
+  assert.deepEqual(reachability.unreachable, [island]);
+  assert.equal(reachability.maxDepth, 3);
+  assert.deepEqual(reachability.depthHistogram, { 0: 1, 1: 1, 2: 1, 3: 1 });
+});
+
+test("all-page census actually gates broken shared header and unreachable sitemap destinations", () => {
+  const census = source("scripts/power-seo-live-census.mjs");
+  assertContains(census, "headerMenu = ok ? publicHeaderMenuLinksFromHtml(body)", "live HTML header audit");
+  assertContains(census, "homeReachability = buildHomeReachability(validPages, siteUrls)", "real sitemap graph crawl");
+  assertContains(census, "summary.homepageUnreachableSitemapUrls", "fail when public pages cannot be reached from root");
+  assertContains(census, "summary.pagesWithHeaderNavigationProblems", "fail when native menu links disappear");
+  const header = source("src/components/layout/PublicHeaderNavigation.tsx");
+  assert.equal(header.split("href={menuLandingHref(menu)}").length - 1, 2,
+    "Both desktop and mobile main menus must be real href links");
 });

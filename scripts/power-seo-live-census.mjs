@@ -352,6 +352,72 @@ function buildInternalLinkReview(pages, sitemapUrls) {
   };
 }
 
+// Verify native, same-origin links in the *initial response HTML* rather
+// than counting anchors added after a visitor hovers or clicks a menu.
+// This is a discovery diagnostic, not a claim of Google indexing.
+function publicHeaderMenuLinksFromHtml(html) {
+  let header = "";
+  for (const match of html.matchAll(/<header\b[^>]*>/giu)) {
+    const classes = attribute(match[0], "class").split(/\s+/u);
+    if (!classes.includes("public-site-header")) continue;
+    const end = html.indexOf("</header>", match.index + match[0].length);
+    if (end >= 0) header = html.slice(match.index, end + "</header>".length);
+    break;
+  }
+  if (!header) return { hasHeader: false, realMenuLinks: 0, nonLinkTriggers: 0, invalidMenuHrefs: 0, targets: [] };
+  const targets = [];
+  let realMenuLinks = 0;
+  let nonLinkTriggers = 0;
+  let invalidMenuHrefs = 0;
+  for (const tag of header.match(/<(?:a|button)\b[^>]*>/giu) || []) {
+    const classes = attribute(tag, "class").split(/\s+/u);
+    if (!classes.includes("public-site-header__menu-trigger")) continue;
+    if (/^<button\b/iu.test(tag)) {
+      nonLinkTriggers += 1;
+      continue;
+    }
+    const href = attribute(tag, "href");
+    let parsed;
+    try { parsed = new URL(href, ORIGIN); } catch { /* invalid menu href */ }
+    if (!href || !parsed || parsed.origin !== ORIGIN || !/^https?:$/u.test(parsed.protocol) ||
+      parsed.search || parsed.hash || !normalize(parsed.toString())) {
+      invalidMenuHrefs += 1;
+      continue;
+    }
+    realMenuLinks += 1;
+    targets.push(normalize(parsed.toString()));
+  }
+  return { hasHeader: true, realMenuLinks, nonLinkTriggers, invalidMenuHrefs, targets };
+}
+
+// A non-orphan page may still be unreachable from the homepage if it belongs
+// to a disconnected group. Measure directed HTML-anchor reachability from /.
+function buildHomeReachability(pages, sitemapUrls) {
+  const root = normalize(ORIGIN + "/");
+  const graph = new Map(pages.map((page) => [
+    normalize(page.url),
+    (page.internalLinks || []).filter((target) => sitemapUrls.has(target)),
+  ]));
+  const depths = new Map([[root, 0]]);
+  const queue = [root];
+  for (let index = 0; index < queue.length; index += 1) {
+    const from = queue[index];
+    for (const target of graph.get(from) || []) {
+      if (depths.has(target)) continue;
+      depths.set(target, depths.get(from) + 1);
+      queue.push(target);
+    }
+  }
+  const unreachable = [...sitemapUrls].filter((url) => !depths.has(url)).sort();
+  const depthHistogram = {};
+  for (const value of depths.values()) depthHistogram[value] = (depthHistogram[value] || 0) + 1;
+  return {
+    root, sitemapUrlCount: sitemapUrls.size, reachableCount: depths.size,
+    unreachable, maxDepth: Math.max(...depths.values()), depthHistogram,
+    byUrl: [...depths.entries()].map(([url, depth]) => ({ url, depth })),
+  };
+}
+
 // Only check known public routes from links found in live sitemap HTML.
 // Never probe private account, reading, admin, API, or editor workspaces.
 // A target outside sitemap is not a broken link on its own.
@@ -475,9 +541,10 @@ async function inspect(url, retry = 0, firstAttemptFailure = "") {
     const imageAlt = ok ? imageAltFromHtml(body) : null;
     const structuredData = ok ? structuredDataFromHtml(body) : null;
     const internalLinks = ok ? internalLinksFromHtml(body, url) : [];
+    const headerMenu = ok ? publicHeaderMenuLinksFromHtml(body) : null;
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, h1Count, mainText, imageAlt, structuredData, internalLinks,
+      url, status: response.status, ok, title, description, canonical, robots, h1Count, mainText, imageAlt, structuredData, internalLinks, headerMenu,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       recoveredTransientFailure: retry > 0 && ok,
       firstAttemptFailure,
@@ -491,7 +558,7 @@ async function inspect(url, retry = 0, firstAttemptFailure = "") {
       return inspect(url, 1, e?.name === "TimeoutError" ? "timeout" : "network-type-error");
     }
     return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", h1Count: null, mainText: "",
-      imageAlt: null, structuredData: null, internalLinks: [], canonicalMatches: false, recoveredTransientFailure: false,
+      imageAlt: null, structuredData: null, internalLinks: [], headerMenu: null, canonicalMatches: false, recoveredTransientFailure: false,
       firstAttemptFailure,
       error: e instanceof Error ? e.name : "Unknown error" };
   }
@@ -516,6 +583,10 @@ async function main() {
   const publicResults = results.map(({ mainText, structuredData, internalLinks, ...page }) => page);
   const siteUrls = new Set(urls.map(normalize));
   const linkReview = buildInternalLinkReview(validPages, siteUrls);
+  const homeReachability = buildHomeReachability(validPages, siteUrls);
+  const headerNavigationReview = validPages.map((page) => ({ url: page.url, ...page.headerMenu }));
+  const headerProblems = headerNavigationReview.filter((page) => page.hasHeader &&
+    (page.realMenuLinks === 0 || page.nonLinkTriggers > 0 || page.invalidMenuHrefs > 0));
   const offSitemapHttp = await verifyPublicOffSitemapLinks(linkReview);
   const schemaReview = validPages.map((page) => {
     const audit = inspectBreadcrumbHierarchy(page.structuredData, page.url, siteUrls);
@@ -602,6 +673,15 @@ async function main() {
     pagesWithoutH1: validPages.filter((x) => x.h1Count === 0).length,
     pagesWithMultipleH1: validPages.filter((x) => x.h1Count > 1).length,
     sitemapInternalLinkEdges: linkReview.internalEdges,
+    homepageReachableSitemapUrls: homeReachability.reachableCount,
+    homepageUnreachableSitemapUrls: homeReachability.unreachable.length,
+    homepageMaxClickDepth: homeReachability.maxDepth,
+    pagesWithSharedHeader: headerNavigationReview.filter((page) => page.hasHeader).length,
+    pagesWithoutSharedHeader: headerNavigationReview.filter((page) => !page.hasHeader).length,
+    sharedHeaderRealMenuHrefs: headerNavigationReview.reduce((sum, page) => sum + page.realMenuLinks, 0),
+    sharedHeaderNonLinkTriggers: headerNavigationReview.reduce((sum, page) => sum + page.nonLinkTriggers, 0),
+    sharedHeaderInvalidMenuHrefs: headerNavigationReview.reduce((sum, page) => sum + page.invalidMenuHrefs, 0),
+    pagesWithHeaderNavigationProblems: headerProblems.length,
     sitemapNoIncomingLinkCandidates: linkReview.noIncomingCandidates.length,
     sitemapLowIncomingLinkCandidates: linkReview.lowIncomingCandidates.length,
     distinctOffSitemapLinkTargets: linkReview.offSitemapTargets.length,
@@ -643,7 +723,7 @@ async function main() {
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
     .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, offSitemapHttp };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, homeReachability, headerNavigationReview, headerProblems, offSitemapHttp };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
@@ -665,6 +745,21 @@ async function main() {
   }
   for (const item of linkReview.lowIncomingCandidates.slice(0, 15)) {
     console.log(JSON.stringify({ lowSitemapIncomingLinkReview: item }));
+  }
+  console.log(JSON.stringify({ homeReachabilitySummary: {
+    reachable: homeReachability.reachableCount,
+    total: homeReachability.sitemapUrlCount,
+    depthHistogram: homeReachability.depthHistogram,
+    missingSharedHeader: summary.pagesWithoutSharedHeader,
+  } }));
+  for (const url of homeReachability.unreachable.slice(0, 25)) {
+    console.log(JSON.stringify({ unreachableFromHomepage: url }));
+  }
+  for (const item of headerProblems.slice(0, 25)) {
+    console.log(JSON.stringify({ headerNavigationProblem: item }));
+  }
+  for (const item of headerNavigationReview.filter((page) => !page.hasHeader).slice(0, 25)) {
+    console.log(JSON.stringify({ noSharedHeaderReview: item.url, classification: "design-review-only" }));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
   for (const item of schemaIssues.slice(0, 25)) {
@@ -694,10 +789,12 @@ async function main() {
       "",
     ].join("\n"));
   }
-  if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap || summary.offSitemapPublicHttpMissing || summary.offSitemapPublicHttpHalted) process.exitCode = 1;
+  if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap ||
+    summary.offSitemapPublicHttpMissing || summary.offSitemapPublicHttpHalted ||
+    summary.homepageUnreachableSitemapUrls || summary.pagesWithHeaderNavigationProblems) process.exitCode = 1;
 }
 
-export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicOffSitemapPath, verifyPublicOffSitemapLinks };
+export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

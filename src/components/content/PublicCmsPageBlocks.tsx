@@ -57,7 +57,7 @@ export function PublicCmsPageBlocks({ blocks, pageTitle, summary, eyebrow, unopt
                       {block.text || summary ? <p className="mt-6 max-w-2xl text-base leading-8 text-[#655e78] sm:text-lg">{block.text || summary}</p> : null}
                       {(block.primaryLabel || block.secondaryLabel) ? <div className="mt-7 flex flex-wrap gap-3"><ActionLink href={block.primaryHref} label={block.primaryLabel} /><ActionLink href={block.secondaryHref} label={block.secondaryLabel} secondary /></div> : null}
                     </div>
-                    {block.imageUrl ? <div className="relative min-h-72 overflow-hidden rounded-[1.6rem] bg-[#f1edff]"><Image alt={block.imageAlt} className="object-cover" fill sizes="(max-width: 1024px) 100vw, 45vw" src={block.imageUrl} unoptimized={unoptimizedImages} /></div> : null}
+                    {block.imageUrl ? <div className="relative min-h-72 overflow-hidden rounded-[1.6rem] bg-[#f1edff]"><Image alt={block.imageAlt} className="object-cover" fill loading="eager" fetchPriority="high" sizes="(max-width: 1024px) 100vw, 45vw" src={block.imageUrl} unoptimized={unoptimizedImages} /></div> : null}
                   </div>
                 </section>
               );

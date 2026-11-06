@@ -411,3 +411,23 @@ test("LCP reporter distinguishes observed image requests from simulated load-del
   assert.equal(absent.blockingCssCount, null);
   assert.equal(absent.heroObservedNetworkMs, null);
 });
+
+test("above-fold public CMS guide hero is eager while lower illustrations remain lazy", () => {
+  const source = fs.readFileSync("src/components/content/PublicCmsPageBlocks.tsx", "utf8");
+  const hero = source.split('case "hero":')[1]?.split('case "text":')[0] ?? "";
+  assert.ok(hero.includes('<Image alt={block.imageAlt}'), "Hero image is rendered with next/image");
+  assert.match(
+    hero,
+    /<Image alt=\\{block\\.imageAlt\\}[^>]*fill loading="eager" fetchPriority="high"[^>]*\\/>/u,
+    "Visible CMS hero image must be fetched eagerly at high priority",
+  );
+
+  for (const kind of ["image", "split", "gallery"]) {
+    const section = source.split(`case "${kind}":`)[1]?.split('case "')[0] ?? "";
+    assert.ok(section.includes("<Image"), `${kind} should still render an image`);
+    assert.doesNotMatch(section, /loading="eager"|fetchPriority="high"/u, `${kind} must not compete with LCP`);
+  }
+
+  const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
+  assert.match(homepage, /fill priority fetchPriority="high"/u, "Home page LCP image behavior remains untouched");
+});

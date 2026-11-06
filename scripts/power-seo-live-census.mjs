@@ -357,8 +357,8 @@ function buildInternalLinkReview(pages, sitemapUrls) {
 // This is a discovery diagnostic, not a claim of Google indexing.
 function publicHeaderMenuLinksFromHtml(html) {
   let header = "";
-  for (const match of html.matchAll(/<header\\b[^>]*>/giu)) {
-    const classes = attribute(match[0], "class").split(/\\s+/u);
+  for (const match of html.matchAll(/<header\b[^>]*>/giu)) {
+    const classes = attribute(match[0], "class").split(/\s+/u);
     if (!classes.includes("public-site-header")) continue;
     const end = html.indexOf("</header>", match.index + match[0].length);
     if (end >= 0) header = html.slice(match.index, end + "</header>".length);
@@ -369,10 +369,10 @@ function publicHeaderMenuLinksFromHtml(html) {
   let realMenuLinks = 0;
   let nonLinkTriggers = 0;
   let invalidMenuHrefs = 0;
-  for (const tag of header.match(/<(?:a|button)\\b[^>]*>/giu) || []) {
-    const classes = attribute(tag, "class").split(/\\s+/u);
+  for (const tag of header.match(/<(?:a|button)\b[^>]*>/giu) || []) {
+    const classes = attribute(tag, "class").split(/\s+/u);
     if (!classes.includes("public-site-header__menu-trigger")) continue;
-    if (/^<button\\b/iu.test(tag)) {
+    if (/^<button\b/iu.test(tag)) {
       nonLinkTriggers += 1;
       continue;
     }

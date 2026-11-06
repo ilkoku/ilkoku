@@ -758,6 +758,9 @@ async function main() {
   for (const item of headerProblems.slice(0, 25)) {
     console.log(JSON.stringify({ headerNavigationProblem: item }));
   }
+  for (const item of headerNavigationReview.filter((page) => !page.hasHeader).slice(0, 25)) {
+    console.log(JSON.stringify({ noSharedHeaderReview: item.url, classification: "design-review-only" }));
+  }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
   for (const item of schemaIssues.slice(0, 25)) {
     console.log(JSON.stringify({ schemaReviewFinding: { url: item.url, findings: item.findings } }));

@@ -391,3 +391,18 @@ test("legacy public headers are hidden only inside the explicit public frame", (
     assert.ok(css.includes(`.public-site-frame ${selector}`), `${selector} must be scoped to public-site-frame`);
   }
 });
+
+test("all public mega-menu roots expose crawlable HTML links without changing click-to-expand behavior", () => {
+  const navigation = read(headerNavigationClientPath);
+  assert.match(navigation, /function menuLandingHref\(menu: PublicHeaderMenu\)/u);
+  assert.match(navigation, /links\.find\(\(link\) => link\.primary\)\?\.href/u);
+  assert.equal(
+    (navigation.match(/href=\{menuLandingHref\(menu\)\}/gu) || []).length,
+    2,
+    "Desktop and mobile menu roots must expose real href targets",
+  );
+  assert.match(navigation, /event\.preventDefault\(\)/u, "Hydrated clicks must continue to expand menus");
+  assert.match(navigation, /setActiveId\(isActive \? null : menu\.id\)/u, "Desktop menu state stays unchanged");
+  assert.match(navigation, /setMobileMenuId\(menu\.id\)/u, "Mobile menu state stays unchanged");
+  assert.match(navigation, /\{activeMenu \? \(/u, "Existing visible mega panel stays single-active");
+});

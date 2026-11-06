@@ -1926,6 +1926,6 @@ test("all-page census actually gates broken shared header and unreachable sitema
   assertContains(census, "summary.homepageUnreachableSitemapUrls", "fail when public pages cannot be reached from root");
   assertContains(census, "summary.pagesWithHeaderNavigationProblems", "fail when native menu links disappear");
   const header = source("src/components/layout/PublicHeaderNavigation.tsx");
-  assert.equal((header.match(/href=\\{menuLandingHref\\(menu\\)\\}/gu) || []).length, 2,
+  assert.equal(header.split("href={menuLandingHref(menu)}").length - 1, 2,
     "Both desktop and mobile main menus must be real href links");
 });

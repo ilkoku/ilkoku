@@ -175,6 +175,7 @@ export function PublicHeaderNavigation({
 
             return (
               <Link
+                prefetch={false}
                 className="public-site-header__menu-trigger"
                 href={menuLandingHref(menu)}
                 key={menu.id}
@@ -256,6 +257,7 @@ export function PublicHeaderNavigation({
                         </Link>
                       ) : (
                         <Link
+                          prefetch={false}
                           className="public-site-header__mobile-category"
                           href={menuLandingHref(menu)}
                           key={`mobile-root-${menu.id}`}

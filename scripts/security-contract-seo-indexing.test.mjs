@@ -58,6 +58,21 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
 });
 
+test("homepage metadata uses the previously approved wording without ecosystem language", () => {
+  const expected = "Yazarları, okurları, editörleri ve yayınevlerini buluşturan dijital platform";
+  const brand = source("src/lib/public-brand.ts");
+  const homepage = source("src/app/page.tsx");
+  const layout = source("src/app/layout.tsx");
+  const experience = source("src/features/homepage/HomepageExperience.tsx");
+
+  assertContains(brand, `publicBrandDescription = "${expected}"`, "approved homepage SEO description");
+  assertNotContains(brand.toLocaleLowerCase("tr-TR"), "ekosistem", "retired homepage SEO description vocabulary");
+  assertContains(experience, expected, "metadata and previously approved visible homepage copy remain aligned");
+  assertContains(homepage, "const homeDescription = publicBrandDescription", "homepage SEO/Open Graph/Twitter all consume approved description");
+  assertContains(layout, "description: publicBrandDescription", "global fallback metadata uses approved description");
+  assertContains(layout, "description: publicBrandDescription", "WebSite structured data uses approved description");
+});
+
 test("robots isolates private content management without blocking the public content policy route", () => {
   const robots = source("src/app/robots.ts");
   const liveSmoke = source(".github/workflows/seo-indexability-smoke.yml");

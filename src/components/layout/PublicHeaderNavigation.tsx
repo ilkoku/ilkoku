@@ -26,6 +26,11 @@ type PublicHeaderMenu = {
   }>;
 };
 
+function menuLandingHref(menu: PublicHeaderMenu): string {
+  const links = menu.groups.flatMap((group) => group.links);
+  return links.find((link) => link.primary)?.href ?? links[0]?.href ?? "/";
+}
+
 const CLOSE_DELAY_MS = 140;
 
 function MenuGroups({
@@ -169,19 +174,22 @@ export function PublicHeaderNavigation({
             }
 
             return (
-              <button
+              <Link
                 className="public-site-header__menu-trigger"
-                type="button"
+                href={menuLandingHref(menu)}
                 key={menu.id}
                 data-active={isActive ? "true" : undefined}
                 aria-expanded={isActive}
                 aria-controls={`public-site-header-mega-panel-${menu.id}`}
                 onMouseEnter={() => activate(menu.id)}
                 onFocus={() => activate(menu.id)}
-                onClick={() => setActiveId(isActive ? null : menu.id)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setActiveId(isActive ? null : menu.id);
+                }}
               >
                 {menu.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -247,15 +255,18 @@ export function PublicHeaderNavigation({
                           <span>{menu.label}</span>
                         </Link>
                       ) : (
-                        <button
+                        <Link
                           className="public-site-header__mobile-category"
-                          type="button"
+                          href={menuLandingHref(menu)}
                           key={`mobile-root-${menu.id}`}
-                          onClick={() => setMobileMenuId(menu.id)}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setMobileMenuId(menu.id);
+                          }}
                         >
                           <span>{menu.label}</span>
                           <span aria-hidden="true">›</span>
-                        </button>
+                        </Link>
                       ),
                     )}
                   </nav>

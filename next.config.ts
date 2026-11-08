@@ -10,6 +10,33 @@ const deploymentId =
   process.env.DEPLOYMENT_VERSION?.trim() ||
   undefined;
 
+// Browser-side hardening; keep this independent from route-specific SEO rules.
+// HSTS starts with a short lifetime and does not cover other subdomains.
+// A narrow CSP protects against framing without changing scripts, styles,
+// external payment integrations or auth form behaviour.
+const browserSecurityHeaders = [
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self'; upgrade-insecure-requests",
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=300",
+  },
+];
+
 const publicAuthNoindexRouteHeaders = [
   "/giris",
   "/giris/:path*",
@@ -102,6 +129,10 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/:path*",
+        headers: browserSecurityHeaders,
+      },
       ...publicAuthNoindexRouteHeaders.map((source) => ({
         source,
         headers: [

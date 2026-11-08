@@ -3,6 +3,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+// Prevent rapid repeat emails without leaking whether an account exists.
+const PASSWORD_RESET_COOLDOWN_MS = 2 * 60 * 1000;
 
 type LockedResetUserRow = {
   deletedAt: Date | string | null;
@@ -51,6 +53,24 @@ export async function issuePasswordReset(input: {
       return null;
     }
 
+    const now = new Date();
+    // The User row is locked above: concurrent reset requests for one account
+    // cannot both pass the cooldown check. Include used tokens so a successful
+    // redemption does not make immediate additional reset emails possible.
+    const recentRequest = await transaction.passwordResetToken.findFirst({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: new Date(now.getTime() - PASSWORD_RESET_COOLDOWN_MS),
+        },
+      },
+      select: { id: true },
+    });
+
+    if (recentRequest) {
+      return null;
+    }
+
     await transaction.passwordResetToken.deleteMany({
       where: {
         userId: user.id,
@@ -60,7 +80,7 @@ export async function issuePasswordReset(input: {
 
     await transaction.passwordResetToken.create({
       data: {
-        expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+        expiresAt: new Date(now.getTime() + PASSWORD_RESET_TTL_MS),
         tokenHash: input.tokenHash,
         userId: user.id,
       },

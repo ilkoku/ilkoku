@@ -152,7 +152,7 @@ test("post-auth continuation rejects cross-origin, slash-backslash and control c
     "/%2e%2e//evil.example",
     "javascript:alert(1)",
   ]) {
-    assert.equal(safeAuthNextPath(malicious), "", \`Unsafe auth destination: \${JSON.stringify(malicious)}\`);
+    assert.equal(safeAuthNextPath(malicious), "", `Unsafe auth destination: ${JSON.stringify(malicious)}`);
   }
 
   assert.equal(safeAuthNextPath("/yazar"), "/yazar");

@@ -37,6 +37,34 @@ test("password reset issuance serializes on the live user and preserves account 
   );
 });
 
+test("password reset issuance throttles rapid requests without replacing a valid token", () => {
+  const state = source("src/features/auth/password-reset-state.ts");
+  const actions = source("src/features/auth/actions.ts");
+  const compatibility = source("src/features/auth/password-security-actions.ts");
+
+  const issue = state.slice(
+    state.indexOf("export async function issuePasswordReset"),
+    state.indexOf("export async function redeemPasswordReset"),
+  );
+  const userLock = issue.indexOf("FOR UPDATE");
+  const cooldown = issue.indexOf("transaction.passwordResetToken.findFirst");
+  const recentCheck = issue.indexOf("if (recentRequest)");
+  const oldTokenDeletion = issue.indexOf("transaction.passwordResetToken.deleteMany");
+  const newTokenCreation = issue.indexOf("transaction.passwordResetToken.create");
+
+  assertContains(state, "const PASSWORD_RESET_COOLDOWN_MS = 2 * 60 * 1000", "two-minute request cooldown");
+  assertContains(issue, "createdAt: {", "cooldown on canonical token timestamps");
+  assertContains(issue, "gte: new Date(now.getTime() - PASSWORD_RESET_COOLDOWN_MS)", "cooldown lower timestamp bound");
+  assertContains(issue, "select: { id: true }", "cooldown only loads token identity");
+  assert.ok(userLock >= 0 && cooldown > userLock, "one account lock must serialize all cooldown checks");
+  assert.ok(recentCheck > cooldown && oldTokenDeletion > recentCheck && newTokenCreation > oldTokenDeletion,
+    "repeated requests must not invalidate an already-sent reset link");
+  assert.ok(!issue.slice(cooldown, recentCheck).includes("usedAt: null"),
+    "even redeemed reset tokens must be included in recent request cooldown");
+  assertContains(actions, "return success(notificationContent.passwordResetSent)", "primary reset response stays opaque");
+  assertContains(compatibility, "notificationContent.passwordResetSent", "compatibility reset response stays opaque");
+});
+
 test("password reset redemption locks user before token and invalidates all other credentials", () => {
   const state = source("src/features/auth/password-reset-state.ts");
   const redeemStart = state.indexOf("export async function redeemPasswordReset");

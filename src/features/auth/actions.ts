@@ -7,6 +7,7 @@ import { clearAdminRoleViewCookie } from "@/features/admin-role-view/cookie";
 import { sendPasswordResetEmail } from "@/lib/email/auth-emails";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { loginUser } from "@/lib/auth/login";
+import { safeAuthNextPath } from "@/lib/auth/safe-next-path.mjs";
 import { hashPassword } from "@/lib/auth/password";
 import { registerUser } from "@/lib/auth/register";
 import { clearSessionCookie, getSessionCookie, setSessionCookie } from "@/lib/auth/cookies";
@@ -55,11 +56,7 @@ function getText(formData: FormData, key: string) {
 }
 
 function safeInternalPath(value: string) {
-  return value.length <= MAX_NEXT_PATH_LENGTH &&
-    value.startsWith("/") &&
-    !value.startsWith("//")
-    ? value
-    : "";
+  return safeAuthNextPath(value, MAX_NEXT_PATH_LENGTH);
 }
 
 function validPassword(password: string) {

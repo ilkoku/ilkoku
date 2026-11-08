@@ -18,6 +18,7 @@ import {
   setKnownDeviceCookie,
 } from "@/lib/auth/known-device";
 import { loginUser } from "@/lib/auth/login";
+import { safeAuthNextPath } from "@/lib/auth/safe-next-path.mjs";
 import {
   sendNewDeviceLoginEmail,
 } from "@/lib/email/auth-emails";
@@ -149,12 +150,7 @@ export async function loginAction(
     formData,
     "next",
   );
-  const safeNextPath =
-    nextPath.length <= MAX_NEXT_PATH_LENGTH &&
-    nextPath.startsWith("/") &&
-    !nextPath.startsWith("//")
-      ? nextPath
-      : "";
+  const safeNextPath = safeAuthNextPath(nextPath, MAX_NEXT_PATH_LENGTH);
 
   if (!email || !password) {
     return error(

@@ -119,3 +119,48 @@ test("private reader author discovery is protected at every SEO and access-contr
     );
   }
 });
+
+test("browser hardening is sitewide without changing auth and discovery index policy", () => {
+  const nextConfig = source("next.config.ts");
+  const login = source("src/app/giris/page.tsx");
+  const registration = source("src/app/kayit/page.tsx");
+  const recovery = source("src/app/sifremi-unuttum/page.tsx");
+  const proxy = source("src/proxy.ts");
+
+  assert.match(nextConfig, /const browserSecurityHeaders = \[/u);
+  assert.match(nextConfig, /source: "\/:path\*"/u);
+  assert.match(nextConfig, /headers: browserSecurityHeaders/u);
+
+  const expectedHeaders = [
+    ['X-Content-Type-Options', 'nosniff'],
+    ['Referrer-Policy', 'strict-origin-when-cross-origin'],
+    ['X-Frame-Options', 'SAMEORIGIN'],
+    ['Content-Security-Policy', "frame-ancestors 'self'; upgrade-insecure-requests"],
+    ['Strict-Transport-Security', 'max-age=300'],
+  ];
+
+  for (const [key, value] of expectedHeaders) {
+    assert.ok(nextConfig.includes(`key: "${key}"`), `Missing ${key} hardening header`);
+    assert.ok(nextConfig.includes(`value: "${value}"`), `Unexpected ${key} header value`);
+  }
+
+  const broadHeaders = nextConfig.indexOf('source: "/:path*"');
+  const authHeaders = nextConfig.indexOf("...publicAuthNoindexRouteHeaders.map");
+  const privateHeaders = nextConfig.indexOf("...searchExcludedRouteHeaders.map");
+  assert.ok(broadHeaders >= 0 && broadHeaders < authHeaders && authHeaders < privateHeaders,
+    "Global hardening must precede the existing auth/private X-Robots-Tag rules");
+
+  for (const [route, page] of [
+    ["/giris", login],
+    ["/kayit", registration],
+    ["/sifremi-unuttum", recovery],
+  ]) {
+    assert.match(page, /robots: \{ index: false, follow: true \}/u, `${route} must keep noindex follow`);
+    assert.ok(nextConfig.includes(`"${route}"`), `${route} must retain auth noindex header`);
+  }
+
+  assert.match(proxy, /NextResponse\.redirect\(destination\)/u,
+    "Unauthenticated user routes must continue using temporary redirects");
+  assert.doesNotMatch(nextConfig, /max-age=31536000[^\n]*includeSubDomains/u,
+    "Long-duration subdomain-wide HSTS requires a separate audit");
+});

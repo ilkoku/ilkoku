@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { safeAuthNextPath } from "../src/lib/auth/safe-next-path.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -138,4 +139,32 @@ test("authenticated login navigation fails safely when auxiliary role-view or ro
     "return roleDestinations[user.role];",
     "authenticated destination static role fallback",
   );
+});
+
+test("post-auth continuation rejects cross-origin, slash-backslash and control characters", () => {
+  for (const malicious of [
+    "https://evil.example/steal",
+    "//evil.example/steal",
+    "/\\evil.example/steal",
+    "/\\\\evil.example",
+    "/\nevil.example",
+    "/\tevil.example",
+    "/%2e%2e//evil.example",
+    "javascript:alert(1)",
+  ]) {
+    assert.equal(safeAuthNextPath(malicious), "", \`Unsafe auth destination: \${JSON.stringify(malicious)}\`);
+  }
+
+  assert.equal(safeAuthNextPath("/yazar"), "/yazar");
+  assert.equal(safeAuthNextPath("/hesabim?sekme=rol-basvurusu"), "/hesabim?sekme=rol-basvurusu");
+  assert.equal(
+    safeAuthNextPath("/oku/kitap/kapak?from=%2Fkitap%2Fkitap"),
+    "/oku/kitap/kapak?from=%2Fkitap%2Fkitap",
+  );
+  assert.equal(safeAuthNextPath("/" + "a".repeat(5000)), "", "Oversized continuation must be discarded");
+
+  const loginAction = source("src/features/auth/login-security-actions.ts");
+  const authActions = source("src/features/auth/actions.ts");
+  assertContains(loginAction, "safeAuthNextPath(nextPath, MAX_NEXT_PATH_LENGTH)", "login path validation");
+  assertContains(authActions, "return safeAuthNextPath(value, MAX_NEXT_PATH_LENGTH);", "registration path validation");
 });

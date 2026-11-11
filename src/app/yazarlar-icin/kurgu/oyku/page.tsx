@@ -1,4 +1,5 @@
 import { publicBrandSocialImage } from "@/lib/public-brand";
+import { getSearchCodeFreshness } from "@/lib/search-content-freshness";
 import type { Metadata } from "next";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -312,6 +313,11 @@ export default async function OykuYazarlikRehberiPage() {
     ? guide.summary
     : "Tek bir anı, çatışmayı veya değişimi yoğunlaştır. Fikirden karaktere, sahne ekonomisinden finale ve revizyona kadar kısa öykünü adım adım kur.";
   const blocks = buildOykuBlocks(visuals, alts, title, summary);
+  const codeUpdatedAt = getSearchCodeFreshness(canonicalUrl);
+  const updatedAt =
+    codeUpdatedAt && (!guide?.updatedAt || codeUpdatedAt > guide.updatedAt)
+      ? codeUpdatedAt
+      : guide?.updatedAt ?? null;
   const schema = [
     {
       "@context": "https://schema.org",
@@ -322,10 +328,15 @@ export default async function OykuYazarlikRehberiPage() {
       inLanguage: "tr-TR",
       mainEntityOfPage: canonicalUrl,
       ...(guide?.publishedAt ? { datePublished: guide.publishedAt.toISOString() } : {}),
-      ...(guide?.updatedAt ? { dateModified: guide.updatedAt.toISOString() } : {}),
+      ...(updatedAt ? { dateModified: updatedAt.toISOString() } : {}),
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
+      reviewedBy: {
+        "@type": "Organization",
+        name: "İlkOku Editoryal Ekibi",
+        url: "https://ilkoku.com/editoryal-standartlar",
+      },
     },
     {
       "@context": "https://schema.org",
@@ -345,7 +356,7 @@ export default async function OykuYazarlikRehberiPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
       />
-      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="oyku">
+      <WritingGuideShell activeCategory="Kurgu" activeGenreSlug="oyku" updatedAt={updatedAt}>
       <div className="oyku-writing-guide">
         <PublicCmsPageBlocks
           blocks={blocks}

@@ -385,6 +385,8 @@ test("SEO content-depth phase 9 adds seven useful category examples and a reader
   }
   assertContains(freshness, 'const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z")', "verified Oct 22 informational content update timestamp");
   assertContains(freshness, '["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT]', "only the informational hub tracks the later expert disclaimer update");
+  assertContains(freshness, '["/yazarlar-icin/bilgilendirici/psikoloji", SEO_INDEX_COHORT_TRUST_UPDATED_AT]', "psychology cohort gets stable editorial freshness");
+  assertContains(freshness, '["/yazarlar-icin/kurgu/oyku", SEO_INDEX_COHORT_TRUST_UPDATED_AT]', "story discovery cohort gets stable editorial freshness");
   assertContains(freshness, '["/nasil-calisir", HOW_IT_WORKS_QUICK_START_UPDATED_AT]', "unrelated flagship freshness remains unchanged");
 });
 
@@ -393,8 +395,11 @@ test("SEO internal-links phase 11 gives three indexable editor lessons contextua
   const freshness = source("src/lib/search-content-freshness.ts");
   const livePolicy = source("src/lib/soft-launch-search-policy.ts");
   for (const slug of ["editorluge-baslama", "metin-degerlendirme", "dil-ve-anlatim-editorlugu"]) {
+    const freshnessConstant = slug === "editorluge-baslama"
+      ? "SEO_INDEX_COHORT_TRUST_UPDATED_AT"
+      : "EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT";
     assertContains(shell, `"${slug}": {`, `contextual education step exists for ${slug}`);
-    assertContains(freshness, `["/editorler-icin/egitim/${slug}", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT]`, `route-specific lastmod for ${slug}`);
+    assertContains(freshness, `["/editorler-icin/egitim/${slug}", ${freshnessConstant}]`, `route-specific lastmod for ${slug}`);
     assertContains(livePolicy, `"/editorler-icin/egitim/${slug}"`, `destination remains in intended indexable cohort ${slug}`);
   }
   assertContains(shell, 'aria-label="İlgili editörlük eğitimi"', "accessible contextual learning nav");

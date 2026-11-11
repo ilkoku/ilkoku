@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import {
+  getEditorEducationArticleDates,
   getEditorEducationGuideRecord,
   getEditorEducationPublishedTextRecord,
 } from "@/lib/cms-editor-education";
@@ -14,6 +15,7 @@ import {
   editorEducationPublicPath,
   type EditorEducationCategory,
 } from "@/lib/editor-education";
+import { getSearchCodeFreshness } from "@/lib/search-content-freshness";
 import {
   applyEditorEducationTextOverrides,
   type EditorEducationTextOverrides,
@@ -57,16 +59,29 @@ export async function EditorEducationShell({
   textOverrides,
   previewMode = false,
 }: EditorEducationShellProps) {
-  const [guide, publishedText] = await Promise.all([
+  const [guide, publishedText, articleDates] = await Promise.all([
     getEditorEducationGuideRecord(activeCategory.slug).catch(() => null),
     typeof textOverrides === "undefined"
       ? getEditorEducationPublishedTextRecord(activeCategory.slug).catch(() => null)
       : Promise.resolve(null),
+    previewMode
+      ? Promise.resolve({ publishedAt: null, updatedAt: null })
+      : getEditorEducationArticleDates(activeCategory.slug).catch(() => ({
+          publishedAt: null,
+          updatedAt: null,
+        })),
   ]);
   const cover = guide?.visuals.cover;
   const effectiveOverrides = typeof textOverrides === "undefined"
     ? publishedText?.overrides ?? {}
     : textOverrides;
+  const codeUpdatedAt = previewMode
+    ? null
+    : getSearchCodeFreshness(editorEducationPublicPath(activeCategory));
+  const updatedAt =
+    codeUpdatedAt && (!articleDates.updatedAt || codeUpdatedAt > articleDates.updatedAt)
+      ? codeUpdatedAt
+      : articleDates.updatedAt;
   const renderedChildren = applyEditorEducationTextOverrides(children, effectiveOverrides);
   const contextualStep = !previewMode ? EDITOR_EDUCATION_CONTEXTUAL_STEPS[activeCategory.slug] : null;
 
@@ -144,7 +159,7 @@ export async function EditorEducationShell({
                 </Link>
               </nav>
             ) : null}
-            <EditorialTrustNote context="editing" />
+            <EditorialTrustNote context="editing" updatedAt={updatedAt} />
           </main>
         </div>
       </div>

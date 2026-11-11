@@ -26,6 +26,10 @@ const PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT = new Date("2026-10-12T14:57:0
 // Keep its sitemap lastmod faithful to the production content change; do not bump other hubs.
 const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z");
 
+// Controlled GSC cohort: visible editorial freshness and structured-data review signals.
+// Fixed at the code change time so sitemap lastmod remains stable across deploys.
+const SEO_INDEX_COHORT_TRUST_UPDATED_AT = new Date("2026-11-11T14:14:21Z");
+
 // Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
 const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
 
@@ -44,7 +48,7 @@ const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
   ["/site-haritasi", HTML_SITE_MAP_DISCOVERY_UPDATED_AT],
   ["/uyelik-sozlesmesi", REGISTRATION_AGREEMENT_METADATA_UPDATED_AT],
   ["/yazarlar-icin/kurgu/roman", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
-  ["/yazarlar-icin/kurgu/oyku", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
+  ["/yazarlar-icin/kurgu/oyku", SEO_INDEX_COHORT_TRUST_UPDATED_AT],
   ["/yazarlar-icin/kurgu/fantastik", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/bilim-kurgu", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
   ["/yazarlar-icin/kurgu/distopya", FLAGSHIP_GUIDE_INTENT_UPDATED_AT],
@@ -56,12 +60,13 @@ const SEARCH_CODE_FRESHNESS_BY_PATH: ReadonlyMap<string, Date> = new Map([
   ["/yazarlar-icin/edebiyat", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/akademik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/bilgilendirici", INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT],
+  ["/yazarlar-icin/bilgilendirici/psikoloji", SEO_INDEX_COHORT_TRUST_UPDATED_AT],
   ["/yazarlar-icin/senaryo-ve-sahne", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/cocuk-ve-genclik", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/yazarlar-icin/cizgi-anlati", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
   ["/okurlar-icin", PUBLIC_EDUCATION_WORKED_EXAMPLES_UPDATED_AT],
 
-  ["/editorler-icin/egitim/editorluge-baslama", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
+  ["/editorler-icin/egitim/editorluge-baslama", SEO_INDEX_COHORT_TRUST_UPDATED_AT],
   ["/editorler-icin/egitim/dil-ve-anlatim-editorlugu", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
   ["/editorler-icin/egitim/metin-degerlendirme", EDITOR_CONTEXTUAL_LEARNING_UPDATED_AT],
 ]);

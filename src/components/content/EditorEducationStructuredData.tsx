@@ -1,5 +1,6 @@
 import { getEditorEducationArticleDates } from "@/lib/cms-editor-education";
 import { publicBrandSocialImage } from "@/lib/public-brand";
+import { getSearchCodeFreshness } from "@/lib/search-content-freshness";
 
 const siteUrl = "https://ilkoku.com";
 
@@ -31,6 +32,11 @@ export async function EditorEducationStructuredData({
   } catch {
     // Structured-data freshness is optional; a CMS outage must not hide the public lesson.
   }
+  const codeUpdatedAt = getSearchCodeFreshness(pageUrl);
+  const updatedAt =
+    codeUpdatedAt && (!publicationDates.updatedAt || codeUpdatedAt > publicationDates.updatedAt)
+      ? codeUpdatedAt
+      : publicationDates.updatedAt;
   const schema = [
     {
       "@context": "https://schema.org",
@@ -45,8 +51,8 @@ export async function EditorEducationStructuredData({
       ...(publicationDates.publishedAt
         ? { datePublished: publicationDates.publishedAt.toISOString() }
         : {}),
-      ...(publicationDates.updatedAt
-        ? { dateModified: publicationDates.updatedAt.toISOString() }
+      ...(updatedAt
+        ? { dateModified: updatedAt.toISOString() }
         : {}),
       image: `${siteUrl}${publicBrandSocialImage}`,
       author: {
@@ -60,6 +66,11 @@ export async function EditorEducationStructuredData({
         "@id": `${siteUrl}/#organization`,
         name: "İlkOku",
         url: siteUrl,
+      },
+      reviewedBy: {
+        "@type": "Organization",
+        name: "İlkOku Editoryal Ekibi",
+        url: `${siteUrl}/editoryal-standartlar`,
       },
     },
     {

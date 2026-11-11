@@ -140,6 +140,7 @@ type WritingGuideShellProps = {
   activeCategory: GenreCategory;
   activeGenreSlug: string;
   expertVerificationRequired?: boolean;
+  updatedAt?: Date | null;
 };
 
 export function WritingGuideShell({
@@ -147,6 +148,7 @@ export function WritingGuideShell({
   activeCategory,
   activeGenreSlug,
   expertVerificationRequired = false,
+  updatedAt = null,
 }: WritingGuideShellProps) {
   // Category landing pages need this main landmark. Individual genre guides
   // render their own <main> inside PublicCmsPageBlocks; avoid nested mains.
@@ -227,6 +229,7 @@ export function WritingGuideShell({
             authoritativeSources={authoritativeSources}
             context="writing"
             expertVerificationRequired={expertVerificationRequired}
+            updatedAt={updatedAt}
           />
           {activeGenreSlug && categoryHub ? (
             <aside

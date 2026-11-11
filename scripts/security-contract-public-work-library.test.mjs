@@ -326,21 +326,14 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   contains(
     publicNavigation,
-    "export const publicDiscoveryEnabled = false",
+    "export const publicDiscoveryEnabled = true",
     "shared public discovery pause flag",
   );
   for (const route of ["/eserler", "/yazarlar", "/turler"]) {
-    notContains(
-      publicNavigation,
-      `href: "${route}"`,
-      `retired public discovery link ${route}`,
-    );
-    notContains(
-      sitemap,
-      "url: `${baseUrl}" + route + "`",
-      `retired sitemap route ${route}`,
-    );
+    contains(publicNavigation, `href: "${route}"`, `public discovery link ${route}`);
   }
+  contains(sitemap, '["eserler", "yazarlar", "turler"]', "public discovery sitemap routes");
+
   contains(
     publicNavigation,
     'href: "/nasil-calisir"',
@@ -380,25 +373,21 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   ]) {
     contains(
       smoke,
-      `check_post_merge_public_route "${route}" "404"`,
+      `check_post_merge_public_route "${route}" "200"`,
       `paused production route check ${route}`,
     );
   }
   contains(
     smoke,
-    'check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "404"',
+    'check_post_merge_public_route "https://ilkoku.com/eserler/rss.xml" "200"',
     "paused catalog RSS route check",
   );
   contains(
     smoke,
-    'check_post_merge_body_excludes "https://ilkoku.com/sitemap.xml"',
+    'check_soft_launch_sitemap "https://ilkoku.com/sitemap.xml"',
     "paused discovery sitemap exclusion check",
   );
-  notContains(
-    smoke,
-    'check_post_merge_public_route "https://ilkoku.com/eserler" "200"',
-    "retired catalog production 200 expectation",
-  );
+  contains(smoke, 'check_post_merge_public_route "https://ilkoku.com/eserler" "200"', "open catalog production 200 expectation");
   contains(
     bookPage,
     'return safeOneHopReturnPath(value, "/");',
@@ -424,14 +413,11 @@ test("landing, sitemap and production smoke keep retired public discovery closed
     "publicDiscoveryEnabled",
     "retired author link rendering gate",
   );
-  for (const route of [
-    '"/eserler/:path*"',
-    '"/yazarlar/:path*"',
-    '"/turler/:path*"',
-    '"/yayinevleri/:path*"',
-  ]) {
-    contains(nextConfig, route, `paused discovery noindex ${route}`);
+  for (const route of ['"/eserler/:path*"', '"/yazarlar/:path*"', '"/turler/:path*"']) {
+    notContains(nextConfig, route, `public directory must not be noindex blocked: ${route}`);
   }
+  contains(nextConfig, '"/yayinevleri/:path*"', "private publisher workspace stays excluded");
+
   notContains(
     nextConfig,
     '"/kitap/:path*"',

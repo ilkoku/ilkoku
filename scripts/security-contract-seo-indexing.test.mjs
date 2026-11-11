@@ -700,7 +700,7 @@ test("dynamic public work route keeps canonical query noindex and structured-dat
   const sitemap = source("src/lib/seo/sitemap-data.ts");
 
   assertContains(book, "const canonical = `/kitap/${work.slug}`", "book self canonical");
-  assertContains(book, "index: !query.from && !searchIndexExcluded", "book return-path and test-work noindex");
+  assertContains(book, "index: !searchIndexExcluded", "test-work remains noindex regardless of return path");
   assertContains(book, "follow: !searchIndexExcluded", "search-excluded test/demo works are nofollow");
   assertContains(safety, '"yeni-test209-30820c6a"', "Reader UAT work exact search exclusion");
   assertContains(safety, '"test2-7b0fbe47"', "secondary test work exact search exclusion");

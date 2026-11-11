@@ -6,6 +6,7 @@ type EditorialTrustNoteProps = {
   context: "writing" | "reading" | "editing";
   expertVerificationRequired?: boolean;
   authoritativeSources?: readonly AuthoritativeGuideSource[];
+  updatedAt?: Date | null;
 };
 
 const contextCopy = {
@@ -30,8 +31,17 @@ export function EditorialTrustNote({
   context,
   expertVerificationRequired = false,
   authoritativeSources = [],
+  updatedAt = null,
 }: EditorialTrustNoteProps) {
   const copy = contextCopy[context];
+  const updatedAtLabel = updatedAt
+    ? new Intl.DateTimeFormat("tr-TR", {
+        day: "numeric",
+        month: "long",
+        timeZone: "UTC",
+        year: "numeric",
+      }).format(updatedAt)
+    : null;
 
   return (
     <aside
@@ -47,6 +57,13 @@ export function EditorialTrustNote({
       <p className="mt-3 max-w-3xl text-sm leading-7 text-[#696270]">
         {copy.summary} İçerik eğitim amaçlıdır; yayınevi kabul garantisi vermez.
       </p>
+
+      {updatedAt && updatedAtLabel ? (
+        <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#7c6d94]">
+          Editoryal kontrol: İlkOku Editoryal Ekibi · Son içerik güncellemesi:{" "}
+          <time dateTime={updatedAt.toISOString()}>{updatedAtLabel}</time>
+        </p>
+      ) : null}
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <section className="rounded-[1.3rem] border border-[#6b52c7]/10 bg-white p-5">

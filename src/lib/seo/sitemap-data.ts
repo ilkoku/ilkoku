@@ -208,6 +208,11 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "daily",
     priority: 1,
   },
+  ...(["eserler", "yazarlar", "turler"] as const).map((route) => ({
+    url: `${baseUrl}/${route}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  })),
   ...writingEducationEntries,
   ...readerEducationEntries,
   ...editorEducationEntries,

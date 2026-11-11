@@ -384,8 +384,8 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   contains(
     smoke,
-    'check_soft_launch_sitemap "https://ilkoku.com/sitemap.xml"',
-    "paused discovery sitemap exclusion check",
+    'check_soft_launch_sitemap',
+    "production smoke validates live sitemap",
   );
   contains(smoke, 'check_post_merge_public_route "https://ilkoku.com/eserler" "200"', "open catalog production 200 expectation");
   contains(

@@ -16,7 +16,6 @@ import {
 import { siteContact, siteSocialUrls } from "@/lib/site-contact";
 import "./globals.css";
 import "./site-contact-links.css";
-import "./public-discovery-paused.css";
 
 const baseUrl = "https://ilkoku.com";
 const officialEntityUrls = [...siteSocialUrls, "https://github.com/ilkoku"];

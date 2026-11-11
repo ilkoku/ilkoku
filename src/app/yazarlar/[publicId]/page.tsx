@@ -51,9 +51,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: AuthorPageProps): Promise<Metadata> {
-  const [{ publicId }, query] = await Promise.all([params, searchParams]);
+  const { publicId } = await params;
   const author = await getPublicAuthorById(publicId);
 
   if (!author) {
@@ -72,7 +71,7 @@ export async function generateMetadata({
     title,
     description: metaDescription,
     alternates: { canonical },
-    robots: { index: !query.from, follow: true },
+    robots: { index: true, follow: true },
     openGraph: {
       type: "profile",
       locale: "tr_TR",

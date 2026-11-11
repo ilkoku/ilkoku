@@ -417,5 +417,5 @@ test("legacy book and passport pages normalize return history before rendering o
   contains(passport, 'return safeOneHopReturnPath(value, `/kitap/${slug}`);', "passport return sanitizer");
   contains(passport, "const backHref = safeReturnPath(query.from, slug);", "passport applies sanitizer to inbound context");
   contains(showcase, "const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);", "preexisting one-hop related-book behavior protected");
-  contains(book, "index: !query.from && !searchIndexExcluded", "contextual duplicate book URLs stay noindex");
+  contains(book, "index: !searchIndexExcluded", "public work detail remains indexable with contextual return path");
 });

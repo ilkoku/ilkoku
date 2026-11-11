@@ -214,6 +214,7 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   const collector = source("src/features/system-map/collector.ts");
 
   contains(sitemap, "${baseUrl}/nasil-calisir", "active public sitemap route");
+  contains(sitemap, '["eserler", "yazarlar", "turler"]', "public discovery sitemap roots");
   notContains(sitemap, "url: \`${baseUrl}/eserler\`", "retired work directory sitemap route");
   notContains(sitemap, "url: \`${baseUrl}/yazarlar\`", "retired author directory sitemap route");
   notContains(sitemap, "url: \`${baseUrl}/turler\`", "retired genre directory sitemap route");
@@ -224,10 +225,10 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   notContains(homepage, "onizleme/ana-sayfa-yeni", "homepage must not depend on the preview namespace");
   contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
-  contains(publicNavigation, "export const publicDiscoveryEnabled = false", "shared discovery pause");
-  notContains(publicNavigation, 'href: "/eserler"', "retired work catalog route");
-  notContains(publicNavigation, 'href: "/yazarlar"', "retired author route");
-  notContains(publicNavigation, 'href: "/turler"', "retired genre route");
+  contains(publicNavigation, "export const publicDiscoveryEnabled = true", "shared discovery pause");
+  contains(publicNavigation, 'href: "/eserler"', "retired work catalog route");
+  contains(publicNavigation, 'href: "/yazarlar"', "retired author route");
+  contains(publicNavigation, 'href: "/turler"', "retired genre route");
   notContains(homepageExperience, "2.847+", "fabricated writer count");
   notContains(homepageExperience, "18.592+", "fabricated reader count");
   notContains(book, "publicDiscoveryEnabled", "retired book discovery gate");

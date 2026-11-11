@@ -98,7 +98,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: page === 1 && !query.from,
+      index: page === 1,
       follow: true,
     },
     openGraph: {

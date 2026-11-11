@@ -117,10 +117,10 @@ test("reader education exposes Article and one shared breadcrumb structured data
 });
 
 
-test("reader genre comparison CTA never links to the intentionally gated /turler 404", () => {
+test("reader genre comparison CTA stays on the live writing guide", () => {
   const inventory = source("src/lib/reader-education.ts");
   const routing = source("src/lib/public-site-navigation.ts");
-  assertContains(routing, "export const publicDiscoveryEnabled = false", "retired /turler remains gated");
+  assertContains(routing, "export const publicDiscoveryEnabled = true", "public discovery directories are open");
   assertContains(inventory, 'href: "/yazarlar-icin/kurgu", label: "Kurgu türlerini incele"', "reader genre CTA points to the live category hub");
-  assert.ok(!inventory.includes('href: "/turler"'), "no reader education CTA links to the retired 404");
+  assert.ok(!inventory.includes('href: "/turler"'), "reader education still points to the focused guide");
 });

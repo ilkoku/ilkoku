@@ -199,7 +199,9 @@ jobs:
 
           grep -Fq '<loc>https://ilkoku.com/yeni-cikanlar</loc>' "$sitemap"
           grep -Fq '<loc>https://ilkoku.com/en-cok-satanlar/dunya</loc>' "$sitemap"
-          ! grep -Fq '<loc>https://ilkoku.com/eserler</loc>' "$sitemap"
+          for public_directory in eserler yazarlar turler; do
+            grep -Fq "<loc>https://ilkoku.com/${public_directory}</loc>" "$sitemap"
+          done
 
           check_page '/' 'https://ilkoku.com/'
           check_page '/nasil-calisir' 'https://ilkoku.com/nasil-calisir'

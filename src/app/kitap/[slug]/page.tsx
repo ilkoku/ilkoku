@@ -47,12 +47,8 @@ function absoluteUrl(value: string | null) {
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: BookShowcasePageProps): Promise<Metadata> {
-  const [{ slug }, query] = await Promise.all([
-    params,
-    searchParams,
-  ]);
+  const { slug } = await params;
 
   if (isBlockedPublicWorkSlug(slug)) {
     return {
@@ -84,7 +80,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: !query.from && !searchIndexExcluded,
+      index: !searchIndexExcluded,
       follow: !searchIndexExcluded,
     },
     openGraph: {

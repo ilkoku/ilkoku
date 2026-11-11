@@ -3,11 +3,14 @@ export type PublicSiteLink = {
   label: string;
 };
 
-// Public Eserler/Yazarlar/Türler discovery routes are retired from the
-// public website. Keep this false for legacy route layouts that must 404.
-export const publicDiscoveryEnabled = false;
+// Public directories expose only published, publicly discoverable content.
+// Keep private workspaces and unpublished content behind their existing gates.
+export const publicDiscoveryEnabled = true;
 
 export const publicPlatformLinks = [
+  { href: "/eserler", label: "Eserler" },
+  { href: "/yazarlar", label: "Yazarlar" },
+  { href: "/turler", label: "Türler" },
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "/yazarlar-icin", label: "Yazarlar İçin" },

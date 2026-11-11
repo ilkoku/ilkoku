@@ -275,6 +275,7 @@ test("CMS trust/legal defaults remain stable while sitemap applies route-level s
   assertNotContains(sitemap, '`${baseUrl}/en`', "no EN static sitemap URL");
   assertContains(sitemap, "contentKey NOT LIKE 'legal:en:%'", "EN legal sitemap exclusion");
   assertNotContains(sitemap, "page:en:%", "no EN generic sitemap inventory");
+  assertContains(sitemap, '["eserler", "yazarlar", "turler"]', "reopened public sitemap directories");
   assertNotContains(sitemap, 'url: \`${baseUrl}/eserler\`', "retired work directory sitemap route");
   assertNotContains(sitemap, 'url: \`${baseUrl}/yazarlar\`', "retired author directory sitemap route");
   assertNotContains(sitemap, 'url: \`${baseUrl}/turler\`', "retired genre directory sitemap route");
@@ -753,7 +754,7 @@ test("SEO center uses one core route catalog and verifies exact live coverage", 
   assertNotContains(metadata, 'href="/kesfet"', "member discovery route is not a public SEO action");
   for (const retired of ['"/eserler"', '"/yazarlar"', '"/turler"']) {
     assertNotContains(routes, retired, `retired public SEO route ${retired}`);
-    assertNotContains(navigation, retired, `retired public navigation route ${retired}`);
+    assertContains(navigation, `href: ${retired}`, `reopened public navigation route ${retired}`);
   }
 });
 

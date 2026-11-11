@@ -1,5 +1,6 @@
 import { getAuthoritativeGuideSources } from "@/lib/authoritative-guide-sources";
 import { publicBrandSocialImage } from "@/lib/public-brand";
+import { getSearchCodeFreshness } from "@/lib/search-content-freshness";
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import type { CmsPageBlock } from "@/lib/cms-page-blocks";
@@ -291,6 +292,11 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
     : `https://ilkoku.com/yazarlar-icin`;
   const expertVerificationRequired = EXPERT_VERIFICATION_GUIDE_SLUGS.has(definition.slug);
   const authoritativeSources = getAuthoritativeGuideSources(definition.slug);
+  const codeUpdatedAt = getSearchCodeFreshness(canonicalUrl);
+  const updatedAt =
+    codeUpdatedAt && (!guide?.updatedAt || codeUpdatedAt > guide.updatedAt)
+      ? codeUpdatedAt
+      : guide?.updatedAt ?? null;
   const schema = [
     {
       "@context": "https://schema.org",
@@ -317,10 +323,15 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       inLanguage: "tr-TR",
       mainEntityOfPage: { "@id": `${canonicalUrl}#webpage` },
       ...(guide?.publishedAt ? { datePublished: guide.publishedAt.toISOString() } : {}),
-      ...(guide?.updatedAt ? { dateModified: guide.updatedAt.toISOString() } : {}),
+      ...(updatedAt ? { dateModified: updatedAt.toISOString() } : {}),
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
+      reviewedBy: {
+        "@type": "Organization",
+        name: "İlkOku Editoryal Ekibi",
+        url: "https://ilkoku.com/editoryal-standartlar",
+      },
       ...(authoritativeSources.length > 0
         ? { citation: authoritativeSources.map((source) => source.url) }
         : {}),
@@ -350,6 +361,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
         activeCategory={definition.category}
         activeGenreSlug={definition.slug}
         expertVerificationRequired={expertVerificationRequired}
+        updatedAt={updatedAt}
       >
       <div className="batched-education-writing-guide">
         <PublicCmsPageBlocks

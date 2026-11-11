@@ -258,7 +258,7 @@ test("demo showcase works stay usable but are excluded from search indexing", ()
     "demo work robots exclusion header",
   );
   contains(page, "const searchIndexExcluded = isSearchIndexExcludedPublicWorkSlug(slug);", "work metadata resolves search exclusion once");
-  contains(page, "index: !query.from && !searchIndexExcluded", "search-excluded work metadata noindex");
+  contains(page, "index: !searchIndexExcluded", "search-excluded work metadata noindex");
   contains(page, "follow: !searchIndexExcluded", "search-excluded work metadata nofollow");
   contains(guard, 'meta_robots=', "production guard reads HTML robots metadata");
   contains(guard, 'effective_robots=', "production guard combines header and HTML robots directives");

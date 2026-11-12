@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 export type SiteIdentity = {
@@ -87,12 +88,23 @@ export async function loadSiteIdentityForCms(): Promise<SiteIdentityLoadState> {
   }
 }
 
-export const getPublicSiteIdentity = cache(async (): Promise<SiteIdentity> => {
-  try {
-    const valueJson = await readIdentityRow();
-    if (!valueJson) return defaultSiteIdentity;
-    return parseSiteIdentityStrict(valueJson) ?? defaultSiteIdentity;
-  } catch {
-    return defaultSiteIdentity;
-  }
-});
+// Published, user-independent branding is shared by both the public header
+// and footer. Cache across requests while preserving request-level deduplication.
+// Admin updates immediately invalidate this tag after successful publication.
+const getCachedPublishedSiteIdentity = unstable_cache(
+  async (): Promise<SiteIdentity> => {
+    try {
+      const valueJson = await readIdentityRow();
+      if (!valueJson) return defaultSiteIdentity;
+      return parseSiteIdentityStrict(valueJson) ?? defaultSiteIdentity;
+    } catch {
+      return defaultSiteIdentity;
+    }
+  },
+  ["public-site-identity-v1"],
+  { revalidate: 60, tags: ["public-header-site-identity"] },
+);
+
+export const getPublicSiteIdentity = cache(
+  async (): Promise<SiteIdentity> => getCachedPublishedSiteIdentity(),
+);

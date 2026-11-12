@@ -84,11 +84,14 @@ test("public shared header caches only published settings and invalidates on CMS
   const account = read("src/components/layout/PublicSiteAccount.tsx");
 
   assert.match(header, /import \{ unstable_cache \} from "next\/cache";/u);
-  assert.match(header, /async \(\) => getPublicSiteIdentity\(\)/u);
+  assert.match(header, /getPublicSiteIdentity\(\)/u);
+  assert.match(identity, /import \{ unstable_cache \} from "next\/cache";/u);
+  assert.match(identity, /getCachedPublishedSiteIdentity/u);
   assert.match(header, /async \(\) => getPublishedHeaderNavigation\(\)/u);
-  assert.match(header, /revalidate: 60, tags: \["public-header-site-identity"\]/u);
+  assert.match(identity, /revalidate: 60, tags: \["public-header-site-identity"\]/u);
   assert.match(header, /revalidate: 60, tags: \["public-header-navigation"\]/u);
-  assert.match(header, /getCachedPublicHeaderIdentity\(\)/u);
+  assert.match(identity, /getCachedPublishedSiteIdentity\(\)/u);
+  assert.doesNotMatch(header, /getCachedPublicHeaderIdentity/u);
   assert.match(header, /getCachedPublicHeaderNavigation\(\)/u);
   assert.match(navActions, /updateTag\("public-header-navigation"\);/u);
   assert.match(identityActions, /updateTag\("public-header-site-identity"\);/u);

@@ -1965,3 +1965,20 @@ test("sitemap explicitly covers live public work discovery without adding demo a
   assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");
   assertNotContains(sitemap, "/yazarlar/${author.", "no indiscriminate demo author publication");
 });
+
+test("schema.org warning regression keeps valid Article and Person properties", () => {
+  for (const file of [
+    "src/components/content/BatchedEducationGuidePage.tsx",
+    "src/components/content/EditorEducationStructuredData.tsx",
+    "src/app/yazarlar-icin/kurgu/oyku/page.tsx",
+  ]) {
+    const content = source(file);
+    assertContains(content, '"@type": "Article"', file + " still emits Article");
+    assertNotContains(content, "      reviewedBy: {", file + " must omit invalid Article reviewedBy");
+  }
+
+  const authorPage = source("src/app/yazarlar/[publicId]/page.tsx");
+  assertContains(authorPage, '"@type": "Person"', "author profile remains a Person");
+  assertNotContains(authorPage, "        workExample:", "invalid Person workExample property removed");
+  assertContains(authorPage, 'const bookHref = `/kitap/${work.slug}?from=', "public book links remain accessible");
+});

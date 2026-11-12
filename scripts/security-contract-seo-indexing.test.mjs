@@ -1982,3 +1982,12 @@ test("schema.org warning regression keeps valid Article and Person properties", 
   assertNotContains(authorPage, "        workExample:", "invalid Person workExample property removed");
   assertContains(authorPage, 'const bookHref = `/kitap/${work.slug}?from=', "public book links remain accessible");
 });
+
+test("public genre and author social cards include a real image", () => {
+  for (const path of ["src/app/turler/[slug]/page.tsx", "src/app/yazarlar/[publicId]/page.tsx"]) {
+    const sourceText = source(path);
+    assertContains(sourceText, 'import { publicBrandSocialImage } from "@/lib/public-brand";', path + " must reuse approved image");
+    assertContains(sourceText, "images: [{ url: publicBrandSocialImage, alt: title }]", path + " Open Graph preview");
+    assertContains(sourceText, "images: [publicBrandSocialImage]", path + " Twitter preview");
+  }
+});

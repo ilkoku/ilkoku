@@ -1950,3 +1950,18 @@ test("all-page census actually gates broken shared header and unreachable sitema
   assert.equal(header.split("href={menuLandingHref(menu)}").length - 1, 2,
     "Both desktop and mobile main menus must be real href links");
 });
+
+test("sitemap explicitly covers live public work discovery without adding demo author pages", () => {
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const library = source("src/features/public-discovery/library.ts");
+  const genrePage = source("src/app/turler/[slug]/page.tsx");
+
+  assertContains(sitemap, '["yeni", "guncellenen"] as const', "two self-canonical work lists");
+  assertContains(sitemap, "getPublicGenres()", "public genre inventory uses publication policy");
+  assertContains(sitemap, "...livePublicGenres.map((genre)", "live valid genre URLs");
+  assertContains(sitemap, 'url: \`${baseUrl}/turler/${genre.slug}\`', "canonical genre sitemap paths");
+  assertContains(library, "const publicWorkBaseWhere", "author and work eligibility");
+  assertContains(library, "const slug = label ? publicTaxonomySlug(label) : \"\"", "genre normalization");
+  assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");
+  assertNotContains(sitemap, "/yazarlar/${author.", "no indiscriminate demo author publication");
+});

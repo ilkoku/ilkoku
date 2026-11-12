@@ -74,3 +74,32 @@ test("public Green routes bypass the auth proxy", () => {
     );
   }
 });
+
+test("public shared header caches only published settings and invalidates on CMS publish", () => {
+  const header = read("src/components/layout/PublicSiteHeader.tsx");
+  const navigation = read("src/lib/cms-header-navigation-server.ts");
+  const identity = read("src/lib/site-identity.ts");
+  const navActions = read("src/features/cms/navigation-actions.ts");
+  const identityActions = read("src/features/cms/site-identity-actions.ts");
+  const account = read("src/components/layout/PublicSiteAccount.tsx");
+
+  assert.match(header, /import \{ unstable_cache \} from "next\/cache";/u);
+  assert.match(header, /getPublicSiteIdentity\(\)/u);
+  assert.match(identity, /import \{ unstable_cache \} from "next\/cache";/u);
+  assert.match(identity, /getCachedPublishedSiteIdentity/u);
+  assert.match(header, /async \(\) => getPublishedHeaderNavigation\(\)/u);
+  assert.match(identity, /revalidate: 60, tags: \["public-header-site-identity"\]/u);
+  assert.match(header, /revalidate: 60, tags: \["public-header-navigation"\]/u);
+  assert.match(identity, /getCachedPublishedSiteIdentity\(\)/u);
+  assert.doesNotMatch(header, /getCachedPublicHeaderIdentity/u);
+  assert.match(header, /getCachedPublicHeaderNavigation\(\)/u);
+  assert.match(navActions, /updateTag\("public-header-navigation"\);/u);
+  assert.match(identityActions, /updateTag\("public-header-site-identity"\);/u);
+
+  assert.match(navigation, /status = 'published'/u);
+  assert.match(identity, /status = 'published'/u);
+  assert.match(account, /fetch\("\/api\/public-account", \{/u);
+  assert.match(account, /cache: "no-store"/u);
+  assert.doesNotMatch(header, /getCurrentProfile|getCurrentSessionContext|headers\(\)|cookies\(\)/u);
+  assert.doesNotMatch(header, /getCachedPublicSiteAccount|cachePublicAccount|unstable_cache\(\s*PublicSiteAccount/u);
+});

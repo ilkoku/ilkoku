@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
@@ -117,10 +118,19 @@ function withBookIndexMenu(
   ];
 }
 
+// Shared, published, session-neutral menus. The public site identity is
+// cached in site-identity.ts so the header and footer share the same value.
+// Never cache the authenticated account widget.
+const getCachedPublicHeaderNavigation = unstable_cache(
+  async () => getPublishedHeaderNavigation(),
+  ["public-header-navigation-v1"],
+  { revalidate: 60, tags: ["public-header-navigation"] },
+);
+
 export async function PublicSiteHeader() {
   const [identity, navigation] = await Promise.all([
     getPublicSiteIdentity(),
-    getPublishedHeaderNavigation(),
+    getCachedPublicHeaderNavigation(),
   ]);
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),

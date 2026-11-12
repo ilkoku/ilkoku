@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import {
@@ -134,6 +134,8 @@ export async function publishHeaderNavigationAction() {
     `,
   ]);
 
+  // Published menus must appear immediately despite public header read caching.
+  updateTag("public-header-navigation");
   revalidatePath("/", "layout");
   revalidatePath("/icerik/menuler");
   redirect("/icerik/menuler?menuYayin=1");

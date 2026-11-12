@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireCmsAdmin } from "@/lib/cms-access";
 import { prisma } from "@/lib/prisma";
@@ -73,6 +73,8 @@ export async function saveSiteIdentityAction(formData: FormData) {
     redirect("/icerik/site-kimligi?hata=kayit");
   }
 
+  // Keep a newly published logo/identity immediately visible in the header.
+  updateTag("public-header-site-identity");
   revalidatePath("/", "layout");
   revalidatePath("/icerik/site-kimligi");
   redirect("/icerik/site-kimligi?kaydedildi=1");

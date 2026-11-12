@@ -89,3 +89,11 @@ export const getBookIndexSoftLaunchPageContext = cache(
   async (limit = 100): Promise<BookIndexPublicPageContext> =>
     buildBookIndexPageContext(limit),
 );
+
+// Footer navigation needs a publication boolean, not a fresh ranking list.
+// Keep the exact fail-closed gate; actual Book Index routes stay request-fresh.
+export const getBookIndexFooterDiscoveryEnabled = unstable_cache(
+  async () => Boolean(await getBookIndexPublicPageContext(100)),
+  ["ilkoku-book-index-footer-discovery-v1"],
+  { revalidate: 30 },
+);

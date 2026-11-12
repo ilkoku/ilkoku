@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -233,7 +234,7 @@ export async function getPublicWorkLibrary(
   };
 }
 
-export async function getPublicGenres(search?: string) {
+export const getPublicGenres = cache(async function getPublicGenres(search?: string) {
   const normalizedSearch = search?.trim().slice(0, 120);
   const rows = await prisma.work.groupBy({
     _count: {
@@ -291,7 +292,7 @@ export async function getPublicGenres(search?: string) {
       .toLocaleLowerCase("tr-TR")
       .includes(needle),
   );
-}
+});
 
 export async function getPublicGenreBySlug(
   slug: string,
@@ -358,7 +359,7 @@ export async function getPublicAuthors(search?: string) {
   );
 }
 
-export async function getPublicAuthorById(
+export const getPublicAuthorById = cache(async function getPublicAuthorById(
   publicId: string,
 ) {
   return prisma.user.findFirst({
@@ -409,7 +410,7 @@ export async function getPublicAuthorById(
       },
     },
   });
-}
+});
 
 export async function getPublicWorkFeed() {
   return prisma.work.findMany({

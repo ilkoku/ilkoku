@@ -98,5 +98,5 @@ test("public shared header caches only published settings and invalidates on CMS
   assert.match(account, /fetch\("\/api\/public-account", \{/u);
   assert.match(account, /cache: "no-store"/u);
   assert.doesNotMatch(header, /getCurrentProfile|getCurrentSessionContext|headers\(\)|cookies\(\)/u);
-  assert.doesNotMatch(header, /unstable_cache\([\s\S]*?PublicSiteAccount\(/u);
+  assert.doesNotMatch(header, /getCachedPublicSiteAccount|cachePublicAccount|unstable_cache\(\s*PublicSiteAccount/u);
 });

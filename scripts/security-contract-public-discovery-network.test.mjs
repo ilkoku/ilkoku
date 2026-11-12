@@ -48,6 +48,22 @@ test("public catalogue hides unsupported legacy taxonomy links and bounds return
   contains(author, "{supportedGenre ? (", "author genre links require known label");
   notContains(stream, "publicTaxonomySlug(genre)", "legacy work genres must not link to 404");
   notContains(author, "publicTaxonomySlug(genre)", "legacy author genres must not link to 404");
+  contains(stream, 'safeOneHopReturnPath(returnPath, "/eserler")',
+    "public work cards must not generate nested from= paths");
+  contains(author, '?from=${encodeURIComponent(profilePath)}',
+    "author book, passport and genre links use direct canonical author origin");
+  notContains(author, '?from=${encodeURIComponent(profileContextPath)}',
+    "author navigation context is not embedded into onward crawlable links");
+  contains(author, 'value={profileContextPath}',
+    "favorite form still preserves its exact return context");
+  assert.equal(
+    safeOneHopReturnPath(
+      "/turler/roman?sayfa=2&from=%2Fyazarlar%2FIKO-U-2026-000014",
+      "/eserler",
+    ),
+    "/turler/roman?sayfa=2",
+    "genre pagination is retained while stale nested from history is dropped",
+  );
   contains(stream, '{genre || "Tür belirtilmedi"}', "legacy genre remains visible as text");
   contains(author, '{genre || "Tür belirtilmedi"}', "author legacy genre remains visible as text");
 

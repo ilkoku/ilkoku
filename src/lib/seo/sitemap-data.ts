@@ -11,6 +11,7 @@ import { contentAgePolicyPageContent } from "@/content/content-age-policy";
 import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { hasPublishedEditorProfiles } from "@/features/editors/data";
+import { getPublicGenres } from "@/features/public-discovery/library";
 import { GENRES } from "@/lib/genres";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
@@ -213,6 +214,12 @@ const staticDiscoveryEntries: MetadataRoute.Sitemap = [
     changeFrequency: "weekly" as const,
     priority: 0.8,
   })),
+  // These self-canonical, indexable lists are publicly available.
+  ...(["yeni", "guncellenen"] as const).map((slug) => ({
+    url: `${baseUrl}/eserler/${slug}`,
+    changeFrequency: "daily" as const,
+    priority: 0.75,
+  })),
   ...writingEducationEntries,
   ...readerEducationEntries,
   ...editorEducationEntries,
@@ -338,6 +345,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       legalRows,
       bookIndexEntries,
       educationFreshnessRows,
+      livePublicGenres,
     ] = await Promise.all([
       prisma.work.findMany({
         where: {
@@ -399,6 +407,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         ORDER BY updatedAt DESC
         LIMIT 1000
       `,
+      getPublicGenres(),
     ]);
 
     const educationFreshnessByKey = new Map<string, Date>();
@@ -511,6 +520,13 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       ...liveStaticDiscoveryEntries,
       WEBTOON_SITEMAP_ENTRY,
       ...bookIndexEntries,
+      // Only genres backed by currently public, eligible published works.
+      // In particular, do not advertise legacy or demo-only invalid slugs.
+      ...livePublicGenres.map((genre) => ({
+        url: `${baseUrl}/turler/${genre.slug}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
       ...publicPageEntries,
       ...legalEntries,
       ...works

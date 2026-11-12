@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublicHeaderNavigation } from "@/components/layout/PublicHeaderNavigation";
@@ -117,10 +118,24 @@ function withBookIndexMenu(
   ];
 }
 
+// Shared, published, session-neutral header metadata. Reuse database reads
+// across public page requests; never cache the authenticated account widget.
+// Admin publish actions invalidate these tags immediately after writing.
+const getCachedPublicHeaderIdentity = unstable_cache(
+  async () => getPublicSiteIdentity(),
+  ["public-header-site-identity-v1"],
+  { revalidate: 60, tags: ["public-header-site-identity"] },
+);
+const getCachedPublicHeaderNavigation = unstable_cache(
+  async () => getPublishedHeaderNavigation(),
+  ["public-header-navigation-v1"],
+  { revalidate: 60, tags: ["public-header-navigation"] },
+);
+
 export async function PublicSiteHeader() {
   const [identity, navigation] = await Promise.all([
-    getPublicSiteIdentity(),
-    getPublishedHeaderNavigation(),
+    getCachedPublicHeaderIdentity(),
+    getCachedPublicHeaderNavigation(),
   ]);
   const publicMenus = withBookIndexMenu(
     resolveHeaderNavigation(navigation.payload, navigation.pages),

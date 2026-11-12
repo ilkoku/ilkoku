@@ -13,7 +13,7 @@ import {
   getBookIndexPublicReadModel,
   type BookIndexPublicReadModel,
 } from "./public-read-model";
-import { getBookIndexReadinessSnapshot } from "./readiness";
+import { getBookIndexPublicReadinessSnapshot } from "./public-readiness";
 import { timeBookIndexOperation } from "./performance-trace";
 
 export type BookIndexPublicPageContext = {
@@ -43,7 +43,7 @@ function policyConfigured() {
 // The SEO publishing gate itself is unchanged; at most 30s of evidence lag.
 const getCachedPublicBookIndexSeoEvidence = unstable_cache(
   async () => {
-    const readiness = await getBookIndexReadinessSnapshot();
+    const readiness = await getBookIndexPublicReadinessSnapshot();
     return {
       observedCompositeSources: readiness.observedCompositeSources,
       observedIndependentCompositeSources:
@@ -52,7 +52,7 @@ const getCachedPublicBookIndexSeoEvidence = unstable_cache(
       historySpanDays: getBookIndexSeoHistorySpanDays(readiness),
     };
   },
-  ["ilkoku-book-index-public-seo-evidence-v1"],
+  ["ilkoku-book-index-public-seo-evidence-v2"],
   { revalidate: 30 },
 );
 

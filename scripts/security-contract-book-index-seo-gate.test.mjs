@@ -359,12 +359,57 @@ test("SEO history evidence uses the minimum Turkey composite source history floo
   );
 });
 
+test("Public SEO gate uses a bounded parity read instead of full admin readiness", () => {
+  const evidence = source("src/lib/book-index/public-readiness.ts");
+  const publicAccess = source("src/lib/book-index/public-access.ts");
+  const fullReadiness = source("src/lib/book-index/readiness.ts");
+
+  for (const query of [evidence, fullReadiness]) {
+    contains(query, 'active: true,', "only active composite lists");
+    contains(query, 'includeInComposite: true,', "only composite lists");
+    contains(query, 'includeInTurkeyIndex: true, status: "active"', "same Turkey source filter");
+    contains(query, 'status: { in: ["success", "no_change"] }', "same latest valid snapshots");
+    contains(query, 'orderBy: { startedAt: "desc" }', "latest successful snapshot");
+    contains(query, 'take: 1', "one recent snapshot per list");
+    contains(query, 'by: ["listId"]', "history per composite list");
+    contains(query, '_min: { startedAt: true }', "source history starts at earliest successful run");
+    contains(query, '_max: { startedAt: true }', "source history ends at latest successful run");
+  }
+
+  contains(evidence, 'const latestCompositeBooks = new Map<string, boolean>()',
+    "match coverage deduplicates external book identities");
+  contains(evidence, 'latestCompositeBooks.set(book.id, Boolean(book.masterBookId))',
+    "match eligibility comes from masterBookId");
+  contains(evidence, 'Math.round((matchedCount / latestCompositeBooks.size) * 1000) / 10',
+    "same one-decimal match coverage");
+  contains(evidence, 'const compositeRegistrySourceCodes',
+    "minimum history includes composite registry sources without snapshots");
+  contains(evidence, 'if (!history?.first || !history.last) return 0',
+    "missing source history must fail the floor closed");
+  contains(evidence, '3_600_000', "source history stays measured in hours");
+  contains(evidence, 'minimumSourceHistorySpanHours',
+    "original gate history threshold is unchanged");
+
+  contains(publicAccess, 'getBookIndexPublicReadinessSnapshot()',
+    "only public evidence selects lean readiness");
+  notContains(publicAccess, 'getBookIndexReadinessSnapshot()',
+    "no admin-scale readiness queries on public pages");
+  contains(publicAccess, 'getBookIndexPublicReadModel(limit)',
+    "book rankings remain fresh per request");
+  contains(publicAccess, 'getBookIndexSeoHistorySpanDays(readiness)',
+    "history eligibility remains unchanged");
+  contains(publicAccess, 'turkeyItemCount: model.turkey.items.length',
+    "publication still depends on live Turkey results");
+  contains(fullReadiness, 'export async function getBookIndexReadinessSnapshot()',
+    "full admin readiness is preserved");
+});
+
 test("Book Index public SEO evidence is briefly cached without caching live book listings", () => {
   const access = source("src/lib/book-index/public-access.ts");
   contains(access, 'import { unstable_cache } from "next/cache";', "supported Next.js database cache");
-  contains(access, '["ilkoku-book-index-public-seo-evidence-v1"]', "separate public evidence cache key");
+  contains(access, '["ilkoku-book-index-public-seo-evidence-v2"]', "separate public evidence cache key");
   contains(access, "{ revalidate: 30 }", "readiness evidence expires after 30 seconds");
-  contains(access, "const readiness = await getBookIndexReadinessSnapshot();", "real SEO readiness still determines the gate");
+  contains(access, "const readiness = await getBookIndexPublicReadinessSnapshot();", "real SEO readiness still determines the gate");
   contains(access, "getCachedPublicBookIndexSeoEvidence()", "public routes reuse one bounded evidence snapshot");
   contains(access, "getBookIndexPublicReadModel(limit)", "public book list remains fresh per request");
   contains(access, "turkeyItemCount: model.turkey.items.length", "SEO gate keeps live Turkey book count");

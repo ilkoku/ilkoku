@@ -1991,3 +1991,17 @@ test("public genre and author social cards include a real image", () => {
     assertContains(sourceText, "images: [publicBrandSocialImage]", path + " Twitter preview");
   }
 });
+
+test("real author profiles enter sitemap only with search-eligible public books", () => {
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const author = source("src/app/yazarlar/[publicId]/page.tsx");
+  const exclusion = source("src/lib/public-content-safety.ts");
+
+  assertContains(sitemap, "const searchEligibleWorks = works.filter", "use book-level index exclusion");
+  assertContains(sitemap, "searchEligibleWorks.map((work) => work.author.publicId)", "author IDs from eligible books");
+  assertContains(sitemap, "...searchEligibleAuthors.map((publicId)", "approved author discovery URLs");
+  assertContains(sitemap, 'url: `$'+'{baseUrl}/yazarlar/$'+'{publicId}`', "self-canonical author paths");
+  assertContains(author, "const hasIndexableWorks = author.works.some", "author has at least one public indexable book");
+  assertContains(author, "robots: { index: hasIndexableWorks, follow: true }", "demo-only authors stay public and noindex");
+  assertContains(exclusion, '"demo-"', "demo publication exclusion remains");
+});

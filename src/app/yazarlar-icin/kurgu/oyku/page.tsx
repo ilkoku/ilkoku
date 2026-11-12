@@ -332,11 +332,7 @@ export default async function OykuYazarlikRehberiPage() {
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
-      reviewedBy: {
-        "@type": "Organization",
-        name: "İlkOku Editoryal Ekibi",
-        url: "https://ilkoku.com/editoryal-standartlar",
-      },
+      // Schema.org Article has no reviewedBy property; editorial content remains unchanged.
     },
     {
       "@context": "https://schema.org",

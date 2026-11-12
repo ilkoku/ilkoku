@@ -118,14 +118,9 @@ function withBookIndexMenu(
   ];
 }
 
-// Shared, published, session-neutral header metadata. Reuse database reads
-// across public page requests; never cache the authenticated account widget.
-// Admin publish actions invalidate these tags immediately after writing.
-const getCachedPublicHeaderIdentity = unstable_cache(
-  async () => getPublicSiteIdentity(),
-  ["public-header-site-identity-v1"],
-  { revalidate: 60, tags: ["public-header-site-identity"] },
-);
+// Shared, published, session-neutral menus. The public site identity is
+// cached in site-identity.ts so the header and footer share the same value.
+// Never cache the authenticated account widget.
 const getCachedPublicHeaderNavigation = unstable_cache(
   async () => getPublishedHeaderNavigation(),
   ["public-header-navigation-v1"],
@@ -134,7 +129,7 @@ const getCachedPublicHeaderNavigation = unstable_cache(
 
 export async function PublicSiteHeader() {
   const [identity, navigation] = await Promise.all([
-    getCachedPublicHeaderIdentity(),
+    getPublicSiteIdentity(),
     getCachedPublicHeaderNavigation(),
   ]);
   const publicMenus = withBookIndexMenu(

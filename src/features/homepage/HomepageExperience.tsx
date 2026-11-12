@@ -6,7 +6,7 @@ import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexFooterDiscoveryEnabled } from "@/lib/book-index/public-access";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
 
 import History670 from "./history-670";
@@ -143,11 +143,11 @@ async function HomepageFooterSection({
   slogan: string;
   copyright: string;
 }) {
-  const bookIndexContext = await getBookIndexPublicPageContext(100).catch(() => null);
+  const bookIndexPublished = await getBookIndexFooterDiscoveryEnabled().catch(() => false);
   return (
     <LiveHomepageFooter
       signedIn={false}
-      bookIndexPublished={Boolean(bookIndexContext)}
+      bookIndexPublished={bookIndexPublished}
       slogan={slogan}
       copyright={copyright}
     />

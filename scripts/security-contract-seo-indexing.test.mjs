@@ -1965,3 +1965,43 @@ test("sitemap explicitly covers live public work discovery without adding demo a
   assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");
   assertNotContains(sitemap, "/yazarlar/${author.", "no indiscriminate demo author publication");
 });
+
+test("schema.org warning regression keeps valid Article and Person properties", () => {
+  for (const file of [
+    "src/components/content/BatchedEducationGuidePage.tsx",
+    "src/components/content/EditorEducationStructuredData.tsx",
+    "src/app/yazarlar-icin/kurgu/oyku/page.tsx",
+  ]) {
+    const content = source(file);
+    assertContains(content, '"@type": "Article"', file + " still emits Article");
+    assertNotContains(content, "      reviewedBy: {", file + " must omit invalid Article reviewedBy");
+  }
+
+  const authorPage = source("src/app/yazarlar/[publicId]/page.tsx");
+  assertContains(authorPage, '"@type": "Person"', "author profile remains a Person");
+  assertNotContains(authorPage, "        workExample:", "invalid Person workExample property removed");
+  assertContains(authorPage, 'const bookHref = `/kitap/${work.slug}?from=', "public book links remain accessible");
+});
+
+test("public genre and author social cards include a real image", () => {
+  for (const path of ["src/app/turler/[slug]/page.tsx", "src/app/yazarlar/[publicId]/page.tsx"]) {
+    const sourceText = source(path);
+    assertContains(sourceText, 'import { publicBrandSocialImage } from "@/lib/public-brand";', path + " must reuse approved image");
+    assertContains(sourceText, "images: [{ url: publicBrandSocialImage, alt: title }]", path + " Open Graph preview");
+    assertContains(sourceText, "images: [publicBrandSocialImage]", path + " Twitter preview");
+  }
+});
+
+test("real author profiles enter sitemap only with search-eligible public books", () => {
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  const author = source("src/app/yazarlar/[publicId]/page.tsx");
+  const exclusion = source("src/lib/public-content-safety.ts");
+
+  assertContains(sitemap, "const searchEligibleWorks = works.filter", "use book-level index exclusion");
+  assertContains(sitemap, "searchEligibleWorks.map((work) => work.author.publicId)", "author IDs from eligible books");
+  assertContains(sitemap, "...searchEligibleAuthors.map((publicId)", "approved author discovery URLs");
+  assertContains(sitemap, 'url: `$'+'{baseUrl}/yazarlar/$'+'{publicId}`', "self-canonical author paths");
+  assertContains(author, "const hasIndexableWorks = author.works.some", "author has at least one public indexable book");
+  assertContains(author, "robots: { index: hasIndexableWorks, follow: true }", "demo-only authors stay public and noindex");
+  assertContains(exclusion, '"demo-"', "demo publication exclusion remains");
+});

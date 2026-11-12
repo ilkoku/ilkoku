@@ -67,11 +67,7 @@ export async function EditorEducationStructuredData({
         name: "İlkOku",
         url: siteUrl,
       },
-      reviewedBy: {
-        "@type": "Organization",
-        name: "İlkOku Editoryal Ekibi",
-        url: `${siteUrl}/editoryal-standartlar`,
-      },
+      // Schema.org Article has no reviewedBy property; editorial content remains unchanged.
     },
     {
       "@context": "https://schema.org",

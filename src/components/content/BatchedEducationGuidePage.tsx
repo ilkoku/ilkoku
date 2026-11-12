@@ -327,11 +327,7 @@ export async function BatchedEducationGuidePage({ definition }: { definition: Ed
       image: `https://ilkoku.com${publicBrandSocialImage}`,
       author: { "@id": "https://ilkoku.com/#organization" },
       publisher: { "@id": "https://ilkoku.com/#organization" },
-      reviewedBy: {
-        "@type": "Organization",
-        name: "İlkOku Editoryal Ekibi",
-        url: "https://ilkoku.com/editoryal-standartlar",
-      },
+      // Schema.org Article has no reviewedBy property; editorial content remains unchanged.
       ...(authoritativeSources.length > 0
         ? { citation: authoritativeSources.map((source) => source.url) }
         : {}),

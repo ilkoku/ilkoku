@@ -373,6 +373,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         select: {
           slug: true,
           updatedAt: true,
+          author: { select: { publicId: true } },
         },
         take: 50_000,
       }),
@@ -516,6 +517,13 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
+    const searchEligibleWorks = works.filter((work) =>
+      !isSearchIndexExcludedPublicWorkSlug(work.slug),
+    );
+    const searchEligibleAuthors = [...new Set(
+      searchEligibleWorks.map((work) => work.author.publicId),
+    )];
+
     return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([
       ...liveStaticDiscoveryEntries,
       WEBTOON_SITEMAP_ENTRY,
@@ -529,11 +537,14 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       })),
       ...publicPageEntries,
       ...legalEntries,
-      ...works
-        .filter(
-          (work) =>
-            !isSearchIndexExcludedPublicWorkSlug(work.slug),
-        )
+      // Author pages are discoverable only if they have at least one
+      // independently indexable public work; demo-only authors are excluded.
+      ...searchEligibleAuthors.map((publicId) => ({
+        url: `${baseUrl}/yazarlar/${publicId}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+      ...searchEligibleWorks
         .map((work) => ({
           url: `${baseUrl}/kitap/${work.slug}`,
           lastModified: work.updatedAt,

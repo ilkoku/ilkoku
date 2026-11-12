@@ -67,6 +67,15 @@ test("public catalogue hides unsupported legacy taxonomy links and bounds return
   );
 });
 
+test("primary public catalogue only links to valid genre landing pages", () => {
+  const catalogue = source("src/app/eserler/page.tsx");
+  contains(catalogue, "normalizeGenreLabel(work.genre)", "catalogue must check supported taxonomy");
+  contains(catalogue, "const genreHref = supportedGenre", "catalogue must not link unsupported genres");
+  contains(catalogue, "publicTaxonomySlug(supportedGenre)", "catalogue links must normalize validated genres");
+  notContains(catalogue, "publicTaxonomySlug(work.genre)", "legacy genre labels must not emit 404 links");
+  contains(catalogue, "<span>{genre}</span>", "unrecognized legacy genres remain visible as text");
+});
+
 test("how-it-works trust page stays discovery-led, CMS-compatible and truthful", () => {
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");

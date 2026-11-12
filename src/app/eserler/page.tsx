@@ -10,6 +10,7 @@ import {
   type PublicWorkLibraryFilters,
   type PublicWorkSort,
 } from "@/features/public-discovery/library";
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import {
   isPublicStoredWorkContentRating,
@@ -411,8 +412,11 @@ export default async function PublicWorkLibraryPage({
                   const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(currentPath)}`;
                   const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(currentPath)}`;
                   const authorHref = `/yazarlar/${work.author.publicId}?from=${encodeURIComponent(currentPath)}`;
-                  const genreHref = work.genre
-                    ? `/turler/${publicTaxonomySlug(work.genre)}?from=${encodeURIComponent(currentPath)}`
+                  // Legacy genre names remain readable but must not create
+                  // links to a public genre page that cannot exist.
+                  const supportedGenre = normalizeGenreLabel(work.genre);
+                  const genreHref = supportedGenre
+                    ? `/turler/${publicTaxonomySlug(supportedGenre)}?from=${encodeURIComponent(currentPath)}`
                     : null;
 
                   return (

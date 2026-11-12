@@ -40,6 +40,7 @@ test("Public homepage streams exactly one real footer without duplicated fallbac
   assert.ok(experience.includes("<Suspense fallback={null}>"), "Suspense boundary should keep stream nonblocking");
   assert.equal(experience.split("<HomepageFooterSection").length - 1, 1, "One server-driven footer");
   assert.equal(experience.split("<LiveHomepageFooter").length - 1, 1, "Only footer component owner renders a live footer");
-  assert.ok(experience.includes("bookIndexPublished={Boolean(bookIndexContext)}"), "Book Index publication visibility unchanged");
+  assert.ok(experience.includes("bookIndexPublished={bookIndexPublished}"), "Book Index publication visibility unchanged");
+  assert.ok(experience.includes("getBookIndexFooterDiscoveryEnabled().catch(() => false)"), "Homepage footer uses original fail-closed publication gate through shared decision cache");
   assert.ok(experience.includes("slogan={footer?.slogan"), "Homepage CMS footer copy unchanged");
 });

@@ -156,27 +156,27 @@ test("Book Index uses a dedicated social preview for result-sharing CTR", () => 
 });
 
 
-test("homepage footer uses the same published Book Index gate depth", () => {
+test("homepage footer reuses the cached full publication decision", () => {
   const homepage = source("src/features/homepage/HomepageExperience.tsx");
 
   contains(
     homepage,
-    "getBookIndexPublicPageContext(100).catch(() => null)",
+    "getBookIndexFooterDiscoveryEnabled().catch(() => false)",
     "homepage footer evaluates the full Turkey publication threshold",
   );
   contains(
     homepage,
-    "bookIndexPublished={Boolean(bookIndexContext)}",
+    "bookIndexPublished={bookIndexPublished}",
     "homepage footer receives the published Book Index state",
   );
 });
 
-test("Book Index gains a gated site-wide footer discovery link after publication", () => {
+test("Book Index maintains a gated site-wide footer link with cached decision", () => {
   const footer = source("src/components/content/PublicTrustFooter.tsx");
 
   contains(
     footer,
-    "getBookIndexPublicPageContext(100).catch(() => null)",
+    "getBookIndexFooterDiscoveryEnabled().catch(() => false)",
     "footer uses the same fail-closed public gate",
   );
   contains(
@@ -186,9 +186,22 @@ test("Book Index gains a gated site-wide footer discovery link after publication
   );
   contains(
     footer,
-    "const platformLinks = bookIndexContext",
+    "const platformLinks = bookIndexPublished",
     "footer link only appears when publication is actually allowed",
   );
+});
+
+test("footer uses a shared 30-second boolean cache while real rankings remain fresh", () => {
+  const access = source("src/lib/book-index/public-access.ts");
+  const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+  contains(access, "getBookIndexFooterDiscoveryEnabled = unstable_cache(", "cross-request boolean cache");
+  contains(access, "Boolean(await getBookIndexPublicPageContext(100))", "same gate and threshold");
+  contains(access, '["ilkoku-book-index-footer-discovery-v1"]', "distinct cache key");
+  contains(access, "{ revalidate: 30 }", "30-second decision freshness");
+  contains(access, "getBookIndexPublicReadModel(limit)", "book routes keep request-fresh rankings");
+  notContains(footer, "getBookIndexPublicPageContext(", "shared footer avoids direct ranking reads");
+  notContains(homepage, "getBookIndexPublicPageContext(", "homepage avoids direct ranking reads");
 });
 
 test("Book Index Turkey TTFB threshold is confirmed twice without changing the other route gate", () => {

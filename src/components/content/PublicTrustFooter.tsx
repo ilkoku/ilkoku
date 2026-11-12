@@ -8,15 +8,15 @@ import {
   publicSupportLinks,
   publicTrustLinks,
 } from "@/lib/public-site-navigation";
-import { getBookIndexPublicPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexFooterDiscoveryEnabled } from "@/lib/book-index/public-access";
 import { getPublicSiteIdentity } from "@/lib/site-identity";
 
 export async function PublicTrustFooter() {
-  const [identity, bookIndexContext] = await Promise.all([
+  const [identity, bookIndexPublished] = await Promise.all([
     getPublicSiteIdentity(),
-    getBookIndexPublicPageContext(100).catch(() => null),
+    getBookIndexFooterDiscoveryEnabled().catch(() => false),
   ]);
-  const platformLinks = bookIndexContext
+  const platformLinks = bookIndexPublished
     ? [...publicPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]
     : publicPlatformLinks;
 

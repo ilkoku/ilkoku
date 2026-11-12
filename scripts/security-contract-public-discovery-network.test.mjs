@@ -35,6 +35,38 @@ function notContains(text, fragment, label) {
   );
 }
 
+test("public catalogue hides unsupported legacy taxonomy links and bounds return hops", () => {
+  const stream = source("src/features/public-discovery/PublicWorkStream.tsx");
+  const author = source("src/app/yazarlar/[publicId]/page.tsx");
+  const genre = source("src/app/turler/[slug]/page.tsx");
+  const genreSystem = source("src/lib/genre-system.ts");
+
+  contains(genreSystem, "genreByNormalizedLabel.get", "supported taxonomy lookup");
+  contains(stream, "const supportedGenre = normalizeGenreLabel(genre)", "work card taxonomy guard");
+  contains(author, "const supportedGenre = normalizeGenreLabel(genre)", "author taxonomy guard");
+  contains(stream, "const genreHref = supportedGenre", "work genre links require known label");
+  contains(author, "{supportedGenre ? (", "author genre links require known label");
+  notContains(stream, "publicTaxonomySlug(genre)", "legacy work genres must not link to 404");
+  notContains(author, "publicTaxonomySlug(genre)", "legacy author genres must not link to 404");
+  contains(stream, '{genre || "Tür belirtilmedi"}', "legacy genre remains visible as text");
+  contains(author, '{genre || "Tür belirtilmedi"}', "author legacy genre remains visible as text");
+
+  for (const page of [author, genre]) {
+    contains(page, "safeOneHopReturnPath(value,", "bounded one-hop navigation context");
+    notContains(page, "return value;", "raw nested history must not be propagated");
+  }
+  assert.equal(
+    safeOneHopReturnPath("/yazarlar/IKO-U-2026-000014?from=%2Fturler%2Froman", "/yazarlar"),
+    "/yazarlar/IKO-U-2026-000014",
+    "nested author from is stripped",
+  );
+  assert.equal(
+    safeOneHopReturnPath("/turler/roman?from=%2Feserler%3Ffrom%3D%2Fyazarlar", "/turler"),
+    "/turler/roman",
+    "nested genre from is stripped",
+  );
+});
+
 test("how-it-works trust page stays discovery-led, CMS-compatible and truthful", () => {
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");

@@ -12,6 +12,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { publicBrandSocialImage } from "@/lib/public-brand";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
@@ -61,12 +62,15 @@ export async function generateMetadata({
   const canonical = `/yazarlar/${author.publicId}`;
   const title = `${name} — Eserleri | İlkOku`;
   const metaDescription = `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
+  const hasIndexableWorks = author.works.some(
+    (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+  );
 
   return {
     title,
     description: metaDescription,
     alternates: { canonical },
-    robots: { index: true, follow: true },
+    robots: { index: hasIndexableWorks, follow: true },
     openGraph: {
       type: "profile",
       locale: "tr_TR",

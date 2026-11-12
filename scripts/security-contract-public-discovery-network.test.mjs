@@ -35,6 +35,31 @@ function notContains(text, fragment, label) {
   );
 }
 
+test("P1: public genre and author metadata share request-local DB reads", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  const author = source("src/app/yazarlar/[publicId]/page.tsx");
+  const genre = source("src/app/turler/[slug]/page.tsx");
+
+  contains(library, 'import { cache } from "react";',
+    "React request cache without cross-request data staleness");
+  contains(library, "getPublicGenres = cache(async function getPublicGenres(",
+    "genre list lookup deduplicates metadata and page body");
+  contains(library, "getPublicAuthorById = cache(async function getPublicAuthorById(",
+    "author lookup deduplicates metadata and page body");
+  contains(library, "const genres = await getPublicGenres();",
+    "single-genre lookup reuses the shared public catalogue");
+  contains(library, "where: publicWorkPublicationWhere,",
+    "deduplication preserves publication filtering");
+  contains(library, "deletedAt: null,",
+    "deduplication preserves active author filtering");
+  contains(author, "getPublicAuthorById(publicId)",
+    "author route uses request-local shared lookup");
+  contains(genre, "getPublicGenreBySlug(slug)",
+    "genre route uses request-local shared lookup");
+  notContains(library, "unstable_cache(",
+    "no cross-request stale public genre or author cache");
+});
+
 test("public catalogue hides unsupported legacy taxonomy links and bounds return hops", () => {
   const stream = source("src/features/public-discovery/PublicWorkStream.tsx");
   const author = source("src/app/yazarlar/[publicId]/page.tsx");

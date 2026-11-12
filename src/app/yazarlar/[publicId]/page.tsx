@@ -118,13 +118,9 @@ export default async function PublicAuthorPage({
         "@type": "Person",
         name,
         url: canonical,
-        workExample: author.works.map((work) => ({
-          "@type": "Book",
-          name: work.title,
-          url: `${baseUrl}/kitap/${work.slug}`,
-          genre: work.genre ?? undefined,
-          datePublished: work.publishedAt?.toISOString(),
-        })),
+        // Individual works have their own canonical Book pages; Person does
+        // not support the workExample property in schema.org.
+
       },
     },
     {

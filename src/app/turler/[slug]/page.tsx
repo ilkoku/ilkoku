@@ -10,6 +10,7 @@ import {
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
+import { publicBrandSocialImage } from "@/lib/public-brand";
 
 const baseUrl = "https://ilkoku.com";
 const MAX_RETURN_PATH_LENGTH = 1500;
@@ -99,11 +100,13 @@ export async function generateMetadata({
       url: canonical,
       title,
       description,
+      images: [{ url: publicBrandSocialImage, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [publicBrandSocialImage],
     },
   };
 }

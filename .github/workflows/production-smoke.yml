@@ -49,14 +49,16 @@ jobs:
 
           print_edge_headers() {
             local headers="$1"
-            local server cf_ray cf_cache hcdn hcdn_cache retry_after
+            local server cf_ray cf_cache hcdn hcdn_cache retry_after cache_control age
             server="$(header_value "$headers" "server")"
             cf_ray="$(header_value "$headers" "cf-ray")"
             cf_cache="$(header_value "$headers" "cf-cache-status")"
             hcdn="$(header_value "$headers" "hcdn-request-id")"
             hcdn_cache="$(header_value "$headers" "x-hcdn-cache-status")"
             retry_after="$(header_value "$headers" "retry-after")"
-            echo "EDGE server=${server:-YOK} | cf-ray=${cf_ray:-YOK} | cf-cache-status=${cf_cache:-YOK} | hcdn-request-id=${hcdn:-YOK} | x-hcdn-cache-status=${hcdn_cache:-YOK} | retry-after=${retry_after:-YOK}"
+            cache_control="$(header_value "$headers" "cache-control")"
+            age="$(header_value "$headers" "age")"
+            echo "EDGE server=${server:-YOK} | cf-ray=${cf_ray:-YOK} | cf-cache-status=${cf_cache:-YOK} | hcdn-request-id=${hcdn:-YOK} | x-hcdn-cache-status=${hcdn_cache:-YOK} | cache-control=${cache_control:-YOK} | age=${age:-YOK} | retry-after=${retry_after:-YOK}"
           }
 
           fail_on_edge_block() {
@@ -71,10 +73,13 @@ jobs:
           check_status() {
             local url="$1"
             local expected="$2"
-            local headers code
+            local headers code metrics ttfb total
             headers="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$url" || true)"
-            echo "$url -> HTTP $code"
+            # Record transfer timings on an existing request; no extra HTTP
+            # traffic, request headers, user data, or cache-policy changes.
+            metrics="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output /dev/null --write-out '%{http_code} %{time_starttransfer} %{time_total}' "$url" || true)"
+            read -r code ttfb total <<< "$metrics"
+            echo "$url -> HTTP $code | TTFB=${ttfb:-YOK}s | Total=${total:-YOK}s"
             print_edge_headers "$headers"
             if [[ "$code" == "403" || "$code" == "429" ]]; then
               rm -f "$headers"

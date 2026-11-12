@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
@@ -44,7 +45,8 @@ function summary(value: string | null) {
 }
 
 function withReturnPath(path: string, returnPath: string) {
-  return `${path}?from=${encodeURIComponent(returnPath)}`;
+  const oneHopReturnPath = safeOneHopReturnPath(returnPath, "/eserler");
+  return `${path}?from=${encodeURIComponent(oneHopReturnPath)}`;
 }
 
 export function PublicWorkStream({

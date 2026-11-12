@@ -1959,7 +1959,7 @@ test("sitemap explicitly covers live public work discovery without adding demo a
   assertContains(sitemap, '["yeni", "guncellenen"] as const', "two self-canonical work lists");
   assertContains(sitemap, "getPublicGenres()", "public genre inventory uses publication policy");
   assertContains(sitemap, "...livePublicGenres.map((genre)", "live valid genre URLs");
-  assertContains(sitemap, 'url: \`${baseUrl}/turler/${genre.slug}\`', "canonical genre sitemap paths");
+  assertContains(sitemap, 'url: `${baseUrl}/turler/${genre.slug}`', "canonical genre sitemap paths");
   assertContains(library, "const publicWorkBaseWhere", "author and work eligibility");
   assertContains(library, "const slug = label ? publicTaxonomySlug(label) : \"\"", "genre normalization");
   assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");

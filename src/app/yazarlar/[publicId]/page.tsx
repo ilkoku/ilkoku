@@ -182,15 +182,15 @@ export default async function PublicAuthorPage({
             {author.works.map((work) => {
               const genre = work.genre?.trim();
               const supportedGenre = normalizeGenreLabel(genre);
-              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
-              const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profileContextPath)}`;
+              const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profilePath)}`;
+              const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profilePath)}`;
 
               return (
                 <article className="public-hub-card" key={work.slug}>
                   <div className="public-hub-card__meta">
                     {supportedGenre ? (
                       <Link
-                        href={`/turler/${publicTaxonomySlug(supportedGenre)}?from=${encodeURIComponent(profileContextPath)}`}
+                        href={`/turler/${publicTaxonomySlug(supportedGenre)}?from=${encodeURIComponent(profilePath)}`}
                       >
                         {genre}
                       </Link>

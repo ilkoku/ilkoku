@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { normalizeGenreLabel } from "@/lib/genre-system";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import {
   workContentRatingDetails,
@@ -78,9 +79,12 @@ export function PublicWorkStream({
           `/yazarlar/${work.author.publicId}`,
           returnPath,
         );
-        const genreHref = genre
+        // Legacy work genres can fall outside the current public taxonomy.
+        // Display their original name, but never link to a guaranteed 404.
+        const supportedGenre = normalizeGenreLabel(genre);
+        const genreHref = supportedGenre
           ? withReturnPath(
-              `/turler/${publicTaxonomySlug(genre)}`,
+              `/turler/${publicTaxonomySlug(supportedGenre)}`,
               returnPath,
             )
           : null;
@@ -94,7 +98,7 @@ export function PublicWorkStream({
               {genre && genreHref ? (
                 <Link href={genreHref}>{genre}</Link>
               ) : (
-                <span>Tür belirtilmedi</span>
+                <span>{genre || "Tür belirtilmedi"}</span>
               )}
               <span>
                 {work._count.chapters} bölüm

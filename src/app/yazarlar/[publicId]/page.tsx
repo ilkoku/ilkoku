@@ -10,6 +10,8 @@ import {
   toggleReaderAuthorFavoriteAction,
 } from "@/features/reader/author-favorites";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { normalizeGenreLabel } from "@/lib/genre-system";
+import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "../reader-author-favorites.css";
@@ -36,15 +38,7 @@ function description(value: string | null) {
 }
 
 function safeReturnPath(value: string | undefined) {
-  if (
-    !value ||
-    value.length > MAX_RETURN_PATH_LENGTH ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
-    return "/yazarlar";
-  }
-  return value;
+  return safeOneHopReturnPath(value, "/yazarlar", MAX_RETURN_PATH_LENGTH);
 }
 
 export const dynamic = "force-dynamic";
@@ -184,20 +178,21 @@ export default async function PublicAuthorPage({
           <div className="public-hub__grid">
             {author.works.map((work) => {
               const genre = work.genre?.trim();
+              const supportedGenre = normalizeGenreLabel(genre);
               const bookHref = `/kitap/${work.slug}?from=${encodeURIComponent(profileContextPath)}`;
               const passportHref = `/kitap/${work.slug}/pasaport?from=${encodeURIComponent(profileContextPath)}`;
 
               return (
                 <article className="public-hub-card" key={work.slug}>
                   <div className="public-hub-card__meta">
-                    {genre ? (
+                    {supportedGenre ? (
                       <Link
-                        href={`/turler/${publicTaxonomySlug(genre)}?from=${encodeURIComponent(profileContextPath)}`}
+                        href={`/turler/${publicTaxonomySlug(supportedGenre)}?from=${encodeURIComponent(profileContextPath)}`}
                       >
                         {genre}
                       </Link>
                     ) : (
-                      <span>Tür belirtilmedi</span>
+                      <span>{genre || "Tür belirtilmedi"}</span>
                     )}
                     <span>{work._count.chapters} bölüm</span>
                     <span>

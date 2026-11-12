@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 import { notFound } from "next/navigation";
 
 import {
@@ -32,16 +33,7 @@ function pageNumber(value: string | undefined) {
 }
 
 function safeReturnPath(value: string | undefined) {
-  if (
-    !value ||
-    value.length > MAX_RETURN_PATH_LENGTH ||
-    !value.startsWith("/") ||
-    value.startsWith("//")
-  ) {
-    return "/turler";
-  }
-
-  return value;
+  return safeOneHopReturnPath(value, "/turler", MAX_RETURN_PATH_LENGTH);
 }
 
 function genrePageHref(

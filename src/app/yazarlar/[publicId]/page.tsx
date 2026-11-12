@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { workContentRatingDetails } from "@/lib/work-content-classification";
 import "../reader-author-favorites.css";
 
@@ -72,11 +73,13 @@ export async function generateMetadata({
       url: canonical,
       title,
       description: metaDescription,
+      images: [{ url: publicBrandSocialImage, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: metaDescription,
+      images: [publicBrandSocialImage],
     },
   };
 }

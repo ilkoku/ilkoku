@@ -258,56 +258,81 @@ async function loadLongSellers(limit: number) {
 
   if (!rows.length) return [];
 
-  const books = await timeBookIndexOperation("insights.longSellerBookMetadataSql", () => prisma.bookIndexBook.findMany({
-    where: {
-      id: { in: rows.map((row) => row.masterBookId) },
-    },
-    select: {
-      id: true,
-      title: true,
-      authorName: true,
-    },
-  }));
-  const bookById = new Map(books.map((book) => [book.id, book] as const));
-
-  return rows
-    .flatMap((row) => {
-      const book = bookById.get(row.masterBookId);
-      if (!book) return [];
-
-      const independenceGroups = new Set(
-        (row.sourceCodes ?? "")
-          .split(",")
-          .filter(Boolean)
-          .map((sourceCode) => getBookIndexSourceIndependenceGroup(sourceCode)),
-      );
-
-      return [{
-        masterBookId: row.masterBookId,
-        title: book.title,
-        authorName: book.authorName,
-        firstObservedAt: row.firstObservedAt,
-        lastObservedAt: row.lastObservedAt,
+  // The page renders at most `limit` books. Rank using all historical
+  // evidence first, then fetch metadata only for rank-eligible candidates.
+  // Title is the final tie-breaker, so never split an equal-rank group.
+  const rankedRows = rows
+    .map((row) => {
+      const sourceCodes = (row.sourceCodes ?? "").split(",").filter(Boolean);
+      return {
+        row,
+        sourceCodes,
         historyDays: historyDays(row.firstObservedAt, row.lastObservedAt),
-        sourceCount: independenceGroups.size,
+        sourceCount: new Set(
+          sourceCodes.map((code) => getBookIndexSourceIndependenceGroup(code)),
+        ).size,
         observationCount: Number(row.observationCount),
-        sources: (row.sourceCodes ?? "")
-          .split(",")
-          .filter(Boolean)
-          .map((sourceCode) => ({
+      };
+    })
+    .sort((a, b) =>
+      b.historyDays - a.historyDays
+      || b.sourceCount - a.sourceCount
+      || b.observationCount - a.observationCount
+    );
+
+  const selected: BookIndexLongSeller[] = [];
+  let offset = 0;
+  while (offset < rankedRows.length && selected.length < limit) {
+    let end = Math.min(rankedRows.length, offset + limit - selected.length);
+    // All equal-ranked candidates must be fetched: their titles determine
+    // the order, and missing book metadata must not truncate the public list.
+    while (
+      end < rankedRows.length
+      && rankedRows[end].historyDays === rankedRows[end - 1].historyDays
+      && rankedRows[end].sourceCount === rankedRows[end - 1].sourceCount
+      && rankedRows[end].observationCount === rankedRows[end - 1].observationCount
+    ) {
+      end++;
+    }
+
+    const candidates = rankedRows.slice(offset, end);
+    const books = await timeBookIndexOperation("insights.longSellerBookMetadataSql", () => prisma.bookIndexBook.findMany({
+      where: { id: { in: candidates.map(({ row }) => row.masterBookId) } },
+      select: { id: true, title: true, authorName: true },
+    }));
+    const bookById = new Map(books.map((book) => [book.id, book] as const));
+
+    const eligible = candidates
+      .flatMap(({ row, sourceCodes, historyDays: days, sourceCount, observationCount }) => {
+        const book = bookById.get(row.masterBookId);
+        if (!book) return [];
+        return [{
+          masterBookId: row.masterBookId,
+          title: book.title,
+          authorName: book.authorName,
+          firstObservedAt: row.firstObservedAt,
+          lastObservedAt: row.lastObservedAt,
+          historyDays: days,
+          sourceCount,
+          observationCount,
+          sources: sourceCodes.map((sourceCode) => ({
             sourceCode,
             sourceName: getBookIndexSource(sourceCode)?.name ?? sourceCode,
           })),
-      } satisfies BookIndexLongSeller];
-    })
-    .sort(
-      (a, b) =>
+        } satisfies BookIndexLongSeller];
+      })
+      .sort((a, b) =>
         b.historyDays - a.historyDays
         || b.sourceCount - a.sourceCount
         || b.observationCount - a.observationCount
-        || a.title.localeCompare(b.title, "tr"),
-    )
-    .slice(0, limit);
+        || a.title.localeCompare(b.title, "tr")
+      );
+
+    selected.push(...eligible.slice(0, limit - selected.length));
+    offset = end;
+  }
+
+  return selected;
 }
 
 // Page and generateMetadata request the same evidence. Compute it once per

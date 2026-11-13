@@ -513,3 +513,90 @@ test("P1 long-seller historical SQL avoids redundant global sort while preservin
   contains(insights, "b.observationCount - a.observationCount", "observation tie-break unchanged");
   contains(insights, 'a.title.localeCompare(b.title, "tr")', "Turkish title tie-break unchanged");
 });
+
+
+test("P1 public insight freshness matches legacy snapshot date without full ranking or observation SQL", async () => {
+  const freshnessCode = source("src/lib/book-index/public-freshness.ts");
+  const page = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+  const diagnostic = source("src/app/api/admin/book-index-query-timing/route.ts");
+
+  contains(page, "getBookIndexPublicLastObservedAt()", "insight page loads only source freshness");
+  notContains(page, "getBookIndexSoftLaunchPageContext(100)", "insight page does not assemble full Turkey book ranking");
+  contains(page, "getBookIndexPageInsights(definition.key, 50)", "existing insight ranking logic is unchanged");
+  contains(page, "getBookIndexInsightItems(insights, definition.key)", "published noindex and visible-item gate remains identical");
+  contains(page, "dateModified: lastObservedAt.toISOString()", "schema freshness remains driven by the latest source run");
+  contains(diagnostic, 'user.role !== "admin"', "authenticated admin-only diagnostics remain protected");
+  contains(diagnostic, "getBookIndexPublicLastObservedAt()", "admin selected-insight timing mirrors live page");
+  contains(diagnostic, "getBookIndexSoftLaunchPageContext(100)", "full legacy admin profiling remains available");
+  notContains(freshnessCode, "unstable_cache", "freshness must never be stale between requests");
+  notContains(freshnessCode, "getTurkeySourceRankRows", "freshness must not materialize Turkey rankings");
+  notContains(freshnessCode, "getBookIndexPublicReadModel", "freshness must not load source book observations");
+  contains(freshnessCode, "getBookIndexList(code)", "source/list identity is matched to legacy registry");
+  contains(freshnessCode, "row.source.status === \"blocked\"", "blocked source cannot contribute freshness");
+  contains(freshnessCode, "row.source.status === \"paused\"", "paused source cannot contribute freshness");
+
+  const defs = [
+    {code:"eligible", sourceCode:"s1", enabled:true, publiclyVisible:true},
+    {code:"older", sourceCode:"s1", enabled:true, publiclyVisible:true},
+    {code:"blocked", sourceCode:"s2", enabled:true, publiclyVisible:true},
+    {code:"paused", sourceCode:"s3", enabled:true, publiclyVisible:true},
+    {code:"inactive", sourceCode:"s4", enabled:true, publiclyVisible:true},
+    {code:"disabled", sourceCode:"s5", enabled:false, publiclyVisible:true},
+    {code:"not-public", sourceCode:"s6", enabled:true, publiclyVisible:false},
+  ];
+  const date = value => new Date(value + "T12:00:00.000Z");
+  const rows = [
+    {code:"eligible", active:true, source:{code:"s1",status:"active"}, fetchRuns:[{startedAt:date("2026-11-12")}]},
+    {code:"eligible", active:true, source:{code:"foreign",status:"active"}, fetchRuns:[{startedAt:date("2026-11-20")}]},
+    {code:"older", active:true, source:{code:"s1",status:"active"}, fetchRuns:[{startedAt:date("2026-11-11")}]},
+    {code:"blocked", active:true, source:{code:"s2",status:"blocked"}, fetchRuns:[{startedAt:date("2026-11-19")}]},
+    {code:"paused", active:true, source:{code:"s3",status:"paused"}, fetchRuns:[{startedAt:date("2026-11-18")}]},
+    {code:"inactive", active:false, source:{code:"s4",status:"active"}, fetchRuns:[{startedAt:date("2026-11-17")}]},
+    {code:"disabled", active:true, source:{code:"s5",status:"active"}, fetchRuns:[{startedAt:date("2026-11-16")}]},
+    {code:"not-public", active:true, source:{code:"s6",status:"active"}, fetchRuns:[{startedAt:date("2026-11-15")}]},
+  ];
+  const readCalls = [];
+  const mocks = {
+    "server-only": {},
+    "react": {cache: fn => fn},
+    "@/lib/prisma": {prisma:{bookIndexList:{findMany:async opts => {
+      readCalls.push(opts);
+      return rows.filter(row => opts.where.code.in.includes(row.code));
+    }}}},
+    "./lists": { BOOK_INDEX_LISTS:defs, getBookIndexList:code => defs.find(d => d.code === code) ?? null },
+    "./sources": { getBookIndexSource:code => code === "missing" ? null : {code} },
+    "./performance-trace": { timeBookIndexOperation: async (_, fn) => fn() },
+  };
+  const compiled = ts.transpileModule(freshnessCode, {
+    compilerOptions: {module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true},
+  }).outputText;
+  const mod = {exports:{}};
+  new Function("require","module","exports",compiled)(
+    name => {
+      assert.ok(Object.hasOwn(mocks,name),"unexpected dependency "+name);
+      return mocks[name];
+    },
+    mod, mod.exports,
+  );
+  const latest = await mod.exports.getBookIndexPublicLastObservedAt();
+  assert.equal(latest?.toISOString(), date("2026-11-12").toISOString(),
+    "new date must match the legacy maximum visible successful fetch run");
+  assert.equal(readCalls.length, 1, "only one lightweight registry query per request");
+  assert.deepEqual(readCalls[0].select.fetchRuns.select, {startedAt:true}, "fetch only run timestamps");
+  assert.equal(readCalls[0].select.fetchRuns.take,1, "only newest eligible run fetched per list");
+  assert.deepEqual(readCalls[0].select.fetchRuns.where.status.in, ["success","no_change"]);
+  assert.equal(JSON.stringify(readCalls[0]).includes("observations"),false,"no book observation or metadata reads");
+  assert.ok(!readCalls[0].where.code.in.includes("disabled"), "disabled sources are not queried");
+  assert.ok(!readCalls[0].where.code.in.includes("not-public"), "private sources are not queried");
+
+  const selectedLegacyLists = rows
+    .filter(row => defs.some(def => def.enabled && def.publiclyVisible
+      && def.code === row.code && def.sourceCode === row.source.code))
+    .filter(row => row.active && !["blocked","paused"].includes(row.source.status))
+    .map(row => ({observedAt:row.fetchRuns[0]?.startedAt ?? null}));
+  const legacyLast = selectedLegacyLists.reduce((latest,row) =>
+    !row.observedAt ? latest
+      : !latest || row.observedAt > latest ? row.observedAt : latest, null);
+  assert.equal(latest?.toISOString(), legacyLast?.toISOString(),
+    "dateModified must equal the old full-read-model freshness");
+});

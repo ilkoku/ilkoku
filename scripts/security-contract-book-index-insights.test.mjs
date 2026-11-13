@@ -499,7 +499,7 @@ test("P1 long-seller metadata bounds candidate reads but preserves title ties an
 
 test("P1 long-seller historical SQL avoids redundant global sort while preserving ranked visible results", () => {
   const insights = source("src/lib/book-index/insights.ts");
-  const sqlStart = insights.indexOf("SELECT\\n      externalBook.masterBookId AS masterBookId");
+  const sqlStart = insights.indexOf("externalBook.masterBookId AS masterBookId");
   const sqlEnd = insights.indexOf("`;", sqlStart);
   assert.ok(sqlStart >= 0 && sqlEnd > sqlStart, "historical aggregation SQL must exist");
   const sql = insights.slice(sqlStart, sqlEnd);

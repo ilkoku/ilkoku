@@ -441,7 +441,7 @@ test("P1 long-seller metadata bounds candidate reads but preserves title ties an
     ...top.map(id => row(id, "20")),
     ...second.map(id => row(id, "19")),
     ...tail.map(id => row(id, "02")),
-  ];
+  ].reverse();
   const titles = new Map([
     ["zebra", "Zebra"],
     ["uzum", "Üzüm"],
@@ -495,4 +495,21 @@ test("P1 long-seller metadata bounds candidate reads but preserves title ties an
     assert.ok(ids.length <= 5, "only rank-eligible group IDs are fetched");
     assert.ok(!ids.some(id => id.startsWith("tail_")), "80 lower-ranked books are never fetched for page of 5");
   }
+});
+
+test("P1 long-seller historical SQL avoids redundant global sort while preserving ranked visible results", () => {
+  const insights = source("src/lib/book-index/insights.ts");
+  const sqlStart = insights.indexOf("SELECT\\n      externalBook.masterBookId AS masterBookId");
+  const sqlEnd = insights.indexOf("`;", sqlStart);
+  assert.ok(sqlStart >= 0 && sqlEnd > sqlStart, "historical aggregation SQL must exist");
+  const sql = insights.slice(sqlStart, sqlEnd);
+  contains(sql, "GROUP BY externalBook.masterBookId", "the original history aggregation stays intact");
+  contains(sql, "GROUP_CONCAT(DISTINCT source.code ORDER BY source.code", "deterministic source-code evidence stays intact");
+  notContains(sql, "DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC", "global SQL duration sort removed");
+  notContains(sql, "COUNT(*) DESC", "global SQL count sort removed");
+  contains(insights, "const rankedRows = rows", "ranked JavaScript selection unchanged");
+  contains(insights, "b.historyDays - a.historyDays", "primary public sort unchanged");
+  contains(insights, "b.sourceCount - a.sourceCount", "independent-group tie-break unchanged");
+  contains(insights, "b.observationCount - a.observationCount", "observation tie-break unchanged");
+  contains(insights, 'a.title.localeCompare(b.title, "tr")', "Turkish title tie-break unchanged");
 });

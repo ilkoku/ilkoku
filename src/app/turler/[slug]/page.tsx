@@ -85,7 +85,7 @@ export async function generateMetadata({
   // let the production sitemap/noindex parity smoke flag the mismatch.
   let eligibleGenreSlugs: Set<string> | null = null;
   try {
-    eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs();
+    eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs(genre.sourceGenres);
   } catch (error) {
     console.error("Public genre SEO eligibility lookup failed", error);
   }

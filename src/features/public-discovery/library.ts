@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -303,8 +304,12 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 // those fixtures must not independently create a search landing page.
 // This lightweight read path avoids a grouped query with an exclusion predicate
 // whose failure previously broke public genre detail rendering in production.
-export const getSearchIndexEligibleGenreSlugs = cache(
-  async function getSearchIndexEligibleGenreSlugs() {
+// This publication-only aggregate is identical for all anonymous visitors.
+// Share the expensive up-to-50k-row scan briefly across requests, then keep
+// request-local deduplication and return an independent Set to callers.
+// The 30s TTL bounds stale eligibility after an editor publishes/unpublishes.
+const loadCachedSearchIndexEligibleGenreSlugs = unstable_cache(
+  async () => {
     const works = await prisma.work.findMany({
       where: {
         ...publicWorkBaseWhere,
@@ -319,7 +324,15 @@ export const getSearchIndexEligibleGenreSlugs = cache(
       const label = normalizeGenreLabel(work.genre);
       if (label) slugs.add(publicTaxonomySlug(label));
     }
-    return slugs;
+    return [...slugs];
+  },
+  ["public-search-eligible-genre-slugs-v1"],
+  { revalidate: 30 },
+);
+
+export const getSearchIndexEligibleGenreSlugs = cache(
+  async function getSearchIndexEligibleGenreSlugs() {
+    return new Set(await loadCachedSearchIndexEligibleGenreSlugs());
   },
 );
 

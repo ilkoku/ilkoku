@@ -168,7 +168,7 @@ export default async function PublicAuthorPage({
             </form>
           ) : null}
           <p>
-            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
+            <Link prefetch={false} href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
@@ -189,7 +189,7 @@ export default async function PublicAuthorPage({
                 <article className="public-hub-card" key={work.slug}>
                   <div className="public-hub-card__meta">
                     {supportedGenre ? (
-                      <Link
+                      <Link prefetch={false}
                         href={`/turler/${publicTaxonomySlug(supportedGenre)}?from=${encodeURIComponent(profilePath)}`}
                       >
                         {genre}
@@ -203,7 +203,7 @@ export default async function PublicAuthorPage({
                     </span>
                   </div>
                   <h2>
-                    <Link href={bookHref}>{work.title}</Link>
+                    <Link prefetch={false} href={bookHref}>{work.title}</Link>
                   </h2>
                   <p className="public-hub-card__description">
                     {description(work.description)}
@@ -216,8 +216,8 @@ export default async function PublicAuthorPage({
                           }).format(work.publishedAt)
                         : "Tarih belirtilmedi"}
                     </time>
-                    <Link href={passportHref}>Pasaport →</Link>
-                    <Link href={bookHref}>Eseri incele →</Link>
+                    <Link prefetch={false} href={passportHref}>Pasaport →</Link>
+                    <Link prefetch={false} href={bookHref}>Eseri incele →</Link>
                   </div>
                 </article>
               );

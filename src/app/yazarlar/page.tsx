@@ -14,7 +14,7 @@ import "./reader-author-favorites.css";
 const baseUrl = "https://ilkoku.com";
 const title = "Yazarlar | İlkOku";
 const description =
-  "İlkOku’da keşfe açık Türkçe eseri bulunan yazarları ve yayımlanmış eser vitrinlerini keşfedin.";
+  "İlkOku’da keşfe açık Türkçe eseri bulunan yazarları ve yayımlanmış eser vitrinlerini keşfedin. Yazarların eser türlerini, bölüm sayılarını inceleyin.";
 const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 type PublicAuthorsPageProps = {

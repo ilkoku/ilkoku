@@ -252,9 +252,9 @@ test("Book Index auto-matches refresh corrected metadata only through exact ISBN
 test("Book Index insight SQL reads are parallel and de-duplicated within one server request", () => {
   const insights = source("src/lib/book-index/insights.ts");
   contains(insights, 'import { cache } from "react";', "request-local React cache");
-  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true)", "per-limit and history-mode cached computation");
+  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true, includeSnapshotEvidence = true)", "per-limit, history and snapshot mode request-local cache");
   contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads are parallel");
-  contains(insights, "loadSourceSnapshots(),", "current/previous source evidence still collected");
+  contains(insights, "includeSnapshotEvidence ? loadSourceSnapshots() : Promise.resolve([]),", "do not load irrelevant source snapshots for long sellers");
   contains(insights, "includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),", "historical evidence collected only where needed");
   contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "public insight function uses request-local cache");
   contains(insights, "longSellers,", "historical evidence returned unmodified");
@@ -320,7 +320,7 @@ test("three insight pages skip unrelated long-seller history while preserving so
     2,
     "metadata and page must use identical selected-insight cache arguments",
   );
-  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\")", "all other insight routes skip historical query");
+  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\", key !== \"longSellers\")", "only long seller computes history and all other insight routes retain snapshots");
   contains(diagnostic, "getBookIndexPageInsights(insightKey, 50)", "admin-only profiler measures page-specific workload");
   contains(diagnostic, 'requested !== null && !validKeys.some((key) => key === requested)', "profile key must be allowlisted");
   contains(diagnostic, "getBookIndexInsights(50)", "legacy full evidence diagnostics remain available");
@@ -405,4 +405,14 @@ test("three insight pages skip unrelated long-seller history while preserving so
   const long = await getBookIndexPageInsights("longSellers", 50);
   assert.equal(historySqlCalls, 2, "long-seller page retains full historical query");
   assert.deepEqual(JSON.parse(JSON.stringify(long.longSellers)), JSON.parse(JSON.stringify(full.longSellers)), "long-seller page retains exact historical evidence");
+});
+
+test("P1 long-seller route skips unrelated new-entry/riser/everywhere source snapshots", () => {
+  const insights = source("src/lib/book-index/insights.ts");
+  const page = source("src/app/en-cok-satanlar/[insight]/page.tsx");
+  contains(insights, 'includeSnapshotEvidence ? loadSourceSnapshots() : Promise.resolve([])', "long seller skips costly source snapshot SQL");
+  contains(insights, 'return getBookIndexInsightsForLimit(safeLimit, key === "longSellers", key !== "longSellers");', "only long-seller skips unrelated snapshot data");
+  contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "full consumer keeps both current and historical evidence");
+  contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads remain parallel");
+  contains(page, "getBookIndexPageInsights(definition.key, 50)", "dynamic route passes the exact insight key");
 });

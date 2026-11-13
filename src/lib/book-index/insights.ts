@@ -312,9 +312,9 @@ async function loadLongSellers(limit: number) {
 
 // Page and generateMetadata request the same evidence. Compute it once per
 // request, while running the independent snapshot and history SQL in parallel.
-const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true): Promise<BookIndexInsights> => {
+const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true, includeSnapshotEvidence = true): Promise<BookIndexInsights> => {
   const [snapshots, longSellers] = await Promise.all([
-    loadSourceSnapshots(),
+    includeSnapshotEvidence ? loadSourceSnapshots() : Promise.resolve([]),
     // Only the long-seller page needs the historical aggregation. Other
     // insight views select one of the three source-snapshot collections.
     includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),
@@ -544,5 +544,5 @@ export async function getBookIndexPageInsights(
   limit = 20,
 ): Promise<BookIndexInsights> {
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
-  return getBookIndexInsightsForLimit(safeLimit, key === "longSellers");
+  return getBookIndexInsightsForLimit(safeLimit, key === "longSellers", key !== "longSellers");
 }

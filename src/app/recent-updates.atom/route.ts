@@ -114,24 +114,15 @@ export async function GET(request: Request) {
   const headers = {
     "Cache-Control": "public, max-age=0, s-maxage=900, stale-while-revalidate=3600",
     "Content-Type": "application/atom+xml; charset=utf-8",
+    // A newer or newly added feed entry may not advance feedUpdated.
+    // ETag is derived from the complete Atom XML, unlike feedUpdated.
     ETag: etag,
-    "Last-Modified": feedUpdated.toUTCString(),
     Link: `<${hubUrl}>; rel="hub", <${feedUrl}>; rel="self"`,
   };
 
   const ifNoneMatch = request.headers.get("if-none-match");
   if (ifNoneMatch === etag) {
     return new Response(null, { status: 304, headers });
-  }
-
-  const ifModifiedSince = request.headers.get("if-modified-since");
-  // If-None-Match takes precedence: a stale entity tag must not be overridden
-  // by an unchanged Last-Modified value on an otherwise changed feed.
-  if (!ifNoneMatch && ifModifiedSince) {
-    const validatorTime = Date.parse(ifModifiedSince);
-    if (Number.isFinite(validatorTime) && validatorTime >= feedUpdated.getTime()) {
-      return new Response(null, { status: 304, headers });
-    }
   }
 
   return new Response(xml, { headers });

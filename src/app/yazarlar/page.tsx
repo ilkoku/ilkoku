@@ -142,7 +142,7 @@ export default async function PublicAuthorsPage({
               />
             </label>
             <button type="submit">Yazarları getir</button>
-            {search ? <Link href="/yazarlar">Aramayı temizle</Link> : null}
+            {search ? <Link prefetch={false} href="/yazarlar">Aramayı temizle</Link> : null}
           </form>
 
           {authors.length > 0 ? (
@@ -159,14 +159,14 @@ export default async function PublicAuthorsPage({
                       <span>{author._count.works} eser</span>
                     </div>
                     <h2>
-                      <Link href={href}>{name}</Link>
+                      <Link prefetch={false} href={href}>{name}</Link>
                     </h2>
                     <p className="public-hub-card__description">
                       Yazarın keşfe açık yayımlanan eserlerini tek vitrinde
                       inceleyin.
                     </p>
                     <div className="reader-author-card__actions">
-                      <Link href={href}>Yazar vitrini →</Link>
+                      <Link prefetch={false} href={href}>Yazar vitrini →</Link>
                       {readerUser ? (
                         <form action={toggleReaderAuthorFavoriteAction}>
                           <input
@@ -207,9 +207,9 @@ export default async function PublicAuthorsPage({
                   : "Bir yazar ilk keşfe açık eserini yayımladığında vitrini otomatik oluşacak."}
               </p>
               {search ? (
-                <Link href="/yazarlar">Tüm yazarları göster</Link>
+                <Link prefetch={false} href="/yazarlar">Tüm yazarları göster</Link>
               ) : (
-                <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                <Link prefetch={false} href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
                   İlkOku’da eser yolculuğunu öğren
                 </Link>
               )}

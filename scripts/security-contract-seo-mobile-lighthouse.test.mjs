@@ -430,3 +430,26 @@ test("above-fold public CMS guide hero is eager while lower illustrations remain
   const homepage = fs.readFileSync("src/features/homepage/HomepageExperience.tsx", "utf8");
   assert.match(homepage, /fill priority fetchPriority="high"/u, "Home page LCP image behavior remains untouched");
 });
+
+
+test("P1 writing guide navigation never speculatively prefetches the entire education catalogue", () => {
+  // Real mobile browser baseline (2026-11-13): Kurgu and Öykü each loaded 55
+  // unsolicited Next.js _rsc fetches (~400 KB) before any link was clicked.
+  // These shared templates own the repeated category and genre navigation.
+  // Preserve all functional hrefs and copy; only stop automatic prefetching.
+  const cases = [
+    ["src/components/content/WritingGuideShell.tsx", 5],
+    ["src/components/content/WritingCategoryLandingPage.tsx", 2],
+  ];
+  for (const [path, expectedTags] of cases) {
+    const component = fs.readFileSync(path, "utf8");
+    const openingTags = [...component.matchAll(/<Link\\b[^>]*>/gu)].map(([tag]) => tag);
+    assert.equal(openingTags.length, expectedTags, path + " navigational link count changed: review coverage");
+    for (const tag of openingTags) {
+      assert.match(tag, /\\bprefetch=\\{false\\}/u, path + " must disable unsolicited RSC route prefetch");
+      assert.match(tag, /\\bhref=/u, path + " must preserve working links");
+    }
+  }
+  const sharedHeader = fs.readFileSync("src/components/layout/PublicHeaderNavigation.tsx", "utf8");
+  assert.match(sharedHeader, /prefetch=\\{false\\}/u, "primary navigation keeps safe no-prefetch setting");
+});

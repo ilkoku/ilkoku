@@ -49,6 +49,16 @@ type LinkGroup = {
   links: Array<{ href: string; label: string }>;
 };
 
+// Canonical public catalogue entry points stay in the HTML sitemap only;
+// they must not become selectable entries in the separately curated header menu.
+const publicDiscoveryHubLinks = [
+  { href: "/eserler", label: "Keşfe açık eserler" },
+  { href: "/eserler/yeni", label: "Yeni yayımlananlar" },
+  { href: "/eserler/guncellenen", label: "Son güncellenenler" },
+  { href: "/yazarlar", label: "Yazarlar" },
+  { href: "/turler", label: "Türler" },
+] as const;
+
 // The published registration agreement is an indexable public legal page.
 const siteMapLegalLinks = [
   ...publicLegalLinks,
@@ -230,6 +240,17 @@ export default async function PublicSiteMapPage() {
             </ul>
           </section>
         ))}
+
+        <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
+          <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Eserleri Keşfet</h2>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+            {publicDiscoveryHubLinks.map((link) => (
+              <li key={link.href}>
+                <Link prefetch={false} href={link.href}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Yasal</h2>

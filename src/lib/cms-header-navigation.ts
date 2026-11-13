@@ -47,6 +47,11 @@ export type HeaderNavigationPayload = {
 
 const basePages: SiteMapPage[] = [
   { id: "home", label: "Ana Sayfa", href: "/", area: "İlkOku", group: "Platform", kind: "page" },
+  { id: "discover-works", label: "Keşfe açık eserler", href: "/eserler", area: "Okur", group: "Eserler", kind: "page" },
+  { id: "discover-new", label: "Yeni yayımlananlar", href: "/eserler/yeni", area: "Okur", group: "Eserler", kind: "page" },
+  { id: "discover-updated", label: "Son güncellenenler", href: "/eserler/guncellenen", area: "Okur", group: "Eserler", kind: "page" },
+  { id: "discover-authors", label: "Yazarlar", href: "/yazarlar", area: "Okur", group: "Eserler", kind: "page" },
+  { id: "discover-genres", label: "Türler", href: "/turler", area: "Okur", group: "Eserler", kind: "page" },
   { id: "writers-home", label: "Yazarlar İçin", href: "/yazarlar-icin", area: "Yazar", group: "Başlangıç", kind: "page" },
   { id: "writer-register", label: "Yazar Ol", href: "/kayit?rol=writer", area: "Yazar", group: "Başlangıç", kind: "action", indexable: false },
   { id: "readers-home", label: "Okurlar İçin", href: "/okurlar-icin", area: "Okur", group: "Başlangıç", kind: "page" },

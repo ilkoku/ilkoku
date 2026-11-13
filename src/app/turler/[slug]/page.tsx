@@ -92,7 +92,7 @@ export async function generateMetadata({
   const canonical = `/turler/${genre.slug}`;
   const title = `${genre.label} Eserleri | İlkOku`;
   const description =
-    `İlkOku’da keşfe açık yayımlanan ${genre.label} türündeki Türkçe eserleri keşfedin.`;
+    `İlkOku’da ${genre.label} türündeki keşfe açık Türkçe eserleri inceleyin. Yazar profillerine, kitapların bölüm sayılarına ve eser pasaportlarına ulaşın.`;
 
   return {
     title,

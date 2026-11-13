@@ -114,6 +114,96 @@ jobs:
           console.log(md);
           NODE
 
+
+      - name: P1 audit Ahrefs slow-page cohort and legacy 404/503
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          output=/tmp/ilkoku-p1-http-cohort.tsv
+          printf 'cohort\turl\texpected\tstatus\tttfb_s\ttotal_s\tbytes\tcf_cache\n' > "$output"
+          fail=0
+          while IFS='|' read -r cohort path expected; do
+            [[ -n "$cohort" ]] || continue
+            url="https://ilkoku.com$path"
+            headers="$(mktemp)"
+            metrics="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 8 --max-time 25 \
+              --user-agent 'IlkOku-P1-Sample/1.0 (+https://ilkoku.com)' \
+              --dump-header "$headers" --output /dev/null \
+              --write-out '%{http_code}\t%{time_starttransfer}\t%{time_total}\t%{size_download}' \
+              "$url" || true)"
+            cache="$(grep -i '^cf-cache-status:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
+            rm -f "$headers"
+            read -r code ttfb total bytes <<< "$(printf '%s' "$metrics" | tr '\t' ' ')"
+            if [[ -z "$code" ]]; then code=000; fi
+            printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$cohort" "$url" "$expected" "$code" "$ttfb" "$total" "$bytes" "$cache" | tee -a "$output"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then
+              echo "::error::WAF circuit breaker HTTP $code; stopping all P1 probes."
+              exit 1
+            fi
+            if [[ "$code" == 5* ]]; then
+              echo "::error::HTTP $code from $url; do not amplify server errors."
+              exit 1
+            fi
+            if [[ "$code" != "$expected" ]]; then
+              echo "::error::P1 HTTP mismatch $url expected=$expected got=$code"
+              fail=1
+            fi
+            sleep 5
+          done <<'P1_COHORT'
+          slow|/yazarlar-icin/bilgilendirici/psikoloji|200
+          slow|/yazarlar-icin/edebiyat/soylesi|200
+          slow|/yazarlar-icin/kurgu|200
+          slow|/yazarlar-icin/senaryo-ve-sahne/radyo-tiyatrosu|200
+          slow|/yazarlar-icin/akademik/bildiri|200
+          slow|/yazarlar-icin/kurgu/dram|200
+          slow|/yazarlar-icin/edebiyat/gezi-yazisi|200
+          slow|/yazarlar-icin/akademik/arastirma|200
+          slow|/en-cok-satanlar/uzun-suredir-cok-satanlar|200
+          slow|/yazarlar-icin/akademik/akademik-inceleme|200
+          slow|/yazarlar-icin/edebiyat/deneme|200
+          slow|/yazarlar-icin/kurgu/oyku|200
+          public|/turler/roman|200
+          legacy-404|/turler/gizem|404
+          legacy-404|/turler/genclik|404
+          legacy-404|/turler/edeb-roman|404
+          historical-503|/kitap/demo-kayip-harfler?from=%2Fyazarlar%2FIKO-U-2026-000014%3Ffrom%3D%2Fturler%2Fbilim-kurgu%3Ffrom%3D%252Fturler%252Fbilim-kurgu%253Ffrom%253D%25252Fturler%25252Fbilim-kurgu%25253Ffrom%25253D%2525252Feserler|200
+          P1_COHORT
+          exit "$fail"
+
+      - name: P1 summarize present-day HTTP and TTFB
+        if: always()
+        shell: bash
+        run: |
+          node <<'P1_SUMMARY'
+          const fs = require('node:fs');
+          const path = '/tmp/ilkoku-p1-http-cohort.tsv';
+          if (!fs.existsSync(path)) process.exit(0);
+          const lines = fs.readFileSync(path,'utf8').trim().split('\n').slice(1).filter(Boolean);
+          const rows = lines.map(line => {
+            const [cohort,url,expected,status,ttfb,total,bytes,cache] = line.split('\t');
+            return {cohort,url,expected,status,ttfbMs:Math.round(Number(ttfb)*1000),totalMs:Math.round(Number(total)*1000),bytes:Number(bytes),cache};
+          });
+          const slow = rows.filter(r => r.cohort === 'slow').map(r=>r.ttfbMs).sort((a,b)=>a-b);
+          const percentile = (p)=>slow.length ? slow[Math.min(slow.length-1,Math.ceil(p*slow.length)-1)] : 'n/a';
+          const md = [
+            '## P1: live sampled speed and historical error cohort',
+            '',
+            'GitHub-hosted sample; NOT a complete 239/336 Ahrefs recrawl, Google indexing or CrUX. One request per URL. Runner location/cache changes TTFB.',
+            '',
+            '| Cohort | URL | Expected HTTP | HTTP | TTFB ms | Total ms | Cache |',
+            '|---|---|---:|---:|---:|---:|---|',
+            ...rows.map(r=>'| '+[r.cohort,r.url,r.expected,r.status,r.ttfbMs,r.totalMs,r.cache||'n/a'].join(' | ')+' |'),
+            '',
+            'Slow cohort samples: '+slow.length+'; median TTFB='+percentile(.5)+'ms; P90='+percentile(.9)+'ms; >1000ms='+slow.filter(n=>n>1000).length+'.',
+            'HTTP mismatches: '+rows.filter(r=>r.expected!==r.status).length+'.',
+            '',
+          ].join('\n');
+          fs.writeFileSync('/tmp/ilkoku-p1-http-cohort-report.md',md);
+          if(process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,md);
+          console.log(md);
+          P1_SUMMARY
+
       - name: Save evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -122,5 +212,7 @@ jobs:
           path: |
             /tmp/ilkoku-lcp-timing.ndjson
             /tmp/ilkoku-lcp-timing-report.md
+            /tmp/ilkoku-p1-http-cohort.tsv
+            /tmp/ilkoku-p1-http-cohort-report.md
           retention-days: 14
           if-no-files-found: warn

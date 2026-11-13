@@ -9,7 +9,7 @@ import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 const baseUrl = "https://ilkoku.com";
 const title = "Eser Türleri | İlkOku";
 const description =
-  "İlkOku’da keşfe açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin.";
+  "İlkOku’da keşfe açık yayımlanan Türkçe eserleri edebî türlerine göre keşfedin. Roman, öykü, bilim kurgu ve diğer türlerdeki kitapları, yazarlarını inceleyin.";
 const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 type PublicGenresPageProps = {

@@ -230,10 +230,10 @@ const getCachedLongSellerHistoryRows = unstable_cache(
       AND source.includeInTurkeyIndex = 1
       AND source.status = 'active'
       AND fetchRun.status IN ('success', 'no_change')
+    -- The public reader ranks every history row using duration, independent
+    -- source count, observation count and Turkish title. Sorting here is
+    -- redundant and forces a second historical filesort in the database.
     GROUP BY externalBook.masterBookId
-    ORDER BY
-      DATEDIFF(MAX(observation.observedAt), MIN(observation.observedAt)) DESC,
-      COUNT(*) DESC
   `;
     return rows.map((row) => ({
       masterBookId: row.masterBookId,

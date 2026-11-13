@@ -845,6 +845,11 @@ test("sitemap XML route exposes stable HTTP validators", () => {
   assertNotContains(route, 'request.headers.get("if-modified-since")', "an unchanged per-page timestamp must never cause a false sitemap 304");
   assertContains(route, 'status: 304', "sitemap returns 304 for matching content ETags");
   assertContains(route, 'return new Response(xml, { headers });', "changed sitemap XML always returns HTTP 200");
+  const productionSmoke = source(".github/workflows/production-smoke.yml");
+  assertContains(productionSmoke, 'If-Modified-Since: Fri, 01 Jan 2100 00:00:00 GMT',
+    "live production smoke must verify stale date-only conditional requests receive full XML");
+  assertContains(productionSmoke, 'conditional_header=(--header "If-Modified-Since:',
+    "Atom production smoke uses a date-only conditional request without extra traffic");
   assertContains(route, 'ifNoneMatchMatches(ifNoneMatch, etag)', "sitemap 304 requires matching complete-XML ETag");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
 });

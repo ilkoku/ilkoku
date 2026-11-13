@@ -7,7 +7,11 @@ import {
   normalizeGenreLabel,
 } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-import { BLOCKED_PUBLIC_WORK_SLUGS } from "@/lib/public-content-safety";
+import {
+  BLOCKED_PUBLIC_WORK_SLUGS,
+  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
+  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES,
+} from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import type { PublicStoredWorkContentRating } from "@/lib/work-content-classification";
 
@@ -293,6 +297,39 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
       .includes(needle),
   );
 });
+
+// A public genre may contain QA/demo publications that must remain readable but
+// must not create a search landing page on their own. This is request-scoped:
+// new eligible publications are reflected immediately in later requests.
+export const getSearchIndexEligibleGenreSlugs = cache(
+  async function getSearchIndexEligibleGenreSlugs() {
+    const rows = await prisma.work.groupBy({
+      by: ["genre"],
+      orderBy: { genre: "asc" },
+      take: 100,
+      where: {
+        ...publicWorkBaseWhere,
+        genre: { not: null },
+        slug: {
+          notIn: [
+            ...BLOCKED_PUBLIC_WORK_SLUGS,
+            ...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
+          ],
+        },
+        NOT: SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix) => ({
+          slug: { startsWith: prefix },
+        })),
+      },
+    });
+
+    return new Set(
+      rows.flatMap((row) => {
+        const label = normalizeGenreLabel(row.genre);
+        return label ? [publicTaxonomySlug(label)] : [];
+      }),
+    );
+  },
+);
 
 export async function getPublicGenreBySlug(
   slug: string,

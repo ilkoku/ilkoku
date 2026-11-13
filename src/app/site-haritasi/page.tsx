@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getPublicGenres } from "@/features/public-discovery/library";
+import { normalizeGenreLabel } from "@/lib/genre-system";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { SITE_MAP_PAGES, type SiteMapPage } from "@/lib/cms-header-navigation";
 import { loadPublishedCmsSiteMapPages } from "@/lib/cms-header-navigation-server";
 import { prisma } from "@/lib/prisma";
@@ -46,6 +49,16 @@ type LinkGroup = {
   links: Array<{ href: string; label: string }>;
 };
 
+// Canonical public catalogue entry points stay in the HTML sitemap only;
+// they must not become selectable entries in the separately curated header menu.
+const publicDiscoveryHubLinks = [
+  { href: "/eserler", label: "Keşfe açık eserler" },
+  { href: "/eserler/yeni", label: "Yeni yayımlananlar" },
+  { href: "/eserler/guncellenen", label: "Son güncellenenler" },
+  { href: "/yazarlar", label: "Yazarlar" },
+  { href: "/turler", label: "Türler" },
+] as const;
+
 // The published registration agreement is an indexable public legal page.
 const siteMapLegalLinks = [
   ...publicLegalLinks,
@@ -76,48 +89,84 @@ function groupedSitePages(pages: readonly SiteMapPage[]): LinkGroup[] {
   return [...groups.values()];
 }
 
-async function getPublicWorkLinks(): Promise<PublicWorkLink[]> {
-  try {
-    const works = await prisma.work.findMany({
-      where: {
-        archivedAt: null,
-        contentRating: { not: "adult_18" },
-        author: {
-          is: {
-            deletedAt: null,
-            status: "active",
-          },
-        },
-        isActive: true,
-        language: "tr",
-        publishedAt: { not: null },
-        status: "published",
-        visibility: "public",
-      },
-      orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
-      select: {
-        slug: true,
-        title: true,
-      },
-      take: 5_000,
-    });
+type PublicDiscoveryLinks = {
+  works: PublicWorkLink[];
+  authors: PublicWorkLink[];
+  genres: PublicWorkLink[];
+};
 
-    return works
-      .filter((work) => !isSearchIndexExcludedPublicWorkSlug(work.slug))
-      .map((work) => ({
-        href: `/kitap/${work.slug}`,
+async function getPublicDiscoveryLinks(): Promise<PublicDiscoveryLinks> {
+  try {
+    const [works, genres] = await Promise.all([
+      prisma.work.findMany({
+        where: {
+          archivedAt: null,
+          contentRating: { not: "adult_18" },
+          author: { is: { deletedAt: null, status: "active" } },
+          isActive: true,
+          language: "tr",
+          publishedAt: { not: null },
+          status: "published",
+          visibility: "public",
+        },
+        orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+        select: {
+          slug: true,
+          title: true,
+          genre: true,
+          author: { select: { publicId: true, displayName: true, fullName: true } },
+        },
+        take: 5_000,
+      }),
+      getPublicGenres(),
+    ]);
+
+    // Mirror the XML sitemap: demo/test-only works must not seed crawlable
+    // author or genre landing links, even when the public fixtures remain readable.
+    const eligibleWorks = works.filter(
+      (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+    );
+    const authors = new Map<string, string>();
+    const eligibleGenreSlugs = new Set<string>();
+
+    for (const work of eligibleWorks) {
+      if (!authors.has(work.author.publicId)) {
+        authors.set(
+          work.author.publicId,
+          work.author.displayName?.trim() || work.author.fullName?.trim() || work.author.publicId,
+        );
+      }
+      const label = normalizeGenreLabel(work.genre);
+      if (label) eligibleGenreSlugs.add(publicTaxonomySlug(label));
+    }
+
+    return {
+      works: eligibleWorks.map((work) => ({
+        href: "/kitap/" + work.slug,
         label: work.title,
-      }));
+      })),
+      authors: [...authors].map(([publicId, label]) => ({
+        href: "/yazarlar/" + publicId,
+        label,
+      })),
+      genres: genres
+        .filter((genre) => eligibleGenreSlugs.has(genre.slug))
+        .map((genre) => ({
+          href: "/turler/" + genre.slug,
+          label: genre.label,
+        })),
+    };
   } catch {
-    return [];
+    return { works: [], authors: [], genres: [] };
   }
 }
 
 export default async function PublicSiteMapPage() {
-  const [cmsPages, publicWorks] = await Promise.all([
+  const [cmsPages, publicDiscovery] = await Promise.all([
     loadPublishedCmsSiteMapPages(),
-    getPublicWorkLinks(),
+    getPublicDiscoveryLinks(),
   ]);
+  const publicWorks = publicDiscovery.works;
 
   const codeOwnedPages = SITE_MAP_PAGES.filter(
     (page) => page.indexable !== false,
@@ -193,6 +242,17 @@ export default async function PublicSiteMapPage() {
         ))}
 
         <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
+          <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Eserleri Keşfet</h2>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+            {publicDiscoveryHubLinks.map((link) => (
+              <li key={link.href}>
+                <Link prefetch={false} href={link.href}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
           <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Yasal</h2>
           <ul className="mt-5 grid gap-2 sm:grid-cols-2">
             {siteMapLegalLinks.map((link) => (
@@ -224,6 +284,32 @@ export default async function PublicSiteMapPage() {
                   >
                     {link.label}
                   </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {publicDiscovery.authors.length > 0 ? (
+          <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
+            <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Yazarlar</h2>
+            <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+              {publicDiscovery.authors.map((link) => (
+                <li key={link.href}>
+                  <Link prefetch={false} href={link.href}>{link.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {publicDiscovery.genres.length > 0 ? (
+          <section className="rounded-[1.8rem] border border-black/[0.07] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.05)] sm:p-7">
+            <h2 className="font-serif text-2xl font-semibold tracking-[-0.025em] text-[#211746]">Türler</h2>
+            <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+              {publicDiscovery.genres.map((link) => (
+                <li key={link.href}>
+                  <Link prefetch={false} href={link.href}>{link.label}</Link>
                 </li>
               ))}
             </ul>

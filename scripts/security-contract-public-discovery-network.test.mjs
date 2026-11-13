@@ -589,3 +589,30 @@ test("Ahrefs P1: indexable discovery metadata has useful-length descriptions wit
   }
   assert.match(genre, /index: page === 1/u);
 });
+
+
+test("GSC crawl discovery: HTML site map links canonical public directories and indexable works' authors/genres", () => {
+  const discoveryPage = source("src/app/site-haritasi/page.tsx");
+  for (const href of [
+    "/eserler",
+    "/eserler/yeni",
+    "/eserler/guncellenen",
+    "/yazarlar",
+    "/turler",
+  ]) {
+    assert.ok(
+      discoveryPage.includes('href: "' + href + '"'),
+      "HTML sitemap must expose canonical directory link: " + href,
+    );
+  }
+  const sitemapPage = source("src/app/site-haritasi/page.tsx");
+  contains(sitemapPage, "getPublicDiscoveryLinks()", "public sitemap discovers live works, authors and genres");
+  contains(sitemapPage, "isSearchIndexExcludedPublicWorkSlug(work.slug)", "exclude demo-only works before adding links");
+  contains(sitemapPage, "const eligibleGenreSlugs = new Set<string>()", "only independently indexable genres");
+  contains(sitemapPage, "if (!authors.has(work.author.publicId))", "only published eligible authors");
+  contains(sitemapPage, "publicDiscovery.authors.map((link)", "crawlable author profile anchors");
+  contains(sitemapPage, "publicDiscovery.genres.map((link)", "crawlable genre landing anchors");
+  contains(sitemapPage, "href: \"/yazarlar/\" + publicId", "author link canonical has no tracking query");
+  contains(sitemapPage, "href: \"/turler/\" + genre.slug", "genre link canonical has no tracking query");
+  notContains(sitemapPage, "?from=", "HTML sitemap must not multiply crawlable URLs via return parameters");
+});

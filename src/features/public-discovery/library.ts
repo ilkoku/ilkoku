@@ -260,7 +260,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 
   const genresBySlug = new Map<
     string,
-    { count: number; label: string; slug: string }
+    { count: number; label: string; slug: string; sourceGenres: string[] }
   >();
 
   for (const row of rows) {
@@ -275,6 +275,9 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 
     if (existing) {
       existing.count += row._count._all;
+      if (row.genre && !existing.sourceGenres.includes(row.genre)) {
+        existing.sourceGenres.push(row.genre);
+      }
       continue;
     }
 
@@ -282,6 +285,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
       count: row._count._all,
       label,
       slug,
+      sourceGenres: row.genre ? [row.genre] : [],
     });
   }
 
@@ -304,11 +308,14 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 // This lightweight read path avoids a grouped query with an exclusion predicate
 // whose failure previously broke public genre detail rendering in production.
 export const getSearchIndexEligibleGenreSlugs = cache(
-  async function getSearchIndexEligibleGenreSlugs() {
+  async function getSearchIndexEligibleGenreSlugs(sourceGenres: string[]) {
+    // Use the raw, grouped database values for the selected genre only.
+    // This preserves normalization/collation semantics and avoids scanning
+    // every published genre to check a single public genre detail.
     const works = await prisma.work.findMany({
       where: {
         ...publicWorkBaseWhere,
-        genre: { not: null },
+        genre: { in: sourceGenres },
       },
       select: { genre: true, slug: true },
       take: 50_000,

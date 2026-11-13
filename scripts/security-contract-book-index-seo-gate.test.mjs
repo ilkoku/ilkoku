@@ -137,7 +137,7 @@ test("Book Index public pages index usable content and keep quality-gate telemet
     "trend routes retain full 100-row quality-gate evidence while omitting unused source observations",
   );
   assert.equal(
-    insight.match(/getBookIndexSoftLaunchPageContext\\(100, false\\)/g)?.length,
+    insight.match(/getBookIndexSoftLaunchPageContext\(100, false\)/g)?.length,
     2,
     "metadata and page must share one request-scoped freshness/gate cache key",
   );

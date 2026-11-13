@@ -157,7 +157,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {priorityGenres.map((genre) => (
-                <Link
+                <Link prefetch={false}
                   className="group rounded-[1.35rem] border border-[#6b52c7]/15 bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.05)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
                   href={`${hub.href}/${genre.slug}`}
                   key={genre.slug}
@@ -221,7 +221,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
           <p className="mt-5 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.invitation}</p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {genres.map((genre) => (
-              <Link
+              <Link prefetch={false}
                 className="group rounded-[1.35rem] border border-[#6b52c7]/10 bg-[#fffdf8] px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.04)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/30 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
                 href={`${hub.href}/${genre.slug}`}
                 key={genre.slug}

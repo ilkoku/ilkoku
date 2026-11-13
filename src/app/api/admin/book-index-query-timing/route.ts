@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { getBookIndexInsights, getBookIndexPageInsights } from "@/lib/book-index/insights";
 import type { BookIndexInsightKey } from "@/lib/book-index/insight-pages";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexPublicLastObservedAt } from "@/lib/book-index/public-freshness";
 import {
   collectBookIndexTimings,
   timeBookIndexOperation,
@@ -41,7 +42,34 @@ export async function GET(request: Request) {
 
   try {
     const { value, wallMs, timings } = await collectBookIndexTimings(async () => {
-      // Match the real insight page's concurrent 100/50 request workload.
+      // The selected insight routes no longer build the 100-row public model
+      // just to display source freshness; match their real workload.
+      if (insightKey) {
+        const [lastObservedAt, insights] = await Promise.all([
+          timeBookIndexOperation(
+            "route.publicFreshness",
+            () => getBookIndexPublicLastObservedAt(),
+          ),
+          timeBookIndexOperation(
+            "route.insightsCalculation",
+            () => getBookIndexPageInsights(insightKey, 50),
+          ),
+        ]);
+        return {
+          publicationGate: null,
+          totalTurkeyRankingRows: null,
+          sourceListCount: null,
+          lastObservedAtUtc: lastObservedAt?.toISOString() ?? null,
+          insightCounts: {
+            longSellers: insights.longSellers.length,
+            newEntries: insights.newEntries.length,
+            risers: insights.risers.length,
+            everywhereSellers: insights.everywhereSellers.length,
+          },
+        };
+      }
+
+      // Preserve the legacy full admin-only diagnostic unchanged.
       const [context, insights] = await Promise.all([
         timeBookIndexOperation(
           "route.publicContext",
@@ -72,7 +100,7 @@ export async function GET(request: Request) {
       ok: true,
       observedAtUtc: new Date().toISOString(),
       workload: insightKey
-        ? `insight-page:${insightKey} publicContext(100) + selectedInsights(50)`
+        ? `insight-page:${insightKey} publicFreshness + selectedInsights(50)`
         : "insight-page: publicContext(100) + insights(50)",
       // Timed SQL calls include driver/connection queue time. Because the
       // shared MariaDB adapter connectionLimit is 1, parallel spans overlap.

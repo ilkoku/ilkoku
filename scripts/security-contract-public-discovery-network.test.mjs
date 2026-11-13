@@ -56,8 +56,8 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "author route uses request-local shared lookup");
   contains(genre, "getPublicGenreBySlug(slug)",
     "genre route uses request-local shared lookup");
-  contains(genre, "getSearchIndexEligibleGenreSlugs()",
-    "genre metadata separately checks only search-index eligible publications");
+  contains(genre, "getSearchIndexEligibleGenreSlugs(genre.sourceGenres)",
+    "genre metadata checks only the selected genre's eligible publications");
   contains(genre, "page === 1 && (eligibleGenreSlugs?.has(genre.slug) ?? true)",
     "QA-only genre is noindexed when eligibility is known");
   contains(genre, "catch (error)",
@@ -520,13 +520,15 @@ test("P1 genre detail skips redundant all-genres distinct query", () => {
     "genre detail only opts out of unused genre filter data");
 });
 
-test("P1 search eligibility query is short-lived and shared across anonymous genre requests", () => {
+test("P1 genre SEO eligibility scans only the selected raw genre categories", () => {
   const library = source("src/features/public-discovery/library.ts");
-  contains(library, 'import { unstable_cache } from "next/cache";', "cross-request cache is explicitly imported");
-  contains(library, 'const loadCachedSearchIndexEligibleGenreSlugs = unstable_cache(', "publication-only scan shares cached result");
-  contains(library, '"public-search-eligible-genre-slugs-v1"', "cache has stable scoped key");
-  contains(library, '{ revalidate: 30 }', "cached publication eligibility rechecks within 30 seconds");
-  contains(library, "return [...slugs];", "cached data serializes a flat string array, not a Set");
-  contains(library, "return new Set(await loadCachedSearchIndexEligibleGenreSlugs());", "each request returns a stable Set");
-  contains(library, "if (isSearchIndexExcludedPublicWorkSlug(work.slug)) continue;", "QA and demo works remain excluded");
+  const genre = source("src/app/turler/[slug]/page.tsx");
+  contains(library, "sourceGenres: string[]", "grouped genres retain raw stored source labels");
+  contains(library, "sourceGenres: row.genre ? [row.genre] : []", "single genre keeps exact source label");
+  contains(library, "existing.sourceGenres.push(row.genre)", "normalized collations preserve all source labels");
+  contains(library, "async function getSearchIndexEligibleGenreSlugs(sourceGenres: string[])", "read path receives selected genre only");
+  contains(library, "genre: { in: sourceGenres }", "eligibility query restricts SQL to only selected genres");
+  contains(library, "if (isSearchIndexExcludedPublicWorkSlug(work.slug)) continue;", "QA and demo works stay excluded");
+  contains(genre, "getSearchIndexEligibleGenreSlugs(genre.sourceGenres)", "detail supplies its selected genre's grouped stored values");
+  notContains(library, "unstable_cache(", "publication changes are reflected without cross-request stale caching");
 });

@@ -59,10 +59,11 @@ const getCachedPublicBookIndexSeoEvidence = unstable_cache(
 async function buildBookIndexPageContext(
   limit: number,
   policy = getBookIndexSeoGatePolicy(),
+  includeSourceListItems = true,
 ): Promise<BookIndexPublicPageContext> {
   const [evidence, model] = await Promise.all([
     timeBookIndexOperation("publicContext.readinessEvidence", () => getCachedPublicBookIndexSeoEvidence()),
-    timeBookIndexOperation("publicContext.readModel", () => getBookIndexPublicReadModel(limit)),
+    timeBookIndexOperation("publicContext.readModel", () => getBookIndexPublicReadModel(limit, includeSourceListItems)),
   ]);
 
   const gate = evaluateBookIndexSeoGate(policy, {
@@ -86,8 +87,8 @@ export const getBookIndexPublicPageContext = cache(
 );
 
 export const getBookIndexSoftLaunchPageContext = cache(
-  async (limit = 100): Promise<BookIndexPublicPageContext> =>
-    buildBookIndexPageContext(limit),
+  async (limit = 100, includeSourceListItems = true): Promise<BookIndexPublicPageContext> =>
+    buildBookIndexPageContext(limit, getBookIndexSeoGatePolicy(), includeSourceListItems),
 );
 
 // Footer navigation needs a publication boolean, not a fresh ranking list.

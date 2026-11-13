@@ -1,6 +1,5 @@
 import "server-only";
 import { cache } from "react";
-import { unstable_cache } from "next/cache";
 
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -261,7 +260,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 
   const genresBySlug = new Map<
     string,
-    { count: number; label: string; slug: string }
+    { count: number; label: string; slug: string; sourceGenres: string[] }
   >();
 
   for (const row of rows) {
@@ -276,6 +275,9 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 
     if (existing) {
       existing.count += row._count._all;
+      if (row.genre && !existing.sourceGenres.includes(row.genre)) {
+        existing.sourceGenres.push(row.genre);
+      }
       continue;
     }
 
@@ -283,6 +285,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
       count: row._count._all,
       label,
       slug,
+      sourceGenres: row.genre ? [row.genre] : [],
     });
   }
 
@@ -304,16 +307,15 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
 // those fixtures must not independently create a search landing page.
 // This lightweight read path avoids a grouped query with an exclusion predicate
 // whose failure previously broke public genre detail rendering in production.
-// This publication-only aggregate is identical for all anonymous visitors.
-// Share the expensive up-to-50k-row scan briefly across requests, then keep
-// request-local deduplication and return an independent Set to callers.
-// The 30s TTL bounds stale eligibility after an editor publishes/unpublishes.
-const loadCachedSearchIndexEligibleGenreSlugs = unstable_cache(
-  async () => {
+export const getSearchIndexEligibleGenreSlugs = cache(
+  async function getSearchIndexEligibleGenreSlugs(sourceGenres: string[]) {
+    // Use the raw, grouped database values for the selected genre only.
+    // This preserves normalization/collation semantics and avoids scanning
+    // every published genre to check a single public genre detail.
     const works = await prisma.work.findMany({
       where: {
         ...publicWorkBaseWhere,
-        genre: { not: null },
+        genre: { in: sourceGenres },
       },
       select: { genre: true, slug: true },
       take: 50_000,
@@ -324,15 +326,7 @@ const loadCachedSearchIndexEligibleGenreSlugs = unstable_cache(
       const label = normalizeGenreLabel(work.genre);
       if (label) slugs.add(publicTaxonomySlug(label));
     }
-    return [...slugs];
-  },
-  ["public-search-eligible-genre-slugs-v1"],
-  { revalidate: 30 },
-);
-
-export const getSearchIndexEligibleGenreSlugs = cache(
-  async function getSearchIndexEligibleGenreSlugs() {
-    return new Set(await loadCachedSearchIndexEligibleGenreSlugs());
+    return slugs;
   },
 );
 

@@ -252,9 +252,9 @@ test("Book Index auto-matches refresh corrected metadata only through exact ISBN
 test("Book Index insight SQL reads are parallel and de-duplicated within one server request", () => {
   const insights = source("src/lib/book-index/insights.ts");
   contains(insights, 'import { cache } from "react";', "request-local React cache");
-  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true)", "per-limit and history-mode cached computation");
+  contains(insights, "const getBookIndexInsightsForLimit = cache(async (safeLimit: number, includeLongSellerHistory = true, includeCurrentSnapshotEvidence = true)", "per-limit, history-mode and current-snapshot-mode cached computation");
   contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads are parallel");
-  contains(insights, "loadSourceSnapshots(),", "current/previous source evidence still collected");
+  contains(insights, "includeCurrentSnapshotEvidence ? loadSourceSnapshots() : Promise.resolve([] as SourceSnapshot[])", "historical-only page skips unrelated current/previous source snapshot SQL");
   contains(insights, "includeLongSellerHistory ? loadLongSellers(safeLimit) : Promise.resolve([]),", "historical evidence collected only where needed");
   contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "public insight function uses request-local cache");
   contains(insights, "longSellers,", "historical evidence returned unmodified");
@@ -320,7 +320,7 @@ test("three insight pages skip unrelated long-seller history while preserving so
     2,
     "metadata and page must use identical selected-insight cache arguments",
   );
-  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\")", "all other insight routes skip historical query");
+  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\", key !== \"longSellers\")", "all insight routes skip unrelated history or snapshot SQL");
   contains(diagnostic, "getBookIndexPageInsights(insightKey, 50)", "admin-only profiler measures page-specific workload");
   contains(diagnostic, 'requested !== null && !validKeys.some((key) => key === requested)', "profile key must be allowlisted");
   contains(diagnostic, "getBookIndexInsights(50)", "legacy full evidence diagnostics remain available");
@@ -347,8 +347,9 @@ test("three insight pages skip unrelated long-seller history while preserving so
     ],
   }];
   let historySqlCalls = 0;
+  let snapshotSqlCalls = 0;
   const prisma = {
-    bookIndexList: { findMany: async () => fixtureLists },
+    bookIndexList: { findMany: async () => { snapshotSqlCalls++; return fixtureLists; } },
     $queryRaw: async () => {
       historySqlCalls++;
       return [{
@@ -387,6 +388,7 @@ test("three insight pages skip unrelated long-seller history while preserving so
   const { getBookIndexInsights, getBookIndexPageInsights } = mockModule.exports;
   const full = await getBookIndexInsights(50);
   assert.equal(historySqlCalls, 1, "normal full insight consumer retains historical evidence");
+  assert.equal(snapshotSqlCalls, 1, "normal full insight consumer retains current snapshot evidence");
   assert.equal(full.longSellers.length, 1, "long-seller evidence is available to full consumer");
   assert.ok(full.longSellers[0].firstObservedAt instanceof Date, "cached first observation is revived as Date");
   assert.ok(full.longSellers[0].lastObservedAt instanceof Date, "cached last observation is revived as Date");
@@ -402,7 +404,10 @@ test("three insight pages skip unrelated long-seller history while preserving so
     assert.equal(selected.longSellers.length, 0, key + " need not load unrelated long sellers");
     assert.deepEqual(JSON.parse(JSON.stringify(selected[key])), JSON.parse(JSON.stringify(full[key])), key + " visible evidence must match full computation");
   }
+  const snapshotCallsBeforeLong = snapshotSqlCalls;
   const long = await getBookIndexPageInsights("longSellers", 50);
+  assert.equal(snapshotSqlCalls, snapshotCallsBeforeLong, "long-seller page does not run unrelated source snapshot SQL");
+  assert.deepEqual([long.newEntries, long.risers, long.everywhereSellers], [[], [], []], "long-seller page skips all unrelated snapshot computations");
   assert.equal(historySqlCalls, 2, "long-seller page retains full historical query");
   assert.deepEqual(JSON.parse(JSON.stringify(long.longSellers)), JSON.parse(JSON.stringify(full.longSellers)), "long-seller page retains exact historical evidence");
 });

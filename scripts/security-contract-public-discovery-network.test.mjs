@@ -519,3 +519,14 @@ test("P1 genre detail skips redundant all-genres distinct query", () => {
   contains(genre, "false, // Genre-filter options are not displayed on this detail page.",
     "genre detail only opts out of unused genre filter data");
 });
+
+test("P1 search eligibility query is short-lived and shared across anonymous genre requests", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  contains(library, 'import { unstable_cache } from "next/cache";', "cross-request cache is explicitly imported");
+  contains(library, 'const loadCachedSearchIndexEligibleGenreSlugs = unstable_cache(', "publication-only scan shares cached result");
+  contains(library, '"public-search-eligible-genre-slugs-v1"', "cache has stable scoped key");
+  contains(library, '{ revalidate: 30 }', "cached publication eligibility rechecks within 30 seconds");
+  contains(library, "return [...slugs];", "cached data serializes a flat string array, not a Set");
+  contains(library, "return new Set(await loadCachedSearchIndexEligibleGenreSlugs());", "each request returns a stable Set");
+  contains(library, "if (isSearchIndexExcludedPublicWorkSlug(work.slug)) continue;", "QA and demo works remain excluded");
+});

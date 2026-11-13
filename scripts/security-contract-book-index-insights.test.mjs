@@ -320,7 +320,7 @@ test("three insight pages skip unrelated long-seller history while preserving so
     2,
     "metadata and page must use identical selected-insight cache arguments",
   );
-  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\")", "all other insight routes skip historical query");
+  contains(insightsCode, "getBookIndexInsightsForLimit(safeLimit, key === \"longSellers\", key !== \"longSellers\")", "only long seller computes history and all other insight routes retain snapshots");
   contains(diagnostic, "getBookIndexPageInsights(insightKey, 50)", "admin-only profiler measures page-specific workload");
   contains(diagnostic, 'requested !== null && !validKeys.some((key) => key === requested)', "profile key must be allowlisted");
   contains(diagnostic, "getBookIndexInsights(50)", "legacy full evidence diagnostics remain available");

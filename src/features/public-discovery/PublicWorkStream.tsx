@@ -98,7 +98,7 @@ export function PublicWorkStream({
           >
             <div className="public-hub-card__meta">
               {genre && genreHref ? (
-                <Link href={genreHref}>{genre}</Link>
+                <Link prefetch={false} href={genreHref}>{genre}</Link>
               ) : (
                 <span>{genre || "Tür belirtilmedi"}</span>
               )}
@@ -111,10 +111,10 @@ export function PublicWorkStream({
             </div>
 
             <h2>
-              <Link href={bookHref}>{work.title}</Link>
+              <Link prefetch={false} href={bookHref}>{work.title}</Link>
             </h2>
             <p className="public-hub-card__author">
-              <Link href={authorHref}>{authorName}</Link>
+              <Link prefetch={false} href={authorHref}>{authorName}</Link>
             </p>
             <p className="public-hub-card__description">
               {summary(work.description)}
@@ -129,10 +129,10 @@ export function PublicWorkStream({
                   : "Yayımlandı: "}
                 {formatDate(displayedDate)}
               </time>
-              <Link href={passportHref}>
+              <Link prefetch={false} href={passportHref}>
                 Pasaport →
               </Link>
-              <Link href={bookHref}>
+              <Link prefetch={false} href={bookHref}>
                 Eseri incele →
               </Link>
             </div>

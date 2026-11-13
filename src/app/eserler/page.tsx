@@ -228,7 +228,7 @@ export default async function PublicWorkLibraryPage({
 
       <header className="public-library__header">
         <div className="public-library__container public-library__header-inner">
-          <Link
+          <Link prefetch={false}
             className="public-library__logo"
             href="/"
             aria-label="İlkOku ana sayfa"
@@ -242,17 +242,17 @@ export default async function PublicWorkLibraryPage({
           </Link>
 
           <nav aria-label="Genel gezinme">
-            <Link aria-current="page" href="/eserler">
+            <Link prefetch={false} aria-current="page" href="/eserler">
               Eserler
             </Link>
-            <Link href="/yazarlar">Yazarlar</Link>
-            <Link href="/turler">Türler</Link>
-            <Link href="/nasil-calisir">Nasıl Çalışır</Link>
+            <Link prefetch={false} href="/yazarlar">Yazarlar</Link>
+            <Link prefetch={false} href="/turler">Türler</Link>
+            <Link prefetch={false} href="/nasil-calisir">Nasıl Çalışır</Link>
           </nav>
 
           <div className="public-library__account">
-            <Link href="/giris">Giriş Yap</Link>
-            <Link href="/kayit?rol=reader">Üye Ol</Link>
+            <Link prefetch={false} href="/giris">Giriş Yap</Link>
+            <Link prefetch={false} href="/kayit?rol=reader">Üye Ol</Link>
           </div>
         </div>
       </header>
@@ -292,19 +292,19 @@ export default async function PublicWorkLibraryPage({
           className="public-library__routes"
         >
           <div className="public-library__container">
-            <Link href="/eserler/yeni">
+            <Link prefetch={false} href="/eserler/yeni">
               <strong>Yeni yayımlananlar</strong>
               <span>Yayın tarihine göre keşfet →</span>
             </Link>
-            <Link href="/eserler/guncellenen">
+            <Link prefetch={false} href="/eserler/guncellenen">
               <strong>Son güncellenenler</strong>
               <span>Yakın zamanda değişen eserler →</span>
             </Link>
-            <Link href="/yazarlar">
+            <Link prefetch={false} href="/yazarlar">
               <strong>Yazarlar</strong>
               <span>Yazarların keşfe açık eserleri →</span>
             </Link>
-            <Link href="/turler">
+            <Link prefetch={false} href="/turler">
               <strong>Türler</strong>
               <span>Gerçek yayınların tür dizini →</span>
             </Link>
@@ -398,7 +398,7 @@ export default async function PublicWorkLibraryPage({
               filters.genre ||
               filters.contentRating ||
               filters.sort !== "newest" ? (
-                <Link href="/eserler">Filtreleri temizle</Link>
+                <Link prefetch={false} href="/eserler">Filtreleri temizle</Link>
               ) : null}
             </form>
 
@@ -439,7 +439,7 @@ export default async function PublicWorkLibraryPage({
                       <div className="public-library-card__body">
                         <div className="public-library-card__meta">
                           {genreHref ? (
-                            <Link href={genreHref}>
+                            <Link prefetch={false} href={genreHref}>
                               {genre}
                             </Link>
                           ) : (
@@ -454,7 +454,7 @@ export default async function PublicWorkLibraryPage({
                         </div>
 
                         <h3>
-                          <Link href={bookHref}>
+                          <Link prefetch={false} href={bookHref}>
                             {work.title}
                           </Link>
                         </h3>
@@ -466,7 +466,7 @@ export default async function PublicWorkLibraryPage({
                         ) : null}
 
                         <p className="public-library-card__author">
-                          <Link href={authorHref}>
+                          <Link prefetch={false} href={authorHref}>
                             {authorName}
                           </Link>
                         </p>
@@ -483,14 +483,14 @@ export default async function PublicWorkLibraryPage({
                           >
                             {formatDate(work.publishedAt)}
                           </time>
-                          <Link
+                          <Link prefetch={false}
                             className="public-library-card__link"
                             href={passportHref}
                           >
                             Pasaport
                             <span aria-hidden="true">→</span>
                           </Link>
-                          <Link
+                          <Link prefetch={false}
                             className="public-library-card__link"
                             href={bookHref}
                           >
@@ -515,11 +515,11 @@ export default async function PublicWorkLibraryPage({
                 {filters.search ||
                 filters.genre ||
                 filters.contentRating ? (
-                  <Link href="/eserler">
+                  <Link prefetch={false} href="/eserler">
                     Tüm keşfe açık eserleri göster
                   </Link>
                 ) : (
-                  <Link href="/kayit?rol=writer">
+                  <Link prefetch={false} href="/kayit?rol=writer">
                     İlk eserini yayımlamaya başla
                   </Link>
                 )}
@@ -532,7 +532,7 @@ export default async function PublicWorkLibraryPage({
                 aria-label="Eser sayfaları"
               >
                 {library.currentPage > 1 ? (
-                  <Link
+                  <Link prefetch={false}
                     href={pageHref(
                       filters,
                       library.currentPage - 1,
@@ -551,7 +551,7 @@ export default async function PublicWorkLibraryPage({
 
                 {library.currentPage <
                 library.totalPages ? (
-                  <Link
+                  <Link prefetch={false}
                     href={pageHref(
                       filters,
                       library.currentPage + 1,
@@ -613,12 +613,12 @@ export default async function PublicWorkLibraryPage({
             </span>
           </p>
           <nav aria-label="Alt gezinme">
-            <Link href="/eserler">Eserler</Link>
-            <Link href="/yazarlar">Yazarlar</Link>
-            <Link href="/turler">Türler</Link>
-            <Link href="/nasil-calisir">Nasıl Çalışır</Link>
-            <Link href="/yardim">Yardım</Link>
-            <Link href="/yasal/gizlilik-politikasi">
+            <Link prefetch={false} href="/eserler">Eserler</Link>
+            <Link prefetch={false} href="/yazarlar">Yazarlar</Link>
+            <Link prefetch={false} href="/turler">Türler</Link>
+            <Link prefetch={false} href="/nasil-calisir">Nasıl Çalışır</Link>
+            <Link prefetch={false} href="/yardim">Yardım</Link>
+            <Link prefetch={false} href="/yasal/gizlilik-politikasi">
               Gizlilik
             </Link>
           </nav>

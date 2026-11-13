@@ -509,3 +509,13 @@ test("legacy book and passport pages normalize return history before rendering o
   contains(showcase, "const encodedRelatedBookReturnPath = encodeURIComponent(`/kitap/${work.slug}`);", "preexisting one-hop related-book behavior protected");
   contains(book, "index: !searchIndexExcluded", "public work detail remains indexable with contextual return path");
 });
+
+test("P1 genre detail skips redundant all-genres distinct query", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  const genre = source("src/app/turler/[slug]/page.tsx");
+  contains(library, "includeGenres = true", "catalogue pages still load genre filter options by default");
+  contains(library, "const genreRowsQuery = includeGenres", "expensive distinct-genre query is optional");
+  contains(library, "Promise.resolve([] as { genre: string | null }[])", "disabled genre list skips the SQL query");
+  contains(genre, "false, // Genre-filter options are not displayed on this detail page.",
+    "genre detail only opts out of unused genre filter data");
+});

@@ -142,6 +142,7 @@ export default async function PublicGenrePage({
       sort: "newest",
     },
     pageNumber(query.sayfa),
+    false, // Genre-filter options are not displayed on this detail page.
   );
   const currentPath = genrePageHref(
     genre.slug,

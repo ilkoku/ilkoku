@@ -443,13 +443,13 @@ test("P1 writing guide navigation never speculatively prefetches the entire educ
   ];
   for (const [path, expectedTags] of cases) {
     const component = fs.readFileSync(path, "utf8");
-    const openingTags = [...component.matchAll(/<Link\\b[^>]*>/gu)].map(([tag]) => tag);
+    const openingTags = [...component.matchAll(/<Link\b[^>]*>/gu)].map(([tag]) => tag);
     assert.equal(openingTags.length, expectedTags, path + " navigational link count changed: review coverage");
     for (const tag of openingTags) {
-      assert.match(tag, /\\bprefetch=\\{false\\}/u, path + " must disable unsolicited RSC route prefetch");
-      assert.match(tag, /\\bhref=/u, path + " must preserve working links");
+      assert.match(tag, /\bprefetch=\{false\}/u, path + " must disable unsolicited RSC route prefetch");
+      assert.match(tag, /\bhref=/u, path + " must preserve working links");
     }
   }
   const sharedHeader = fs.readFileSync("src/components/layout/PublicHeaderNavigation.tsx", "utf8");
-  assert.match(sharedHeader, /prefetch=\\{false\\}/u, "primary navigation keeps safe no-prefetch setting");
+  assert.match(sharedHeader, /prefetch=\{false\}/u, "primary navigation keeps safe no-prefetch setting");
 });

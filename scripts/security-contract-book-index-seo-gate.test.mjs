@@ -133,8 +133,23 @@ test("Book Index public pages index usable content and keep quality-gate telemet
 
   contains(
     insight,
-    "getBookIndexSoftLaunchPageContext(100)",
-    "trend routes use route-only soft-launch context",
+    "getBookIndexSoftLaunchPageContext(100, false)",
+    "trend routes retain full 100-row quality-gate evidence while omitting unused source observations",
+  );
+  assert.equal(
+    insight.match(/getBookIndexSoftLaunchPageContext\\(100, false\\)/g)?.length,
+    2,
+    "metadata and page must share one request-scoped freshness/gate cache key",
+  );
+  contains(
+    access,
+    "evaluateBookIndexSeoGate(policy, {",
+    "trend optimization cannot bypass the existing publication policy evaluation",
+  );
+  contains(
+    access,
+    "getBookIndexPublicReadModel(limit, false)",
+    "only source observation payload is omitted, not Turkey rank evidence",
   );
   contains(
     insight,

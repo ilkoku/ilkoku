@@ -61,7 +61,7 @@ export async function generateMetadata({
   const name = authorName(author);
   const canonical = `/yazarlar/${author.publicId}`;
   const title = `${name} — Eserleri | İlkOku`;
-  const metaDescription = `${name} tarafından İlkOku’da keşfe açık yayımlanan ${author.works.length} Türkçe eseri keşfedin.`;
+  const metaDescription = `İlkOku’da ${name} tarafından yayımlanan ${author.works.length} Türkçe eseri keşfedin. Bu yazarın kitap türlerini, bölüm sayılarını ve eser pasaportlarını inceleyin.`;
   const hasIndexableWorks = author.works.some(
     (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
   );

@@ -4,7 +4,7 @@ import { PublicWorkFeedPage } from "@/features/public-discovery/PublicWorkFeedPa
 
 const title = "Yeni Yayımlanan Eserler | İlkOku";
 const description =
-  "İlkOku’da son yayımlanan keşfe açık Türkçe eser vitrinlerini kalıcı kitap bağlantılarıyla keşfedin.";
+  "İlkOku’da son yayımlanan keşfe açık Türkçe eser vitrinlerini kalıcı kitap bağlantılarıyla keşfedin. Yeni eserlerin yazarlarını ve bölüm sayılarını inceleyin.";
 const socialImage = "/og/ilkoku-social-selected-2026.webp";
 
 type NewWorksSearchParams = {

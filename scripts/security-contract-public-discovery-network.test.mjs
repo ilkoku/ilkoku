@@ -556,3 +556,36 @@ test("P1: public discovery menus and cards avoid speculative RSC prefetch while 
     }
   }
 });
+
+
+test("Ahrefs P1: indexable discovery metadata has useful-length descriptions without changing robots/canonical", () => {
+  const staticPages = [
+    "src/app/eserler/page.tsx",
+    "src/app/yazarlar/page.tsx",
+    "src/app/turler/page.tsx",
+    "src/app/eserler/yeni/page.tsx",
+    "src/app/eserler/guncellenen/page.tsx",
+  ];
+  for (const path of staticPages) {
+    const code = source(path);
+    const desc = code.match(/const (?:pageDescription|description)\s*=\s*"([^"]+)"/u)?.[1];
+    assert.ok(desc, path + " must retain a meta description");
+    assert.ok(desc.length >= 140 && desc.length <= 160, path + " meta length " + desc.length);
+    assert.match(code, /canonical:/u, path + " canonical policy remains defined");
+    assert.match(code, /robots:/u, path + " indexability policy remains defined");
+  }
+  const author = source("src/app/yazarlar/[publicId]/page.tsx");
+  const authorTemplate = author.split("const metaDescription = ")[1]?.split(";")[0].trim().slice(1, -1);
+  assert.ok(authorTemplate);
+  const authorSample = authorTemplate.replaceAll("$" + "{name}", "Arda Koral — Demo Yazar").replaceAll("$" + "{author.works.length}", "5");
+  assert.ok(authorSample.length >= 140 && authorSample.length <= 160, "author sample length " + authorSample.length);
+  assert.match(author, /robots: \{ index: hasIndexableWorks, follow: true \}/u);
+  const genre = source("src/app/turler/[slug]/page.tsx");
+  const genreTemplate = genre.split("const description =")[1]?.trim().split(";")[0].trim().slice(1, -1);
+  assert.ok(genreTemplate);
+  for (const label of ["Tez", "Psikolojik Roman"]) {
+    const sample = genreTemplate.replaceAll("$" + "{genre.label}", label);
+    assert.ok(sample.length >= 140 && sample.length <= 160, "genre " + label + " length " + sample.length);
+  }
+  assert.match(genre, /index: page === 1/u);
+});

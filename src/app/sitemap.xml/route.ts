@@ -56,41 +56,21 @@ function ifNoneMatchMatches(ifNoneMatch: string | null, etag: string) {
   });
 }
 
-function latestSitemapModification(entries: MetadataRoute.Sitemap) {
-  const timestamps = entries
-    .map((entry) => normalizeLastModified(entry.lastModified)?.getTime() ?? null)
-    .filter((value): value is number => value !== null);
-
-  if (timestamps.length === 0) return null;
-
-  // HTTP dates have one-second precision.
-  return new Date(Math.floor(Math.max(...timestamps) / 1000) * 1000);
-}
-
 export async function GET(request: Request) {
   const entries = await buildSitemap();
   const xml = serializeSitemap(entries);
   const etag = `"${createHash("sha256").update(xml).digest("base64url")}"`;
-  const lastModified = latestSitemapModification(entries);
-
+  // Sitemap membership can change without changing the latest page <lastmod>.
+  // Only the hash of the complete XML is a sound whole-document validator.
   const headers: Record<string, string> = {
     "Cache-Control": "public, max-age=0, s-maxage=900, stale-while-revalidate=3600",
     "Content-Type": "application/xml; charset=utf-8",
     ETag: etag,
-    ...(lastModified ? { "Last-Modified": lastModified.toUTCString() } : {}),
   };
 
   const ifNoneMatch = request.headers.get("if-none-match");
   if (ifNoneMatchMatches(ifNoneMatch, etag)) {
     return new Response(null, { status: 304, headers });
-  }
-
-  const ifModifiedSince = request.headers.get("if-modified-since");
-  if (!ifNoneMatch && ifModifiedSince && lastModified) {
-    const validatorTime = Date.parse(ifModifiedSince);
-    if (Number.isFinite(validatorTime) && validatorTime >= lastModified.getTime()) {
-      return new Response(null, { status: 304, headers });
-    }
   }
 
   return new Response(xml, { headers });

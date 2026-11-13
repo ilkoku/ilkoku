@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import {
   getPublicGenreBySlug,
   getPublicWorkLibrary,
+  getSearchIndexEligibleGenreSlugs,
   PUBLIC_WORK_PAGE_SIZE,
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
@@ -79,6 +80,7 @@ export async function generateMetadata({
   }
 
   const page = pageNumber(query.sayfa);
+  const eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs();
   const canonical = `/turler/${genre.slug}`;
   const title = `${genre.label} Eserleri | İlkOku`;
   const description =
@@ -91,7 +93,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: page === 1,
+      index: page === 1 && eligibleGenreSlugs.has(genre.slug),
       follow: true,
     },
     openGraph: {

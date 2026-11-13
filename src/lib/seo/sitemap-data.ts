@@ -12,6 +12,8 @@ import { howItWorksPageContent } from "@/content/how-it-works";
 import { EDITOR_EDUCATION_CATEGORIES, editorEducationPublicPath } from "@/lib/editor-education";
 import { hasPublishedEditorProfiles } from "@/features/editors/data";
 import { getPublicGenres } from "@/features/public-discovery/library";
+import { normalizeGenreLabel } from "@/lib/genre-system";
+import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import { GENRES } from "@/lib/genres";
 import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
 import { getBookIndexLastObservedAt } from "@/lib/book-index/seo";
@@ -372,6 +374,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
         },
         select: {
           slug: true,
+          genre: true,
           updatedAt: true,
           author: { select: { publicId: true } },
         },
@@ -523,6 +526,14 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
     const searchEligibleAuthors = [...new Set(
       searchEligibleWorks.map((work) => work.author.publicId),
     )];
+    // Genre landing pages require at least one independently indexable work.
+    // A demo/test-only genre must not enter Google's sitemap inventory.
+    const searchEligibleGenreSlugs = new Set(
+      searchEligibleWorks.flatMap((work) => {
+        const label = normalizeGenreLabel(work.genre);
+        return label ? [publicTaxonomySlug(label)] : [];
+      }),
+    );
 
     return applySearchCodeFreshness(filterSoftLaunchSitemapEntries(dedupeSitemapEntries([
       ...liveStaticDiscoveryEntries,
@@ -530,11 +541,13 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       ...bookIndexEntries,
       // Only genres backed by currently public, eligible published works.
       // In particular, do not advertise legacy or demo-only invalid slugs.
-      ...livePublicGenres.map((genre) => ({
-        url: `${baseUrl}/turler/${genre.slug}`,
-        changeFrequency: "weekly" as const,
-        priority: 0.7,
-      })),
+      ...livePublicGenres
+        .filter((genre) => searchEligibleGenreSlugs.has(genre.slug))
+        .map((genre) => ({
+          url: `${baseUrl}/turler/${genre.slug}`,
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        })),
       ...publicPageEntries,
       ...legalEntries,
       // Author pages are discoverable only if they have at least one

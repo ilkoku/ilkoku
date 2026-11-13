@@ -187,6 +187,36 @@ jobs:
               }
             fi
 
+            # Preserve public browsing, but a genre absent from the live search
+            # inventory must not be marked indexable. This is conditional so a
+            # future real Distopya publication can legitimately enter the sitemap.
+            if ! grep -Fq '<loc>https://ilkoku.com/turler/distopya</loc>' "$body"; then
+              local genre_url="https://ilkoku.com/turler/distopya"
+              local genre_headers genre_body genre_code
+              genre_headers="$(mktemp)"
+              genre_body="$(mktemp)"
+              genre_code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$genre_headers" --output "$genre_body" --write-out '%{http_code}' "$genre_url" || true)"
+              echo "$genre_url -> HTTP $genre_code (noindex if not in sitemap)"
+              print_edge_headers "$genre_headers"
+              if [[ "$genre_code" == "403" || "$genre_code" == "429" ]]; then
+                rm -f "$genre_headers" "$genre_body" "$body"
+                fail_on_edge_block "$genre_code" "$genre_url"
+              fi
+              [[ "$genre_code" == "200" ]] || {
+                echo "Test-only genre must remain browseable" >&2
+                rm -f "$genre_headers" "$genre_body" "$body"
+                return 1
+              }
+              grep -Eqi '<meta[^>]+name="robots"[^>]+content="[^"]*noindex' "$genre_body" || {
+                echo "Genre excluded from sitemap is still indexable: $genre_url" >&2
+                rm -f "$genre_headers" "$genre_body" "$body"
+                return 1
+              }
+              echo "PASS: sitemap-excluded QA-only genre remains browseable with noindex"
+              rm -f "$genre_headers" "$genre_body"
+              pace
+            fi
+
             rm -f "$body"
             pace
           }

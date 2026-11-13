@@ -23,7 +23,7 @@ import "./public-library.css";
 const baseUrl = "https://ilkoku.com";
 const pageTitle = "Eserleri Keşfet | İlkOku";
 const pageDescription =
-  "İlkOku'da keşfe açık Türkçe eser vitrinlerini tür, yazar ve güncellik bilgileriyle keşfedin.";
+  "İlkOku'da keşfe açık Türkçe eser vitrinlerini tür, yazar ve güncellik bilgileriyle keşfedin. Kitapların bölüm sayılarını ve yazar profillerini inceleyin.";
 
 type PublicLibraryPageProps = {
   searchParams: Promise<{

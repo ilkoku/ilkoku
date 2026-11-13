@@ -592,7 +592,7 @@ test("Ahrefs P1: indexable discovery metadata has useful-length descriptions wit
 
 
 test("GSC crawl discovery: HTML site map links canonical public directories and indexable works' authors/genres", () => {
-  const navigation = source("src/lib/cms-header-navigation.ts");
+  const discoveryPage = source("src/app/site-haritasi/page.tsx");
   for (const href of [
     "/eserler",
     "/eserler/yeni",
@@ -601,7 +601,7 @@ test("GSC crawl discovery: HTML site map links canonical public directories and 
     "/turler",
   ]) {
     assert.ok(
-      navigation.includes('href: "' + href + '"'),
+      discoveryPage.includes('href: "' + href + '"'),
       "HTML sitemap must expose canonical directory link: " + href,
     );
   }

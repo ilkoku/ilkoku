@@ -532,3 +532,27 @@ test("P1 genre SEO eligibility scans only the selected raw genre categories", ()
   contains(genre, "getSearchIndexEligibleGenreSlugs(genre.sourceGenres)", "detail supplies its selected genre's grouped stored values");
   notContains(library, "unstable_cache(", "publication changes are reflected without cross-request stale caching");
 });
+
+
+test("P1: public discovery menus and cards avoid speculative RSC prefetch while keeping crawlable hrefs", () => {
+  // Measured live before change: Eserler 8, Yazarlar 17, Turler 22
+  // automatic _rsc requests in mobile browser without any navigation click.
+  const components = [
+    ["src/features/public-discovery/PublicHubShell.tsx", 1],
+    ["src/features/public-discovery/PublicWorkStream.tsx", 5],
+    ["src/app/eserler/page.tsx", 27],
+    ["src/app/yazarlar/page.tsx", 5],
+    ["src/app/turler/page.tsx", 4],
+    ["src/app/yazarlar/[publicId]/page.tsx", 5],
+    ["src/app/turler/[slug]/page.tsx", 4],
+  ];
+  for (const [path, expected] of components) {
+    const component = source(path);
+    const links = [...component.matchAll(/<Link\b[^>]*>/gu)].map(([tag]) => tag);
+    assert.equal(links.length, expected, path + " link count changed; review coverage");
+    for (const tag of links) {
+      assert.match(tag, /\bprefetch=\{false\}/u, path + " must disable automatic prefetch");
+      assert.match(tag, /\bhref=/u, path + " must keep crawlable destinations");
+    }
+  }
+});

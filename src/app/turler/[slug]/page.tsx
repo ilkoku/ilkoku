@@ -80,7 +80,15 @@ export async function generateMetadata({
   }
 
   const page = pageNumber(query.sayfa);
-  const eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs();
+  // A discovery-only eligibility lookup must never take the public genre
+  // page offline; if it fails, retain the previous indexable behaviour and
+  // let the production sitemap/noindex parity smoke flag the mismatch.
+  let eligibleGenreSlugs: Set<string> | null = null;
+  try {
+    eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs();
+  } catch (error) {
+    console.error("Public genre SEO eligibility lookup failed", error);
+  }
   const canonical = `/turler/${genre.slug}`;
   const title = `${genre.label} Eserleri | İlkOku`;
   const description =
@@ -93,7 +101,7 @@ export async function generateMetadata({
       canonical,
     },
     robots: {
-      index: page === 1 && eligibleGenreSlugs.has(genre.slug),
+      index: page === 1 && (eligibleGenreSlugs?.has(genre.slug) ?? true),
       follow: true,
     },
     openGraph: {

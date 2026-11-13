@@ -7,11 +7,7 @@ import {
   normalizeGenreLabel,
 } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-import {
-  BLOCKED_PUBLIC_WORK_SLUGS,
-  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
-  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES,
-} from "@/lib/public-content-safety";
+import { BLOCKED_PUBLIC_WORK_SLUGS, isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import type { PublicStoredWorkContentRating } from "@/lib/work-content-classification";
 
@@ -298,36 +294,27 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
   );
 });
 
-// A public genre may contain QA/demo publications that must remain readable but
-// must not create a search landing page on their own. This is request-scoped:
-// new eligible publications are reflected immediately in later requests.
+// A public genre may contain QA/demo publications that remain readable, but
+// those fixtures must not independently create a search landing page.
+// This lightweight read path avoids a grouped query with an exclusion predicate
+// whose failure previously broke public genre detail rendering in production.
 export const getSearchIndexEligibleGenreSlugs = cache(
   async function getSearchIndexEligibleGenreSlugs() {
-    const rows = await prisma.work.groupBy({
-      by: ["genre"],
-      orderBy: { genre: "asc" },
-      take: 100,
+    const works = await prisma.work.findMany({
       where: {
         ...publicWorkBaseWhere,
         genre: { not: null },
-        slug: {
-          notIn: [
-            ...BLOCKED_PUBLIC_WORK_SLUGS,
-            ...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
-          ],
-        },
-        NOT: SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix) => ({
-          slug: { startsWith: prefix },
-        })),
       },
+      select: { genre: true, slug: true },
+      take: 50_000,
     });
-
-    return new Set(
-      rows.flatMap((row) => {
-        const label = normalizeGenreLabel(row.genre);
-        return label ? [publicTaxonomySlug(label)] : [];
-      }),
-    );
+    const slugs = new Set<string>();
+    for (const work of works) {
+      if (isSearchIndexExcludedPublicWorkSlug(work.slug)) continue;
+      const label = normalizeGenreLabel(work.genre);
+      if (label) slugs.add(publicTaxonomySlug(label));
+    }
+    return slugs;
   },
 );
 

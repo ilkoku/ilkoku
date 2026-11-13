@@ -1970,9 +1970,10 @@ test("sitemap explicitly covers live public work discovery without adding demo a
   assertContains(sitemap, 'url: `${baseUrl}/turler/${genre.slug}`', "canonical genre sitemap paths");
   assertContains(library, "const publicWorkBaseWhere", "author and work eligibility");
   assertContains(library, "getSearchIndexEligibleGenreSlugs = cache(", "request-local indexable genre lookup");
-  assertContains(library, "...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS", "excluded QA work slugs cannot support a search genre");
-  assertContains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix)", "demo prefixes cannot support a search genre");
-  assertContains(genrePage, "eligibleGenreSlugs.has(genre.slug)", "test-only genres are served to users but noindexed");
+  assertContains(library, "isSearchIndexExcludedPublicWorkSlug(work.slug)", "test and demo works cannot support a search genre");
+  assertContains(library, "prisma.work.findMany({", "genre eligibility uses a proven public work read path");
+  assertContains(genrePage, "eligibleGenreSlugs?.has(genre.slug)", "test-only genres are served to users but noindexed");
+  assertContains(genrePage, "catch (error)", "optional SEO query failure never takes genre routes offline");
   const productionSmoke = source(".github/workflows/production-smoke.yml");
   assertContains(productionSmoke, 'if ! grep -Fq \'<loc>https://ilkoku.com/turler/distopya</loc>\'', "site smoke verifies noindex when QA genre is absent from sitemap");
   assertContains(productionSmoke, "PASS: sitemap-excluded QA-only genre remains browseable with noindex", "live smoke proves the QA genre route remains public without indexing");

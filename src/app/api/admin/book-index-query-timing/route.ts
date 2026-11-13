@@ -45,7 +45,9 @@ export async function GET(request: Request) {
       const [context, insights] = await Promise.all([
         timeBookIndexOperation(
           "route.publicContext",
-          () => getBookIndexSoftLaunchPageContext(100),
+          () => insightKey
+            ? getBookIndexSoftLaunchPageContext(100, false)
+            : getBookIndexSoftLaunchPageContext(100),
         ),
         timeBookIndexOperation(
           "route.insightsCalculation",
@@ -72,7 +74,7 @@ export async function GET(request: Request) {
       ok: true,
       observedAtUtc: new Date().toISOString(),
       workload: insightKey
-        ? `insight-page:${insightKey} publicContext(100) + selectedInsights(50)`
+        ? `insight-page:${insightKey} publicContext(100,sourceItems=false) + selectedInsights(50)`
         : "insight-page: publicContext(100) + insights(50)",
       // Timed SQL calls include driver/connection queue time. Because the
       // shared MariaDB adapter connectionLimit is 1, parallel spans overlap.

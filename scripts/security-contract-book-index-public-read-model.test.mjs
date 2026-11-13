@@ -734,5 +734,22 @@ test("batched public source snapshots reproduce the original single-list reader 
     assert.equal(current[4].availability, "paused");
     assert.equal(current[5].availability, "researching");
     assert.equal(current[6].availability, "no_snapshot");
+
+    // Insight pages need the exact source freshness and SEO-gate evidence,
+    // but no duplicate book observation/price payload for source snapshots.
+    const beforeLean = batchCalls;
+    const leanModel = await getBookIndexPublicReadModel(limit, false);
+    const stripItems = lists => lists.map(({ items, ...snapshot }) => snapshot);
+    assert.deepEqual(
+      stripItems(leanModel.sourceLists),
+      stripItems(current),
+      "light insight context must preserve every source's observedAt and availability",
+    );
+    assert.deepEqual(leanModel.turkey, (await getBookIndexPublicReadModel(limit)).turkey,
+      "Turkey rank evidence used by the existing SEO publication gate must not change");
+    assert.ok(leanModel.sourceLists.every(list => list.items.length === 0),
+      "light insight context must not fetch a second set of source books");
+    assert.equal(batchCalls - beforeLean, 2,
+      "one lightweight and one default full model read used by the regression comparison");
   }
 });

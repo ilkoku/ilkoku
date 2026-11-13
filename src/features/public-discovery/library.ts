@@ -119,6 +119,7 @@ const publicWorkSelect = {
 export async function getPublicWorkLibrary(
   filters: PublicWorkLibraryFilters,
   requestedPage: number,
+  includeGenres = true,
 ) {
   const orderBy: Prisma.WorkOrderByWithRelationInput[] =
     filters.sort === "updated"
@@ -130,22 +131,26 @@ export async function getPublicWorkLibrary(
           { publishedAt: "desc" },
           { createdAt: "desc" },
         ];
-  const genreRowsQuery = prisma.work.findMany({
-    distinct: ["genre"],
-    orderBy: {
-      genre: "asc",
-    },
-    select: {
-      genre: true,
-    },
-    take: 100,
-    where: {
-      ...publicWorkBaseWhere,
-      genre: {
-        not: null,
-      },
-    },
-  });
+  // Genre detail pages already know their genre and do not render the full
+  // filter list. Avoid a redundant distinct-genre database query for them.
+  const genreRowsQuery = includeGenres
+    ? prisma.work.findMany({
+        distinct: ["genre"],
+        orderBy: {
+          genre: "asc",
+        },
+        select: {
+          genre: true,
+        },
+        take: 100,
+        where: {
+          ...publicWorkBaseWhere,
+          genre: {
+            not: null,
+          },
+        },
+      })
+    : Promise.resolve([] as { genre: string | null }[]);
 
   if (filters.search) {
     const needle = filters.search

@@ -58,9 +58,11 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "genre route uses request-local shared lookup");
   contains(genre, "getSearchIndexEligibleGenreSlugs()",
     "genre metadata separately checks only search-index eligible publications");
-  contains(genre, "page === 1 && eligibleGenreSlugs.has(genre.slug)",
-    "QA-only genre remains available for users but excluded from search");
-  contains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix)",
+  contains(genre, "page === 1 && (eligibleGenreSlugs?.has(genre.slug) ?? true)",
+    "QA-only genre is noindexed when eligibility is known");
+  contains(genre, "catch (error)",
+    "metadata eligibility failures must not break public genre rendering");
+  contains(library, "isSearchIndexExcludedPublicWorkSlug(work.slug)",
     "demo-only genres are not valid search landings");
   notContains(library, "unstable_cache(",
     "no cross-request stale public genre or author cache");

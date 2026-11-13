@@ -134,17 +134,7 @@ jobs:
               "$url" || true)"
             cache="$(grep -i '^cf-cache-status:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
             rm -f "$headers"
-            IFS=        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: ilkoku-lcp-edge-origin-timing
-          path: |
-            /tmp/ilkoku-lcp-timing.ndjson
-            /tmp/ilkoku-lcp-timing-report.md
-            /tmp/ilkoku-p1-http-cohort.tsv
-            /tmp/ilkoku-p1-http-cohort-report.md
-          retention-days: 14
-          if-no-files-found: warn\t' read -r code ttfb total bytes <<< "$metrics"
+            read -r code ttfb total bytes <<< "$(printf '%s' "$metrics" | tr '\t' ' ')"
             if [[ -z "$code" ]]; then code=000; fi
             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$cohort" "$url" "$expected" "$code" "$ttfb" "$total" "$bytes" "$cache" | tee -a "$output"
             if [[ "$code" == "403" || "$code" == "429" ]]; then
@@ -222,5 +212,7 @@ jobs:
           path: |
             /tmp/ilkoku-lcp-timing.ndjson
             /tmp/ilkoku-lcp-timing-report.md
+            /tmp/ilkoku-p1-http-cohort.tsv
+            /tmp/ilkoku-p1-http-cohort-report.md
           retention-days: 14
           if-no-files-found: warn

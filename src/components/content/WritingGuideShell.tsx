@@ -170,7 +170,7 @@ export function WritingGuideShell({
           {WRITING_CATEGORY_HUBS.map((category) => {
             const active = category.category === activeCategory;
             return (
-              <Link
+              <Link prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={active
                   ? "shrink-0 rounded-full bg-[#211746] px-4 py-2 text-sm font-extrabold !text-white shadow-sm transition"
@@ -200,7 +200,7 @@ export function WritingGuideShell({
 
                 if (href) {
                   return (
-                    <Link
+                    <Link prefetch={false}
                       aria-current={active ? "page" : undefined}
                       className={className}
                       href={href}
@@ -241,11 +241,11 @@ export function WritingGuideShell({
                 {activeCategory} yolculuğunda devam et.
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-[#696270]">
-                Bu rehber, <Link className="font-extrabold text-[#5b35dd] underline decoration-[#5b35dd]/25 underline-offset-4" href={categoryHub.href}>{categoryHub.title} ana eğitiminin</Link> bir parçasıdır. Konuyu komşu türlerle karşılaştırmak için ilgili rehberlere geçebilirsin.
+                Bu rehber, <Link prefetch={false} className="font-extrabold text-[#5b35dd] underline decoration-[#5b35dd]/25 underline-offset-4" href={categoryHub.href}>{categoryHub.title} ana eğitiminin</Link> bir parçasıdır. Konuyu komşu türlerle karşılaştırmak için ilgili rehberlere geçebilirsin.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {contextualBridge ? (
-                  <Link
+                  <Link prefetch={false}
                     className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
                     href={contextualBridge.href}
                   >
@@ -256,7 +256,7 @@ export function WritingGuideShell({
                   const href = LIVE_WRITING_GUIDE_HREFS[genre.slug];
                   if (!href) return null;
                   return (
-                    <Link
+                    <Link prefetch={false}
                       className="rounded-full border border-[#6b52c7]/15 bg-white px-4 py-2.5 text-sm font-extrabold text-[#4f35b5] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35"
                       href={href}
                       key={genre.slug}

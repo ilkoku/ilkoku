@@ -73,7 +73,7 @@ test("Book Index insights derive from historical snapshots without publishing ro
   );
   contains(
     insights,
-    "sourceCount: independenceGroups.size",
+    "sourceCount: new Set(",
     "long-seller independent operator count",
   );
   notContains(
@@ -305,7 +305,7 @@ test("Book Index query timing diagnostic is admin-only, read-only and request-sc
   contains(insights, "{ revalidate: 30 }", "history freshness bounded to 30 seconds");
   contains(insights, "observationCount: Number(row.observationCount)", "bigint normalization for cache transport");
   contains(insights, "firstObservedAt: new Date(row.firstObservedAt)", "Date rehydration preserves downstream presentation");
-  contains(insights, ".slice(0, limit);", "existing long-seller ranking and limit preserved");
+  contains(insights, "eligible.slice(0, limit - selected.length)", "existing long-seller ranking and limit preserved");
   notContains(route, "executeRaw", "diagnostic does not write to database");
   notContains(route, "POST(", "no state-mutating diagnostic action");
 });
@@ -415,4 +415,84 @@ test("P1 long-seller route skips unrelated new-entry/riser/everywhere source sna
   contains(insights, "return getBookIndexInsightsForLimit(safeLimit);", "full consumer keeps both current and historical evidence");
   contains(insights, "const [snapshots, longSellers] = await Promise.all([", "independent reads remain parallel");
   contains(page, "getBookIndexPageInsights(definition.key, 50)", "dynamic route passes the exact insight key");
+});
+
+test("P1 long-seller metadata bounds candidate reads but preserves title ties and missing-book backfill", async () => {
+  const insightsCode = source("src/lib/book-index/insights.ts");
+  contains(insightsCode, "const rankedRows = rows", "all history is ranked before metadata lookup");
+  contains(insightsCode, "end < rankedRows.length", "rank ties must be fetched together");
+  contains(insightsCode, "selected.push(...eligible.slice(0, limit - selected.length))", "result limit maintained");
+
+  const compiled = ts.transpileModule(insightsCode, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const first = new Date("2026-10-01T00:00:00Z");
+  const top = ["zebra", "missing", "uzum", "armut", "badem"];
+  const second = ["mavi", "deniz", "yildiz"];
+  const tail = Array.from({ length: 80 }, (_, i) => "tail_" + i);
+  const row = (masterBookId, day) => ({
+    masterBookId,
+    firstObservedAt: first,
+    lastObservedAt: new Date("2026-10-" + day + "T00:00:00Z"),
+    sourceCodes: "s1,s2",
+    observationCount: 10n,
+  });
+  const history = [
+    ...top.map(id => row(id, "20")),
+    ...second.map(id => row(id, "19")),
+    ...tail.map(id => row(id, "02")),
+  ];
+  const titles = new Map([
+    ["zebra", "Zebra"],
+    ["uzum", "Üzüm"],
+    ["armut", "Armut"],
+    ["badem", "Badem"],
+    ["mavi", "Mavi"],
+    ["deniz", "Deniz"],
+    ["yildiz", "Yıldız"],
+  ]);
+  const metadataRequests = [];
+  const mocks = {
+    "server-only": {},
+    "react": { cache: fn => fn },
+    "next/cache": { unstable_cache: fn => async (...args) => JSON.parse(JSON.stringify(await fn(...args))) },
+    "@/lib/prisma": {
+      prisma: {
+        bookIndexList: { findMany: async () => [] },
+        $queryRaw: async () => history,
+        bookIndexBook: { findMany: async ({ where }) => {
+          const ids = where.id.in;
+          metadataRequests.push([...ids]);
+          return ids.filter(id => titles.has(id)).map(id => ({ id, title: titles.get(id), authorName: "Yazar" }));
+        } },
+      },
+    },
+    "./performance-trace": { timeBookIndexOperation: async (_, fn) => fn() },
+    "./sources": {
+      TURKEY_INDEX_MIN_SOURCES: 1,
+      getBookIndexSource: code => ({ name: code }),
+      getBookIndexSourceIndependenceGroup: code => code,
+    },
+  };
+  const mod = { exports: {} };
+  new Function("require", "module", "exports", compiled)(
+    name => {
+      assert.ok(Object.hasOwn(mocks, name), "unexpected dependency " + name);
+      return mocks[name];
+    },
+    mod, mod.exports,
+  );
+  const full = await mod.exports.getBookIndexInsights(5);
+  const page = await mod.exports.getBookIndexPageInsights("longSellers", 5);
+  const topOrdered = top.filter(id => titles.has(id)).sort((a, b) => titles.get(a).localeCompare(titles.get(b), "tr"));
+  const nextOrdered = second.sort((a, b) => titles.get(a).localeCompare(titles.get(b), "tr"));
+  assert.deepEqual(page.longSellers.map(item => item.masterBookId), [...topOrdered, ...nextOrdered].slice(0, 5),
+    "missing metadata is backfilled while equal-ranked books use Turkish title order");
+  assert.deepEqual(JSON.parse(JSON.stringify(page.longSellers)), JSON.parse(JSON.stringify(full.longSellers)),
+    "selected route and full-data consumer retain the same visible long-seller evidence");
+  assert.equal(metadataRequests.length, 4, "two bounded metadata fetches per call, including backfill");
+  for (const ids of metadataRequests) {
+    assert.ok(ids.length <= 5, "only rank-eligible group IDs are fetched");
+    assert.ok(!ids.some(id => id.startsWith("tail_")), "80 lower-ranked books are never fetched for page of 5");
+  }
 });

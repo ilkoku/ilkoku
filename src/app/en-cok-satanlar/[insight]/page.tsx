@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const [context, insights] = await Promise.all([
-    getBookIndexSoftLaunchPageContext(100),
+    getBookIndexSoftLaunchPageContext(100, false),
     getBookIndexPageInsights(definition.key, 50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);
@@ -69,7 +69,7 @@ export default async function BookIndexInsightPage({
   if (!definition) notFound();
 
   const [context, insights] = await Promise.all([
-    getBookIndexSoftLaunchPageContext(100),
+    getBookIndexSoftLaunchPageContext(100, false),
     getBookIndexPageInsights(definition.key, 50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);

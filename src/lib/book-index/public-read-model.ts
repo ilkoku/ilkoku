@@ -263,6 +263,7 @@ export async function getBookIndexSourceListSnapshot(
 async function getBookIndexPublicSourceListSnapshots(
   listCodes: string[],
   limit: number,
+  includeSourceListItems = true,
 ): Promise<Array<BookIndexSourceListSnapshot | null>> {
   if (!listCodes.length) return [];
 
@@ -285,7 +286,9 @@ async function getBookIndexPublicSourceListSnapshots(
             startedAt: true,
             observations: {
               orderBy: { rank: "asc" },
-              take: safeLimit,
+              // Insight routes need only source freshness; never load the
+              // same ranked book observations for a second time.
+              take: includeSourceListItems ? safeLimit : 0,
               select: {
                 rank: true,
                 priceAmount: true,
@@ -419,6 +422,7 @@ async function getMarketSourceState(
 
 export async function getBookIndexPublicReadModel(
   limit = 100,
+  includeSourceListItems = true,
 ): Promise<BookIndexPublicReadModel> {
   const enabledLists = BOOK_INDEX_LISTS.filter(
     (list) => list.enabled && list.publiclyVisible,
@@ -426,7 +430,7 @@ export async function getBookIndexPublicReadModel(
   const [turkeyItems, sourceLists] = await Promise.all([
     timeBookIndexOperation("publicModel.turkeyRankRows", () => getTurkeySourceRankRows(limit)),
     timeBookIndexOperation("publicModel.sourceListSnapshots", () =>
-      getBookIndexPublicSourceListSnapshots(enabledLists.map((list) => list.code), limit),
+      getBookIndexPublicSourceListSnapshots(enabledLists.map((list) => list.code), limit, includeSourceListItems),
     ),
   ]);
 

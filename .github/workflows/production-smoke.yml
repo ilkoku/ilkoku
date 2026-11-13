@@ -100,7 +100,12 @@ jobs:
             local headers body code marker
             headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            local conditional_header=()
+            if [[ "$url" == "https://ilkoku.com/recent-updates.atom" ]]; then
+              # Regression guard: a changed feed must not be answered with a stale date-only 304.
+              conditional_header=(--header "If-Modified-Since: Fri, 01 Jan 2100 00:00:00 GMT")
+            fi
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" "${conditional_header[@]}" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
             print_edge_headers "$headers"
             if [[ "$code" == "403" || "$code" == "429" ]]; then
@@ -121,7 +126,9 @@ jobs:
             local headers body code required forbidden
             headers="$(mktemp)"
             body="$(mktemp)"
-            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
+            # An If-Modified-Since-only client must receive the current XML, even when the
+            # newest entry <lastmod> did not advance after the URL inventory changed.
+            code="$(curl --silent --show-error --location --max-time 20 --user-agent "$USER_AGENT" --header "If-Modified-Since: Fri, 01 Jan 2100 00:00:00 GMT" --dump-header "$headers" --output "$body" --write-out '%{http_code}' "$url" || true)"
             echo "$url -> HTTP $code"
             print_edge_headers "$headers"
             if [[ "$code" == "403" || "$code" == "429" ]]; then

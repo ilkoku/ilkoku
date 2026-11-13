@@ -237,25 +237,25 @@ test("education sitemap lastmod uses only truthful published CMS timestamps", ()
     'ETag: etag',
     "Atom feed ETag response header",
   );
-  assertContains(
+  assertNotContains(
     recentUpdatesAtom,
-    '"Last-Modified": feedUpdated.toUTCString()',
-    "Atom feed Last-Modified response header",
+    '"Last-Modified"',
+    "Atom feed does not expose a stale whole-resource HTTP date",
   );
   assertContains(
     recentUpdatesAtom,
     'const ifNoneMatch = request.headers.get("if-none-match");',
     "Atom feed If-None-Match conditional response",
   );
-  assertContains(
+  assertNotContains(
     recentUpdatesAtom,
     'request.headers.get("if-modified-since")',
-    "Atom feed If-Modified-Since conditional response",
+    "Atom must not return stale 304 from entry updated timestamps",
   );
   assertContains(
     recentUpdatesAtom,
-    "if (!ifNoneMatch && ifModifiedSince)",
-    "Atom must give If-None-Match precedence over If-Modified-Since",
+    "if (ifNoneMatch === etag)",
+    "Atom only returns 304 when the full XML ETag matches",
   );
   assertNotContains(
     recentUpdatesAtom,

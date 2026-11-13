@@ -7,10 +7,9 @@ import {
   getBookIndexInsightPage,
 } from "@/lib/book-index/insight-pages";
 import { getBookIndexPageInsights } from "@/lib/book-index/insights";
-import { getBookIndexSoftLaunchPageContext } from "@/lib/book-index/public-access";
+import { getBookIndexPublicLastObservedAt } from "@/lib/book-index/public-freshness";
 import {
   createBookIndexGenericItemListSchema,
-  getBookIndexLastObservedAt,
 } from "@/lib/book-index/seo";
 import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
@@ -42,10 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     });
   }
 
-  const [context, insights] = await Promise.all([
-    getBookIndexSoftLaunchPageContext(100),
-    getBookIndexPageInsights(definition.key, 50),
-  ]);
+  const insights = await getBookIndexPageInsights(definition.key, 50);
   const items = getBookIndexInsightItems(insights, definition.key);
 
   return createPublicPageMetadata({
@@ -68,15 +64,14 @@ export default async function BookIndexInsightPage({
   const definition = getBookIndexInsightPage(slug);
   if (!definition) notFound();
 
-  const [context, insights] = await Promise.all([
-    getBookIndexSoftLaunchPageContext(100),
+  const [lastObservedAt, insights] = await Promise.all([
+    getBookIndexPublicLastObservedAt(),
     getBookIndexPageInsights(definition.key, 50),
   ]);
   const items = getBookIndexInsightItems(insights, definition.key);
   const searchIndexable = items.length > 0;
 
   const pageUrl = `${baseUrl}${canonical(slug)}`;
-  const lastObservedAt = getBookIndexLastObservedAt(context.model);
   const schemas = [
     {
       "@context": "https://schema.org",

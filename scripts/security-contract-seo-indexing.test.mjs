@@ -1965,9 +1965,14 @@ test("sitemap explicitly covers live public work discovery without adding demo a
 
   assertContains(sitemap, '["yeni", "guncellenen"] as const', "two self-canonical work lists");
   assertContains(sitemap, "getPublicGenres()", "public genre inventory uses publication policy");
-  assertContains(sitemap, "...livePublicGenres.map((genre)", "live valid genre URLs");
+  assertContains(sitemap, "searchEligibleGenreSlugs", "search eligible genre slugs derived from indexable works");
+  assertContains(sitemap, ".filter((genre) => searchEligibleGenreSlugs.has(genre.slug))", "test-only genre pages excluded from sitemap");
   assertContains(sitemap, 'url: `${baseUrl}/turler/${genre.slug}`', "canonical genre sitemap paths");
   assertContains(library, "const publicWorkBaseWhere", "author and work eligibility");
+  assertContains(library, "getSearchIndexEligibleGenreSlugs = cache(", "request-local indexable genre lookup");
+  assertContains(library, "...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS", "excluded QA work slugs cannot support a search genre");
+  assertContains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix)", "demo prefixes cannot support a search genre");
+  assertContains(genrePage, "eligibleGenreSlugs.has(genre.slug)", "test-only genres are served to users but noindexed");
   assertContains(library, "const slug = label ? publicTaxonomySlug(label) : \"\"", "genre normalization");
   assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");
   assertNotContains(sitemap, "/yazarlar/${author.", "no indiscriminate demo author publication");

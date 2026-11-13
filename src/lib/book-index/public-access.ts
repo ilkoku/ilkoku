@@ -63,7 +63,9 @@ async function buildBookIndexPageContext(
 ): Promise<BookIndexPublicPageContext> {
   const [evidence, model] = await Promise.all([
     timeBookIndexOperation("publicContext.readinessEvidence", () => getCachedPublicBookIndexSeoEvidence()),
-    timeBookIndexOperation("publicContext.readModel", () => getBookIndexPublicReadModel(limit, includeSourceListItems)),
+    timeBookIndexOperation("publicContext.readModel", () => includeSourceListItems
+      ? getBookIndexPublicReadModel(limit)
+      : getBookIndexPublicReadModel(limit, false)),
   ]);
 
   const gate = evaluateBookIndexSeoGate(policy, {

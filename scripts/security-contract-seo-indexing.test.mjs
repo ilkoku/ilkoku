@@ -1973,6 +1973,9 @@ test("sitemap explicitly covers live public work discovery without adding demo a
   assertContains(library, "...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS", "excluded QA work slugs cannot support a search genre");
   assertContains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix)", "demo prefixes cannot support a search genre");
   assertContains(genrePage, "eligibleGenreSlugs.has(genre.slug)", "test-only genres are served to users but noindexed");
+  const productionSmoke = source(".github/workflows/production-smoke.yml");
+  assertContains(productionSmoke, 'if ! grep -Fq \'<loc>https://ilkoku.com/turler/distopya</loc>\'', "site smoke verifies noindex when QA genre is absent from sitemap");
+  assertContains(productionSmoke, "PASS: sitemap-excluded QA-only genre remains browseable with noindex", "live smoke proves the QA genre route remains public without indexing");
   assertContains(library, "const slug = label ? publicTaxonomySlug(label) : \"\"", "genre normalization");
   assertContains(genrePage, 'const canonical = `/turler/${genre.slug}`', "genre canonical parity");
   assertNotContains(sitemap, "/yazarlar/${author.", "no indiscriminate demo author publication");

@@ -837,13 +837,15 @@ test("sitemap XML route exposes stable HTTP validators", () => {
 
   assertContains(route, 'buildSitemap()', "sitemap route reuses canonical discovery inventory");
   assertContains(route, 'createHash("sha256")', "sitemap response uses content-derived ETag");
-  assertContains(route, '"Last-Modified"', "sitemap response exposes Last-Modified");
+  assertNotContains(route, '"Last-Modified"', "dynamic sitemap must not advertise a stale whole-resource HTTP date");
   assertContains(route, 'request.headers.get("if-none-match")', "sitemap handles If-None-Match");
   assertContains(route, 'replace(/^W\\//i, "")', "sitemap normalizes weak ETags");
   assertContains(route, 'ifNoneMatch.split(",")', "sitemap accepts ETag lists");
   assertContains(route, 'value === "*"', "sitemap honors wildcard If-None-Match");
-  assertContains(route, 'request.headers.get("if-modified-since")', "sitemap handles If-Modified-Since");
-  assertContains(route, 'status: 304', "sitemap returns 304 for matching validators");
+  assertNotContains(route, 'request.headers.get("if-modified-since")', "an unchanged per-page timestamp must never cause a false sitemap 304");
+  assertContains(route, 'status: 304', "sitemap returns 304 for matching content ETags");
+  assertContains(route, 'return new Response(xml, { headers });', "changed sitemap XML always returns HTTP 200");
+  assertContains(route, 'ifNoneMatchMatches(ifNoneMatch, etag)', "sitemap 304 requires matching complete-XML ETag");
   assertContains(route, '"Content-Type": "application/xml; charset=utf-8"', "sitemap keeps XML content type");
 });
 

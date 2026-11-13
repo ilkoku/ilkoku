@@ -131,14 +131,14 @@ export default async function PublicGenresPage({
             </label>
             <button type="submit">Türleri getir</button>
             {search ? (
-              <Link href="/turler">Aramayı temizle</Link>
+              <Link prefetch={false} href="/turler">Aramayı temizle</Link>
             ) : null}
           </form>
 
           {genres.length > 0 ? (
             <div className="public-hub__grid">
               {genres.map((genre) => (
-                <Link
+                <Link prefetch={false}
                   className="public-hub-card"
                   href={`/turler/${genre.slug}?from=${encodeURIComponent(returnPath)}`}
                   key={genre.slug}
@@ -172,9 +172,9 @@ export default async function PublicGenresPage({
                   : "İlk keşfe açık eser yayımlandığında tür sayfası otomatik oluşacak ve sitemap’e eklenecek."}
               </p>
               {search ? (
-                <Link href="/turler">Tüm türleri göster</Link>
+                <Link prefetch={false} href="/turler">Tüm türleri göster</Link>
               ) : (
-                <Link href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
+                <Link prefetch={false} href="/nasil-calisir#eser-ilkoku-da-nasil-ilerler">
                   İlkOku’da eser yolculuğunu öğren
                 </Link>
               )}

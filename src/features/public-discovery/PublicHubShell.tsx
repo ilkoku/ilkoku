@@ -24,7 +24,7 @@ export function PublicHubShell({
       >
         <div className="public-hub__container">
           {discoveryLinks.map((item) => (
-            <Link href={item.href} key={item.href}>
+            <Link prefetch={false} href={item.href} key={item.href}>
               {item.label}
             </Link>
           ))}

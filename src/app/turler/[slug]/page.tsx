@@ -222,7 +222,7 @@ export default async function PublicGenrePage({
             kalıcı kitap bağlantılarıyla keşfedin.
           </p>
           <p>
-            <Link href={returnTo}>← Geldiğin sayfaya dön</Link>
+            <Link prefetch={false} href={returnTo}>← Geldiğin sayfaya dön</Link>
           </p>
         </header>
 
@@ -251,7 +251,7 @@ export default async function PublicGenrePage({
                 Eser yayından kaldırıldığında boş tür sayfası
                 da sitemap’ten otomatik çıkar.
               </p>
-              <Link href={returnTo}>
+              <Link prefetch={false} href={returnTo}>
                 Diğer türleri görüntüle
               </Link>
             </div>
@@ -263,7 +263,7 @@ export default async function PublicGenrePage({
               className="public-hub__pagination"
             >
               {library.currentPage > 1 ? (
-                <Link
+                <Link prefetch={false}
                   href={genrePageHref(
                     genre.slug,
                     library.currentPage - 1,
@@ -281,7 +281,7 @@ export default async function PublicGenrePage({
               </span>
               {library.currentPage <
               library.totalPages ? (
-                <Link
+                <Link prefetch={false}
                   href={genrePageHref(
                     genre.slug,
                     library.currentPage + 1,

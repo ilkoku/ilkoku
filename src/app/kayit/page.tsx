@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { redirect } from "next/navigation";
 import { authContent } from "@/content";
 import { AuthShell } from "@/features/auth/components/AuthShell";
@@ -7,7 +8,12 @@ import { getAuthenticatedDestination } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 import type { RegistrationRole } from "@/features/auth/types";
 
-export const metadata: Metadata = { title: authContent.register.metadataTitle, description: authContent.register.metadataDescription, robots: { index: false, follow: true } };
+export const metadata: Metadata = createPublicPageMetadata({
+  title: authContent.register.metadataTitle,
+  description: authContent.register.metadataDescription,
+  canonical: "/kayit",
+  noIndex: true,
+});
 
 const registrationRoles: RegistrationRole[] = [
   "reader",

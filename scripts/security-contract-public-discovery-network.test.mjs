@@ -46,7 +46,7 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "genre list lookup deduplicates metadata and page body");
   contains(library, "getPublicAuthorById = cache(async function getPublicAuthorById(",
     "author lookup deduplicates metadata and page body");
-  contains(library, "const genres = await getPublicGenres(undefined, true);",
+  contains(library, "const genres = await getPublicGenres();",
     "single-genre lookup reuses the shared public catalogue");
   contains(library, "where: publicWorkPublicationWhere,",
     "deduplication preserves publication filtering");
@@ -66,39 +66,6 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "demo-only genres are not valid search landings");
   notContains(library, "unstable_cache(",
     "no cross-request stale public genre or author cache");
-});
-
-test("SEO: public author directory excludes demo-only authors from crawlable links and schema", () => {
-  const library = source("src/features/public-discovery/library.ts");
-  const directory = source("src/app/yazarlar/page.tsx");
-  const sitemap = source("src/lib/seo/sitemap-data.ts");
-  contains(library, "const publicSearchEligibleWorkWhere: Prisma.WorkWhereInput",
-    "author directory uses an explicit search-eligible publication predicate");
-  contains(library, "...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS",
-    "known QA-only work slugs must not seed public author discovery");
-  contains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map",
-    "demo-prefix exclusions must be applied at the database query boundary");
-  const authorQuery = library.split("export async function getPublicAuthors(")[1]
-    ?.split("export const getPublicAuthorById")[0] ?? "";
-  contains(authorQuery, "where: publicSearchEligibleWorkWhere",
-    "public author work counts exclude demo-only works");
-  contains(authorQuery, "some: publicSearchEligibleWorkWhere",
-    "public author directory only links authors with index-eligible publications");
-  contains(library, "const where = publicWorkWhere(filters, includeSearchExcluded);",
-    "public catalogue query excludes search-ineligible demo works by default");
-  contains(library, "const publicSearchEligibleWorkBaseWhere: Prisma.WorkWhereInput",
-    "work and genre discovery share a single query-level exclusion policy");
-  contains(library, "const genres = await getPublicGenres(undefined, true);",
-    "direct QA/demo-only genre detail still resolves without a 404");
-  contains(library, "where: publicSearchEligibleWorkBaseWhere,",
-    "public work RSS feed must not advertise demo-only URLs");
-  const genreDetail = source("src/app/turler/[slug]/page.tsx");
-  contains(genreDetail, "true, // Preserve direct browseability of QA/demo genre pages",
-    "direct QA/demo genre navigation continues to show readable works");
-  contains(directory, "getPublicAuthors(search)",
-    "crawlable directory and ItemList are built from filtered author query");
-  contains(sitemap, "isSearchIndexExcludedPublicWorkSlug(work.slug)",
-    "XML sitemap keeps its existing independent demo-exclusion policy");
 });
 
 test("public catalogue hides unsupported legacy taxonomy links and bounds return hops", () => {

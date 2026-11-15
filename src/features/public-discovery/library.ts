@@ -7,12 +7,7 @@ import {
   normalizeGenreLabel,
 } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-import {
-  BLOCKED_PUBLIC_WORK_SLUGS,
-  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
-  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES,
-  isSearchIndexExcludedPublicWorkSlug,
-} from "@/lib/public-content-safety";
+import { BLOCKED_PUBLIC_WORK_SLUGS, isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import type { PublicStoredWorkContentRating } from "@/lib/work-content-classification";
 
@@ -55,36 +50,13 @@ const publicWorkBaseWhere: Prisma.WorkWhereInput = {
   },
 };
 
-// Public author discovery must share the sitemap's search eligibility policy.
-// Demo-only authors remain accessible by direct URL but must not be linked
-// from the self-indexable /yazarlar directory or its ItemList schema.
-const publicSearchEligibleWorkWhere: Prisma.WorkWhereInput = {
-  ...publicWorkPublicationWhere,
-  slug: {
-    notIn: [
-      ...BLOCKED_PUBLIC_WORK_SLUGS,
-      ...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
-    ],
-  },
-  NOT: SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix) => ({
-    slug: { startsWith: prefix },
-  })),
-};
-
-const publicSearchEligibleWorkBaseWhere: Prisma.WorkWhereInput = {
-  ...publicWorkBaseWhere,
-  slug: publicSearchEligibleWorkWhere.slug,
-  NOT: publicSearchEligibleWorkWhere.NOT,
-};
-
 function publicWorkWhere(
   filters: PublicWorkLibraryFilters,
-  includeSearchExcluded = false,
 ): Prisma.WorkWhereInput {
   const genre = normalizeGenreLabel(filters.genre);
 
   return {
-    ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
+    ...publicWorkBaseWhere,
     ...(filters.search
       ? {
           OR: [
@@ -148,7 +120,6 @@ export async function getPublicWorkLibrary(
   filters: PublicWorkLibraryFilters,
   requestedPage: number,
   includeGenres = true,
-  includeSearchExcluded = false,
 ) {
   const orderBy: Prisma.WorkOrderByWithRelationInput[] =
     filters.sort === "updated"
@@ -173,7 +144,7 @@ export async function getPublicWorkLibrary(
         },
         take: 100,
         where: {
-          ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
+          ...publicWorkBaseWhere,
           genre: {
             not: null,
           },
@@ -188,7 +159,7 @@ export async function getPublicWorkLibrary(
     const whereWithoutSearch = publicWorkWhere({
       ...filters,
       search: undefined,
-    }, includeSearchExcluded);
+    });
     const [genreRows, candidates] = await Promise.all([
       genreRowsQuery,
       prisma.work.findMany({
@@ -238,7 +209,7 @@ export async function getPublicWorkLibrary(
     };
   }
 
-  const where = publicWorkWhere(filters, includeSearchExcluded);
+  const where = publicWorkWhere(filters);
   const [totalCount, genreRows] = await Promise.all([
     prisma.work.count({ where }),
     genreRowsQuery,
@@ -268,7 +239,7 @@ export async function getPublicWorkLibrary(
   };
 }
 
-export const getPublicGenres = cache(async function getPublicGenres(search?: string, includeSearchExcluded = false) {
+export const getPublicGenres = cache(async function getPublicGenres(search?: string) {
   const normalizedSearch = search?.trim().slice(0, 120);
   const rows = await prisma.work.groupBy({
     _count: {
@@ -280,7 +251,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
     },
     take: 100,
     where: {
-      ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
+      ...publicWorkBaseWhere,
       genre: {
         not: null,
       },
@@ -362,7 +333,7 @@ export const getSearchIndexEligibleGenreSlugs = cache(
 export async function getPublicGenreBySlug(
   slug: string,
 ) {
-  const genres = await getPublicGenres(undefined, true);
+  const genres = await getPublicGenres();
 
   return (
     genres.find((genre) => genre.slug === slug) ??
@@ -385,7 +356,7 @@ export async function getPublicAuthors(search?: string) {
       _count: {
         select: {
           works: {
-            where: publicSearchEligibleWorkWhere,
+            where: publicWorkPublicationWhere,
           },
         },
       },
@@ -399,7 +370,7 @@ export async function getPublicAuthors(search?: string) {
       deletedAt: null,
       status: "active",
       works: {
-        some: publicSearchEligibleWorkWhere,
+        some: publicWorkPublicationWhere,
       },
     },
   });
@@ -503,6 +474,6 @@ export async function getPublicWorkFeed() {
       updatedAt: true,
     },
     take: 50,
-    where: publicSearchEligibleWorkBaseWhere,
+    where: publicWorkBaseWhere,
   });
 }

@@ -35,6 +35,22 @@ function notContains(text, fragment, label) {
   );
 }
 
+test("Ahrefs social preview: public catalogue and coverless books retain approved fallback image", () => {
+  const catalogue = source("src/app/eserler/page.tsx");
+  const book = source("src/app/kitap/[slug]/page.tsx");
+
+  contains(catalogue, 'images: [{ url: publicBrandSocialImage, alt: pageTitle }]',
+    "public catalogue always has Open Graph image");
+  contains(catalogue, "images: [publicBrandSocialImage]",
+    "public catalogue always has Twitter image");
+  contains(book, "const socialImage = cover ?? publicBrandSocialImage;",
+    "coverless published books use approved brand fallback");
+  contains(book, "images: [socialImage]",
+    "book Twitter metadata includes a fallback image");
+  contains(book, "images: [{ url: socialImage, alt:",
+    "book Open Graph metadata includes a fallback image");
+});
+
 test("P1: public genre and author metadata share request-local DB reads", () => {
   const library = source("src/features/public-discovery/library.ts");
   const author = source("src/app/yazarlar/[publicId]/page.tsx");

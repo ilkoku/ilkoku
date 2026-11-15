@@ -659,6 +659,8 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   const workflow = source(".github/workflows/indexnow-submit.yml");
   assertContains(workflow, "uses: actions/checkout@v6", "IndexNow repository checkout");
   assertContains(workflow, "fetch-depth: 0", "IndexNow complete push diff");
+  assertContains(workflow, 'group: indexnow-${{ github.sha }}',
+    "GitHub must not replace previously pending IndexNow runs on new pushes");
   assertContains(workflow, "cancel-in-progress: false",
     "rapid merges must queue rather than cancel earlier IndexNow URL batches");
   assertNotContains(workflow, "cancel-in-progress: true",

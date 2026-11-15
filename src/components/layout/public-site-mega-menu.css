@@ -368,12 +368,6 @@
   text-decoration: none;
 }
 
-.public-site-header__mobile-category span:last-child {
-  color: rgba(212, 194, 255, 0.76);
-  font-size: 1.5rem;
-  font-weight: 350;
-}
-
 .public-site-header__mobile-back {
   min-height: 2.75rem;
   display: inline-flex;

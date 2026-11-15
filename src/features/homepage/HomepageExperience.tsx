@@ -167,7 +167,11 @@ export default async function HomepageExperience() {
   const heroLines = heroTitle.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const primaryHref = safeCmsInternalHref(hero?.primaryCtaHref) || "/kayit?rol=writer";
   const cmsSecondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref);
-  const secondaryHref = cmsSecondaryHref || "/nasil-calisir";
+  // The public discovery CTA must not send search visitors to the gated reader workspace.
+  const secondaryHref =
+    cmsSecondaryHref === "/kesfet" || cmsSecondaryHref.startsWith("/kesfet?")
+      ? "/eserler"
+      : cmsSecondaryHref || "/nasil-calisir";
   const secondaryLabel = cmsSecondaryHref ? (hero?.secondaryCtaLabel || "Detayları Gör") : "Nasıl Çalışır?";
   const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
 

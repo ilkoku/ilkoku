@@ -144,7 +144,7 @@ jobs:
           grep -Fq 'Allow: /' "$robots"
           # Application-owned robots.txt must be fully open. Cloudflare may
           # separately prepend policy until Bot Preference Sync is disabled.
-          if grep -Eq '^Disallow: /(?:admin|icerik|api|auth|hesabim|oku|editor|yazar|yayinevi|cdn-cgi|1q6z)' "$robots"; then
+          if grep -Eq '^Disallow: /(admin|icerik|api|auth|hesabim|oku|editor|yazar|yayinevi|cdn-cgi|1q6z)' "$robots"; then
             echo "FAIL: a legacy application-specific crawl restriction remains" >&2
             exit 1
           fi

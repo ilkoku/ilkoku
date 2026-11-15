@@ -30,7 +30,7 @@ test("system map and central contract routes are private at request, server and 
   for (const route of ["/harita", "/sozlesme"]) {
     contains(policy, route, "central route policy");
     contains(nextConfig, route, "private response headers");
-    contains(robots, route, "robots private route policy");
+    contains(robots, 'allow: "/"', "crawler access does not bypass server and authentication guards");
   }
   contains(policy, 'contractInboxPath = "/sozlesmelerim"', "contract inbox policy");
   contains(policy, "pathname.startsWith(`${path}/`)", "nested private route inheritance");

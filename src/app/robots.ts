@@ -2,67 +2,15 @@ import type { MetadataRoute } from "next";
 
 const baseUrl = "https://ilkoku.com";
 
+// Search and AI crawlers may fetch public responses. Authentication, role checks,
+// and X-Robots-Tag/noindex on private routes remain enforced independently.
+// Cloudflare-managed robots.txt prefixes must also be disabled in the zone.
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: [
-          "/",
-          "/api/media/",
-          "/api/site-assets/",
-          "/api/site-content/footer-navigation",
-          "/api/public-announcements",
-        ],
-        disallow: [
-          "/admin",
-          "/icerik$",
-          "/icerik/",
-          "/sistem-yonetimi",
-          "/harita",
-          "/sozlesme",
-          "/sozlesmelerim",
-          // Authenticated/member workspaces are intentionally absent from the public
-          // search inventory. Block crawling instead of making Google spend requests
-          // just to rediscover their X-Robots-Tag noindex headers.
-          "/bildirimler",
-          "/editor$",
-          "/editor/",
-          "/editor-daveti",
-          "/editor-paneli",
-          "/erisim-reddedildi",
-          "/eserlerim",
-          "/favorilerim",
-          "/geri-bildirimler",
-          "/hesabim",
-          "/kesfet",
-          "/yazar-kesfet",
-          "/okumaya-devam",
-          "/okuyucu",
-          "/oku$",
-          "/oku/",
-          "/rol-secimi",
-          "/tamamlanan-eserler",
-          "/yazar$",
-          "/yazar/",
-          "/satis-erisim",
-          "/gelirler",
-          "/satinal",
-          "/kutuphanem",
-          "/sayfa-renkleri",
-          "/yazmaya-devam",
-          "/yayinevi$",
-          "/yayinevi/",
-          "/yayinevleri$",
-          "/yayinevleri/",
-          "/yorumlarim",
-          "/api",
-          "/auth",
-          // Cloudflare-managed infrastructure URLs are not website content.
-          "/cdn-cgi/",
-          // First-party Google Tag Gateway measurement path; analytics is not required for page rendering.
-          "/1q6z",
-        ],
+        allow: "/",
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

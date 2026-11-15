@@ -73,47 +73,23 @@ test("homepage metadata uses the previously approved wording without ecosystem l
   assertContains(layout, "description: publicBrandDescription", "WebSite structured data uses approved description");
 });
 
-test("robots isolates private content management without blocking the public content policy route", () => {
+test("robots.txt permits all crawlers without removing private response protections", () => {
   const robots = source("src/app/robots.ts");
-  const liveSmoke = source(".github/workflows/seo-indexability-smoke.yml");
-
-  assertNotContains(robots, '          "/icerik",', "broad private content robots prefix");
-  assertContains(robots, '          "/icerik$",', "exact private content root robots rule");
-  assertContains(robots, '          "/icerik/",', "private content descendant robots rule");
-  assertContains(robots, '"/api/media/"', "published public CMS media crawl allowance");
-  assertContains(robots, '"/api/site-assets/"', "published public site asset crawl allowance");
-  assertContains(robots, '"/api/site-content/footer-navigation"', "published footer render API crawl allowance");
-  assertContains(robots, '"/api/public-announcements"', "published announcement render API crawl allowance");
+  const nextConfig = source("next.config.ts");
+  const proxy = source("src/proxy.ts");
   const footerApi = source("src/app/api/site-content/footer-navigation/route.ts");
   const announcementApi = source("src/app/api/public-announcements/route.ts");
-  assertContains(footerApi, '"X-Robots-Tag": "noindex, noarchive"', "footer render API search exclusion");
-  assertContains(announcementApi, '"X-Robots-Tag": "noindex, noarchive"', "announcement render API search exclusion");
-  assertContains(robots, '          "/api",', "private API robots boundary remains blocked");
-  assertContains(robots, '          "/1q6z",', "Google Tag Gateway measurement path crawl block");
-  assertContains(liveSmoke, "Disallow: /icerik$", "live exact private content robots guard");
-  assertContains(liveSmoke, "Disallow: /icerik/", "live private content descendant robots guard");
-  assertContains(liveSmoke, "broad /icerik robots prefix blocks public content policy", "live broad prefix regression message");
-});
 
+  assertContains(robots, 'userAgent: "*"', "all crawler user agents use the same rules");
+  assertContains(robots, 'allow: "/"', "all paths can be fetched so crawlers can see HTTP/noindex policy");
+  assertNotContains(robots, "disallow:", "robots.txt does not prohibit any crawler route");
+  assertContains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap remains published");
 
-
-test("robots limits private reading rules without blocking public Okurluk Okulu", () => {
-  const robots = source("src/app/robots.ts");
-  const readingRules = [...robots.matchAll(/^\s+"(\/oku(?:\$|\/)?)",?$/gmu)].map((match) => match[1]);
-
-  assert.deepEqual(readingRules, ["/oku$", "/oku/"], "private reader crawl rules remain narrowly scoped");
-
-  const blocksReading = (route) => readingRules.some((rule) =>
-    rule.endsWith("$") ? route === rule.slice(0, -1) : route.startsWith(rule),
-  );
-
-  for (const publicRoute of ["/okurlar-icin", "/okurlar-icin/okumaya-baslama"]) {
-    assert.equal(blocksReading(publicRoute), false, `public reading education must be crawlable: ${publicRoute}`);
-  }
-
-  for (const privateRoute of ["/oku", "/oku/", "/oku/bolum-1"]) {
-    assert.equal(blocksReading(privateRoute), true, `private reading must remain blocked: ${privateRoute}`);
-  }
+  assertContains(nextConfig, "const privateRouteHeaders", "private route index exclusion still configured");
+  assertContains(nextConfig, 'value: "noindex, nofollow, noarchive"', "private HTTP noindex protection persists");
+  assertContains(proxy, "isProtectedPath(pathname)", "protected route authentication is unchanged");
+  assertContains(footerApi, '"X-Robots-Tag": "noindex, noarchive"', "published footer API remains noindex");
+  assertContains(announcementApi, '"X-Robots-Tag": "noindex, noarchive"', "announcements API remains noindex");
 });
 
 test("public auth entry pages stay crawlable noindex-follow while private workspaces stay protected", () => {
@@ -151,52 +127,14 @@ test("public auth entry pages stay crawlable noindex-follow while private worksp
   }
 });
 
-test("robots mirrors private and protected route inventories without shadowing public prefixes", () => {
+test("formerly robots-blocked private routes retain independent auth and noindex protections", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");
   const proxy = source("src/proxy.ts");
-  const privateInventory = nextConfig.match(/const privateRouteHeaders = \[([\s\S]*?)\];/u)?.[1];
-  const protectedInventory = proxy.match(/matcher:\s*\[([\s\S]*?)\]/u)?.[1];
-
-  assert.ok(privateInventory, "next.config privateRouteHeaders inventory must be readable");
-  assert.ok(protectedInventory, "proxy protected matcher inventory must be readable");
-
-  const privateRoutes = [...privateInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
-  const protectedRoutes = [...protectedInventory.matchAll(/"([^"]+)"/gu)].map((match) => match[1]);
-  const privateRoots = [...new Set(
-    [...privateRoutes, ...protectedRoutes].map((route) => route.replace(/\/:path\*$/u, "")),
-  )];
-
-  const exactPrefixRoots = new Set([
-    "/icerik",
-    "/editor",
-    "/oku",
-    "/yazar",
-    "/yayinevi",
-    "/yayinevleri",
-  ]);
-  const crawlableRedirectRoots = new Set([
-    "/editörler",
-  ]);
-
-  for (const route of privateRoots) {
-    if (crawlableRedirectRoots.has(route)) {
-      assertNotContains(
-        robots,
-        `"${route}"`,
-        `legacy redirect ${route} must stay crawlable so crawlers can observe its canonical redirect`,
-      );
-      continue;
-    }
-
-    if (exactPrefixRoots.has(route)) {
-      assertContains(robots, `"${route}$"`, `exact private crawl boundary ${route}`);
-      assertContains(robots, `"${route}/"`, `private descendants crawl boundary ${route}`);
-      assertNotContains(robots, `          "${route}",`, `broad private prefix ${route}`);
-      continue;
-    }
-
-    assertContains(robots, `"${route}"`, `private crawl boundary ${route}`);
+  assertNotContains(robots, "disallow:", "crawler directives remain open");
+  for (const route of ["/hesabim", "/editor", "/eserlerim", "/kutuphanem", "/yayinevi"]) {
+    assertContains(nextConfig, `"${route}/:path*"`, `${route} remains HTTP noindex`);
+    assertContains(proxy, `"${route}/:path*"`, `${route} remains guarded by authentication`);
   }
 });
 

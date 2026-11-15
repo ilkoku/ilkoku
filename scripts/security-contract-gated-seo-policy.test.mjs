@@ -82,7 +82,7 @@ test("private reader author discovery is protected at every SEO and access-contr
   assert.ok(routeSecurity.includes('"/yazar-kesfet"'), "protected path requires an active session");
   assert.ok(proxy.includes('"/yazar-kesfet/:path*"'), "request-time proxy enforces login");
   assert.ok(config.includes('"/yazar-kesfet/:path*"'), "private X-Robots-Tag response covers route");
-  assert.ok(robots.includes('"/yazar-kesfet"'), "private crawl path is disallowed");
+  assert.ok(!robots.includes("disallow:"), "robots permits crawling; proxy and HTTP noindex still protect the workspace");
   assert.ok(productionSmoke.includes('check_redirect_and_noindex "https://ilkoku.com/yazar-kesfet" "/giris"'), "production smoke verifies X-Robots-Tag on live redirect");
 
   for (const guide of ["/yazarlar-icin", "/yazarlar-icin/kurgu"]) {

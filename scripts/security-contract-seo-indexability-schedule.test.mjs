@@ -58,4 +58,7 @@ test("robots permits all AI and search crawlers; Cloudflare prepend must be disa
   assert.equal(robots.includes("disallow:"), false, "no origin robots.txt deny rules");
   contains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap untouched");
   contains(robots, '"/",', "public pages remain crawlable");
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+  contains(smoke, "grep -Eqi '^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:' \"$robots\"", "live smoke catches all Disallow and managed Content-Signal directives");
+  assert.equal(smoke.includes("Disallow: /(admin|icerik|api"), false, "legacy path-only restriction matcher must not come back");
 });

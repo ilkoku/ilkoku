@@ -51,10 +51,11 @@ test("SEO indexability smoke runs weekly without weakening manual confirmation",
 });
 
 
-test("Cloudflare infrastructure is excluded from crawler inventory while public pages stay allowed", () => {
+test("robots permits all AI and search crawlers; Cloudflare prepend must be disabled separately", () => {
   const robots = source("src/app/robots.ts");
-  contains(robots, '"/cdn-cgi/"', "Cloudflare managed paths excluded");
-  contains(robots, '"/api/media/"', "published media remain discoverable");
+  contains(robots, 'userAgent: "*"', "one default user-agent policy");
+  contains(robots, 'allow: "/"', "sitewide crawler permission");
+  assert.equal(robots.includes("disallow:"), false, "no origin robots.txt deny rules");
   contains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap untouched");
   contains(robots, '"/",', "public pages remain crawlable");
 });

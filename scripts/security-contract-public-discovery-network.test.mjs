@@ -46,7 +46,7 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "genre list lookup deduplicates metadata and page body");
   contains(library, "getPublicAuthorById = cache(async function getPublicAuthorById(",
     "author lookup deduplicates metadata and page body");
-  contains(library, "const genres = await getPublicGenres();",
+  contains(library, "const genres = await getPublicGenres(undefined, true);",
     "single-genre lookup reuses the shared public catalogue");
   contains(library, "where: publicWorkPublicationWhere,",
     "deduplication preserves publication filtering");
@@ -84,6 +84,17 @@ test("SEO: public author directory excludes demo-only authors from crawlable lin
     "public author work counts exclude demo-only works");
   contains(authorQuery, "some: publicSearchEligibleWorkWhere",
     "public author directory only links authors with index-eligible publications");
+  contains(library, "const where = publicWorkWhere(filters, includeSearchExcluded);",
+    "public catalogue query excludes search-ineligible demo works by default");
+  contains(library, "const publicSearchEligibleWorkBaseWhere: Prisma.WorkWhereInput",
+    "work and genre discovery share a single query-level exclusion policy");
+  contains(library, "const genres = await getPublicGenres(undefined, true);",
+    "direct QA/demo-only genre detail still resolves without a 404");
+  contains(library, "where: publicSearchEligibleWorkBaseWhere,",
+    "public work RSS feed must not advertise demo-only URLs");
+  const genreDetail = source("src/app/turler/[slug]/page.tsx");
+  contains(genreDetail, "true, // Preserve direct browseability of QA/demo genre pages",
+    "direct QA/demo genre navigation continues to show readable works");
   contains(directory, "getPublicAuthors(search)",
     "crawlable directory and ItemList are built from filtered author query");
   contains(sitemap, "isSearchIndexExcludedPublicWorkSlug(work.slug)",

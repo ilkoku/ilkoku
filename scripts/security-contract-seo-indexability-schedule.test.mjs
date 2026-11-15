@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,4 +62,20 @@ test("robots permits all AI and search crawlers; Cloudflare prepend must be disa
   const smoke = source(".github/workflows/seo-indexability-smoke.yml");
   contains(smoke, "grep -Eqi '^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:' \"$robots\"", "live smoke catches all Disallow and managed Content-Signal directives");
   assert.equal(smoke.includes("Disallow: /(admin|icerik|api"), false, "legacy path-only restriction matcher must not come back");
+});
+
+
+test("robots smoke rejects global blocks, AI-specific denies and managed training restrictions", () => {
+  const pattern = "^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:";
+  const examples = [
+    { body: "User-agent: *\\nAllow: /\\nDisallow: /\\n", blocked: true },
+    { body: "User-agent: GPTBot\\nDisallow: /\\n", blocked: true },
+    { body: "Content-Signal: search=yes,ai-train=no\\nUser-agent: *\\nAllow: /\\n", blocked: true },
+    { body: "User-agent: *\\nAllow: /\\nSitemap: https://ilkoku.com/sitemap.xml\\n", blocked: false },
+  ];
+  for (const { body, blocked } of examples) {
+    const result = spawnSync("grep", ["-Eqi", pattern], { input: body.replaceAll("\\\\n", "\\n"), encoding: "utf8" });
+    assert.equal(result.error, undefined, "grep must be available to validate the live smoke pattern");
+    assert.equal(result.status, blocked ? 0 : 1, `unexpected crawler rule match for ${JSON.stringify(body)}`);
+  }
 });

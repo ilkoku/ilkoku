@@ -393,7 +393,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
   contains(homepage, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "homepage neutral experience boundary");
   notContains(homepage, "onizleme/ana-sayfa-yeni", "homepage must not depend on the preview namespace");
-  contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
+  contains(homepageExperience, 'resolveHomepageSecondaryHref(cmsSecondaryHref)', "homepage delegates public CTA resolution");
+  contains(source("src/lib/homepage-secondary-href.mjs"), 'return cmsHref || "/nasil-calisir";', "homepage live public fallback stays safe");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
   contains(publicNavigation, "export const publicDiscoveryEnabled = true", "shared discovery pause");
   contains(publicNavigation, 'href: "/eserler"', "retired work catalog route");

@@ -68,6 +68,28 @@ test("P1: public genre and author metadata share request-local DB reads", () => 
     "no cross-request stale public genre or author cache");
 });
 
+test("SEO: public author directory excludes demo-only authors from crawlable links and schema", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  const directory = source("src/app/yazarlar/page.tsx");
+  const sitemap = source("src/lib/seo/sitemap-data.ts");
+  contains(library, "const publicSearchEligibleWorkWhere: Prisma.WorkWhereInput",
+    "author directory uses an explicit search-eligible publication predicate");
+  contains(library, "...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS",
+    "known QA-only work slugs must not seed public author discovery");
+  contains(library, "SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map",
+    "demo-prefix exclusions must be applied at the database query boundary");
+  const authorQuery = library.split("export async function getPublicAuthors(")[1]
+    ?.split("export const getPublicAuthorById")[0] ?? "";
+  contains(authorQuery, "where: publicSearchEligibleWorkWhere",
+    "public author work counts exclude demo-only works");
+  contains(authorQuery, "some: publicSearchEligibleWorkWhere",
+    "public author directory only links authors with index-eligible publications");
+  contains(directory, "getPublicAuthors(search)",
+    "crawlable directory and ItemList are built from filtered author query");
+  contains(sitemap, "isSearchIndexExcludedPublicWorkSlug(work.slug)",
+    "XML sitemap keeps its existing independent demo-exclusion policy");
+});
+
 test("public catalogue hides unsupported legacy taxonomy links and bounds return hops", () => {
   const stream = source("src/features/public-discovery/PublicWorkStream.tsx");
   const author = source("src/app/yazarlar/[publicId]/page.tsx");

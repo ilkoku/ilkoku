@@ -14,6 +14,7 @@ import {
   isSearchIndexExcludedPublicWorkSlug,
 } from "@/lib/public-content-safety";
 import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
+import { publicBrandSocialImage } from "@/lib/public-brand";
 
 const baseUrl = "https://ilkoku.com";
 type BookShowcasePageProps = {
@@ -71,6 +72,7 @@ export async function generateMetadata({
   const description = getSeoDescription(work.description, work.title, work.authorName, work.slug);
   const canonical = `/kitap/${work.slug}`;
   const cover = absoluteUrl(work.coverUrl);
+  const socialImage = cover ?? publicBrandSocialImage;
   const searchIndexExcluded = isSearchIndexExcludedPublicWorkSlug(slug);
 
   return {
@@ -91,13 +93,13 @@ export async function generateMetadata({
       description,
       publishedTime: work.publishedAt?.toISOString(),
       modifiedTime: work.updatedAt.toISOString(),
-      images: cover ? [{ url: cover, alt: `${work.title} kapak görseli` }] : undefined,
+      images: [{ url: socialImage, alt: cover ? `${work.title} kapak görseli` : "İlkOku" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: cover ? [cover] : undefined,
+      images: [socialImage],
     },
   };
 }

@@ -142,15 +142,10 @@ jobs:
           fetch_contract_file "https://ilkoku.com/robots.txt" "$robots"
           grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
           grep -Fq 'Allow: /' "$robots"
-          grep -Fq 'Allow: /api/media/' "$robots"
-          grep -Fq 'Allow: /api/site-assets/' "$robots"
-          grep -Fq 'Allow: /api/site-content/footer-navigation' "$robots"
-          grep -Fq 'Allow: /api/public-announcements' "$robots"
-          grep -Fxq 'Disallow: /icerik$' "$robots"
-          grep -Fxq 'Disallow: /icerik/' "$robots"
-          grep -Fxq 'Disallow: /1q6z' "$robots"
-          if grep -Fxq 'Disallow: /icerik' "$robots"; then
-            echo "FAIL: broad /icerik robots prefix blocks public content policy" >&2
+          # Application-owned robots.txt must be fully open. Cloudflare may
+          # separately prepend policy until Bot Preference Sync is disabled.
+          if grep -Eq '^Disallow: /(?:admin|icerik|api|auth|hesabim|oku|editor|yazar|yayinevi|cdn-cgi|1q6z)' "$robots"; then
+            echo "FAIL: a legacy application-specific crawl restriction remains" >&2
             exit 1
           fi
 

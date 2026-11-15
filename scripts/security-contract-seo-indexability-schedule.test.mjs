@@ -68,14 +68,14 @@ test("robots permits all AI and search crawlers; Cloudflare prepend must be disa
 test("robots smoke rejects global blocks, AI-specific denies and managed training restrictions", () => {
   const pattern = "^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:";
   const examples = [
-    { body: "User-agent: *\\nAllow: /\\nDisallow: /\\n", blocked: true },
-    { body: "User-agent: GPTBot\\nDisallow: /\\n", blocked: true },
-    { body: "Content-Signal: search=yes,ai-train=no\\nUser-agent: *\\nAllow: /\\n", blocked: true },
-    { body: "User-agent: *\\nAllow: /\\nSitemap: https://ilkoku.com/sitemap.xml\\n", blocked: false },
+    { lines: ["User-agent: *", "Allow: /", "Disallow: /"], blocked: true },
+    { lines: ["User-agent: GPTBot", "Disallow: /"], blocked: true },
+    { lines: ["Content-Signal: search=yes,ai-train=no", "User-agent: *", "Allow: /"], blocked: true },
+    { lines: ["User-agent: *", "Allow: /", "Sitemap: https://ilkoku.com/sitemap.xml"], blocked: false },
   ];
-  for (const { body, blocked } of examples) {
-    const result = spawnSync("grep", ["-Eqi", pattern], { input: body.replaceAll("\\\\n", "\\n"), encoding: "utf8" });
+  for (const { lines, blocked } of examples) {
+    const result = spawnSync("grep", ["-Eqi", pattern], { input: lines.join("\n") + "\n", encoding: "utf8" });
     assert.equal(result.error, undefined, "grep must be available to validate the live smoke pattern");
-    assert.equal(result.status, blocked ? 0 : 1, `unexpected crawler rule match for ${JSON.stringify(body)}`);
+    assert.equal(result.status, blocked ? 0 : 1, "unexpected crawler rule match: " + JSON.stringify(lines));
   }
 });

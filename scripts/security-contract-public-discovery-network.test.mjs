@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { safeOneHopReturnPath } from "../src/lib/one-hop-return-path.mjs";
+import { resolveHomepageSecondaryHref } from "../src/lib/homepage-secondary-href.mjs";
 
 const ROOT = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -42,9 +43,20 @@ test("homepage public discovery CTA never leads crawlers to the gated reader wor
 
   contains(security, '{ approved: false, path: "/kesfet"', "reader workspace remains protected");
   contains(fallback, 'secondaryCtaHref: "/eserler"', "public catalogue is the default homepage destination");
-  contains(homepage, 'cmsSecondaryHref === "/kesfet"', "legacy CMS reader-workspace CTA is recognized");
-  contains(homepage, 'cmsSecondaryHref.startsWith("/kesfet?")', "query-bearing workspace CTA is recognized");
-  contains(homepage, '? "/eserler"', "homepage discovery CTA leads to the public catalogue");
+  contains(homepage, 'resolveHomepageSecondaryHref(cmsSecondaryHref)', "homepage uses the tested CTA resolver");
+  for (const [input, expected] of [
+    ["/kesfet", "/eserler"],
+    ["/kesfet?arama=test", "/eserler"],
+    ["/kesfet/", "/eserler"],
+    ["/kesfet/eser", "/eserler"],
+    ["/kesfet#liste", "/eserler"],
+    ["/kesfete", "/kesfete"],
+    ["/eserler", "/eserler"],
+    ["/nasil-calisir", "/nasil-calisir"],
+    ["", "/nasil-calisir"],
+  ]) {
+    assert.equal(resolveHomepageSecondaryHref(input), expected, `homepage CTA ${input} resolves correctly`);
+  }
   contains(homepage, 'const secondaryLabel = cmsSecondaryHref', "approved CMS CTA label stays unchanged");
 });
 

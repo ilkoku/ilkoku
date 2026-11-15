@@ -7,7 +7,12 @@ import {
   normalizeGenreLabel,
 } from "@/lib/genre-system";
 import { prisma } from "@/lib/prisma";
-import { BLOCKED_PUBLIC_WORK_SLUGS, isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
+import {
+  BLOCKED_PUBLIC_WORK_SLUGS,
+  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
+  SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES,
+  isSearchIndexExcludedPublicWorkSlug,
+} from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import type { PublicStoredWorkContentRating } from "@/lib/work-content-classification";
 
@@ -48,6 +53,22 @@ const publicWorkBaseWhere: Prisma.WorkWhereInput = {
       status: "active",
     },
   },
+};
+
+// Public author discovery must share the sitemap's search eligibility policy.
+// Demo-only authors remain accessible by direct URL but must not be linked
+// from the self-indexable /yazarlar directory or its ItemList schema.
+const publicSearchEligibleWorkWhere: Prisma.WorkWhereInput = {
+  ...publicWorkPublicationWhere,
+  slug: {
+    notIn: [
+      ...BLOCKED_PUBLIC_WORK_SLUGS,
+      ...SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUGS,
+    ],
+  },
+  NOT: SEARCH_INDEX_EXCLUDED_PUBLIC_WORK_SLUG_PREFIXES.map((prefix) => ({
+    slug: { startsWith: prefix },
+  })),
 };
 
 function publicWorkWhere(
@@ -356,7 +377,7 @@ export async function getPublicAuthors(search?: string) {
       _count: {
         select: {
           works: {
-            where: publicWorkPublicationWhere,
+            where: publicSearchEligibleWorkWhere,
           },
         },
       },
@@ -370,7 +391,7 @@ export async function getPublicAuthors(search?: string) {
       deletedAt: null,
       status: "active",
       works: {
-        some: publicWorkPublicationWhere,
+        some: publicSearchEligibleWorkWhere,
       },
     },
   });

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { safeOneHopReturnPath } from "../src/lib/one-hop-return-path.mjs";
 import { resolveHomepageSecondaryHref } from "../src/lib/homepage-secondary-href.mjs";
+import { buildIndexablePublicGenreSchemaItems } from "../src/lib/public-genre-schema-items.mjs";
 
 const ROOT = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -729,6 +730,30 @@ test("public JSON-LD lists honor search-index work eligibility", () => {
     contains(source(file), "numberOfItems: searchEligibleSchemaWorks.length",
       `${file} ItemList count must match its eligible entries`);
   }
+});
+
+test("indexable public genre JSON-LD excludes demo-only destinations while keeping user-facing genres", () => {
+  const genrePage = source("src/app/turler/page.tsx");
+  contains(genrePage, "getSearchIndexEligibleGenreSlugs(sourceGenres)", "one SEO eligibility lookup for public genre inventory");
+  contains(genrePage, "buildIndexablePublicGenreSchemaItems(genres, eligibleGenreSlugs, baseUrl)", "indexable ItemList is generated from eligible genre slugs");
+  contains(genrePage, "{genres.map((genre) => (", "demo genre discovery cards remain available to users");
+  notContains(genrePage, "itemListElement: genres.map(", "indexable JSON-LD must not advertise unfiltered demo genres");
+
+  const sample = [
+    { slug: "distopya", label: "Distopya" },
+    { slug: "roman", label: "Roman" },
+    { slug: "fantastik", label: "Fantastik" },
+    { slug: "oyku", label: "Öykü" },
+  ];
+  assert.deepEqual(
+    buildIndexablePublicGenreSchemaItems(sample, new Set(["roman", "oyku"])),
+    [
+      { "@type": "ListItem", position: 1, name: "Roman", url: "https://ilkoku.com/turler/roman" },
+      { "@type": "ListItem", position: 2, name: "Öykü", url: "https://ilkoku.com/turler/oyku" },
+    ],
+    "schema retains only search-eligible genre pages, with contiguous positions and canonical URLs",
+  );
+  assert.deepEqual(buildIndexablePublicGenreSchemaItems(sample, new Set()), [], "no real genre should emit zero schema items");
 });
 
 test("Ahrefs: public RSS omits all noindex test/demo works while retaining normal books", () => {

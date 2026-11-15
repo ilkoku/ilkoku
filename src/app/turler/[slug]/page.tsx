@@ -143,7 +143,6 @@ export default async function PublicGenrePage({
     },
     pageNumber(query.sayfa),
     false, // Genre-filter options are not displayed on this detail page.
-    true, // Preserve direct browseability of QA/demo genre pages; directory stays search-clean.
   );
   const currentPath = genrePageHref(
     genre.slug,

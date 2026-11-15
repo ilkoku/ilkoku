@@ -8,15 +8,22 @@ import { getAdultContentAccess } from "@/lib/adult-content-access";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isBlockedPublicWorkSlug } from "@/lib/public-content-safety";
 import { safeOneHopReturnPath } from "@/lib/one-hop-return-path.mjs";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Eser Pasaportu | İlkOku",
-  description: "Eserin İlkOku kayıt, sürüm ve içerik bütünlüğü bilgileri.",
-  robots: {
-    index: false,
-    follow: true,
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  return createPublicPageMetadata({
+    title: "Eser Pasaportu | İlkOku",
+    description: "Eserin İlkOku kayıt, sürüm ve içerik bütünlüğü bilgileri.",
+    canonical: `/kitap/${encodeURIComponent(slug)}/pasaport`,
+    noIndex: true,
+  });
+}
 
 export const dynamic = "force-dynamic";
 

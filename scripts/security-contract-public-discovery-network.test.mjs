@@ -35,6 +35,19 @@ function notContains(text, fragment, label) {
   );
 }
 
+test("homepage public discovery CTA never leads crawlers to the gated reader workspace", () => {
+  const homepage = source("src/features/homepage/HomepageExperience.tsx");
+  const fallback = source("src/lib/homepage-public-content.ts");
+  const security = source("src/lib/route-security.ts");
+
+  contains(security, '{ approved: false, path: "/kesfet"', "reader workspace remains protected");
+  contains(fallback, 'secondaryCtaHref: "/eserler"', "public catalogue is the default homepage destination");
+  contains(homepage, 'cmsSecondaryHref === "/kesfet"', "legacy CMS reader-workspace CTA is recognized");
+  contains(homepage, 'cmsSecondaryHref.startsWith("/kesfet?")', "query-bearing workspace CTA is recognized");
+  contains(homepage, '? "/eserler"', "homepage discovery CTA leads to the public catalogue");
+  contains(homepage, 'const secondaryLabel = cmsSecondaryHref', "approved CMS CTA label stays unchanged");
+});
+
 test("Ahrefs social preview: public catalogue and coverless books retain approved fallback image", () => {
   const catalogue = source("src/app/eserler/page.tsx");
   const book = source("src/app/kitap/[slug]/page.tsx");

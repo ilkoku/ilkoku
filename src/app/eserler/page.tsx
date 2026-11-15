@@ -11,6 +11,7 @@ import {
   type PublicWorkSort,
 } from "@/features/public-discovery/library";
 import { normalizeGenreLabel } from "@/lib/genre-system";
+import { publicBrandSocialImage } from "@/lib/public-brand";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import {
   isPublicStoredWorkContentRating,
@@ -163,11 +164,13 @@ export async function generateMetadata({
       url: "/eserler",
       title: pageTitle,
       description: pageDescription,
+      images: [{ url: publicBrandSocialImage, alt: pageTitle }],
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
       description: pageDescription,
+      images: [publicBrandSocialImage],
     },
   };
 }

@@ -3,8 +3,10 @@ import Link from "next/link";
 
 import {
   getPublicGenres,
+  getSearchIndexEligibleGenreSlugs,
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
+import { buildIndexablePublicGenreSchemaItems } from "@/lib/public-genre-schema-items.mjs";
 
 const baseUrl = "https://ilkoku.com";
 const title = "Eser Türleri | İlkOku";
@@ -58,6 +60,19 @@ export default async function PublicGenresPage({
   const query = await searchParams;
   const search = query.arama?.trim().slice(0, 120) || undefined;
   const genres = await getPublicGenres(search);
+  // This indexable directory can display demo genres for QA visitors, but its
+  // search metadata must only mention destinations backed by real publications.
+  // Resolve eligibility once for the distinct source labels, not per genre.
+  const sourceGenres = [...new Set(genres.flatMap((genre) => genre.sourceGenres))];
+  let eligibleGenreSlugs = new Set<string>();
+  if (sourceGenres.length > 0) {
+    try {
+      eligibleGenreSlugs = await getSearchIndexEligibleGenreSlugs(sourceGenres);
+    } catch (error) {
+      // Metadata lookup failures must not take the public directory offline.
+      console.error("Public genre indexable JSON-LD eligibility lookup failed", error);
+    }
+  }
   const returnPath = search
     ? `/turler?arama=${encodeURIComponent(search)}`
     : "/turler";
@@ -69,14 +84,7 @@ export default async function PublicGenresPage({
     inLanguage: "tr-TR",
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: genres.map(
-        (genre, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          name: genre.label,
-          url: `${baseUrl}/turler/${genre.slug}`,
-        }),
-      ),
+      itemListElement: buildIndexablePublicGenreSchemaItems(genres, eligibleGenreSlugs, baseUrl),
     },
   };
 

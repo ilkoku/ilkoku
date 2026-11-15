@@ -1,4 +1,5 @@
 import { getPublicWorkFeed } from "@/features/public-discovery/library";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicDiscoveryEnabled } from "@/lib/public-site-navigation";
 
 const baseUrl = "https://ilkoku.com";
@@ -24,7 +25,12 @@ export async function GET() {
     });
   }
 
-  const works = await getPublicWorkFeed();
+  // RSS is an external discovery surface: only advertise works that the XML
+  // sitemap and public JSON-LD permit search engines to index. Keep direct
+  // QA/demo work access unchanged and do not introduce new Prisma predicates.
+  const works = (await getPublicWorkFeed()).filter(
+    (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+  );
   const latestUpdate =
     works[0]?.updatedAt ?? new Date("2026-08-24T00:00:00.000Z");
   const items = works

@@ -2040,3 +2040,19 @@ test("real author profiles enter sitemap only with search-eligible public books"
   assertContains(author, "robots: { index: hasIndexableWorks, follow: true }", "demo-only authors stay public and noindex");
   assertContains(exclusion, '"demo-"', "demo publication exclusion remains");
 });
+
+test("Ahrefs historical literary-novel 404 redirects only to healthy canonical genre", () => {
+  const nextConfig = source("next.config.ts");
+  assertContains(nextConfig,
+    'source: "/turler/edeb-roman",\n        destination: "/turler/roman",\n        permanent: true,',
+    "obsolete literary-novel alias redirects permanently to the live indexable Roman page");
+  assertNotContains(nextConfig,
+    'source: "/turler/:slug"',
+    "do not rewrite unknown genre pages or artificially hide genuine 404s");
+  assertNotContains(nextConfig,
+    'destination: "/turler/genc-yetiskin"',
+    "do not redirect into a currently unavailable genre destination");
+  assertNotContains(nextConfig,
+    'destination: "/turler/tarihi-roman"',
+    "do not redirect into a currently unavailable historical category");
+});

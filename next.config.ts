@@ -162,6 +162,14 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Historical public literary-novel genre links are still requested by
+        // crawlers. The published catalogue's current closest indexed genre is
+        // /turler/roman; redirect this precise obsolete alias, not all 404s.
+        source: "/turler/edeb-roman",
+        destination: "/turler/roman",
+        permanent: true,
+      },
+      {
         // The public login URL is /giris. Old/typed Turkish-character
         // links must not return 404; keep one canonical auth entry point.
         source: "/giriş",

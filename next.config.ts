@@ -162,6 +162,13 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // The public login URL is /giris. Old/typed Turkish-character
+        // links must not return 404; keep one canonical auth entry point.
+        source: "/giriş",
+        destination: "/giris",
+        permanent: true,
+      },
+      {
         // Retired public comparison view: preserve old inbound links without
         // leaving a 404 or publishing a duplicate book-index URL.
         source: "/en-cok-satanlar/turkiye/karsilastirma",

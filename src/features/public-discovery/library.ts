@@ -343,7 +343,7 @@ export async function getPublicGenreBySlug(
 
 export async function getPublicAuthors(search?: string) {
   const normalizedSearch = search?.trim().slice(0, 100);
-  const authors = await prisma.user.findMany({
+  const authorRows = await prisma.user.findMany({
     orderBy: [
       {
         displayName: "asc",
@@ -353,17 +353,19 @@ export async function getPublicAuthors(search?: string) {
       },
     ],
     select: {
-      _count: {
-        select: {
-          works: {
-            where: publicWorkPublicationWhere,
-          },
-        },
-      },
       displayName: true,
       fullName: true,
       publicId: true,
       username: true,
+      // The same supported relation read used by author detail pages.
+      // Avoid production-incompatible Prisma NOT/startsWith predicates:
+      // filter QA/demo works in JavaScript before exposing search links.
+      works: {
+        select: {
+          slug: true,
+        },
+        where: publicWorkPublicationWhere,
+      },
     },
     take: 500,
     where: {
@@ -373,6 +375,15 @@ export async function getPublicAuthors(search?: string) {
         some: publicWorkPublicationWhere,
       },
     },
+  });
+
+  const authors = authorRows.flatMap(({ works, ...author }) => {
+    const eligibleCount = works.filter(
+      (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+    ).length;
+    return eligibleCount > 0
+      ? [{ ...author, _count: { works: eligibleCount } }]
+      : [];
   });
 
   if (!normalizedSearch) {

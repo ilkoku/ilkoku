@@ -5,7 +5,7 @@ export const homepagePublicFallback = {
     primaryCtaLabel: "Eserini Yazmaya Başla",
     primaryCtaHref: "/kayit?rol=writer",
     secondaryCtaLabel: "Eserleri Keşfet",
-    secondaryCtaHref: "/kesfet",
+    secondaryCtaHref: "/eserler",
   },
   roles: {
     eyebrow: "Topluluğa katıl",

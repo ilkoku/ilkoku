@@ -132,6 +132,32 @@ test("public catalogue hides unsupported legacy taxonomy links and bounds return
   );
 });
 
+test("Ahrefs crawl cleanup: author directory omits QA-only authors without changing publication queries", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  const list = source("src/app/yazarlar/page.tsx");
+  const detail = source("src/app/yazarlar/[publicId]/page.tsx");
+  const directory = library.slice(
+    library.indexOf("export async function getPublicAuthors("),
+    library.indexOf("export const getPublicAuthorById", library.indexOf("export async function getPublicAuthors(")),
+  );
+
+  contains(directory, "works: {", "author directory loads work slugs through a supported relation");
+  contains(directory, "where: publicWorkPublicationWhere,", "existing tested publication query is preserved");
+  contains(directory, "const authors = authorRows.flatMap(({ works, ...author }) => {",
+    "filtering happens after the database read, not inside Prisma");
+  contains(directory, "!isSearchIndexExcludedPublicWorkSlug(work.slug)",
+    "demo/test work policy shared with XML sitemap");
+  contains(directory, "return eligibleCount > 0",
+    "authors with no independently indexable work must not be linked");
+  contains(directory, "_count: { works: eligibleCount }",
+    "displayed author counts match search-index eligible works");
+  notContains(directory, "NOT:", "do not repeat the production-crashing grouped NOT filter");
+  notContains(directory, "startsWith:", "do not repeat the production-crashing prefix predicate");
+  contains(list, "getPublicAuthors(search)", "public author list uses filtered directory");
+  contains(detail, "getPublicAuthorById(publicId)",
+    "direct profile reads, including QA fixtures, stay unchanged");
+});
+
 test("primary public catalogue only links to valid genre landing pages", () => {
   const catalogue = source("src/app/eserler/page.tsx");
   contains(catalogue, "normalizeGenreLabel(work.genre)", "catalogue must check supported taxonomy");

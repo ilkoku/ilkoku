@@ -628,7 +628,12 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   for (const changedFile of [
     "src/app/sitemap.xml/route.ts",
     "src/lib/seo/sitemap-data.ts",
+    "src/lib/seo/seo-helper.ts",
     "src/lib/soft-launch-search-policy.ts",
+    "src/lib/public-content-safety.ts",
+    "src/lib/public-taxonomy.ts",
+    "src/lib/genre-system.ts",
+    "src/lib/genres.ts",
     "src/app/landing-footer-tight.css",
     "src/lib/public-site-navigation.ts",
     "src/components/content/PublicCmsHydrator.tsx",
@@ -654,6 +659,20 @@ test("IndexNow selects narrow public routes and keeps conservative full-batch fa
   const workflow = source(".github/workflows/indexnow-submit.yml");
   assertContains(workflow, "uses: actions/checkout@v6", "IndexNow repository checkout");
   assertContains(workflow, "fetch-depth: 0", "IndexNow complete push diff");
+  assertContains(workflow, 'group: indexnow-${{ github.sha }}',
+    "GitHub must not replace previously pending IndexNow runs on new pushes");
+  assertContains(workflow, "cancel-in-progress: false",
+    "rapid merges must queue rather than cancel earlier IndexNow URL batches");
+  assertNotContains(workflow, "cancel-in-progress: true",
+    "no silent cancellation of public URL notifications");
+  assertContains(workflow, 'git merge-base --is-ancestor "$EXPECTED_SHA" "$live_sha"',
+    "production must be at requested push revision or a newer descendant");
+  assertContains(workflow, 'BUILD_INFO_URL="https://ilkoku.com/api/build-info"',
+    "IndexNow must check production build identity before submit");
+  assertContains(workflow, '"src/lib/public-content-safety.ts"',
+    "search exclusion changes trigger notification");
+  assertContains(workflow, '"src/lib/seo/**"',
+    "all shared SEO changes trigger notification");
   assertContains(workflow, 'git diff --name-only "$BEFORE_SHA" "$AFTER_SHA"', "IndexNow changed-file inventory");
   assertContains(workflow, 'echo "__FULL__" > /tmp/indexnow-changed-files.txt', "IndexNow manual/fallback full marker");
   assertContains(workflow, "node scripts/prepare-indexnow-payload.mjs", "IndexNow diff-aware payload selector");

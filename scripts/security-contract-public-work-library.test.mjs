@@ -316,8 +316,13 @@ test("landing, sitemap and production smoke keep retired public discovery closed
   );
   contains(
     homepageExperience,
-    '|| "/nasil-calisir"',
-    "homepage safe public fallback",
+    "resolveHomepageSecondaryHref(cmsSecondaryHref)",
+    "homepage delegates the public secondary CTA resolver",
+  );
+  contains(
+    source("src/lib/homepage-secondary-href.mjs"),
+    'return cmsHref || "/nasil-calisir";',
+    "homepage safe public fallback still exists in the resolver",
   );
   notContains(
     homepageExperience,

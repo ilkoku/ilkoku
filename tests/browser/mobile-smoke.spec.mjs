@@ -80,6 +80,19 @@ for (const scenario of publicCases) {
   });
 }
 
+test("anonymous homepage secondary CTA never leads to noindexed reader workspace", async ({ page }) => {
+  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  const secondary = page.locator(".nx-hero__actions a").nth(1);
+  await expect(secondary).toBeVisible();
+  const href = await secondary.getAttribute("href");
+  expect(href).toBeTruthy();
+  expect(href).not.toMatch(/^\\/kesfet(?:$|[/?#])/u);
+  if ((await secondary.textContent())?.includes("Eserleri Keşfet")) {
+    expect(href).toBe("/eserler");
+  }
+});
+
 test("legacy accented login URL must 308 to the public canonical login", async ({ request }) => {
   const legacy = await request.get("/giri%C5%9F", { maxRedirects: 0 });
   expect(legacy.status(), "Old Turkish-character login URL must not be 404").toBe(308);

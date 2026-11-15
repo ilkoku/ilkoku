@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,4 +59,23 @@ test("robots permits all AI and search crawlers; Cloudflare prepend must be disa
   assert.equal(robots.includes("disallow:"), false, "no origin robots.txt deny rules");
   contains(robots, 'sitemap: `${baseUrl}/sitemap.xml`', "sitemap untouched");
   contains(robots, '"/",', "public pages remain crawlable");
+  const smoke = source(".github/workflows/seo-indexability-smoke.yml");
+  contains(smoke, "grep -Eqi '^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:' \"$robots\"", "live smoke catches all Disallow and managed Content-Signal directives");
+  assert.equal(smoke.includes("Disallow: /(admin|icerik|api"), false, "legacy path-only restriction matcher must not come back");
+});
+
+
+test("robots smoke rejects global blocks, AI-specific denies and managed training restrictions", () => {
+  const pattern = "^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:";
+  const examples = [
+    { lines: ["User-agent: *", "Allow: /", "Disallow: /"], blocked: true },
+    { lines: ["User-agent: GPTBot", "Disallow: /"], blocked: true },
+    { lines: ["Content-Signal: search=yes,ai-train=no", "User-agent: *", "Allow: /"], blocked: true },
+    { lines: ["User-agent: *", "Allow: /", "Sitemap: https://ilkoku.com/sitemap.xml"], blocked: false },
+  ];
+  for (const { lines, blocked } of examples) {
+    const result = spawnSync("grep", ["-Eqi", pattern], { input: lines.join("\n") + "\n", encoding: "utf8" });
+    assert.equal(result.error, undefined, "grep must be available to validate the live smoke pattern");
+    assert.equal(result.status, blocked ? 0 : 1, "unexpected crawler rule match: " + JSON.stringify(lines));
+  }
 });

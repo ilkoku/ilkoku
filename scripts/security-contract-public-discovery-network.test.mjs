@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { safeOneHopReturnPath } from "../src/lib/one-hop-return-path.mjs";
+import { resolveHomepageSecondaryHref } from "../src/lib/homepage-secondary-href.mjs";
 
 const ROOT = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -42,9 +43,20 @@ test("homepage public discovery CTA never leads crawlers to the gated reader wor
 
   contains(security, '{ approved: false, path: "/kesfet"', "reader workspace remains protected");
   contains(fallback, 'secondaryCtaHref: "/eserler"', "public catalogue is the default homepage destination");
-  contains(homepage, 'cmsSecondaryHref === "/kesfet"', "legacy CMS reader-workspace CTA is recognized");
-  contains(homepage, 'cmsSecondaryHref.startsWith("/kesfet?")', "query-bearing workspace CTA is recognized");
-  contains(homepage, '? "/eserler"', "homepage discovery CTA leads to the public catalogue");
+  contains(homepage, 'resolveHomepageSecondaryHref(cmsSecondaryHref)', "homepage uses the tested CTA resolver");
+  for (const [input, expected] of [
+    ["/kesfet", "/eserler"],
+    ["/kesfet?arama=test", "/eserler"],
+    ["/kesfet/", "/eserler"],
+    ["/kesfet/eser", "/eserler"],
+    ["/kesfet#liste", "/eserler"],
+    ["/kesfete", "/kesfete"],
+    ["/eserler", "/eserler"],
+    ["/nasil-calisir", "/nasil-calisir"],
+    ["", "/nasil-calisir"],
+  ]) {
+    assert.equal(resolveHomepageSecondaryHref(input), expected, `homepage CTA ${input} resolves correctly`);
+  }
   contains(homepage, 'const secondaryLabel = cmsSecondaryHref', "approved CMS CTA label stays unchanged");
 });
 
@@ -381,7 +393,8 @@ test("sitemap, homepage and book pages form a truthful public graph", () => {
   notContains(sitemap, "contentKey LIKE 'guide:%'", "retired CMS guide sitemap inventory");
   contains(homepage, 'import HomepageExperience from "@/features/homepage/HomepageExperience"', "homepage neutral experience boundary");
   notContains(homepage, "onizleme/ana-sayfa-yeni", "homepage must not depend on the preview namespace");
-  contains(homepageExperience, '|| "/nasil-calisir"', "homepage live public fallback");
+  contains(homepageExperience, 'resolveHomepageSecondaryHref(cmsSecondaryHref)', "homepage delegates public CTA resolution");
+  contains(source("src/lib/homepage-secondary-href.mjs"), 'return cmsHref || "/nasil-calisir";', "homepage live public fallback stays safe");
   notContains(homepageExperience, '|| "/eserler"', "homepage paused discovery fallback");
   contains(publicNavigation, "export const publicDiscoveryEnabled = true", "shared discovery pause");
   contains(publicNavigation, 'href: "/eserler"', "retired work catalog route");

@@ -4,6 +4,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { getPublishedHomepageState } from "@/lib/cms-homepage-store";
 import { safeCmsInternalHref } from "@/lib/cms-links";
+import { resolveHomepageSecondaryHref } from "@/lib/homepage-secondary-href.mjs";
 import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { getBookIndexFooterDiscoveryEnabled } from "@/lib/book-index/public-access";
@@ -167,11 +168,7 @@ export default async function HomepageExperience() {
   const heroLines = heroTitle.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const primaryHref = safeCmsInternalHref(hero?.primaryCtaHref) || "/kayit?rol=writer";
   const cmsSecondaryHref = safeCmsInternalHref(hero?.secondaryCtaHref);
-  // The public discovery CTA must not send search visitors to the gated reader workspace.
-  const secondaryHref =
-    cmsSecondaryHref === "/kesfet" || cmsSecondaryHref.startsWith("/kesfet?")
-      ? "/eserler"
-      : cmsSecondaryHref || "/nasil-calisir";
+  const secondaryHref = resolveHomepageSecondaryHref(cmsSecondaryHref);
   const secondaryLabel = cmsSecondaryHref ? (hero?.secondaryCtaLabel || "Detayları Gör") : "Nasıl Çalışır?";
   const passportHref = safeCmsInternalHref(passport?.ctaHref) || "#roller";
 

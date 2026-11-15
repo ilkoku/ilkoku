@@ -142,10 +142,11 @@ jobs:
           fetch_contract_file "https://ilkoku.com/robots.txt" "$robots"
           grep -Fq 'Sitemap: https://ilkoku.com/sitemap.xml' "$robots"
           grep -Fq 'Allow: /' "$robots"
-          # Application-owned robots.txt must be fully open. Cloudflare may
-          # separately prepend policy until Bot Preference Sync is disabled.
-          if grep -Eq '^Disallow: /(admin|icerik|api|auth|hesabim|oku|editor|yazar|yayinevi|cdn-cgi|1q6z)' "$robots"; then
-            echo "FAIL: a legacy application-specific crawl restriction remains" >&2
+          # Inspect the live response, including possible Cloudflare prepended directives.
+          # Checking only known private path prefixes misses a global Disallow: /
+          # or an AI bot-specific Disallow rule, and would yield a false PASS.
+          if grep -Eqi '^[[:space:]]*(Disallow|Content-Signal)[[:space:]]*:' "$robots"; then
+            echo "FAIL: live robots.txt contains a crawler restriction or Content-Signal" >&2
             exit 1
           fi
 

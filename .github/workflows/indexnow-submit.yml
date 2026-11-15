@@ -38,7 +38,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: indexnow-main
+  # A unique per-commit group keeps GitHub from replacing older pending runs.
+  group: indexnow-${{ github.sha }}
   # Do not cancel earlier changed-URL notifications on rapid successive merges.
   cancel-in-progress: false
 

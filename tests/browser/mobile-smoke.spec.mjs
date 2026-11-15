@@ -80,6 +80,35 @@ for (const scenario of publicCases) {
   });
 }
 
+test("public desktop menu label opens its real landing page on click", async ({ page }) => {
+  await page.setViewportSize(viewports.desktop);
+  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  const menuLink = page.locator(".public-site-header__desktop-nav .public-site-header__menu-trigger:not([data-direct])").first();
+  await expect(menuLink).toBeVisible();
+  const href = await menuLink.getAttribute("href");
+  expect(href).toMatch(/^\/[^?#]+/u);
+  await menuLink.click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe(href.split("?")[0]);
+});
+
+test("public mobile menu label navigates; separate arrow still opens submenu", async ({ page }) => {
+  await page.setViewportSize(viewports.phone390);
+  const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await page.locator(".public-site-header__mobile-toggle").click();
+  const firstRow = page.locator(".public-site-header__mobile-category-row").first();
+  await expect(firstRow).toBeVisible();
+  const landingLink = firstRow.locator("a");
+  const href = await landingLink.getAttribute("href");
+  expect(href).toMatch(/^\/[^?#]+/u);
+  await firstRow.locator("button.public-site-header__mobile-expand").click();
+  await expect(page.locator(".public-site-header__mobile-track")).toHaveAttribute("data-detail", "true");
+  await page.locator(".public-site-header__mobile-back").click();
+  await landingLink.click();
+  await expect.poll(() => new URL(page.url()).pathname).toBe(href.split("?")[0]);
+});
+
 test("anonymous homepage secondary CTA never leads to noindexed reader workspace", async ({ page }) => {
   const response = await page.goto("/", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);

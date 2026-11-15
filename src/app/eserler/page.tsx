@@ -12,6 +12,7 @@ import {
 } from "@/features/public-discovery/library";
 import { normalizeGenreLabel } from "@/lib/genre-system";
 import { publicBrandSocialImage } from "@/lib/public-brand";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import { publicTaxonomySlug } from "@/lib/public-taxonomy";
 import {
   isPublicStoredWorkContentRating,
@@ -188,6 +189,10 @@ export default async function PublicWorkLibraryPage({
     requestedPage,
   );
   const currentPath = pageHref(filters, library.currentPage);
+  // Match XML sitemap eligibility without changing production Prisma queries.
+  const searchEligibleSchemaWorks = library.works.filter(
+    (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+  );
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -197,8 +202,8 @@ export default async function PublicWorkLibraryPage({
     inLanguage: "tr-TR",
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: library.works.length,
-      itemListElement: library.works.map(
+      numberOfItems: searchEligibleSchemaWorks.length,
+      itemListElement: searchEligibleSchemaWorks.map(
         (work, index) => ({
           "@type": "ListItem",
           position:

@@ -12,6 +12,7 @@ import {
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
 import { publicBrandSocialImage } from "@/lib/public-brand";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 
 const baseUrl = "https://ilkoku.com";
 const MAX_RETURN_PATH_LENGTH = 1500;
@@ -150,6 +151,10 @@ export default async function PublicGenrePage({
     returnTo,
   );
   const canonical = `${baseUrl}/turler/${genre.slug}`;
+  // Preserve QA detail browsing without promoting its demo works in JSON-LD.
+  const searchEligibleSchemaWorks = library.works.filter(
+    (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+  );
   const schemas = [
     {
       "@context": "https://schema.org",
@@ -159,7 +164,7 @@ export default async function PublicGenrePage({
       inLanguage: "tr-TR",
       mainEntity: {
         "@type": "ItemList",
-        itemListElement: library.works.map(
+        itemListElement: searchEligibleSchemaWorks.map(
           (work, index) => ({
             "@type": "ListItem",
             position:

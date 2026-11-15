@@ -7,6 +7,7 @@ import {
 } from "@/features/public-discovery/library";
 import { PublicHubShell } from "@/features/public-discovery/PublicHubShell";
 import { PublicWorkStream } from "@/features/public-discovery/PublicWorkStream";
+import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";
 import {
   isPublicStoredWorkContentRating,
   publicStoredWorkContentRatings,
@@ -96,6 +97,10 @@ export async function PublicWorkFeedPage({
     filters,
     library.currentPage,
   );
+  // Never advertise QA/demo work as an indexable Book via public JSON-LD.
+  const searchEligibleSchemaWorks = library.works.filter(
+    (work) => !isSearchIndexExcludedPublicWorkSlug(work.slug),
+  );
   const schema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -105,8 +110,8 @@ export async function PublicWorkFeedPage({
     inLanguage: "tr-TR",
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: library.works.length,
-      itemListElement: library.works.map(
+      numberOfItems: searchEligibleSchemaWorks.length,
+      itemListElement: searchEligibleSchemaWorks.map(
         (work, index) => ({
           "@type": "ListItem",
           position:

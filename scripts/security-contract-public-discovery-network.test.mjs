@@ -671,3 +671,36 @@ test("GSC crawl discovery: HTML site map links canonical public directories and 
   contains(sitemapPage, "href: \"/turler/\" + genre.slug", "genre link canonical has no tracking query");
   notContains(sitemapPage, "?from=", "HTML sitemap must not multiply crawlable URLs via return parameters");
 });
+
+
+test("public JSON-LD lists honor search-index work eligibility", () => {
+  const pages = [
+    "src/app/eserler/page.tsx",
+    "src/features/public-discovery/PublicWorkFeedPage.tsx",
+    "src/app/turler/[slug]/page.tsx",
+  ];
+
+  for (const file of pages) {
+    const content = source(file);
+    contains(content,
+      'import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";',
+      `${file} must reuse XML sitemap work exclusions`);
+    contains(content,
+      "const searchEligibleSchemaWorks = library.works.filter(",
+      `${file} must only emit eligible schema work references`);
+    contains(content,
+      "!isSearchIndexExcludedPublicWorkSlug(work.slug)",
+      `${file} must exclude QA/demo work slugs`);
+    contains(content,
+      "itemListElement: searchEligibleSchemaWorks.map(",
+      `${file} must not promote demo books to search engines`);
+    notContains(content,
+      "itemListElement: library.works.map(",
+      `${file} must not publish raw catalogue pages as Book lists`);
+  }
+
+  for (const file of pages.slice(0, 2)) {
+    contains(source(file), "numberOfItems: searchEligibleSchemaWorks.length",
+      `${file} ItemList count must match its eligible entries`);
+  }
+});

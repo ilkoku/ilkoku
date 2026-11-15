@@ -704,3 +704,25 @@ test("public JSON-LD lists honor search-index work eligibility", () => {
       `${file} ItemList count must match its eligible entries`);
   }
 });
+
+test("Ahrefs: public RSS omits all noindex test/demo works while retaining normal books", () => {
+  const rss = source("src/app/eserler/rss.xml/route.ts");
+  contains(rss,
+    'import { isSearchIndexExcludedPublicWorkSlug } from "@/lib/public-content-safety";',
+    "RSS uses the same approved search index exclusion policy as XML sitemap");
+  contains(rss,
+    "const works = (await getPublicWorkFeed()).filter(",
+    "RSS filters the already-read public feed without risky Prisma predicates");
+  contains(rss,
+    "!isSearchIndexExcludedPublicWorkSlug(work.slug)",
+    "RSS excludes demo-prefixed and explicitly noindexed work slugs");
+  contains(rss,
+    "const latestUpdate =",
+    "RSS freshness is recomputed from eligible publications only");
+  contains(rss,
+    "const items = works",
+    "RSS item list uses the search-eligible filtered works");
+  contains(rss,
+    '      const url = `${baseUrl}/kitap/${work.slug}`;',
+    "RSS keeps the canonical links of real published works");
+});

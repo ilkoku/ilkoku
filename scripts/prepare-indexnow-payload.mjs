@@ -30,6 +30,10 @@ const globalImpactFiles = new Set([
   "src/lib/public-brand.ts",
   "src/lib/public-page-metadata.ts",
   "src/lib/soft-launch-search-policy.ts",
+  "src/lib/public-content-safety.ts",
+  "src/lib/public-taxonomy.ts",
+  "src/lib/genre-system.ts",
+  "src/lib/genres.ts",
   "src/lib/public-site-navigation.ts",
   "src/lib/site-contact.ts",
 ]);
@@ -293,6 +297,13 @@ export function selectIndexNowUrls({
 
     if (globalImpactFiles.has(file)) {
       fullReason = `global public file ${file}`;
+      break;
+    }
+
+    // Any shared SEO helper can affect many canonical URLs at once.
+    // Never silently skip IndexNow after a global indexability change.
+    if (file.startsWith("src/lib/seo/")) {
+      fullReason = `shared SEO module ${file}`;
       break;
     }
 

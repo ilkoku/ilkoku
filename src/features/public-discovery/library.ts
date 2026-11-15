@@ -71,13 +71,20 @@ const publicSearchEligibleWorkWhere: Prisma.WorkWhereInput = {
   })),
 };
 
+const publicSearchEligibleWorkBaseWhere: Prisma.WorkWhereInput = {
+  ...publicWorkBaseWhere,
+  slug: publicSearchEligibleWorkWhere.slug,
+  NOT: publicSearchEligibleWorkWhere.NOT,
+};
+
 function publicWorkWhere(
   filters: PublicWorkLibraryFilters,
+  includeSearchExcluded = false,
 ): Prisma.WorkWhereInput {
   const genre = normalizeGenreLabel(filters.genre);
 
   return {
-    ...publicWorkBaseWhere,
+    ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
     ...(filters.search
       ? {
           OR: [
@@ -141,6 +148,7 @@ export async function getPublicWorkLibrary(
   filters: PublicWorkLibraryFilters,
   requestedPage: number,
   includeGenres = true,
+  includeSearchExcluded = false,
 ) {
   const orderBy: Prisma.WorkOrderByWithRelationInput[] =
     filters.sort === "updated"
@@ -165,7 +173,7 @@ export async function getPublicWorkLibrary(
         },
         take: 100,
         where: {
-          ...publicWorkBaseWhere,
+          ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
           genre: {
             not: null,
           },
@@ -180,7 +188,7 @@ export async function getPublicWorkLibrary(
     const whereWithoutSearch = publicWorkWhere({
       ...filters,
       search: undefined,
-    });
+    }, includeSearchExcluded);
     const [genreRows, candidates] = await Promise.all([
       genreRowsQuery,
       prisma.work.findMany({
@@ -230,7 +238,7 @@ export async function getPublicWorkLibrary(
     };
   }
 
-  const where = publicWorkWhere(filters);
+  const where = publicWorkWhere(filters, includeSearchExcluded);
   const [totalCount, genreRows] = await Promise.all([
     prisma.work.count({ where }),
     genreRowsQuery,
@@ -260,7 +268,7 @@ export async function getPublicWorkLibrary(
   };
 }
 
-export const getPublicGenres = cache(async function getPublicGenres(search?: string) {
+export const getPublicGenres = cache(async function getPublicGenres(search?: string, includeSearchExcluded = false) {
   const normalizedSearch = search?.trim().slice(0, 120);
   const rows = await prisma.work.groupBy({
     _count: {
@@ -272,7 +280,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
     },
     take: 100,
     where: {
-      ...publicWorkBaseWhere,
+      ...(includeSearchExcluded ? publicWorkBaseWhere : publicSearchEligibleWorkBaseWhere),
       genre: {
         not: null,
       },
@@ -354,7 +362,7 @@ export const getSearchIndexEligibleGenreSlugs = cache(
 export async function getPublicGenreBySlug(
   slug: string,
 ) {
-  const genres = await getPublicGenres();
+  const genres = await getPublicGenres(undefined, true);
 
   return (
     genres.find((genre) => genre.slug === slug) ??
@@ -495,6 +503,6 @@ export async function getPublicWorkFeed() {
       updatedAt: true,
     },
     take: 50,
-    where: publicWorkBaseWhere,
+    where: publicSearchEligibleWorkBaseWhere,
   });
 }

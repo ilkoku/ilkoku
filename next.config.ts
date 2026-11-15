@@ -169,6 +169,13 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Incoming browsers send the accent as UTF-8 percent encoding.
+        // Match the wire URL as well as the readable Unicode alias above.
+        source: "/giri%C5%9F",
+        destination: "/giris",
+        permanent: true,
+      },
+      {
         // Retired public comparison view: preserve old inbound links without
         // leaving a 404 or publishing a duplicate book-index URL.
         source: "/en-cok-satanlar/turkiye/karsilastirma",

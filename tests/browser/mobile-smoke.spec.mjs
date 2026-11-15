@@ -80,6 +80,17 @@ for (const scenario of publicCases) {
   });
 }
 
+test("legacy accented login URL must 308 to the public canonical login", async ({ request }) => {
+  const legacy = await request.get("/giri%C5%9F", { maxRedirects: 0 });
+  expect(legacy.status(), "Old Turkish-character login URL must not be 404").toBe(308);
+  const location = legacy.headers()["location"];
+  expect(location).toBeTruthy();
+  expect(new URL(location, "http://127.0.0.1:3100").pathname).toBe("/giris");
+
+  const canonical = await request.get("/giris");
+  expect(canonical.status(), "Canonical login must remain publicly reachable").toBe(200);
+});
+
 test("public registration agreement has unique SEO metadata in server HTML head", async ({ page }) => {
   const response = await page.goto("/uyelik-sozlesmesi", { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);

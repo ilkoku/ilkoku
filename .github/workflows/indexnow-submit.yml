@@ -104,7 +104,7 @@ jobs:
             key_body="$(curl --silent --show-error --location --max-time 20 "$KEY_URL" || true)"
             sitemap_body="$(curl --silent --show-error --location --max-time 20 "$SITEMAP_URL" || true)"
             build_info_body="$(curl --silent --show-error --location --max-time 20 --header 'Cache-Control: no-cache' "$BUILD_INFO_URL" || true)"
-            live_sha="$(printf '%s' "$build_info_body" | sed -nE 's/.*"commitSha"[[:space:]]*:[[:space:]]*"([0-9a-f]{40})".*/\\1/p')"
+            live_sha="$(printf '%s' "$build_info_body" | sed -nE 's/.*"commitSha"[[:space:]]*:[[:space:]]*"([0-9a-f]{40})".*/\1/p')"
             deployment_ready=1
             if [[ "$EVENT_NAME" == "push" ]]; then
               deployment_ready=0

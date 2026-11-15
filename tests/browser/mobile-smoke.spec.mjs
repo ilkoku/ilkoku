@@ -87,7 +87,7 @@ test("anonymous homepage secondary CTA never leads to noindexed reader workspace
   await expect(secondary).toBeVisible();
   const href = await secondary.getAttribute("href");
   expect(href).toBeTruthy();
-  expect(href).not.toMatch(/^\\/kesfet(?:$|[/?#])/u);
+  expect(href).not.toMatch(/^\/kesfet(?:$|[/?#])/u);
   if ((await secondary.textContent())?.includes("Eserleri Keşfet")) {
     expect(href).toBe("/eserler");
   }

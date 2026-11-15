@@ -132,7 +132,17 @@ test("public auth entry pages stay crawlable noindex-follow while private worksp
     ["/sifre-yenile", "src/app/sifre-yenile/page.tsx"],
   ]) {
     const page = source(pagePath);
-    assertContains(page, "robots: { index: false, follow: true }", `${route} metadata noindex-follow`);
+    if (route === "/sifre-yenile") {
+      assertContains(page, "robots: { index: false, follow: true }",
+        `${route} unchanged noindex-follow metadata`);
+    } else {
+      assertContains(page, "createPublicPageMetadata({",
+        `${route} uses the existing full-metadata helper`);
+      assertContains(page, "noIndex: true",
+        `${route} remains noindex-follow`);
+      assertContains(page, `canonical: "${route}"`,
+        `${route} canonical is stable without query parameters`);
+    }
     assertNotContains(robots, `          "${route}",`, `${route} must stay crawlable so noindex can be read`);
     assertNotContains(sitemap, `https://ilkoku.com${route}`, `${route} must stay out of sitemap`);
   }

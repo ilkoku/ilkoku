@@ -24,6 +24,11 @@ on:
       - "src/lib/public-brand.ts"
       - "src/lib/public-page-metadata.ts"
       - "src/lib/soft-launch-search-policy.ts"
+      - "src/lib/public-content-safety.ts"
+      - "src/lib/public-taxonomy.ts"
+      - "src/lib/genre-system.ts"
+      - "src/lib/genres.ts"
+      - "src/lib/seo/**"
       - "src/lib/site-contact.ts"
       - "public/**"
       - "scripts/prepare-indexnow-payload.mjs"
@@ -34,7 +39,8 @@ permissions:
 
 concurrency:
   group: indexnow-main
-  cancel-in-progress: true
+  # Do not cancel earlier changed-URL notifications on rapid successive merges.
+  cancel-in-progress: false
 
 jobs:
   submit:
@@ -82,17 +88,40 @@ jobs:
 
       - name: Wait for production and submit affected sitemap URLs
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -Eeuo pipefail
 
           KEY="f4c33493caf6550560462af5a424980e"
           KEY_URL="https://ilkoku.com/${KEY}.txt"
           SITEMAP_URL="https://ilkoku.com/sitemap.xml"
+          BUILD_INFO_URL="https://ilkoku.com/api/build-info"
           READY=0
 
           for attempt in $(seq 1 20); do
             key_body="$(curl --silent --show-error --location --max-time 20 "$KEY_URL" || true)"
             sitemap_body="$(curl --silent --show-error --location --max-time 20 "$SITEMAP_URL" || true)"
+            build_info_body="$(curl --silent --show-error --location --max-time 20 --header 'Cache-Control: no-cache' "$BUILD_INFO_URL" || true)"
+            live_sha="$(printf '%s' "$build_info_body" | sed -nE 's/.*"commitSha"[[:space:]]*:[[:space:]]*"([0-9a-f]{40})".*/\\1/p')"
+            deployment_ready=1
+            if [[ "$EVENT_NAME" == "push" ]]; then
+              deployment_ready=0
+              # Every queued push gets notified, even if production has moved
+              # to a newer descendant commit while this job was waiting.
+              if [[ -n "$live_sha" ]]; then
+                if ! git cat-file -e "${live_sha}^{commit}" 2>/dev/null; then
+                  git fetch --quiet --no-tags origin main || true
+                fi
+                if git merge-base --is-ancestor "$EXPECTED_SHA" "$live_sha" 2>/dev/null; then
+                  deployment_ready=1
+                fi
+              fi
+              if [[ "$deployment_ready" != "1" ]]; then
+                echo "Production has not deployed commit $EXPECTED_SHA yet (live: ${live_sha:-unknown})."
+              fi
+            fi
             sitemap_ready=1
 
             for required in \
@@ -105,9 +134,9 @@ jobs:
               fi
             done
 
-            if [[ "$key_body" == "$KEY" && "$sitemap_ready" == "1" ]]; then
+            if [[ "$key_body" == "$KEY" && "$sitemap_ready" == "1" && "$deployment_ready" == "1" ]]; then
               READY=1
-              echo "Production IndexNow key and current public sitemap cohorts are ready."
+              echo "Production deployment, IndexNow key and public sitemap cohorts are ready."
               break
             fi
 

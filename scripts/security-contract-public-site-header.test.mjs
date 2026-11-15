@@ -392,8 +392,9 @@ test("legacy public headers are hidden only inside the explicit public frame", (
   }
 });
 
-test("all public mega-menu roots expose crawlable HTML links without changing click-to-expand behavior", () => {
+test("all public mega-menu labels navigate while mobile submenu buttons expand separately", () => {
   const navigation = read(headerNavigationClientPath);
+  const css = read(headerMegaCssPath);
   assert.match(navigation, /function menuLandingHref\(menu: PublicHeaderMenu\)/u);
   assert.match(navigation, /links\.find\(\(link\) => link\.primary\)\?\.href/u);
   assert.equal(
@@ -401,8 +402,12 @@ test("all public mega-menu roots expose crawlable HTML links without changing cl
     2,
     "Desktop and mobile menu roots must expose real href targets",
   );
-  assert.match(navigation, /event\.preventDefault\(\)/u, "Hydrated clicks must continue to expand menus");
-  assert.match(navigation, /setActiveId\(isActive \? null : menu\.id\)/u, "Desktop menu state stays unchanged");
-  assert.match(navigation, /setMobileMenuId\(menu\.id\)/u, "Mobile menu state stays unchanged");
-  assert.match(navigation, /\{activeMenu \? \(/u, "Existing visible mega panel stays single-active");
+  assert.doesNotMatch(navigation, /event\.preventDefault\(\)/u, "Hydrated navigation clicks must not be intercepted");
+  assert.match(navigation, /onClick=\{closeDesktop\}/u, "Desktop heading click closes dropdown and navigates");
+  assert.match(navigation, /className="public-site-header__mobile-category-row"/u, "Mobile menu uses a split link and toggle");
+  assert.match(navigation, /className="public-site-header__mobile-expand"/u, "Mobile submenu has its own button");
+  assert.match(navigation, /onClick=\{closeMobile\}/u, "Mobile heading link closes menu and navigates");
+  assert.match(navigation, /setMobileMenuId\(menu\.id\)/u, "Mobile submenu toggle still opens groups");
+  assert.match(navigation, /\{activeMenu \? \(/u, "Desktop mega panel remains hover-accessible");
+  assert.match(css, /\.public-site-header__mobile-expand/u, "Mobile separate submenu control remains styled");
 });

@@ -184,10 +184,7 @@ export function PublicHeaderNavigation({
                 aria-controls={`public-site-header-mega-panel-${menu.id}`}
                 onMouseEnter={() => activate(menu.id)}
                 onFocus={() => activate(menu.id)}
-                onClick={(event) => {
-                  event.preventDefault();
-                  setActiveId(isActive ? null : menu.id);
-                }}
+                onClick={closeDesktop}
               >
                 {menu.label}
               </Link>
@@ -256,25 +253,39 @@ export function PublicHeaderNavigation({
                           <span>{menu.label}</span>
                         </Link>
                       ) : (
-                        <Link
-                          prefetch={false}
-                          className="public-site-header__mobile-category"
-                          href={menuLandingHref(menu)}
+                        <div
+                          className="public-site-header__mobile-category-row"
                           key={`mobile-root-${menu.id}`}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            setMobileMenuId(menu.id);
-                          }}
                         >
-                          <span>{menu.label}</span>
-                          <span aria-hidden="true">›</span>
-                        </Link>
+                          <Link
+                            prefetch={false}
+                            className="public-site-header__mobile-category"
+                            href={menuLandingHref(menu)}
+                            onClick={closeMobile}
+                          >
+                            <span>{menu.label}</span>
+                          </Link>
+                          <button
+                            type="button"
+                            className="public-site-header__mobile-expand"
+                            aria-label={`${menu.label} alt menüsünü aç`}
+                            aria-expanded={mobileMenuId === menu.id}
+                            aria-controls="public-site-header-mobile-detail"
+                            onClick={() => setMobileMenuId(menu.id)}
+                          >
+                            <span aria-hidden="true">›</span>
+                          </button>
+                        </div>
                       ),
                     )}
                   </nav>
                 </section>
 
-                <section className="public-site-header__mobile-detail" aria-live="polite">
+                <section
+                  className="public-site-header__mobile-detail"
+                  id="public-site-header-mobile-detail"
+                  aria-live="polite"
+                >
                   {mobileMenu ? (
                     <>
                       <button

@@ -30,8 +30,9 @@ const INFORMATIONAL_HUB_EXPERT_NOTE_UPDATED_AT = new Date("2026-10-22T20:16:41Z"
 // Fixed at the code change time so sitemap lastmod remains stable across deploys.
 const SEO_INDEX_COHORT_TRUST_UPDATED_AT = new Date("2026-11-11T14:14:21Z");
 
-// Visible five-guide shortcuts shipped on the writers landing page in PR #1673.
-const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z");
+// The writer hub gained a direct link to its flagship Roman guide on 16 Nov 2026.
+// This is a real visible internal-link change, not a deploy-only timestamp bump.
+const WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-11-16T16:19:08Z");
 
 // A real HTML sitemap link update: the indexable registration agreement was added in PR #1701 (Oct 14).
 const HTML_SITE_MAP_DISCOVERY_UPDATED_AT = new Date("2026-10-14T12:56:16Z");

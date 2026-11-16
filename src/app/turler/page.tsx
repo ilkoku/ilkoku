@@ -148,7 +148,9 @@ export default async function PublicGenresPage({
               {genres.map((genre) => (
                 <Link prefetch={false}
                   className="public-hub-card"
-                  href={`/turler/${genre.slug}?from=${encodeURIComponent(returnPath)}`}
+                  href={search
+                    ? `/turler/${genre.slug}?from=${encodeURIComponent(returnPath)}`
+                    : `/turler/${genre.slug}`}
                   key={genre.slug}
                 >
                   <div className="public-hub-card__meta">

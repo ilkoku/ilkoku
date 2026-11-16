@@ -9,6 +9,8 @@ import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 type Section = { body: string; title: string };
 
 const priorityWritingGuideLinks = [
+  // The flagship Roman guide must be directly discoverable from the main writer hub.
+  { href: "/yazarlar-icin/kurgu/roman", label: "Roman yazarlığı" },
   { href: "/yazarlar-icin/kurgu/oyku", label: "Öykü yazarlığı" },
   { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik yazarlığı" },
   { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu yazarlığı" },

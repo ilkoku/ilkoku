@@ -962,11 +962,12 @@ test("indexing diagnostics and GSC submission stay aligned with the focused live
   );
 });
 
-test("Madde 14 writer hub links directly to five approved indexable priority guides", () => {
+test("Writer hub includes the real Roman flagship and other indexable priority guides", () => {
   const writerHub = source("src/components/content/ForWritersExperience.tsx");
   const searchPolicy = source("src/lib/soft-launch-search-policy.ts");
   const styles = source("src/app/yazarlar-icin/education-hub.css");
   const links = [
+    "/yazarlar-icin/kurgu/roman",
     "/yazarlar-icin/kurgu/oyku",
     "/yazarlar-icin/kurgu/fantastik",
     "/yazarlar-icin/kurgu/bilim-kurgu",
@@ -985,10 +986,10 @@ test("Madde 14 writer hub links directly to five approved indexable priority gui
   assertContains(styles, ".writers-education__shortcuts-links", "responsive link styling");
 });
 
-test("Madde 14 writer hub sitemap lastmod reflects the actual five-guide link release", () => {
+test("Writer hub sitemap lastmod reflects the real November 16 Roman link update", () => {
   const freshness = source("src/lib/search-content-freshness.ts");
   const sitemap = source("src/lib/seo/sitemap-data.ts");
-  assertContains(freshness, 'WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-10-12T18:15:50Z")', "accurate PR #1673 release timestamp");
+  assertContains(freshness, 'WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT = new Date("2026-11-16T16:19:08Z")', "accurate Roman discovery shortcut update timestamp");
   assertContains(freshness, '["/yazarlar-icin", WRITER_HUB_PRIORITY_GUIDES_UPDATED_AT]', "route-specific freshness");
   assertContains(sitemap, "applySearchCodeFreshness(", "dynamic sitemap honors changed route timestamp");
 });

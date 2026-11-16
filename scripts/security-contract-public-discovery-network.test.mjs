@@ -206,6 +206,14 @@ test("primary public catalogue only links to valid genre landing pages", () => {
   contains(catalogue, "<span>{genre}</span>", "unrecognized legacy genres remain visible as text");
 });
 
+test("public genre cards link directly to canonical URLs and preserve search return context only when needed", () => {
+  const directory = source("src/app/turler/page.tsx");
+  contains(directory, "href={search", "normal unfiltered genres use canonical href");
+  contains(directory, `?from=${encodeURIComponent(returnPath)}`, "filtered directory retains a return path");
+  contains(directory, ': `/turler/${genre.slug}`}', "unfiltered cards link without query parameters");
+  notContains(directory, 'href={`/turler/${genre.slug}?from=', "never append from to every genre URL");
+});
+
 test("how-it-works trust page stays discovery-led, CMS-compatible and truthful", () => {
   const content = source("src/content/how-it-works.ts");
   const page = source("src/app/nasil-calisir/page.tsx");

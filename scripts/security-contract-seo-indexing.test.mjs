@@ -2010,3 +2010,13 @@ test("CMS database failures must not be reported as missing pages", () => {
   assertNotContains(redirectSection, "catch {", "redirect database errors must reach Next.js error handler");
   assertContains(redirectSection, "if (!value || value.source !== normalizedSource) notFound()", "missing redirect remains a real 404");
 });
+
+
+test("historical genre redirect HTTP probe follows redirect and expects target 200", () => {
+  const config = source("next.config.ts");
+  const workflow = source(".github/workflows/seo-lcp-edge-origin-timing.yml");
+  assertContains(config, 'source: "/turler/edeb-roman"', "legacy genre redirect source");
+  assertContains(config, 'destination: "/turler/roman"', "legacy genre redirect target");
+  assertContains(workflow, 'legacy-redirect|/turler/edeb-roman|200', "follow-redirect probe expects final 200");
+  assertNotContains(workflow, 'legacy-404|/turler/edeb-roman|404', "redirected URL must not be flagged as a 404");
+});

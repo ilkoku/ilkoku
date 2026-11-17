@@ -130,13 +130,17 @@ jobs:
               --connect-timeout 8 --max-time 25 \
               --user-agent 'IlkOku-P1-Sample/1.0 (+https://ilkoku.com)' \
               --dump-header "$headers" --output /dev/null \
-              --write-out '%{http_code}\t%{time_starttransfer}\t%{time_total}\t%{size_download}' \
+              --write-out '%{http_code}\t%{time_starttransfer}\t%{time_total}\t%{size_download}\t%{url_effective}' \
               "$url" || true)"
             cache="$(grep -i '^cf-cache-status:' "$headers" | tail -1 | cut -d: -f2- | tr -d '\r ' || true)"
             rm -f "$headers"
-            read -r code ttfb total bytes <<< "$(printf '%s' "$metrics" | tr '\t' ' ')"
+            read -r code ttfb total bytes effective_url <<< "$(printf '%s' "$metrics" | tr '\t' ' ')"
             if [[ -z "$code" ]]; then code=000; fi
             printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$cohort" "$url" "$expected" "$code" "$ttfb" "$total" "$bytes" "$cache" | tee -a "$output"
+            if [[ "$cohort" == "legacy-redirect" && "$effective_url" != "https://ilkoku.com/turler/roman" ]]; then
+              echo "::error::Historical genre redirect has wrong destination $url => $effective_url"
+              fail=1
+            fi
             if [[ "$code" == "403" || "$code" == "429" ]]; then
               echo "::error::WAF circuit breaker HTTP $code; stopping all P1 probes."
               exit 1

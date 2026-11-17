@@ -166,7 +166,7 @@ jobs:
           public|/turler/roman|200
           legacy-404|/turler/gizem|404
           legacy-404|/turler/genclik|404
-          legacy-404|/turler/edeb-roman|404
+          legacy-redirect|/turler/edeb-roman|200
           historical-503|/kitap/demo-kayip-harfler?from=%2Fyazarlar%2FIKO-U-2026-000014%3Ffrom%3D%2Fturler%2Fbilim-kurgu%3Ffrom%3D%252Fturler%252Fbilim-kurgu%253Ffrom%253D%25252Fturler%25252Fbilim-kurgu%25253Ffrom%25253D%2525252Feserler|200
           P1_COHORT
           exit "$fail"

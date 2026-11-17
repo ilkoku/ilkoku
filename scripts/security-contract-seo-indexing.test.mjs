@@ -2018,5 +2018,6 @@ test("historical genre redirect HTTP probe follows redirect and expects target 2
   assertContains(config, 'source: "/turler/edeb-roman"', "legacy genre redirect source");
   assertContains(config, 'destination: "/turler/roman"', "legacy genre redirect target");
   assertContains(workflow, 'legacy-redirect|/turler/edeb-roman|200', "follow-redirect probe expects final 200");
+  assertContains(workflow, '"$effective_url" != "https://ilkoku.com/turler/roman"', "follow-redirect probe verifies exact destination");
   assertNotContains(workflow, 'legacy-404|/turler/edeb-roman|404', "redirected URL must not be flagged as a 404");
 });

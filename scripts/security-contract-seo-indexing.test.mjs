@@ -1995,3 +1995,18 @@ test("Ahrefs historical literary-novel 404 redirects only to healthy canonical g
     'destination: "/turler/tarihi-roman"',
     "do not redirect into a currently unavailable historical category");
 });
+
+
+test("CMS database failures must not be reported as missing pages", () => {
+  const page = source("src/app/[...path]/page.tsx");
+  const loader = page.split("async function loadPublicPage(source: string) {")[1]?.split("export async function generateMetadata")[0];
+  assert.ok(loader, "CMS public-page loader exists");
+  assertContains(loader, "const rows = await prisma.$queryRaw<PublicPageRow[]>", "public-page database query");
+  assertNotContains(loader, "catch {", "public-page database errors must reach Next.js error handler");
+  assertContains(loader, "return rows[0] ?? null", "missing public page remains a real 404");
+
+  const redirectSection = page.split("const rows = await prisma.$queryRaw<RedirectRow[]>")[1];
+  assert.ok(redirectSection, "CMS redirect database lookup exists");
+  assertNotContains(redirectSection, "catch {", "redirect database errors must reach Next.js error handler");
+  assertContains(redirectSection, "if (!value || value.source !== normalizedSource) notFound()", "missing redirect remains a real 404");
+});

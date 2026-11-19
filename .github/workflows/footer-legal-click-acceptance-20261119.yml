@@ -45,6 +45,8 @@ jobs:
           assert.match(a,/\.public-trust-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(b,/\.nx-live-footer-scope \.landing-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(hydrator,/anchor\.style\.setProperty\("min-height", "2\.75rem", "important"\)/);
+          assert.doesNotMatch(hydrator,/legal\.replaceChildren\(/);
+          assert.match(hydrator,/existingAnchors\[index\] \?\? document\.createElement\("a"\)/);
           assert.match(b,/\.landing-page\.nx-live-footer-scope \.landing-footer \.landing-footer__copyright\s*\{/);
           assert.match(b,/--ilkoku-consent-footer-clearance/);
           assert.match(a,/--ilkoku-consent-footer-clearance/);

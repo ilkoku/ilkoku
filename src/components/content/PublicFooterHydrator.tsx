@@ -82,9 +82,11 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
     anchor.textContent = content[`${key}Label`] || fallback.label;
     anchor.setAttribute("href", internalHref(content[`${key}Href`], fallback.href));
     anchor.style.setProperty("display", "inline-flex", "important");
+    anchor.style.setProperty("align-items", "center", "important");
+    anchor.style.setProperty("min-height", "2.75rem", "important");
     anchor.style.setProperty("margin", "0", "important");
-    anchor.style.setProperty("padding", ".12rem 0", "important");
-    anchor.style.setProperty("font-size", ".7rem", "important");
+    anchor.style.setProperty("padding", ".5rem .42rem", "important");
+    anchor.style.setProperty("font-size", ".78rem", "important");
     anchor.style.setProperty("white-space", "nowrap", "important");
     legal?.append(anchor);
   });

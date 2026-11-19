@@ -117,6 +117,22 @@ test("reader education exposes Article and one shared breadcrumb structured data
 });
 
 
+test("public reader education CTAs open the public works directory, never the authenticated reader workspace", () => {
+  const inventory = source("src/lib/reader-education.ts");
+  const renderer = source("src/components/content/ReaderEducationPage.tsx");
+  const readerWorkspace = source("src/app/kesfet/page.tsx");
+  const publicLibrary = source("src/app/eserler/page.tsx");
+  const publicCtas = [...inventory.matchAll(/application: \{[^\n]*?href: "([^"]+)", label: "[^"]+" \}/gu)]
+    .map((match) => match[1]);
+  assert.equal(publicCtas.length, 8, "every reader education category has one CTA");
+  assert.equal(publicCtas.filter((href) => href === "/eserler").length, 7, "seven reader CTAs use the public works directory");
+  assert.equal(publicCtas.includes("/kesfet"), false, "public reader CTAs never lead to private reader workspace");
+  assert.equal(publicCtas.filter((href) => href === "/yazarlar-icin/kurgu").length, 1, "genre comparison remains on its writing guide");
+  assertContains(renderer, 'href={category.application.href}', "renderer uses canonical category CTA destination");
+  assertContains(readerWorkspace, 'redirect("/giris?sonraki=/kesfet")', "member-only reader discovery remains guarded");
+  assertContains(publicLibrary, 'const pageTitle = "Eserleri Keşfet | İlkOku"', "public destination is a real works directory");
+});
+
 test("reader genre comparison CTA stays on the live writing guide", () => {
   const inventory = source("src/lib/reader-education.ts");
   const routing = source("src/lib/public-site-navigation.ts");

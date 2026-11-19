@@ -93,7 +93,7 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual publishers-hero__visual">
-            <Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high" sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
+            <Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high" quality={60} sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
             <figcaption><span><PublisherIcon name="search" /> Keşfet</span><span><PublisherIcon name="heart" /> Kısa listeye al</span><span><PublisherIcon name="passport" /> Gelişimini incele</span></figcaption>
           </figure>
         </div>

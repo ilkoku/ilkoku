@@ -95,6 +95,14 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
   contains(hydrator, "}, [pathname]);", "footer hydrator route-change dependency");
 });
 
+test("publisher hero uses an already-supported quality level without changing responsive crop or priority", () => {
+  const hero = source("src/components/content/ForPublishersExperience.tsx");
+  const config = source("next.config.ts");
+  contains(config, "qualities: [45, 60, 75]", "the Next.js configured image quality allowlist");
+  contains(hero, "<Image src={visual.src} alt={visual.alt} fill priority fetchPriority=\"high\" quality={60} sizes=\"(max-width: 860px) 100vw, 54vw\" style={{ objectPosition: visual.focalPoint }} />", "only publisher LCP image receives quality 60 and retains fill, priority, sizes and crop");
+  notContains(hero, 'src={logo} alt="İlkOku" quality={60}', "brand logo quality unchanged");
+});
+
 test("publisher above-the-fold hero is sole high-priority image, without altering visuals", () => {
   const code = source("src/components/content/ForPublishersExperience.tsx");
   contains(code, '<Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high"', "measured LCP image gets explicit browser priority");

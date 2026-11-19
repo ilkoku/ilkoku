@@ -1,0 +1,64 @@
+name: Publisher hero image quality A/B
+on:
+  pull_request:
+    paths:
+      - .github/workflows/publisher-image-quality-ab.yml
+      - src/components/content/ForPublishersExperience.tsx
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Pillow for decoded pixel comparison
+        run: python -m pip install --disable-pip-version-check Pillow==11.3.0
+      - name: Compare live Next image optimization q75 vs q60 before deployment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-publisher-quality
+          python <<'PY'
+          import io, json, math, os, urllib.request
+          from PIL import Image, ImageChops, ImageStat
+
+          url="https://ilkoku.com/_next/image?url=%2Ftrust-pages%2Ffor-publishers.webp&w=750&q="
+          images={}
+          for q in (75,60):
+              req=urllib.request.Request(url+str(q), headers={"User-Agent":"IlkOku-PublisherQualityAB/1.0","Accept":"image/webp,image/*"})
+              with urllib.request.urlopen(req,timeout=25) as resp:
+                  if resp.status != 200 or not resp.headers.get("Content-Type","").startswith("image/"):
+                      raise RuntimeError("Expected valid image response q="+str(q))
+                  data=resp.read()
+              with Image.open(io.BytesIO(data)) as obj:
+                  images[q]=obj.convert("RGB")
+              with open("/tmp/ilkoku-publisher-quality/q"+str(q)+".webp","wb") as f: f.write(data)
+              print("SOURCE q="+str(q)+" bytes="+str(len(data))+" size="+str(images[q].size))
+
+          if images[75].size!=images[60].size:
+              raise RuntimeError("Image dimensions changed")
+          diff=ImageChops.difference(images[75],images[60])
+          rms=ImageStat.Stat(diff).rms
+          rmse=math.sqrt(sum(x*x for x in rms)/len(rms))
+          psnr=20*math.log10(255/max(rmse,1e-9))
+          sizes={q:os.path.getsize("/tmp/ilkoku-publisher-quality/q"+str(q)+".webp") for q in (75,60)}
+          saving=round((1-sizes[60]/sizes[75])*100,2)
+          outcome={"q75_bytes":sizes[75],"q60_bytes":sizes[60],"saving_percent":saving,"psnr_db":round(psnr,2),"width":images[75].width,"height":images[75].height,"visual_threshold_pass":psnr>=33,"size_threshold_pass":saving>=15}
+          with open("/tmp/ilkoku-publisher-quality/ab-result.json","w") as f: json.dump(outcome,f,indent=2)
+          print("IMAGE_AB "+json.dumps(outcome))
+          if not outcome["visual_threshold_pass"] or not outcome["size_threshold_pass"]:
+              raise RuntimeError("Do not deploy q60: pixel quality or transfer savings gate failed")
+          PY
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-image-q75-q60-evidence
+          path: /tmp/ilkoku-publisher-quality/
+          retention-days: 14
+          if-no-files-found: warn

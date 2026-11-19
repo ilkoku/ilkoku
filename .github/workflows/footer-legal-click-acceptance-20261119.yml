@@ -25,6 +25,24 @@ jobs:
           npm init -y >/dev/null
           npm install --silent --no-audit --no-fund playwright-core@1.57.0
           which google-chrome || which chromium || which google-chrome-stable
+      - name: Verify both footer implementations guarantee 44px hit targets and native destinations
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const read=p=>fs.readFileSync(p,'utf8');
+          const trust=read('src/components/content/PublicTrustFooter.tsx');
+          const home=read('src/features/homepage/live-footer.tsx');
+          const a=read('src/app/nasil-calisir/public-trust-footer.css');
+          const b=read('src/features/homepage/live-footer.css');
+          const hydrator=read('src/components/content/PublicFooterHydrator.tsx');
+          assert.match(trust,/publicLegalLinks\.map[\s\S]*?<a href=\{item\.href\} key=\{item\.href\}>/);
+          assert.match(home,/publicLegalLinks\.map[\s\S]*?<a href=\{item\.href\} key=\{item\.href\}>/);
+          assert.match(a,/\.public-trust-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
+          assert.match(b,/\.nx-live-footer-scope \.landing-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
+          assert.match(hydrator,/anchor\.style\.setProperty\("min-height", "2\.75rem", "important"\)/);
+          console.log('LEGAL_FOOTER_SOURCE_CONTRACTS_PASS');
+          NODE
       - name: Click each legal link in desktop and mobile from live footer
         shell: bash
         run: |
@@ -49,18 +67,22 @@ jobs:
                   viewport: mode==='desktop'?{width:1536,height:864}:{width:390,height:844},
                   deviceScaleFactor:1, isMobile:mode==='mobile',hasTouch:mode==='mobile'
                 });
+                for(const variant of ['publisher','homepage']) {
                 for(const [label,href] of expected) {
                   const page=await ctx.newPage();
-                  const entry={mode,label,href};
+                  const entry={mode,variant,label,href};
                   try {
-                    const resp=await page.goto('https://ilkoku.com/yayinevleri-icin',{waitUntil:'domcontentloaded',timeout:30000});
+                    const source=variant==='publisher'?'/yayinevleri-icin':'/';
+                    const resp=await page.goto('https://ilkoku.com'+source,{waitUntil:'domcontentloaded',timeout:30000});
                     entry.pageStatus=resp.status();
                     if(entry.pageStatus!==200)throw Error('Source page HTTP '+entry.pageStatus);
-                    const anchor=page.locator('nav.public-trust-footer__legal a').filter({hasText:label});
+                    const selector=variant==='publisher'?'nav.public-trust-footer__legal a':'nav.landing-footer__legal a';
+                    const anchor=page.locator(selector).filter({hasText:label});
                     if(await anchor.count()!==1)throw Error('Expected exactly one legal anchor, got '+await anchor.count());
                     entry.linkHref=await anchor.getAttribute('href');
                     if(entry.linkHref!==href)throw Error('Unexpected href '+entry.linkHref);
                     await anchor.scrollIntoViewIfNeeded({timeout:10000});
+                    if(variant==='homepage') await page.waitForTimeout(450);
                     entry.hit=await anchor.evaluate(el=>{
                       const b=el.getBoundingClientRect(), cx=b.x+b.width/2,cy=b.y+b.height/2;
                       const e=document.elementFromPoint(cx,cy);
@@ -81,11 +103,12 @@ jobs:
                     entry.ok=true;
                   } catch(error) {
                     entry.ok=false;entry.error=String(error.message||error).slice(0,500);
-                    await page.screenshot({path:'/tmp/ilkoku-footer-click/failure-'+mode+'-'+href.split('/').at(-1)+'.png',fullPage:false}).catch(()=>{});
+                    await page.screenshot({path:'/tmp/ilkoku-footer-click/failure-'+mode+'-'+variant+'-'+href.split('/').at(-1)+'.png',fullPage:false}).catch(()=>{});
                   } finally {
                     data.push(entry);console.log('FOOTER_CLICK_RESULT',JSON.stringify(entry));
                     await page.close();
                   }
+                }
                 }
                 await ctx.close();
               }

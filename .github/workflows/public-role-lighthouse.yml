@@ -1,0 +1,89 @@
+name: Public roles mobile Lighthouse
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/public-role-lighthouse.yml
+  push:
+    branches: [main]
+    paths:
+      - src/components/content/ForPublishersExperience.tsx
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Confirm actual deployed commit before post-merge lab
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            url="https://ilkoku.com/api/build-info?role_perf=$attempt"
+            code="$(curl -sS --connect-timeout 8 --max-time 20 -A 'IlkOku-Lighthouse/1.0' -H 'Cache-Control: no-store' -o /tmp/ilkoku-role-build.json -w '%{http_code}' "$url" || true)"
+            if [[ "$code" == 403 || "$code" == 429 ]]; then echo '::error::WAF block; abort'; exit 1; fi
+            served=""
+            if [[ "$code" == 200 ]]; then served="$(node -p "JSON.parse(require('fs').readFileSync('/tmp/ilkoku-role-build.json','utf8')).commitSha" 2>/dev/null || true)"; fi
+            echo "DEPLOY_GATE HTTP=$code served=$served target=$GITHUB_SHA"
+            if [[ "$served" == "$GITHUB_SHA" ]]; then echo "DEPLOYED_BUILD_VERIFIED"; exit 0; fi
+            sleep 20
+          done
+          echo '::error::New application commit not live; skip invalid performance comparison'
+          exit 1
+      - name: Measure priority pages
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/role-mobile
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          i=0
+          for route in /yazarlar-icin/kurgu/roman /okurlar-icin/okumaya-baslama /editorler-icin/egitim/editorluge-baslama /yayinevleri-icin; do
+            i=$((i+1))
+            status="$(curl -sS --connect-timeout 8 --max-time 20 -A 'IlkOku-Lighthouse/1.0' -o /dev/null -w '%{http_code}' "https://ilkoku.com$route" || true)"
+            echo "PRECHECK $route HTTP=$status"
+            if [[ "$status" == 403 || "$status" == 429 ]]; then echo '::error::WAF block; abort'; exit 1; fi
+            if [[ "$status" != 200 ]]; then echo "::error::Unexpected $status"; exit 1; fi
+            npx --yes lighthouse@12.8.2 "https://ilkoku.com$route" --only-categories=performance --form-factor=mobile --throttling-method=simulate --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' --output=json --output-path="/tmp/role-mobile/role-$i.json" --quiet
+            sleep 5
+          done
+      - name: Report comparable metrics
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const dir = '/tmp/role-mobile';
+          if (!fs.existsSync(dir)) process.exit(0);
+          const names=['/yazarlar-icin/kurgu/roman','/okurlar-icin/okumaya-baslama','/editorler-icin/egitim/editorluge-baslama','/yayinevleri-icin'];
+          const rows=[];
+          for(let i=1;i<=4;i++){
+            const p=dir+'/role-'+i+'.json';
+            if(!fs.existsSync(p))break;
+            const doc=JSON.parse(fs.readFileSync(p,'utf8'));
+            const u=new URL(doc.finalDisplayedUrl||doc.finalUrl);
+            if(u.origin!=='https://ilkoku.com'||u.pathname!==names[i-1]||doc.configSettings.formFactor!=='mobile'||doc.runtimeError)throw Error('Invalid Lighthouse page '+i);
+            const a=doc.audits;
+            const metric=x=>Math.round(a[x].numericValue*100)/100;
+            const net=a['network-requests']?.details?.items||[];
+            const css=net.filter(x=>x.resourceType==='Stylesheet');
+            const row={route:u.pathname,score:Math.round(doc.categories.performance.score*100),lcpMs:metric('largest-contentful-paint'),fcpMs:metric('first-contentful-paint'),tbtMs:metric('total-blocking-time'),cls:metric('cumulative-layout-shift'),cssCount:css.length,cssBytes:css.reduce((a,x)=>a+(x.transferSize||0),0),jsBytes:net.filter(x=>x.resourceType==='Script').reduce((a,x)=>a+(x.transferSize||0),0),renderBlockingMs:a['render-blocking-resources']?.numericValue||0};
+            rows.push(row);
+            console.log('ROLE_LIGHTHOUSE '+JSON.stringify(row));
+          }
+          fs.writeFileSync(dir+'/summary.json',JSON.stringify({type:'Simulated mobile Lighthouse (not CrUX)',rows},null,2));
+          if(rows.length!==4)throw Error('Incomplete Lighthouse measurements '+rows.length);
+          NODE
+      - name: Upload raw Lighthouse files
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-public-roles-mobile
+          path: /tmp/role-mobile/
+          retention-days: 14
+          if-no-files-found: warn

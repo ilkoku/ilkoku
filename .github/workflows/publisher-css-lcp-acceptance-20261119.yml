@@ -1,0 +1,141 @@
+name: Publisher CSS merge live acceptance
+on:
+  push:
+    branches:
+      - perf/publisher-css-single-entry-20261119
+    paths:
+      - .github/workflows/publisher-css-lcp-acceptance-20261119.yml
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Verify production commit and merged CSS content
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-css-merge-acceptance
+          curl --fail --silent --show-error --connect-timeout 8 --max-time 20 \
+            -H 'Cache-Control: no-store' \
+            'https://ilkoku.com/api/build-info?css_accept=2104' \
+            > /tmp/ilkoku-css-merge-acceptance/build.json
+          node <<'NODE'
+          const fs=require('node:fs');
+          const data=JSON.parse(fs.readFileSync('/tmp/ilkoku-css-merge-acceptance/build.json','utf8'));
+          const expected='d47798b32574d9e04783467ef7a3e903f515adad';
+          if(data.commitSha!==expected)throw Error('Live deployment mismatch: '+data.commitSha);
+          console.log('DEPLOYMENT_MATCHED '+data.commitSha);
+          NODE
+          curl --fail --silent --show-error --connect-timeout 8 --max-time 25 \
+            https://ilkoku.com/yayinevleri-icin \
+            > /tmp/ilkoku-css-merge-acceptance/publisher.html
+          node <<'NODE'
+          const fs=require('node:fs'),s=fs.readFileSync('/tmp/ilkoku-css-merge-acceptance/publisher.html','utf8');
+          const links=[...s.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)].map(x=>x[0]);
+          const cssFiles=links.map(x=>x.match(/href="([^"]+)"/)?.[1]).filter(Boolean);
+          if(cssFiles.length!==7)throw Error('CSS expected 7, got '+cssFiles.length+' '+cssFiles.join(','));
+          const merged=cssFiles.find(x=>x.includes('5f8fc4b693736fb1.css'));
+          if(!merged)throw Error('Coalesced publisher CSS file not present');
+          if(!s.includes('fetchpriority="high"'))throw Error('Hero high priority removed');
+          console.log('LIVE_CSS_COUNT '+cssFiles.length+' MERGED '+merged);
+          fs.writeFileSync('/tmp/ilkoku-css-merge-acceptance/css-summary.json',JSON.stringify({files:cssFiles},null,2));
+          NODE
+          curl --fail --silent --show-error --connect-timeout 8 --max-time 25 \
+            https://ilkoku.com/_next/static/css/5f8fc4b693736fb1.css \
+            > /tmp/ilkoku-css-merge-acceptance/publisher-combined.css
+          node <<'NODE'
+          const fs=require('node:fs'),s=fs.readFileSync('/tmp/ilkoku-css-merge-acceptance/publisher-combined.css','utf8');
+          if(!s.includes('.publishers-discovery__grid')||!s.includes('publisher-embedded.svg'))
+            throw Error('Combined CSS missing base publisher or role icon rules');
+          console.log('CSS_RULES_VERIFIED '+s.length);
+          NODE
+
+      - name: Three reproducible simulated mobile Lighthouse samples
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          for i in 1 2 3; do
+            echo "MOBILE_SAMPLE $i"
+            npx --yes lighthouse@12.8.2 \
+              https://ilkoku.com/yayinevleri-icin \
+              --only-categories=performance \
+              --form-factor=mobile \
+              --throttling-method=simulate \
+              --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+              --output=json --output-path="/tmp/ilkoku-css-merge-acceptance/role-$i.json" --quiet
+            sleep 5
+          done
+
+      - name: Validate CSS count, hero geometry, and publish metrics
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const dir='/tmp/ilkoku-css-merge-acceptance';
+          if(!fs.existsSync(dir))process.exit(0);
+          const rows=[];
+          for(let i=1;i<=3;i++){
+            const p=dir+'/role-'+i+'.json';
+            if(!fs.existsSync(p))break;
+            const d=JSON.parse(fs.readFileSync(p,'utf8'));
+            const url=new URL(d.finalDisplayedUrl||d.finalUrl);
+            if(url.origin!=='https://ilkoku.com'||url.pathname!=='/yayinevleri-icin'||d.runtimeError)
+              throw Error('Invalid LCP sample '+i);
+            const a=d.audits||{},net=a['network-requests']?.details?.items||[];
+            const css=net.filter(x=>x.resourceType==='Stylesheet');
+            const hero=net.filter(x=>(x.url||'').includes('for-publishers.webp')&&x.statusCode===200);
+            const sections=a['largest-contentful-paint-element']?.details?.items||[];
+            const image=sections[0]?.items?.[0]?.node||{},rect=image.boundingRect||{};
+            if(css.length!==7)throw Error('Expected 7 stylesheet requests, got '+css.length+' at run '+i);
+            if(hero.length!==1||!image.selector?.includes('figure.how-hero__visual > img'))
+              throw Error('Hero missing as LCP at run '+i);
+            // The old baseline mobile hero rect was top 690px, 394px wide.
+            if(Math.abs(rect.top-690)>3||Math.abs(rect.width-394)>3)
+              throw Error('Hero CSS layout changed: '+JSON.stringify(rect));
+            const phases=(sections[1]?.items||[]).filter(x=>x.phase).map(x=>[x.phase,Math.round(x.timing)]);
+            rows.push({
+              run:i,score:Math.round(d.categories.performance.score*100),
+              lcpMs:Math.round(a['largest-contentful-paint'].numericValue),
+              fcpMs:Math.round(a['first-contentful-paint'].numericValue),
+              tbtMs:Math.round(a['total-blocking-time'].numericValue),
+              cls:a['cumulative-layout-shift'].numericValue,
+              renderBlockingMs:a['render-blocking-resources']?.numericValue||0,
+              cssCount:css.length,cssBytes:css.reduce((n,x)=>n+(x.transferSize||0),0),
+              heroRect:{top:rect.top,width:rect.width,height:rect.height},
+              phases:Object.fromEntries(phases),
+              cssFiles:css.map(x=>x.url.split('/').pop())
+            });
+            console.log('CSS_MERGE_MOBILE '+JSON.stringify(rows[rows.length-1]));
+          }
+          const median=x=>[...x].sort((a,b)=>a-b)[1];
+          const result={
+            comparison:'3 mobile Lighthouse lab samples; old PR2102 median LCP 4131ms, 8 CSS files, CLS 0',
+            rows,
+            medianLcpMs:rows.length===3?median(rows.map(x=>x.lcpMs)):null,
+            medianCssBytes:rows.length===3?median(rows.map(x=>x.cssBytes)):null,
+            caution:'Laboratory simulated mobile, not real-user field metrics; no claim of causality without sufficient repeats'
+          };
+          fs.writeFileSync(dir+'/summary.json',JSON.stringify(result,null,2));
+          console.log('CSS_MERGE_RESULT '+JSON.stringify(result));
+          if(rows.length!==3)throw Error('Incomplete Lighthouse samples');
+          NODE
+
+      - name: Preserve full raw reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-css-lcp-acceptance-2104
+          path: /tmp/ilkoku-css-merge-acceptance/
+          retention-days: 14
+          if-no-files-found: warn

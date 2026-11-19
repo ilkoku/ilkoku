@@ -1,0 +1,139 @@
+name: Publisher static hero PR2105 live postmerge verification
+on:
+  push:
+    branches:
+      - perf/publisher-css-single-entry-20261119
+    paths:
+      - .github/workflows/publisher-postmerge-2105-live.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Gate on actual deployed merge SHA before any claims
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-postmerge-2105
+          seen=''
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            code="$(curl -sS --connect-timeout 8 --max-time 20 -H 'Cache-Control: no-store' \
+              -o /tmp/publisher-postmerge-2105/build.json -w '%{http_code}' \
+              "https://ilkoku.com/api/build-info?postmerge_2105=$i" || true)"
+            if [[ "$code" == "403" || "$code" == "429" ]]; then echo "::error::WAF block HTTP=$code"; exit 1; fi
+            seen=''
+            if [[ "$code" == "200" ]]; then
+              seen="$(node -p "JSON.parse(require('fs').readFileSync('/tmp/publisher-postmerge-2105/build.json','utf8')).commitSha" 2>/dev/null || true)"
+            fi
+            echo "DEPLOY_CHECK $i HTTP=$code current=$seen expected=dd8f569816de9f46c5845e8184b50dbf05ccfb2f"
+            if [[ "$seen" == "dd8f569816de9f46c5845e8184b50dbf05ccfb2f" ]]; then
+              echo 'PRODUCTION_DEPLOY_VERIFIED'
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Live deployed SHA did not reach the target; do NOT report postmerge LCP"
+          exit 1
+      - name: Verify live markup and edge caching from the same runner
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          curl -fLsS --connect-timeout 8 --max-time 30 'https://ilkoku.com/yayinevleri-icin' > /tmp/publisher-postmerge-2105/page.html
+          node <<'NODE'
+          const fs=require('node:fs'),s=fs.readFileSync('/tmp/publisher-postmerge-2105/page.html','utf8');
+          if(!s.includes('/trust-pages/for-publishers-w828-q60-v1.webp'))throw Error('Static responsive hero URL absent from live HTML');
+          if(!/fetchpriority="high"/.test(s))throw Error('Hero browser priority missing');
+          const files=[...s.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)];
+          if(files.length!==7)throw Error('Unexpected CSS links '+files.length);
+          console.log('LIVE_HERO_STATIC_MARKUP CSS='+files.length);
+          NODE
+          for target in /giris /kayit /sifremi-unuttum; do
+            code="$(curl -sS -L --connect-timeout 8 --max-time 20 -o /dev/null -w '%{http_code}' "https://ilkoku.com$target" || true)"
+            echo "AUTH_ROUTE $target HTTP=$code"
+            [[ "$code" == '200' ]] || exit 1
+          done
+          for i in 1 2 3 4; do
+            curl -sS --connect-timeout 8 --max-time 25 \
+              -D "/tmp/publisher-postmerge-2105/image-$i.headers" \
+              -o "/tmp/publisher-postmerge-2105/image-$i.webp" \
+              -w "LIVE_HERO_CACHE $i HTTP=%{http_code} TTFB=%{time_starttransfer} TOTAL=%{time_total} BYTES=%{size_download}\n" \
+              'https://ilkoku.com/trust-pages/for-publishers-w828-q60-v1.webp'
+            sleep 2
+          done
+          python3 - <<'PY'
+          import pathlib, json
+          p=pathlib.Path('/tmp/publisher-postmerge-2105')
+          hits=[]
+          for n in range(1,5):
+              h=(p/f'image-{n}.headers').read_text().lower()
+              body=(p/f'image-{n}.webp').read_bytes()
+              if len(body)!=42544 or body[:4]!=b'RIFF' or body[8:12]!=b'WEBP':
+                  raise SystemExit('Unexpected actual WebP bytes on sample '+str(n))
+              status=[x.strip() for x in h.splitlines() if x.startswith('cf-cache-status:')]
+              hits.append(status[-1].split(':',1)[1].strip() if status else 'unavailable')
+          print('LIVE_HERO_CF_CACHE_STATES', json.dumps(hits))
+          (p/'cache-states.json').write_text(json.dumps(hits))
+          if not any(x=='hit' for x in hits[1:]):
+              print('::warning::No Cloudflare cache HIT observed for static hero after first request')
+          PY
+      - name: Three actual production mobile Lighthouse samples
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          for i in 1 2 3; do
+            npx --yes lighthouse@12.8.2 https://ilkoku.com/yayinevleri-icin \
+              --only-categories=performance --form-factor=mobile --throttling-method=simulate \
+              --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+              --output=json --output-path="/tmp/publisher-postmerge-2105/lh-$i.json" --quiet
+            sleep 5
+          done
+      - name: Report actual postmerge LCP with target state
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),dir='/tmp/publisher-postmerge-2105',rows=[];
+          for(let i=1;i<=3;i++){
+            const f=dir+'/lh-'+i+'.json';if(!fs.existsSync(f))break;
+            const d=JSON.parse(fs.readFileSync(f,'utf8')),u=new URL(d.finalDisplayedUrl||d.finalUrl);
+            if(u.origin!=='https://ilkoku.com'||u.pathname!=='/yayinevleri-icin'||d.runtimeError)throw Error('Bad production run '+i);
+            const a=d.audits,net=a['network-requests']?.details?.items||[];
+            const css=net.filter(x=>x.resourceType==='Stylesheet');
+            const hero=net.filter(x=>(x.url||'').includes('/trust-pages/for-publishers-w')&&x.resourceType==='Image'&&x.statusCode===200);
+            if(css.length!==7||hero.length!==1)throw Error('Unexpected CSS or hero count '+i);
+            rows.push({index:i,lcpMs:Math.round(a['largest-contentful-paint'].numericValue),
+              fcpMs:Math.round(a['first-contentful-paint'].numericValue),
+              tbtMs:Math.round(a['total-blocking-time'].numericValue),
+              cls:a['cumulative-layout-shift'].numericValue,
+              ttfbMs:Math.round(a['server-response-time'].numericValue),
+              renderBlockingMs:a['render-blocking-resources']?.numericValue||0,
+              cssCount:css.length,heroNetworkMs:Math.round(hero[0].networkEndTime-hero[0].networkRequestTime),
+              heroBytes:hero[0].transferSize});
+            console.log('PRODUCTION_POSTMERGE_LH '+JSON.stringify(rows.at(-1)));
+          }
+          const median=x=>[...x].sort((a,b)=>a-b)[1];
+          const m=rows.length===3?median(rows.map(x=>x.lcpMs)):null;
+          const out={productionCommit:'dd8f569816de9f46c5845e8184b50dbf05ccfb2f',
+            previousMedianLcpMs:3676,postMergeMedianLcpMs:m,targetLcpMs:2500,
+            targetMet:m!==null&&m<=2500,
+            rows,note:'Lighthouse simulated mobile lab only; no CrUX/RUM field claims'};
+          fs.writeFileSync(dir+'/summary.json',JSON.stringify(out,null,2));
+          console.log('PRODUCTION_POSTMERGE_RESULT '+JSON.stringify(out));
+          if(rows.length!==3)throw Error('Incomplete live LCP validation; never infer success');
+          if(rows.some(x=>x.cls>0.01))throw Error('Unexpected CLS regression');
+          NODE
+      - name: Retain raw postrelease measurements
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-postmerge-2105-live
+          path: /tmp/publisher-postmerge-2105/
+          retention-days: 14
+          if-no-files-found: warn

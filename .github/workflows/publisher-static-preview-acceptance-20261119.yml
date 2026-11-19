@@ -1,0 +1,140 @@
+name: Publisher static hero preview visual acceptance
+on:
+  push:
+    branches:
+      - perf/publisher-static-hero-edge-20261119
+    paths:
+      - .github/workflows/publisher-static-preview-acceptance-20261119.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install browser test dependencies
+        run: |
+          npm ci --ignore-scripts
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --only-shell chromium
+      - name: Verify production and preview are different verified commits
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          curl -fLsS --connect-timeout 8 --max-time 20 'https://ilkoku.com/api/build-info?visual_compare=20261119' > /tmp/publisher-prod-build.json
+          curl -fLsS --connect-timeout 8 --max-time 20 'https://happy-powderblue-snail-73.hostingersite.com/api/build-info?visual_compare=20261119' > /tmp/publisher-preview-build.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/publisher-prod-build.json'))['commitSha']
+          q=json.load(open('/tmp/publisher-preview-build.json'))['commitSha']
+          if p!='d47798b32574d9e04783467ef7a3e903f515adad':raise SystemExit('Production SHA changed: '+p)
+          if q!='fd4912012a8f7d70941db92d60e0f0ae0ee3a88f':raise SystemExit('Preview SHA changed: '+q)
+          print('BUILDS_VERIFIED production='+p+' preview='+q)
+          PY
+      - name: Compare actual hero geometry, loaded image, CSS, CLS and links
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-static-visual
+          cat > /tmp/publisher-static-visual/probe.cjs <<'NODE'
+          const fs=require('node:fs');
+          const {chromium}=require('@playwright/test');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+            const origins={live:'https://ilkoku.com',preview:'https://happy-powderblue-snail-73.hostingersite.com'};
+            const out={}; 
+            for(const [label,origin] of Object.entries(origins)){
+              const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'tr-TR'});
+              const page=await context.newPage();
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.addInitScript(()=>{
+                window.__lcpShifts=0;
+                new PerformanceObserver(list=>{
+                  for(const entry of list.getEntries())if(!entry.hadRecentInput)window.__lcpShifts+=entry.value;
+                }).observe({type:'layout-shift',buffered:true});
+              });
+              const response=await page.goto(origin+'/yayinevleri-icin',{waitUntil:'networkidle',timeout:45000});
+              if(response.status()!==200)throw Error(label+' page status='+response.status());
+              await page.evaluate(()=>document.fonts.ready);
+              const figure=page.locator('figure.publishers-hero__visual');
+              const hero=figure.locator('img[alt="Keşfe açık eserleri yetki sınırları içinde değerlendiren yayınevi ekibi"]');
+              await hero.waitFor({state:'visible',timeout:15000});
+              const data=await hero.evaluate(img=>{
+                const rect=img.getBoundingClientRect();
+                const f=img.closest('figure').getBoundingClientRect();
+                return {rect:{top:rect.top,left:rect.left,width:rect.width,height:rect.height},
+                  figure:{top:f.top,left:f.left,width:f.width,height:f.height},
+                  complete:img.complete,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,
+                  src:img.currentSrc,srcset:img.srcset,sizes:img.sizes,
+                  fetchPriority:img.fetchPriority,loading:img.loading};
+              });
+              if(!data.complete||data.naturalWidth<300)throw Error(label+' image not loaded '+JSON.stringify(data));
+              if(data.fetchPriority!=='high')throw Error(label+' hero priority changed');
+              if(data.figure.width<300)throw Error(label+' hero layout too narrow');
+              const css=await page.locator('link[rel="stylesheet"]').count();
+              if(css!==7)throw Error(label+' expected 7 stylesheets, got '+css);
+              const linkChecks={};
+              for(const path of ['/giris','/kayit','/sifremi-unuttum']){
+                const r=await context.request.get(origin+path,{maxRedirects:5});
+                linkChecks[path]=r.status();
+                if(r.status()!==200)throw Error(label+' '+path+' returned '+r.status());
+              }
+              data.cssCount=css;
+              data.cls=await page.evaluate(()=>window.__lcpShifts||0);
+              data.errors=errors;
+              data.linkChecks=linkChecks;
+              if(data.cls>0.01)throw Error(label+' CLS exceeded 0.01: '+data.cls);
+              await figure.screenshot({path:'/tmp/publisher-static-visual/'+label+'-hero.png',timeout:20000});
+              await page.screenshot({path:'/tmp/publisher-static-visual/'+label+'-viewport.png',timeout:20000});
+              out[label]=data; 
+              console.log('VISUAL_HERO_'+label.toUpperCase()+' '+JSON.stringify(data));
+              await context.close();
+            }
+            if(!out.live.src.includes('/_next/image?'))throw Error('Unexpected baseline image URL');
+            if(!/\/trust-pages\/for-publishers-w[0-9]+-q60-v1\.webp/.test(out.preview.src))throw Error('Static hero was not used on preview');
+            const required=[384,640,750,828,1080,1200,1920,2048,3840];
+            for(const w of required)if(!out.preview.srcset.includes('for-publishers-w'+w+'-q60-v1.webp'))throw Error('Missing responsive width '+w);
+            for(const k of ['top','left','width','height']){
+              if(Math.abs(out.live.figure[k]-out.preview.figure[k])>3)throw Error('Preview hero figure geometry changed '+k+': '+out.live.figure[k]+' vs '+out.preview.figure[k]);
+            }
+            fs.writeFileSync('/tmp/publisher-static-visual/results.json',JSON.stringify(out,null,2));
+            console.log('VISUAL_GEOMETRY_MATCH_AND_LINKS_PASS');
+            await browser.close();
+          })().catch(e=>{console.error('VISUAL_ACCEPT_FAILURE',e.stack||e);process.exit(1)});
+          NODE
+          node /tmp/publisher-static-visual/probe.cjs
+      - name: Compare PNG hero visual pixel differences
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m pip install --quiet --break-system-packages pillow
+          python3 - <<'PY'
+          from PIL import Image,ImageChops,ImageStat
+          import json
+          p='/tmp/publisher-static-visual/'
+          a=Image.open(p+'live-hero.png').convert('RGB')
+          b=Image.open(p+'preview-hero.png').convert('RGB')
+          if a.size!=b.size:raise SystemExit('Hero screenshots differ in pixel dimensions: '+str((a.size,b.size)))
+          diff=ImageChops.difference(a,b)
+          rms=ImageStat.Stat(diff).mean
+          mae=sum(rms)/3
+          x={'size':a.size,'channelMae':rms,'overallMae':mae}
+          with open(p+'image-diff.json','w') as f:json.dump(x,f,indent=2)
+          diff.save(p+'hero-diff.png')
+          print('HERO_PIXEL_DIFF',json.dumps(x))
+          if mae>3:raise SystemExit('Visual hero differs unexpectedly; do not merge')
+          PY
+      - name: Retain screenshots and results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-static-preview-visual-acceptance
+          path: /tmp/publisher-static-visual/
+          retention-days: 14
+          if-no-files-found: warn

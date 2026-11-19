@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/public-role-lighthouse.yml
+  push:
+    branches: [main]
+    paths:
+      - src/components/content/ForPublishersExperience.tsx
 permissions:
   contents: read
 jobs:
@@ -15,6 +19,23 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
+      - name: Confirm actual deployed commit before post-merge lab
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            url="https://ilkoku.com/api/build-info?role_perf=$attempt"
+            code="$(curl -sS --connect-timeout 8 --max-time 20 -A 'IlkOku-Lighthouse/1.0' -H 'Cache-Control: no-store' -o /tmp/ilkoku-role-build.json -w '%{http_code}' "$url" || true)"
+            if [[ "$code" == 403 || "$code" == 429 ]]; then echo '::error::WAF block; abort'; exit 1; fi
+            served=""
+            if [[ "$code" == 200 ]]; then served="$(node -p "JSON.parse(require('fs').readFileSync('/tmp/ilkoku-role-build.json','utf8')).commitSha" 2>/dev/null || true)"; fi
+            echo "DEPLOY_GATE HTTP=$code served=$served target=$GITHUB_SHA"
+            if [[ "$served" == "$GITHUB_SHA" ]]; then echo "DEPLOYED_BUILD_VERIFIED"; exit 0; fi
+            sleep 20
+          done
+          echo '::error::New application commit not live; skip invalid performance comparison'
+          exit 1
       - name: Measure priority pages
         shell: bash
         run: |

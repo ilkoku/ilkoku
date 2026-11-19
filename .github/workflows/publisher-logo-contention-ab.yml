@@ -1,0 +1,103 @@
+name: Publisher mobile LCP logo contention A/B
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/publisher-logo-contention-ab.yml
+permissions:
+  contents: read
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Six paired read-only mobile runs on current live revision
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-logo-ab
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          rev="$(curl -sS --connect-timeout 8 --max-time 20 -H 'Cache-Control: no-store' \
+            'https://ilkoku.com/api/build-info?logo-ab=run' |
+            node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).commitSha")"
+          if [[ "$rev" != "7049a74ed43feedca1fb08d6e4a5e2b76f73277c" ]]; then
+            echo "::error::Production SHA changed, invalid experiment $rev"; exit 1
+          fi
+          i=0
+          for mode in baseline block-logo block-logo baseline baseline block-logo; do
+            i=$((i+1))
+            status="$(curl -sS --connect-timeout 8 --max-time 20 \
+              -o /dev/null -w '%{http_code}' https://ilkoku.com/yayinevleri-icin || true)"
+            if [[ "$status" != "200" ]]; then echo "::error::Unexpected HTTP $status"; exit 1; fi
+            echo "EXPERIMENT $i $mode"
+            if [[ "$mode" == "block-logo" ]]; then
+              npx --yes lighthouse@12.8.2 https://ilkoku.com/yayinevleri-icin \
+                --only-categories=performance --form-factor=mobile --throttling-method=simulate \
+                --blocked-url-patterns='*ilkoku-logo-desktop-retina*' \
+                --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+                --output=json --output-path="/tmp/publisher-logo-ab/run-$i.json" --quiet
+            else
+              npx --yes lighthouse@12.8.2 https://ilkoku.com/yayinevleri-icin \
+                --only-categories=performance --form-factor=mobile --throttling-method=simulate \
+                --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+                --output=json --output-path="/tmp/publisher-logo-ab/run-$i.json" --quiet
+            fi
+            sleep 4
+          done
+      - name: Validate two groups, LCP element and request blocking
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const dir='/tmp/publisher-logo-ab';
+          if(!fs.existsSync(dir)) process.exit(0);
+          const modes=['baseline','block-logo','block-logo','baseline','baseline','block-logo'];
+          const rows=[];
+          for(let i=1;i<=6;i++){
+            const path=dir+'/run-'+i+'.json';
+            if(!fs.existsSync(path))break;
+            const d=JSON.parse(fs.readFileSync(path,'utf8'));
+            const u=new URL(d.finalDisplayedUrl||d.finalUrl);
+            if(u.origin!=='https://ilkoku.com'||u.pathname!=='/yayinevleri-icin'||d.runtimeError)throw Error('Invalid sample '+i);
+            const a=d.audits, el=JSON.stringify(a['largest-contentful-paint-element']?.details||{});
+            if(!el.includes('Keşfe açık eserleri'))throw Error('LCP element changed unexpectedly '+i);
+            const net=a['network-requests']?.details?.items||[];
+            const logos=net.filter(x=>(x.url||'').includes('ilkoku-logo-desktop-retina')&&x.statusCode===200);
+            const hero=net.filter(x=>(x.url||'').includes('for-publishers.webp')&&x.statusCode===200);
+            if(hero.length!==1)throw Error('Missing LCP image '+i);
+            if(modes[i-1]==='baseline'&&logos.length!==1)throw Error('Baseline logo missing '+i);
+            if(modes[i-1]==='block-logo'&&logos.length!==0)throw Error('Blocked logo still loaded '+i);
+            const phases=a['largest-contentful-paint-element']?.details?.items?.find(x=>x.type==='table'&&x.items?.some(y=>y.phase==='TTFB'))?.items||[];
+            rows.push({index:i,mode:modes[i-1],
+              lcpMs:Math.round(a['largest-contentful-paint'].numericValue),
+              fcpMs:Math.round(a['first-contentful-paint'].numericValue),
+              ttfbMs:Math.round(a['server-response-time'].numericValue),
+              cls:a['cumulative-layout-shift'].numericValue,
+              heroNetworkMs:Math.round(hero[0].networkEndTime-hero[0].networkRequestTime),
+              heroPriority:hero[0].priority,
+              phases:Object.fromEntries(phases.map(x=>[x.phase,Math.round(x.timing)]))
+            });
+          }
+          const median=x=>[...x].sort((a,b)=>a-b)[1];
+          const baseline=rows.filter(x=>x.mode==='baseline');
+          const blocked=rows.filter(x=>x.mode==='block-logo');
+          const result={type:'diagnostic only, blocked requests are never shipped',
+            rows,baselineMedianMs:baseline.length===3?median(baseline.map(x=>x.lcpMs)):null,
+            blockedMedianMs:blocked.length===3?median(blocked.map(x=>x.lcpMs)):null};
+          fs.writeFileSync(dir+'/summary.json',JSON.stringify(result,null,2));
+          console.log('LOGO_CONTENTION_AB '+JSON.stringify(result));
+          if(rows.length!==6)throw Error('Missing runs');
+          NODE
+      - name: Retain raw Lighthouse data
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-logo-contention-ab
+          path: /tmp/publisher-logo-ab/
+          retention-days: 14
+          if-no-files-found: warn

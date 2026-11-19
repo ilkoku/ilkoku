@@ -1757,7 +1757,7 @@ test("Power-SEO census counts real HTML H1s without changing publication policy"
   assertContains(census, "pagesWithOneH1:", "full census reports factual one-H1 pages");
   assertContains(census, "pagesWithoutH1:", "missing H1 pages are observable");
   assertContains(census, "pagesWithMultipleH1:", "multiple H1 pages are observable");
-  assertContains(census, "h1Review, descriptionReview,", "per-page H1 review is in artifact");
+  assertContains(census, "h1Review, duplicateTitles, descriptionReview,", "per-page H1 review is in artifact");
   assertContains(census, 'classification: "manual-technical-review"', "no invented Google indexing penalty");
 });
 

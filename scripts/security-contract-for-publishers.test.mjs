@@ -131,3 +131,15 @@ test("publisher removes only its hidden legacy header, retaining canonical share
   contains(component, 'href="/giris"', "publisher login link elsewhere in the page remains");
 });
 
+test("publisher route coalesces both page-owned CSS imports without changing CMS preview", () => {
+  const publisherRoute = source("src/app/yayinevleri-icin/page.tsx");
+  const roleStyles = source("src/app/yayinevleri-icin/role-illustrations.css");
+  const baseStyles = source("src/app/yayinevleri-icin/for-publishers.css");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  contains(publisherRoute, 'import "./role-illustrations.css";', "public publisher role styles remain included");
+  notContains(publisherRoute, 'import "./for-publishers.css";', "publisher page uses a single route-owned CSS entry");
+  contains(roleStyles, '@import "./for-publishers.css";', "base rules precede icon rules with no selector edits");
+  contains(baseStyles, ".publishers-discovery { padding-block:", "original publisher base styles preserved");
+  contains(roleStyles, ".for-publishers-page .publishers-hero__visual figcaption span:nth-child(1)::before", "hero role illustrations remain visible");
+  contains(preview, 'import "@/app/yayinevleri-icin/for-publishers.css";', "CMS preview still loads original publisher base stylesheet");
+});

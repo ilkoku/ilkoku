@@ -74,6 +74,10 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
     'className="how-footer"',
   ]) {
     contains(writer, hook, `writer reference ${hook}`);
+  }
+  // Publisher mounts the canonical PublicSiteFrame; its old how-header was always display:none.
+  // Preserve the writer header and the publisher's visible shell/footer, not the dead duplicate.
+  for (const hook of ['className="how-page', 'className="how-footer"']) {
     contains(publisher, hook, `publisher reuse ${hook}`);
   }
 

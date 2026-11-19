@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SiteConsentSettings } from "@/lib/site-consent-settings";
 import styles from "./SiteConsentBanner.module.css";
 
@@ -78,6 +78,7 @@ export function SiteConsentBanner() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -103,6 +104,33 @@ export function SiteConsentBanner() {
 
     return () => controller.abort();
   }, []);
+
+  // Reserve real scroll space beneath public footers while the fixed consent
+  // panel is visible. Otherwise it physically covers legal-link hit targets.
+  // This changes layout only; consent storage and category decisions are untouched.
+  useEffect(() => {
+    if (!visible || !cardRef.current) return;
+
+    const card = cardRef.current;
+    const root = document.documentElement;
+    const updateClearance = () => {
+      const height = Math.ceil(card.getBoundingClientRect().height + 32);
+      root.style.setProperty("--ilkoku-consent-footer-clearance", `${height}px`);
+    };
+
+    updateClearance();
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateClearance)
+      : null;
+    observer?.observe(card);
+    window.addEventListener("resize", updateClearance);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateClearance);
+      root.style.removeProperty("--ilkoku-consent-footer-clearance");
+    };
+  }, [visible]);
 
   if (!settings || !visible) return null;
 
@@ -132,7 +160,7 @@ export function SiteConsentBanner() {
 
   return (
     <aside className={styles.shell} aria-label="Çerez tercihleri">
-      <div className={styles.card}>
+      <div className={styles.card} ref={cardRef}>
         <div className={styles.copy}>
           <strong>Gizlilik ve çerez tercihleri</strong>
           <p>

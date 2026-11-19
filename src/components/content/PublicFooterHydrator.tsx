@@ -73,21 +73,29 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   legal.style.setProperty("margin-left", "auto", "important");
 
   legal.setAttribute("aria-label", content.legalTitle || "Yasal bağlantılar");
-  legal.replaceChildren();
 
+  // Preserve SSR links and their live click targets. Replacing all children
+  // twice (once before CMS fetch, once after) detached anchors mid-interaction.
+  // Reconcile content in place; CMS labels and destinations remain authoritative.
+  const existingAnchors = Array.from(legal.querySelectorAll<HTMLAnchorElement>(":scope > a"));
   const keys = ["terms", "privacy", "kvkk", "cookie", "copyright"] as const;
   publicLegalLinks.forEach((fallback, index) => {
     const key = keys[index];
-    const anchor = document.createElement("a");
-    anchor.textContent = content[`${key}Label`] || fallback.label;
-    anchor.setAttribute("href", internalHref(content[`${key}Href`], fallback.href));
+    const anchor = existingAnchors[index] ?? document.createElement("a");
+    const label = content[`${key}Label`] || fallback.label;
+    const href = internalHref(content[`${key}Href`], fallback.href);
+    if (anchor.textContent !== label) anchor.textContent = label;
+    if (anchor.getAttribute("href") !== href) anchor.setAttribute("href", href);
+    if (!anchor.isConnected) legal?.append(anchor);
     anchor.style.setProperty("display", "inline-flex", "important");
+    anchor.style.setProperty("align-items", "center", "important");
+    anchor.style.setProperty("min-height", "2.75rem", "important");
     anchor.style.setProperty("margin", "0", "important");
-    anchor.style.setProperty("padding", ".12rem 0", "important");
-    anchor.style.setProperty("font-size", ".7rem", "important");
+    anchor.style.setProperty("padding", ".5rem .42rem", "important");
+    anchor.style.setProperty("font-size", ".78rem", "important");
     anchor.style.setProperty("white-space", "nowrap", "important");
-    legal?.append(anchor);
   });
+  for (const extra of existingAnchors.slice(keys.length)) extra.remove();
 }
 
 function resolvedPlatformLinks(content: FooterContent) {

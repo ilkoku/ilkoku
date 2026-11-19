@@ -1,0 +1,111 @@
+name: Footer legal links browser click acceptance (read-only)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/footer-legal-click-acceptance-20261119.yml
+      - src/components/content/PublicTrustFooter.tsx
+      - src/app/nasil-calisir/public-trust-footer.css
+      - src/lib/public-site-navigation.ts
+      - src/app/yasal/**
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  click:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install standalone browser controller
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/ilkoku-footer-click
+          cd /tmp/ilkoku-footer-click
+          npm init -y >/dev/null
+          npm install --silent --no-audit --no-fund playwright-core@1.57.0
+          which google-chrome || which chromium || which google-chrome-stable
+      - name: Click each legal link in desktop and mobile from live footer
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cat > /tmp/ilkoku-footer-click/check.cjs <<'NODE'
+          const fs=require('node:fs');
+          const {chromium}=require('playwright-core');
+          const expected=[
+            ['Kullanım Şartları','/yasal/kullanim-sartlari'],
+            ['Gizlilik Politikası','/yasal/gizlilik-politikasi'],
+            ['KVKK','/yasal/kvkk'],
+            ['Çerez Politikası','/yasal/cerez-politikasi'],
+            ['Telif Hakkı Politikası','/yasal/telif-hakki-politikasi']
+          ];
+          (async()=>{
+            const executablePath=process.env.CHROME_PATH;
+            const browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+            const data=[];
+            try {
+              for(const mode of ['desktop','mobile']){
+                const ctx=await browser.newContext({
+                  viewport: mode==='desktop'?{width:1536,height:864}:{width:390,height:844},
+                  deviceScaleFactor:1, isMobile:mode==='mobile',hasTouch:mode==='mobile'
+                });
+                for(const [label,href] of expected) {
+                  const page=await ctx.newPage();
+                  const entry={mode,label,href};
+                  try {
+                    const resp=await page.goto('https://ilkoku.com/yayinevleri-icin',{waitUntil:'domcontentloaded',timeout:30000});
+                    entry.pageStatus=resp.status();
+                    if(entry.pageStatus!==200)throw Error('Source page HTTP '+entry.pageStatus);
+                    const anchor=page.locator('nav.public-trust-footer__legal a').filter({hasText:label});
+                    if(await anchor.count()!==1)throw Error('Expected exactly one legal anchor, got '+await anchor.count());
+                    entry.linkHref=await anchor.getAttribute('href');
+                    if(entry.linkHref!==href)throw Error('Unexpected href '+entry.linkHref);
+                    await anchor.scrollIntoViewIfNeeded({timeout:10000});
+                    entry.hit=await anchor.evaluate(el=>{
+                      const b=el.getBoundingClientRect(), cx=b.x+b.width/2,cy=b.y+b.height/2;
+                      const e=document.elementFromPoint(cx,cy);
+                      const c=getComputedStyle(el);
+                      return {bounds:{x:Math.round(b.x),y:Math.round(b.y),width:Math.round(b.width),height:Math.round(b.height)},
+                      pointerEvents:c.pointerEvents,visibility:c.visibility,opacity:c.opacity,
+                      clickHitTag:e?.tagName,clickHitText:e?.textContent?.trim().slice(0,75),
+                      hitIsAnchor:!!e&&(e===el||el.contains(e))};
+                    });
+                    if(entry.hit.pointerEvents==='none'||entry.hit.visibility==='hidden'||!entry.hit.hitIsAnchor)
+                      throw Error('Pointer hit test failed '+JSON.stringify(entry.hit));
+                    await anchor.click({timeout:8500});
+                    await page.waitForURL(u=>u.pathname===href,{timeout:12000});
+                    entry.actualPath=new URL(page.url()).pathname;
+                    const h1=page.locator('h1').first();
+                    entry.heading=await h1.innerText({timeout:10000});
+                    if(!entry.heading || entry.heading.length<3)throw Error('Legal page heading missing');
+                    entry.ok=true;
+                  } catch(error) {
+                    entry.ok=false;entry.error=String(error.message||error).slice(0,500);
+                    await page.screenshot({path:'/tmp/ilkoku-footer-click/failure-'+mode+'-'+href.split('/').at(-1)+'.png',fullPage:false}).catch(()=>{});
+                  } finally {
+                    data.push(entry);console.log('FOOTER_CLICK_RESULT',JSON.stringify(entry));
+                    await page.close();
+                  }
+                }
+                await ctx.close();
+              }
+            } finally { await browser.close(); }
+            fs.writeFileSync('/tmp/ilkoku-footer-click/results.json',JSON.stringify(data,null,2));
+            const fails=data.filter(x=>!x.ok);
+            console.log('FOOTER_CLICK_SUMMARY',JSON.stringify({total:data.length,passed:data.length-fails.length,failed:fails.length}));
+            if(fails.length)process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          NODE
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          cd /tmp/ilkoku-footer-click
+          node check.cjs
+      - name: Preserve screenshot and click traces
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-footer-legal-click-diagnostic
+          path: |
+            /tmp/ilkoku-footer-click/results.json
+            /tmp/ilkoku-footer-click/failure-*.png
+          retention-days: 14
+          if-no-files-found: warn

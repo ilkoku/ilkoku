@@ -75,13 +75,6 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
 
   return (
     <main className="how-page for-publishers-page">
-      <header className="how-header">
-        <div className="how-container how-header__inner">
-          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" loading="eager" sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris">Giriş yap</Link>
-        </div>
-      </header>
-
       <section className="how-hero publishers-hero">
         <div className="how-container how-hero__grid">
           <div className="how-hero__content">

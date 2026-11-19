@@ -74,6 +74,10 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
     'className="how-footer"',
   ]) {
     contains(writer, hook, `writer reference ${hook}`);
+  }
+  // Publisher mounts the canonical PublicSiteFrame; its old how-header was always display:none.
+  // Preserve the writer header and the publisher's visible shell/footer, not the dead duplicate.
+  for (const hook of ['className="how-page', 'className="how-footer"']) {
     contains(publisher, hook, `publisher reuse ${hook}`);
   }
 
@@ -106,6 +110,24 @@ test("publisher hero uses an already-supported quality level without changing re
 test("publisher above-the-fold hero is sole high-priority image, without altering visuals", () => {
   const code = source("src/components/content/ForPublishersExperience.tsx");
   contains(code, '<Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high"', "measured LCP image gets explicit browser priority");
-  contains(code, '<Image src={logo} alt="İlkOku" loading="eager" sizes="160px"', "logo remains eager but does not compete for preload priority");
+  notContains(code, '<header className="how-header">', "legacy publisher header is no longer rendered inside the shared PublicSiteFrame");
+  notContains(code, 'loading="eager" sizes="160px"', "hidden eager logo must not generate a redundant mobile download");
+  contains(code, '<footer className="how-footer">', "existing footer remains unchanged");
   notContains(code, '<Image src={logo} alt="İlkOku" priority', "logo must not preload ahead of LCP image");
 });
+
+test("publisher removes only its hidden legacy header, retaining canonical shared header and login", () => {
+  const component = source("src/components/content/ForPublishersExperience.tsx");
+  const layout = source("src/app/yayinevleri-icin/layout.tsx");
+  const sharedFrame = source("src/components/layout/PublicSiteFrame.tsx");
+  const header = source("src/components/layout/PublicSiteHeader.tsx");
+  const css = source("src/components/layout/public-site-header.css");
+  contains(layout, "<PublicSiteFrame>{children}</PublicSiteFrame>", "publisher route always uses shared frame");
+  contains(sharedFrame, "<PublicSiteHeader />", "shared visible site header is preserved");
+  contains(header, "<PublicSiteAccount />", "shared account entry is preserved");
+  contains(css, ".public-site-frame .how-header,", "legacy header was hidden by the existing CSS");
+  notContains(component, '<header className="how-header">', "publisher must not render an invisible eager-logo header");
+  contains(component, 'href="/kayit?rol=publisher"', "publisher registration CTA remains");
+  contains(component, 'href="/giris"', "publisher login link elsewhere in the page remains");
+});
+

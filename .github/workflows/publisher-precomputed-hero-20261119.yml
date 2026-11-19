@@ -1,0 +1,60 @@
+name: Build exact publisher hero WebP variants on isolated test branch
+on:
+  push:
+    branches:
+      - perf/publisher-static-hero-edge-20261119
+    paths:
+      - .github/workflows/publisher-precomputed-hero-20261119.yml
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+      - name: Download exactly q60 live WebP variants and validate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ "$GITHUB_REF_NAME" != 'perf/publisher-static-hero-edge-20261119' ]]; then exit 1; fi
+          served="$(curl -fLsS --connect-timeout 8 --max-time 20 'https://ilkoku.com/api/build-info?static_hero=20261119' | python3 -c 'import json,sys;print(json.load(sys.stdin)["commitSha"])')"
+          [[ "$served" == 'd47798b32574d9e04783467ef7a3e903f515adad' ]] || { echo "::error::Production version changed $served"; exit 1; }
+          mkdir -p /tmp/publisher-precomputed
+          for width in 384 640 750 828 1080 1200 1920 2048 3840; do
+            dest="public/trust-pages/for-publishers-w$width-q60-v1.webp"
+            url="https://ilkoku.com/_next/image?url=%2Ftrust-pages%2Ffor-publishers.webp&w=$width&q=60"
+            curl --fail --silent --show-error --connect-timeout 8 --max-time 60 \
+              -H 'Accept: image/webp' -D "/tmp/publisher-precomputed/$width.headers" -o "$dest" "$url"
+            mime="$(file -b --mime-type "$dest")"
+            [[ "$mime" == image/webp ]] || { echo "::error::Invalid MIME $mime for $width"; exit 1; }
+            grep -qi '^content-type: image/webp' "/tmp/publisher-precomputed/$width.headers" || { echo "::error::Server did not return webp"; exit 1; }
+            bytes="$(wc -c < "$dest" | tr -d ' ')"
+            [[ "$bytes" -ge 3000 && "$bytes" -le 1000000 ]] || { echo "::error::Unexpected byte count for $width: $bytes"; exit 1; }
+            sha="$(sha256sum "$dest" | cut -d' ' -f1)"
+            echo "STATIC_HERO_ASSET width=$width bytes=$bytes sha256=$sha"
+          done
+          cat > /tmp/publisher-precomputed/README.txt <<'TXT'
+          Nine q60 image variants fetched from the verified live Next.js image optimizer.
+          Binary bytes and original art are preserved. Production unchanged.
+          Next step: route-scoped test, preview visual acceptance, and post-release LCP comparison.
+          TXT
+      - name: Push only validated binary assets to isolated branch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/trust-pages/for-publishers-w*-q60-v1.webp
+          git diff --cached --stat
+          git commit -m 'perf(publisher): stage identical q60 static responsive hero variants'
+          git push origin HEAD:perf/publisher-static-hero-edge-20261119
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: publisher-precomputed-hero-proof
+          path: /tmp/publisher-precomputed/
+          retention-days: 14
+          if-no-files-found: warn

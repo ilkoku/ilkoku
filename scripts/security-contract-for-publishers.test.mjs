@@ -103,13 +103,21 @@ test("publisher hero uses an already-supported quality level without changing re
   const hero = source("src/components/content/ForPublishersExperience.tsx");
   const config = source("next.config.ts");
   contains(config, "qualities: [45, 60, 75]", "the Next.js configured image quality allowlist");
-  contains(hero, "<Image src={visual.src} alt={visual.alt} fill priority fetchPriority=\"high\" quality={60} sizes=\"(max-width: 860px) 100vw, 54vw\" style={{ objectPosition: visual.focalPoint }} />", "only publisher LCP image receives quality 60 and retains fill, priority, sizes and crop");
+  const staticHero = source("src/components/content/PublisherHeroStaticImage.tsx");
+  contains(hero, '<PublisherHeroStaticImage src={visual.src} alt={visual.alt} focalPoint={visual.focalPoint} />', "publisher retains original visual, alternative text and crop");
+  contains(staticHero, 'quality={60}', "publisher image keeps q60");
+  contains(staticHero, 'fetchPriority="high"', "publisher image keeps high priority");
+  contains(staticHero, 'sizes="(max-width: 860px) 100vw, 54vw"', "publisher keeps responsive image sizes");
+  contains(staticHero, 'fill', "publisher preserves the fill-based layout");
   notContains(hero, 'src={logo} alt="İlkOku" quality={60}', "brand logo quality unchanged");
 });
 
 test("publisher above-the-fold hero is sole high-priority image, without altering visuals", () => {
   const code = source("src/components/content/ForPublishersExperience.tsx");
-  contains(code, '<Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high"', "measured LCP image gets explicit browser priority");
+  contains(code, '<PublisherHeroStaticImage src={visual.src} alt={visual.alt} focalPoint={visual.focalPoint} />', "publisher only replaces the hero image source");
+  const staticHero = source("src/components/content/PublisherHeroStaticImage.tsx");
+  contains(staticHero, 'priority', "measured LCP image retains preload");
+  contains(staticHero, 'fetchPriority="high"', "measured LCP image keeps explicit browser priority");
   notContains(code, '<header className="how-header">', "legacy publisher header is no longer rendered inside the shared PublicSiteFrame");
   notContains(code, 'loading="eager" sizes="160px"', "hidden eager logo must not generate a redundant mobile download");
   contains(code, '<footer className="how-footer">', "existing footer remains unchanged");
@@ -142,4 +150,23 @@ test("publisher route coalesces both page-owned CSS imports without changing CMS
   contains(baseStyles, ".publishers-discovery { padding-block:", "original publisher base styles preserved");
   contains(roleStyles, ".for-publishers-page .publishers-hero__visual figcaption span:nth-child(1)::before", "hero role illustrations remain visible");
   contains(preview, 'import "@/app/yayinevleri-icin/for-publishers.css";', "CMS preview still loads original publisher base stylesheet");
+});
+
+test("publisher static image variants are real WebP assets and only affect the publisher hero", () => {
+  const image = source("src/components/content/PublisherHeroStaticImage.tsx");
+  const publisher = source("src/components/content/ForPublishersExperience.tsx");
+  const preview = source("src/app/icerik/onizleme/sayfa/[id]/page.tsx");
+  for (const width of [384,640,750,828,1080,1200,1920,2048,3840]) {
+    const file=readFileSync(join(ROOT,"public/trust-pages/for-publishers-w" + width + "-q60-v1.webp"));
+    assert.equal(file.subarray(0,4).toString("ascii"),"RIFF","RIFF signature " + width);
+    assert.equal(file.subarray(8,12).toString("ascii"),"WEBP","WebP signature " + width);
+    assert.ok(file.length>3000 && file.length<1000000,"reasonable bytes " + width);
+  }
+  const w750=readFileSync(join(ROOT,"public/trust-pages/for-publishers-w750-q60-v1.webp"));
+  assert.equal(w750.length,36188,"750px variant is identical size to accepted q60");
+  contains(image,'const sourceImage = "/trust-pages/for-publishers.webp";',"original source path remains explicit");
+  contains(image,'if (src !== sourceImage || quality !== 60 || !supportedWidths.has(width))',"safe fallback for future changes");
+  contains(publisher,'<PublisherHeroStaticImage src={visual.src} alt={visual.alt} focalPoint={visual.focalPoint} />',"publisher hero is scoped");
+  contains(preview,'<ForPublishersExperience',"CMS draft stays on approved publisher render path");
+  notContains(publisher,'loading="lazy"',"hero not accidentally lazy-loaded");
 });

@@ -1,0 +1,92 @@
+name: Publisher LCP origin and image timing probe
+on:
+  push:
+    branches:
+      - perf/publisher-css-single-entry-20261119
+    paths:
+      - .github/workflows/publisher-lcp-origin-probe-20261119.yml
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Verify production revision and collect response timings
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-origin-probe
+          curl -fLsS --connect-timeout 8 --max-time 20 \
+            -H 'Cache-Control: no-store' 'https://ilkoku.com/api/build-info?publisher_origin_probe=20261119' \
+            > /tmp/publisher-origin-probe/build.json
+          python3 - <<'PY'
+          import json
+          path='/tmp/publisher-origin-probe/build.json'
+          rev=json.load(open(path))['commitSha']
+          assert rev=='d47798b32574d9e04783467ef7a3e903f515adad', 'Live revision changed; no comparable test: '+rev
+          print('LIVE_REVISION_VERIFIED',rev)
+          PY
+          for i in 1 2 3 4 5; do
+            for target in html image css; do
+              case "$target" in
+                html) url='https://ilkoku.com/yayinevleri-icin' ;;
+                image) url='https://ilkoku.com/_next/image?url=%2Ftrust-pages%2Ffor-publishers.webp&w=750&q=60' ;;
+                css) url='https://ilkoku.com/_next/static/css/5f8fc4b693736fb1.css' ;;
+              esac
+              curl -sS --connect-timeout 8 --max-time 25 \
+                -A 'IlkOku-Publisher-LCP-OriginProbe/1.0' \
+                -H 'Accept: image/webp,image/*;q=0.8,*/*;q=0.5' \
+                -D "/tmp/publisher-origin-probe/$target-$i.headers" \
+                -o /dev/null \
+                -w "$target,$i,%{http_code},%{http_version},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total},%{size_download}\n" \
+                "$url" | tee -a /tmp/publisher-origin-probe/timings.csv
+            done
+            sleep 2
+          done
+      - name: Validate status, caching and summarize uncached/warm behavior
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import csv,json,pathlib,statistics
+          root=pathlib.Path('/tmp/publisher-origin-probe')
+          fp=root/'timings.csv'
+          if not fp.exists(): raise SystemExit('No valid samples; do not report success')
+          rows=list(csv.reader(fp.open()))
+          if len(rows)!=15: raise SystemExit('Expected 15 samples, got '+str(len(rows)))
+          report={}
+          keys=('cache-control','cf-cache-status','age','x-nextjs-cache','vary','server','content-type','etag','last-modified')
+          for target in ('html','image','css'):
+              subset=[r for r in rows if r[0]==target]
+              data=[]
+              for r in subset:
+                  hdr=(root/(target+'-'+r[1]+'.headers')).read_text(errors='replace')
+                  sections=[s for s in hdr.replace('\r','').split('\n\n') if s.strip().startswith('HTTP/')]
+                  h={}
+                  if sections:
+                      for line in sections[-1].split('\n')[1:]:
+                          if ':' in line:
+                              k,v=line.split(':',1)
+                              if k.strip().lower() in keys:h[k.strip().lower()]=v.strip()
+                  sample={'run':int(r[1]),'status':int(r[2]),'http':r[3],
+                          'dnsMs':round(float(r[4])*1000),'tcpMs':round(float(r[5])*1000),
+                          'tlsMs':round(float(r[6])*1000),'ttfbMs':round(float(r[7])*1000),
+                          'totalMs':round(float(r[8])*1000),'bytes':int(r[9]),'headers':h}
+                  data.append(sample)
+                  if sample['status']!=200:raise RuntimeError(target+' unexpected HTTP '+str(sample['status']))
+              report[target]={'samples':data,'medianTtfbMs':statistics.median(x['ttfbMs'] for x in data),
+                              'medianTotalMs':statistics.median(x['totalMs'] for x in data)}
+          report['note']='These are remote GitHub runner cURL HTTPS timings, not Chrome H3 timings or CrUX. Do not claim direct Lighthouse LCP causality.'
+          (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          for target in report:
+              if target!='note':print('ORIGIN_PROBE '+target+' '+json.dumps(report[target],ensure_ascii=False))
+          PY
+      - name: Save raw evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-lcp-origin-probe-20261119
+          path: /tmp/publisher-origin-probe/
+          retention-days: 14
+          if-no-files-found: warn

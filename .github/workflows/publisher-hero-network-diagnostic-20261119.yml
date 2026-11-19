@@ -1,4 +1,4 @@
-name: Publisher hero network diagnostic (read only)
+name: Publisher hero postrelease CDN and LCP diagnostic (read only)
 on:
   workflow_dispatch:
   pull_request:
@@ -24,7 +24,7 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs');
           const b=JSON.parse(fs.readFileSync('/tmp/publisher-hero-network/build.json','utf8'));
-          if(b.commitSha!=='d47798b32574d9e04783467ef7a3e903f515adad')throw Error('Live SHA differs: '+b.commitSha);
+          if(b.commitSha!=='dd8f569816de9f46c5845e8184b50dbf05ccfb2f')throw Error('Live SHA differs: '+b.commitSha);
           console.log('LIVE_SHA',b.commitSha);
           NODE
           curl --fail --silent --show-error --max-time 25 'https://ilkoku.com/yayinevleri-icin' > /tmp/publisher-hero-network/page.html
@@ -35,13 +35,18 @@ jobs:
           if(!match)throw Error('Hero preload missing');
           const tag=match[0];
           if(!/fetchPriority="high"|fetchpriority="high"/i.test(tag) && !/fetchpriority="high"/i.test(h))throw Error('High fetch priority missing');
-          console.log('HERO_PRELOAD',tag.slice(0,500));
+          console.log('STATIC_HERO_PRELOAD',tag.slice(0,500));
           NODE
+          for path in giris kayit sifremi-unuttum; do
+            http=$(curl -L -sS --max-time 20 -o /dev/null -w '%{http_code}' "https://ilkoku.com/$path")
+            echo "AUTH_ROUTE $path $http"
+            [[ "$http" == "200" ]] || exit 1
+          done
       - name: Measure direct HTTP image request repeatedly
         shell: bash
         run: |
           set -Eeuo pipefail
-          url='https://ilkoku.com/_next/image?url=%2Ftrust-pages%2Ffor-publishers.webp&w=750&q=60'
+          url='https://ilkoku.com/trust-pages/for-publishers-w750-q60-v1.webp'
           echo 'run,code,remote_ip,dns_s,tcp_s,tls_s,ttfb_s,total_s,bytes,download_bytes' > /tmp/publisher-hero-network/http.csv
           for i in 1 2 3 4 5 6; do
             curl -L -sS --fail --connect-timeout 8 --max-time 30 -o /dev/null -D "/tmp/publisher-hero-network/headers-$i.txt"               -w "$i,%{http_code},%{remote_ip},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total},%{size_download},%{size_download}\n"               "$url" >> /tmp/publisher-hero-network/http.csv
@@ -66,7 +71,7 @@ jobs:
             const d=JSON.parse(fs.readFileSync('/tmp/publisher-hero-network/lh-'+i+'.json','utf8'));
             if(d.runtimeError||new URL(d.finalUrl).pathname!=='/yayinevleri-icin')throw Error('invalid Lighthouse run '+i);
             const a=d.audits,net=a['network-requests']?.details?.items||[];
-            const hero=net.filter(x=>(x.url||'').includes('for-publishers.webp')&&x.statusCode===200);
+            const hero=net.filter(x=>(x.url||'').includes('for-publishers-w')&&x.statusCode===200);
             if(hero.length!==1)throw Error('Hero response missing or repeated '+i);
             const h=hero[0];
             const phases=a['largest-contentful-paint-element']?.details?.items?.find(x=>x.type==='table'&&x.items?.some(y=>y.phase==='TTFB'))?.items||[];
@@ -75,7 +80,7 @@ jobs:
               requestStartMs:Math.round(h.networkRequestTime),responseEndMs:Math.round(h.networkEndTime),
               heroNetworkDurationMs:Math.round(h.networkEndTime-h.networkRequestTime),
               phases:Object.fromEntries(phases.map(x=>[x.phase,Math.round(x.timing)]))};
-            out.push(item);console.log('HERO_NETWORK_DIAGNOSTIC',JSON.stringify(item));
+            out.push(item);console.log('POSTRELEASE_HERO_DIAGNOSTIC',JSON.stringify(item));
           }
           fs.writeFileSync('/tmp/publisher-hero-network/summary.json',JSON.stringify(out,null,2));
           NODE

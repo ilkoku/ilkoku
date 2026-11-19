@@ -45,7 +45,7 @@ jobs:
           if(cssFiles.length!==7)throw Error('CSS expected 7, got '+cssFiles.length+' '+cssFiles.join(','));
           const merged=cssFiles.find(x=>x.includes('5f8fc4b693736fb1.css'));
           if(!merged)throw Error('Coalesced publisher CSS file not present');
-          if(!s.includes('fetchpriority="high"'))throw Error('Hero high priority removed');
+          if(!/fetchpriority="high"/i.test(s))throw Error('Hero high priority removed');
           console.log('LIVE_CSS_COUNT '+cssFiles.length+' MERGED '+merged);
           fs.writeFileSync('/tmp/ilkoku-css-merge-acceptance/css-summary.json',JSON.stringify({files:cssFiles},null,2));
           NODE

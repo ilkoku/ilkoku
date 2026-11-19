@@ -94,3 +94,10 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
   contains(hydrator, 'if (pathname !== "/") return;', "homepage-only footer hydrator boundary");
   contains(hydrator, "}, [pathname]);", "footer hydrator route-change dependency");
 });
+
+test("publisher above-the-fold hero is sole high-priority image, without altering visuals", () => {
+  const code = source("src/components/content/ForPublishersExperience.tsx");
+  contains(code, '<Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high"', "measured LCP image gets explicit browser priority");
+  contains(code, '<Image src={logo} alt="İlkOku" loading="eager" sizes="160px"', "logo remains eager but does not compete for preload priority");
+  notContains(code, '<Image src={logo} alt="İlkOku" priority', "logo must not preload ahead of LCP image");
+});

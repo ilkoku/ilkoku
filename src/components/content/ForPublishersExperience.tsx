@@ -77,7 +77,7 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
     <main className="how-page for-publishers-page">
       <header className="how-header">
         <div className="how-container how-header__inner">
-          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
+          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" loading="eager" sizes="160px" /></Link>
           <Link className="how-header__account" href="/giris">Giriş yap</Link>
         </div>
       </header>
@@ -93,7 +93,7 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
             {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual publishers-hero__visual">
-            <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
+            <Image src={visual.src} alt={visual.alt} fill priority fetchPriority="high" sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
             <figcaption><span><PublisherIcon name="search" /> Keşfet</span><span><PublisherIcon name="heart" /> Kısa listeye al</span><span><PublisherIcon name="passport" /> Gelişimini incele</span></figcaption>
           </figure>
         </div>

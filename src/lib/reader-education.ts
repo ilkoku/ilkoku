@@ -145,7 +145,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Bir sonraki eserin için on dakikada uygulanabilecek küçük bir başlangıç planı hazırla.",
       steps: ["Okuma amacını tek cümleyle yaz.", "Eserden beklentini üç kelimeyle tanımla.", "Haftada üç gerçekçi okuma zamanı seç.", "İlk 30–50 sayfa sonunda devam kararını hangi ölçüte göre vereceğini belirle."],
     },
-    application: { heading: "Şimdi bir eser seç ve başla.", text: "Öğrendiğin seçim ölçütlerini İlkOku’daki gerçek eserlerde dene; türleri karşılaştır ve sana uygun ilk okumayı seç.", href: "/kesfet", label: "Eserleri keşfet" },
+    application: { heading: "Şimdi bir eser seç ve başla.", text: "Öğrendiğin seçim ölçütlerini İlkOku’daki gerçek eserlerde dene; türleri karşılaştır ve sana uygun ilk okumayı seç.", href: "/eserler", label: "Eserleri keşfet" },
   },
   {
     slug: "aktif-okuma",
@@ -186,7 +186,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Okuduğun kısa bir bölümde olayı, sorunu ve kendi yorumunu birbirinden ayır.",
       steps: ["Ne oldu? Tek cümle yaz.", "Bende hangi soru kaldı? Tek soru yaz.", "Hangi ayrıntı önemli olabilir? Bir işaret seç.", "Bölüm sonunda ilk tahmininin değişip değişmediğini not et."],
     },
-    application: { heading: "Aktif okumayı gerçek bir eserde dene.", text: "İlkOku’da bir eser seç; bir bölüm boyunca yalnız üç anlamlı not çıkar ve bölüm sonunda kendi özetini oluştur.", href: "/kesfet", label: "Okumaya geç" },
+    application: { heading: "Aktif okumayı gerçek bir eserde dene.", text: "İlkOku’da bir eser seç; bir bölüm boyunca yalnız üç anlamlı not çıkar ve bölüm sonunda kendi özetini oluştur.", href: "/eserler", label: "Okumaya geç" },
   },
   {
     slug: "edebi-okuma",
@@ -227,7 +227,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Kısa bir sahne seç ve olayın ötesindeki anlamı dört ayrı gözle incele.",
       steps: ["Anlatıcı ve bakış açısını yaz.", "Tekrar eden bir ayrıntı seç.", "Karşıtlık veya gerilimi belirle.", "Yorumunu iki somut işaretle destekle."],
     },
-    application: { heading: "Bir eserin görünmeyen katmanlarını ara.", text: "İlkOku’da bir bölüm seç; anlatıcı, tekrar ve alt metin için üç ayrı işaret bulup kendi yorumunu oluştur.", href: "/kesfet", label: "Bir eser seç" },
+    application: { heading: "Bir eserin görünmeyen katmanlarını ara.", text: "İlkOku’da bir bölüm seç; anlatıcı, tekrar ve alt metin için üç ayrı işaret bulup kendi yorumunu oluştur.", href: "/eserler", label: "Bir eser seç" },
   },
   {
     slug: "karakter-ve-hikaye-analizi",
@@ -268,7 +268,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Okuduğun eserde ana karakterin üç kritik kararını seç ve sonuçlarını birbirine bağla.",
       steps: ["Karakterin başlangıç hedefini yaz.", "Üç kritik karar seç.", "Her kararın doğurduğu sonucu yaz.", "Finalde hedefin veya karakterin nasıl değiştiğini tek cümlede özetle."],
     },
-    application: { heading: "Bir karakterin yolculuğunu takip et.", text: "İlkOku’daki bir eserde ana karakterin hedefini, en büyük engelini ve ilk önemli kararını belirleyerek analize başla.", href: "/kesfet", label: "Karakter keşfet" },
+    application: { heading: "Bir karakterin yolculuğunu takip et.", text: "İlkOku’daki bir eserde ana karakterin hedefini, en büyük engelini ve ilk önemli kararını belirleyerek analize başla.", href: "/eserler", label: "Karakter keşfet" },
   },
   {
     slug: "turleri-okumak",
@@ -350,7 +350,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Bilgilendirici veya tartışmacı kısa bir metin seç ve iddia–kanıt ilişkisini görünür hâle getir.",
       steps: ["Ana iddiayı tek cümleyle yaz.", "Sunulan kanıtları türlerine göre ayır.", "Eksik olabilecek bir bilgiyi yaz.", "Karşı görüşten gelebilecek en güçlü soruyu oluştur."],
     },
-    application: { heading: "Okuduğun her iddiaya aynı ağırlığı verme.", text: "İlkOku’daki bilgilendirici ve düşünce odaklı metinlerde iddia, gerekçe ve eksik bilgiyi ayırarak kendi değerlendirmene ulaş.", href: "/kesfet", label: "Metinleri keşfet" },
+    application: { heading: "Okuduğun her iddiaya aynı ağırlığı verme.", text: "İlkOku’daki bilgilendirici ve düşünce odaklı metinlerde iddia, gerekçe ve eksik bilgiyi ayırarak kendi değerlendirmene ulaş.", href: "/eserler", label: "Metinleri keşfet" },
   },
   {
     slug: "yorum-ve-elestiri-yazma",
@@ -391,7 +391,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Okuduğun kısa bir bölüm için yalnız dört cümlede açık ve kullanılabilir bir geri bildirim oluştur.",
       steps: ["Bir güçlü yönü somut biçimde belirt.", "Bir geliştirme alanını gözlem olarak yaz.", "Bu gözlemin okuma etkisini açıkla.", "Genel izlenimini spoiler vermeden tamamla."],
     },
-    application: { heading: "Yorumunu gerçek bir eserde uygula.", text: "İlkOku’da okuduğun bir esere yalnız ‘beğendim’ demek yerine gözlem + etki + gerekçe yapısıyla katkı sağlayan bir yorum bırak.", href: "/kesfet", label: "Okuyup yorumla" },
+    application: { heading: "Yorumunu gerçek bir eserde uygula.", text: "İlkOku’da okuduğun bir esere yalnız ‘beğendim’ demek yerine gözlem + etki + gerekçe yapısıyla katkı sağlayan bir yorum bırak.", href: "/eserler", label: "Okuyup yorumla" },
   },
   {
     slug: "okuma-kulturu",
@@ -432,7 +432,7 @@ export const READER_EDUCATION_CATEGORIES = [
       text: "Bir eser hakkında farklı görüşleri davet eden kısa bir tartışma başlangıcı hazırla.",
       steps: ["Spoiler sınırını baştan belirt.", "Kendi yorumunu kesin hüküm yerine gerekçeli görüş olarak yaz.", "Diğer okurlara açık uçlu bir soru sor.", "Yanıtlarda esere odaklanan dili koru."],
     },
-    application: { heading: "Okuma deneyimini toplulukla büyüt.", text: "İlkOku’da bir eser keşfet, yorumları oku ve farklı görüşlere kendi metinsel gerekçenle katkı ver.", href: "/kesfet", label: "Topluluğa katıl" },
+    application: { heading: "Okuma deneyimini toplulukla büyüt.", text: "İlkOku’da bir eser keşfet, yorumları oku ve farklı görüşlere kendi metinsel gerekçenle katkı ver.", href: "/eserler", label: "Topluluğa katıl" },
   },
 ] as const satisfies readonly ReaderEducationCategory[];
 

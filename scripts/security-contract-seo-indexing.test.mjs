@@ -54,6 +54,7 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(ogAlt, "İlkOku — Dijital Yazar Platformu", "Open Graph alt brand");
   assertContains(ogAlt, "İlk cümle, ilk adım.", "Open Graph alt slogan");
   assert.equal(twitterAlt, ogAlt, "Twitter and Open Graph image alt text stay aligned");
+  assertContains(homepage, 'keywords: ["dijital yazar platformu", "digital yazar platformu"]', "approved homepage meta keywords remain present");
   assertContains(homepage, "const homeDescription = publicBrandDescription", "homepage keeps canonical metadata description");
   assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
 });

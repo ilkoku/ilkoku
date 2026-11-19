@@ -1798,6 +1798,49 @@ test("public Book Index metadata descriptions are unique, factual and within rev
   assert.equal(new Set(descriptions).size, routes.length,
     "overview, Turkey and global ranking pages need distinct factual descriptions");
 });
+test("Power-SEO verifies dynamic public links without accessing protected reader or admin routes", async () => {
+  const { publicDynamicOffSitemapKind, verifyPublicDynamicOffSitemapLinks } =
+    await import("./power-seo-live-census.mjs");
+  const allowed = [
+    ["https://ilkoku.com/kitap/demo-ikinci-bakis", "book"],
+    ["https://ilkoku.com/kitap/demo-ikinci-bakis/pasaport", "passport"],
+    ["https://ilkoku.com/yazarlar/iko-u-2026-000014", "author"],
+    ["https://ilkoku.com/turler/tez", "genre"],
+  ];
+  for (const [url, kind] of allowed) assert.equal(publicDynamicOffSitemapKind(url), kind);
+  for (const url of [
+    "https://ilkoku.com/oku/kitap/kapak", "https://ilkoku.com/hesabim",
+    "https://ilkoku.com/editor/talepler", "https://ilkoku.com/api/private",
+    "https://ilkoku.com/giris", "https://elsewhere.example/kitap/test",
+    "https://ilkoku.com/kitap/test?from=private", "javascript:alert(1)",
+  ]) assert.equal(publicDynamicOffSitemapKind(url), null, "private/unsafe path excluded: " + url);
+  const accessed = [];
+  const report = await verifyPublicDynamicOffSitemapLinks({
+    offSitemapTargets: [
+      ...allowed.map(([url]) => ({ url })),
+      { url: "https://ilkoku.com/hesabim" },
+    ],
+  }, {
+    inspectPage: async (url) => {
+      accessed.push(url);
+      return {
+        status: 200, ok: true, canonical: url, canonicalMatches: true,
+        robots: url.endsWith("/pasaport") ? "noindex, follow" : "index, follow",
+        title: "Örnek sayfa",
+      };
+    },
+    pause: async () => {},
+  });
+  assert.equal(report.candidates, 4);
+  assert.equal(report.checked, 4);
+  assert.deepEqual(accessed.sort(), allowed.map(([url]) => url).sort());
+  assert.equal(report.results.filter((p) => p.kind === "passport" && p.robots.includes("noindex")).length, 1);
+  const census = source("scripts/power-seo-live-census.mjs");
+  assertContains(census, "dynamicPublicHttpMissing:", "verified 404/410 evidence count");
+  assertContains(census, "dynamicPublicHttpIndexableCanonicalReview:", "canonicals of indexable pages reviewed separately");
+  assertContains(census, "offSitemapHttp, dynamicPublicHttp", "raw per-page HTTP proof kept in JSON artifact");
+});
+
 test("Power-SEO safely verifies only public off-sitemap HTTP targets without probing protected pages", async () => {
   assert.equal(publicOffSitemapPath("https://ilkoku.com/giris"), "/giris");
   assert.equal(publicOffSitemapPath("https://ilkoku.com/kitap/demo-kayip-harfler"), "/kitap/demo-kayip-harfler");

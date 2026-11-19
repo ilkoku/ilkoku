@@ -580,6 +580,64 @@ async function inspect(url, retry = 0, firstAttemptFailure = "") {
   }
 }
 
+
+// Review only public destinations discovered from the actual sitemap HTML.
+// Do not probe /oku, member accounts, administration, editor workspaces, or APIs.
+// A missing canonical on an intentionally noindex passport is not a 404.
+const MAX_DYNAMIC_PUBLIC_TARGETS = 80;
+function publicDynamicOffSitemapKind(raw) {
+  let parsed;
+  try { parsed = new URL(raw); } catch { return null; }
+  if (parsed.origin !== ORIGIN || parsed.search || parsed.hash || parsed.username || parsed.password) return null;
+  const pathname = parsed.pathname;
+  if (/^\/kitap\/[a-z0-9-]+\/pasaport$/u.test(pathname)) return "passport";
+  if (/^\/kitap\/[a-z0-9-]+$/u.test(pathname)) return "book";
+  if (/^\/yazarlar\/[a-z0-9-]+$/u.test(pathname)) return "author";
+  if (/^\/turler\/[a-z0-9-]+$/u.test(pathname)) return "genre";
+  return null;
+}
+
+async function verifyPublicDynamicOffSitemapLinks(linkReview, options = {}) {
+  const inspectPage = options.inspectPage || inspect;
+  const pause = options.pause || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const targets = linkReview.offSitemapTargets
+    .map((link) => ({ url: link.url, kind: publicDynamicOffSitemapKind(link.url) }))
+    .filter((link) => link.kind !== null);
+  if (targets.length > MAX_DYNAMIC_PUBLIC_TARGETS) {
+    throw new Error("Too many public dynamic targets: " + targets.length);
+  }
+  const results = [];
+  let halted = false;
+  for (let i = 0; i < targets.length; i += CONCURRENCY) {
+    const batch = targets.slice(i, i + CONCURRENCY);
+    const inspected = await Promise.all(batch.map(async (target) => {
+      const page = await inspectPage(target.url);
+      const status = page.status;
+      const outcome = page.ok ? "reachable"
+        : status === 404 || status === 410 ? "missing"
+        : status >= 300 && status < 400 ? "redirect"
+        : status === 401 || status === 403 ? "access-restricted"
+        : status === 429 || status >= 500 ? "temporary-error" : "unverified";
+      return {
+        url: target.url, kind: target.kind, status, outcome,
+        canonical: page.canonical || "", canonicalMatches: !!page.canonicalMatches,
+        robots: page.robots || "", title: page.title || "",
+        error: page.ok ? "" : page.error || "Not HTTP 200 HTML",
+      };
+    }));
+    results.push(...inspected);
+    if (inspected.some((x) => x.status === 403 || x.status === 429)) {
+      halted = true;
+      break;
+    }
+    await pause(180);
+  }
+  return {
+    scope: "Live sitemap-linked, public dynamic pages only; GET read-only, no authentication; intentional noindex accepted.",
+    candidates: targets.length, checked: results.length, halted, results,
+  };
+}
+
 async function main() {
   const { response, body } = await read(ORIGIN + "/sitemap.xml", 1_500_000);
   if (response.status !== 200 || !(response.headers.get("content-type") || "").includes("xml")) {
@@ -604,6 +662,7 @@ async function main() {
   const headerProblems = headerNavigationReview.filter((page) => page.hasHeader &&
     (page.realMenuLinks === 0 || page.nonLinkTriggers > 0 || page.invalidMenuHrefs > 0));
   const offSitemapHttp = await verifyPublicOffSitemapLinks(linkReview);
+  const dynamicPublicHttp = await verifyPublicDynamicOffSitemapLinks(linkReview);
   const schemaReview = validPages.map((page) => {
     const audit = inspectBreadcrumbHierarchy(page.structuredData, page.url, siteUrls);
     return {
@@ -708,6 +767,16 @@ async function main() {
     offSitemapPublicHttpUnverified: offSitemapHttp.results.filter((item) => item.outcome === "unverified" || item.outcome === "temporary-error").length,
     offSitemapPublicHttpSkippedPrivateOrOther: offSitemapHttp.skippedPrivateOrOther,
     offSitemapPublicHttpHalted: Number(offSitemapHttp.halted),
+    dynamicPublicHttpCandidates: dynamicPublicHttp.candidates,
+    dynamicPublicHttpChecked: dynamicPublicHttp.checked,
+    dynamicPublicHttpReachable: dynamicPublicHttp.results.filter((page) => page.outcome === "reachable").length,
+    dynamicPublicHttpMissing: dynamicPublicHttp.results.filter((page) => page.outcome === "missing").length,
+    dynamicPublicHttpRedirects: dynamicPublicHttp.results.filter((page) => page.outcome === "redirect").length,
+    dynamicPublicHttpUnverified: dynamicPublicHttp.results.filter((page) => page.outcome === "unverified" || page.outcome === "temporary-error").length,
+    dynamicPublicHttpHalted: Number(dynamicPublicHttp.halted),
+    dynamicPublicHttpSelfCanonical: dynamicPublicHttp.results.filter((page) => page.canonicalMatches).length,
+    dynamicPublicHttpNoindex: dynamicPublicHttp.results.filter((page) => /\bnoindex\b/iu.test(page.robots)).length,
+    dynamicPublicHttpIndexableCanonicalReview: dynamicPublicHttp.results.filter((page) => page.outcome === "reachable" && !/\bnoindex\b/iu.test(page.robots) && !page.canonicalMatches).length,
     titlesPresent: validPages.filter((x) => !!x.title).length,
     titlesMissing: validPages.filter((x) => !x.title).length,
     duplicateTitleGroups: duplicateTitles.length,
@@ -747,13 +816,20 @@ async function main() {
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
     .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, duplicateTitles, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, homeReachability, headerNavigationReview, headerProblems, offSitemapHttp };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, duplicateTitles, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, homeReachability, headerNavigationReview, headerProblems, offSitemapHttp, dynamicPublicHttp };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
   console.log(JSON.stringify(summary));
   console.log(JSON.stringify({ firstAttemptFailuresByCause }));
   console.log(JSON.stringify({ offSitemapHttp }));
+  console.log(JSON.stringify({ dynamicPublicHttp: {
+    candidates: dynamicPublicHttp.candidates, checked: dynamicPublicHttp.checked, halted: dynamicPublicHttp.halted,
+  } }));
+  for (const item of dynamicPublicHttp.results.filter((page) => page.outcome !== "reachable" ||
+    (!/\bnoindex\b/iu.test(page.robots) && !page.canonicalMatches)).slice(0, 50)) {
+    console.log(JSON.stringify({ dynamicPublicHttpReview: item }));
+  }
   for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
     console.log(JSON.stringify(page));
   }
@@ -818,10 +894,11 @@ async function main() {
   }
   if (summary.errors || summary.canonicalMissingOrDifferent || summary.noindexPagesInSitemap ||
     summary.offSitemapPublicHttpMissing || summary.offSitemapPublicHttpHalted ||
+    summary.dynamicPublicHttpMissing || summary.dynamicPublicHttpUnverified || summary.dynamicPublicHttpHalted ||
     summary.homepageUnreachableSitemapUrls || summary.pagesWithHeaderNavigationProblems) process.exitCode = 1;
 }
 
-export { duplicateTitleGroups, h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
+export { publicDynamicOffSitemapKind, verifyPublicDynamicOffSitemapLinks, duplicateTitleGroups, h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

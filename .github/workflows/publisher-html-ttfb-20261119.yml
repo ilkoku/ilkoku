@@ -1,0 +1,118 @@
+name: Publisher HTML TTFB vs edge reference (read only)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/publisher-html-ttfb-20261119.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify the intended live revision
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-html-ttfb
+          curl -fsSL --connect-timeout 8 --max-time 20 \
+            'https://ilkoku.com/api/build-info' > /tmp/publisher-html-ttfb/build.json
+          node <<'NODE'
+          const fs=require('node:fs');
+          const actual=JSON.parse(fs.readFileSync('/tmp/publisher-html-ttfb/build.json','utf8')).commitSha;
+          const expected='dd8f569816de9f46c5845e8184b50dbf05ccfb2f';
+          if(actual!==expected)throw Error('Production SHA changed, aborting: '+actual);
+          console.log('LIVE_REVISION_OK',actual);
+          NODE
+      - name: Six alternating HTML and static-asset measurements
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          : > /tmp/publisher-html-ttfb/data.ndjson
+          probe() {
+            local kind="$1" seq="$2" url="$3" h result
+            h="$(mktemp)"
+            result="$(curl --silent --show-error --location --compressed \
+              --connect-timeout 8 --max-time 25 --user-agent 'IlkOku-ReadOnly-Publisher-HTML-TTFB/1.0' \
+              --output /dev/null --dump-header "$h" --write-out '%{json}' "$url" || true)"
+            if [[ -z "$result" ]]; then
+              echo "::error::Missing HTTP result $kind $seq"; exit 1
+            fi
+            KIND="$kind" SEQ="$seq" RESPONSE="$result" HEADER_PATH="$h" node <<'NODE' | tee -a /tmp/publisher-html-ttfb/data.ndjson
+          const fs=require('node:fs');
+          const x=JSON.parse(process.env.RESPONSE);
+          const blocks=fs.readFileSync(process.env.HEADER_PATH,'utf8').trim().split(/\r?\n\r?\n/);
+          const headers={};
+          for(const line of blocks.at(-1).split(/\r?\n/)){
+            const pos=line.indexOf(':');
+            if(pos<1)continue;
+            const k=line.slice(0,pos).trim().toLowerCase();
+            if(['cf-cache-status','cache-control','x-nextjs-cache','age','cf-ray','server-timing','vary','content-type','x-powered-by'].includes(k))
+              headers[k]=line.slice(pos+1).trim();
+          }
+          const ms=n=>typeof n==='number'?Math.round(n*1000):null;
+          const row={route:process.env.KIND,iteration:Number(process.env.SEQ),
+            status:x.http_code,effectiveUrl:x.url_effective,
+            dnsMs:ms(x.time_namelookup),tcpMs:ms(x.time_connect),
+            tlsMs:ms(x.time_appconnect),pretransferMs:ms(x.time_pretransfer),
+            ttfbMs:ms(x.time_starttransfer),totalMs:ms(x.time_total),
+            postTlsWaitMs:ms(x.time_starttransfer-x.time_pretransfer),
+            bytes:x.size_download,remoteIp:x.remote_ip,headers};
+          console.log(JSON.stringify(row));
+          NODE
+            local status
+            status="$(RESPONSE="$result" node -p 'JSON.parse(process.env.RESPONSE).http_code')"
+            rm -f "$h"
+            if [[ "$status" == "403" || "$status" == "429" ]]; then echo "::error::WAF stop"; exit 1; fi
+            if [[ "$status" != "200" ]]; then echo "::error::Unexpected HTTP $status $kind"; exit 1; fi
+          }
+          for i in 1 2 3 4 5 6; do
+            probe publisher "$i" 'https://ilkoku.com/yayinevleri-icin'
+            sleep 1
+            probe comparator "$i" 'https://ilkoku.com/nasil-calisir'
+            sleep 1
+            probe static "$i" 'https://ilkoku.com/trust-pages/for-publishers-w750-q60-v1.webp'
+            if [[ "$i" != "6" ]]; then sleep 2; fi
+          done
+      - name: Summarize without equating Cloudflare TTFB to origin CPU time
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const file='/tmp/publisher-html-ttfb/data.ndjson';
+          if(!fs.existsSync(file))process.exit(0);
+          const rows=fs.readFileSync(file,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
+          const median=xs=>{const a=xs.filter(x=>Number.isFinite(x)).sort((a,b)=>a-b);return a.length?Math.round((a[(a.length-1)>>1]+a[a.length>>1])/2):null};
+          const kinds=['publisher','comparator','static'];
+          const summary={kind:'GitHub runner direct HTTP (not origin isolation, not CrUX, not mobile throttling)',samples:rows.length,
+            metrics:Object.fromEntries(kinds.map(kind=>{
+              const r=rows.filter(x=>x.route===kind);
+              return [kind,{count:r.length,medianTtfbMs:median(r.map(x=>x.ttfbMs)),
+                medianPostTlsWaitMs:median(r.map(x=>x.postTlsWaitMs)),
+                medianTotalMs:median(r.map(x=>x.totalMs)),
+                cacheStatuses:r.map(x=>x.headers['cf-cache-status']||'absent'),
+                nextCache:r.map(x=>x.headers['x-nextjs-cache']||'absent'),
+                httpStatuses:r.map(x=>x.status),medianBytes:median(r.map(x=>x.bytes))}];
+            }))};
+          console.log('PUBLISHER_HTML_TTFB_SUMMARY',JSON.stringify(summary));
+          fs.writeFileSync('/tmp/publisher-html-ttfb/summary.json',JSON.stringify(summary,null,2));
+          if(process.env.GITHUB_STEP_SUMMARY){
+            const lines=['## Yayınevi HTML TTFB — observation only','','| Resource | Samples | Median TTFB | Median post-TLS wait | Median total | CF status | Next cache |',
+              '|---|---:|---:|---:|---:|---|---|',
+              ...kinds.map(kind=>{const m=summary.metrics[kind];return '| '+[kind,m.count,m.medianTtfbMs,m.medianPostTlsWaitMs,m.medianTotalMs,m.cacheStatuses.join(', '),m.nextCache.join(', ')].join(' | ')+' |';}),
+              '','Post-TLS wait includes CDN routing, network and application delay: it is not direct origin computation.'];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n'));
+          }
+          if(rows.length!==18)throw Error('Incomplete paired samples '+rows.length+'/18');
+          NODE
+      - name: Retain JSON and HTTP evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-html-ttfb-p1-20261119
+          path: /tmp/publisher-html-ttfb
+          retention-days: 14
+          if-no-files-found: warn

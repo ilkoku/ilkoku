@@ -48,7 +48,7 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs'),s=fs.readFileSync('/tmp/publisher-postmerge-2105/page.html','utf8');
           if(!s.includes('/trust-pages/for-publishers-w828-q60-v1.webp'))throw Error('Static responsive hero URL absent from live HTML');
-          if(!/fetchpriority="high"/.test(s))throw Error('Hero browser priority missing');
+          if(!/fetchpriority="high"/i.test(s))throw Error('Hero browser priority missing');
           const files=[...s.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)];
           if(files.length!==7)throw Error('Unexpected CSS links '+files.length);
           console.log('LIVE_HERO_STATIC_MARKUP CSS='+files.length);

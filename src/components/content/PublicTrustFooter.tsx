@@ -59,7 +59,7 @@ export async function PublicTrustFooter() {
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">
           <h3>Destek</h3>
           {publicSupportLinks.map((item) => (
-            <a href={item.href} key={item.href}>{item.label}</a>
+            <Link href={item.href} key={item.href}>{item.label}</Link>
           ))}
         </nav>
       </div>
@@ -68,7 +68,7 @@ export async function PublicTrustFooter() {
         <span>© {new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.</span>
         <nav className="public-trust-footer__legal" aria-label="Yasal bağlantılar">
           {publicLegalLinks.map((item) => (
-            <Link href={item.href} key={item.href}>{item.label}</Link>
+            <a href={item.href} key={item.href}>{item.label}</a>
           ))}
         </nav>
       </div>

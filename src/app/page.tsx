@@ -31,6 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: homeTitle,
     description: homeDescription,
+    keywords: ["dijital yazar platformu", "digital yazar platformu"],
     alternates: {
       canonical: "https://ilkoku.com/",
       languages: {

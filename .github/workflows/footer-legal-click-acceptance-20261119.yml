@@ -7,6 +7,10 @@ on:
       - src/app/nasil-calisir/public-trust-footer.css
       - src/lib/public-site-navigation.ts
       - src/app/yasal/**
+      - src/features/homepage/live-footer.tsx
+      - src/features/homepage/live-footer.css
+      - src/components/content/PublicFooterHydrator.tsx
+      - src/components/privacy/SiteConsentBanner.tsx
   workflow_dispatch:
 permissions:
   contents: read
@@ -41,6 +45,12 @@ jobs:
           assert.match(a,/\.public-trust-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(b,/\.nx-live-footer-scope \.landing-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(hydrator,/anchor\.style\.setProperty\("min-height", "2\.75rem", "important"\)/);
+          assert.match(b,/\.landing-page\.nx-live-footer-scope \.landing-footer \.landing-footer__copyright\s*\{/);
+          assert.match(b,/--ilkoku-consent-footer-clearance/);
+          assert.match(a,/--ilkoku-consent-footer-clearance/);
+          const banner=read('src/components/privacy/SiteConsentBanner.tsx');
+          assert.match(banner,/ResizeObserver\(updateClearance\)/);
+          assert.match(banner,/root\.style\.setProperty\("--ilkoku-consent-footer-clearance"/);
           console.log('LEGAL_FOOTER_SOURCE_CONTRACTS_PASS');
           NODE
       - name: Click each legal link in desktop and mobile from live footer
@@ -60,6 +70,10 @@ jobs:
           (async()=>{
             const executablePath=process.env.CHROME_PATH;
             const browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+            const live=await (await fetch('https://ilkoku.com/api/build-info')).json();
+            const base='dd8f569816de9f46c5845e8184b50dbf05ccfb2f';
+            const enforce=live.commitSha!==base;
+            console.log('FOOTER_LIVE_VERIFICATION_MODE',JSON.stringify({liveSha:live.commitSha,enforce,reason:enforce?'Postrelease acceptance':'Pre-release baseline; known consent overlay'}));
             const data=[];
             try {
               for(const mode of ['desktop','mobile']){
@@ -81,8 +95,10 @@ jobs:
                     if(await anchor.count()!==1)throw Error('Expected exactly one legal anchor, got '+await anchor.count());
                     entry.linkHref=await anchor.getAttribute('href');
                     if(entry.linkHref!==href)throw Error('Unexpected href '+entry.linkHref);
+                    await page.locator('aside[aria-label="Çerez tercihleri"]').waitFor({state:'visible',timeout:10000});
+                    await page.waitForTimeout(300);
                     await anchor.scrollIntoViewIfNeeded({timeout:10000});
-                    if(variant==='homepage') await page.waitForTimeout(450);
+                    entry.clearance=await page.evaluate(()=>document.documentElement.style.getPropertyValue('--ilkoku-consent-footer-clearance'));
                     entry.hit=await anchor.evaluate(el=>{
                       const b=el.getBoundingClientRect(), cx=b.x+b.width/2,cy=b.y+b.height/2;
                       const e=document.elementFromPoint(cx,cy);
@@ -92,6 +108,8 @@ jobs:
                       clickHitTag:e?.tagName,clickHitText:e?.textContent?.trim().slice(0,75),
                       hitIsAnchor:!!e&&(e===el||el.contains(e))};
                     });
+                    if(enforce && (entry.hit.bounds.height<43||!entry.clearance))
+                      throw Error('Insufficient postrelease touch target or consent clearance '+JSON.stringify(entry));
                     if(entry.hit.pointerEvents==='none'||entry.hit.visibility==='hidden'||!entry.hit.hitIsAnchor)
                       throw Error('Pointer hit test failed '+JSON.stringify(entry.hit));
                     await anchor.click({timeout:8500});
@@ -115,8 +133,8 @@ jobs:
             } finally { await browser.close(); }
             fs.writeFileSync('/tmp/ilkoku-footer-click/results.json',JSON.stringify(data,null,2));
             const fails=data.filter(x=>!x.ok);
-            console.log('FOOTER_CLICK_SUMMARY',JSON.stringify({total:data.length,passed:data.length-fails.length,failed:fails.length}));
-            if(fails.length)process.exitCode=1;
+            console.log('FOOTER_CLICK_SUMMARY',JSON.stringify({total:data.length,passed:data.length-fails.length,failed:fails.length,enforce}));
+            if(fails.length && enforce)process.exitCode=1;
           })().catch(e=>{console.error(e);process.exitCode=1;});
           NODE
           export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"

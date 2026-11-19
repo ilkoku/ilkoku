@@ -103,7 +103,7 @@ export default function LiveHomepageFooter({ signedIn, workspaceHref, bookIndexP
         <div className="landing-footer__copyright">
           <span className="landing-footer__copyright-text">{copyright}</span>
           <nav className="landing-footer__legal" aria-label="Yasal bağlantılar">
-            {publicLegalLinks.map((item) => <Link prefetch={false} href={item.href} key={item.href}>{item.label}</Link>)}
+            {publicLegalLinks.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
           </nav>
         </div>
       </footer>

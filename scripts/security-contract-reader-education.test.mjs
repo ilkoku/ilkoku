@@ -122,7 +122,7 @@ test("public reader education CTAs open the public works directory, never the au
   const renderer = source("src/components/content/ReaderEducationPage.tsx");
   const readerWorkspace = source("src/app/kesfet/page.tsx");
   const publicLibrary = source("src/app/eserler/page.tsx");
-  const publicCtas = [...inventory.matchAll(/application: \\{[^\\n]*?href: "([^"]+)", label: "[^"]+" \\}/gu)]
+  const publicCtas = [...inventory.matchAll(/application: \{[^\n]*?href: "([^"]+)", label: "[^"]+" \}/gu)]
     .map((match) => match[1]);
   assert.equal(publicCtas.length, 8, "every reader education category has one CTA");
   assert.equal(publicCtas.filter((href) => href === "/eserler").length, 7, "seven reader CTAs use the public works directory");

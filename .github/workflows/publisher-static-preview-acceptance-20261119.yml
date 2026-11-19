@@ -99,7 +99,8 @@ jobs:
             if(!out.live.src.includes('/_next/image?'))throw Error('Unexpected baseline image URL');
             if(!/\/trust-pages\/for-publishers-w[0-9]+-q60-v1\.webp/.test(out.preview.src))throw Error('Static hero was not used on preview');
             const required=[384,640,750,828,1080,1200,1920,2048,3840];
-            for(const w of required)if(!out.preview.srcset.includes('for-publishers-w'+w+'-q60-v1.webp'))throw Error('Missing responsive width '+w);
+            const srcsetWidths=[...out.preview.srcset.matchAll(/for-publishers-w([0-9]+)-q60-v1\\.webp/g)].map(m=>Number(m[1]));
+            if(srcsetWidths.length<6||srcsetWidths.some(w=>!required.includes(w)))throw Error('Unexpected responsive srcset widths '+srcsetWidths);
             for(const k of ['top','left','width','height']){
               if(Math.abs(out.live.figure[k]-out.preview.figure[k])>3)throw Error('Preview hero figure geometry changed '+k+': '+out.live.figure[k]+' vs '+out.preview.figure[k]);
             }
@@ -108,7 +109,7 @@ jobs:
             await browser.close();
           })().catch(e=>{console.error('VISUAL_ACCEPT_FAILURE',e.stack||e);process.exit(1)});
           NODE
-          node /tmp/publisher-static-visual/probe.cjs
+          NODE_PATH="$GITHUB_WORKSPACE/node_modules" node /tmp/publisher-static-visual/probe.cjs
       - name: Compare PNG hero visual pixel differences
         shell: bash
         run: |

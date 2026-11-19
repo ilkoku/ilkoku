@@ -182,7 +182,7 @@ function inspectBreadcrumbHierarchy(schema, pageUrl, siteUrls) {
 function duplicateTitleGroups(pages) {
   const groups = new Map();
   for (const page of pages) {
-    const title = (page.title || "").normalize("NFC").replace(/\\s+/gu, " ").trim();
+    const title = (page.title || "").normalize("NFC").replace(/\s+/gu, " ").trim();
     if (!title) continue;
     const key = title.toLocaleLowerCase("tr-TR");
     const group = groups.get(key) || { title, urls: [] };
@@ -712,7 +712,7 @@ async function main() {
     titlesMissing: validPages.filter((x) => !x.title).length,
     duplicateTitleGroups: duplicateTitles.length,
     robotsMetaMissingReview: validPages.filter((x) => !x.robots).length,
-    robotsNoFollowReview: validPages.filter((x) => /\\bnofollow\\b/iu.test(x.robots)).length,
+    robotsNoFollowReview: validPages.filter((x) => /\bnofollow\b/iu.test(x.robots)).length,
     redirectedSitemapUrls: results.filter((x) => x.status >= 300 && x.status < 400).length,
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,

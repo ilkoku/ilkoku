@@ -74,7 +74,10 @@ jobs:
             const browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
             const live=await (await fetch('https://ilkoku.com/api/build-info')).json();
             const base='dd8f569816de9f46c5845e8184b50dbf05ccfb2f';
-            const enforce=live.commitSha!==base;
+            // Both known pre-fix deployments are diagnostic baselines; only
+            // a newer deployed revision activates strict 20/20 acceptance.
+            const preFix=new Set([base,'d123fc768bcaa29a4471f57d3d828080cabd7889']);
+            const enforce=!preFix.has(live.commitSha);
             console.log('FOOTER_LIVE_VERIFICATION_MODE',JSON.stringify({liveSha:live.commitSha,enforce,reason:enforce?'Postrelease acceptance':'Pre-release baseline; known consent overlay'}));
             const data=[];
             try {

@@ -114,7 +114,10 @@ export function SiteConsentBanner() {
     const card = cardRef.current;
     const root = document.documentElement;
     const updateClearance = () => {
-      const height = Math.ceil(card.getBoundingClientRect().height + 32);
+      // Mobile legal links may wrap to a second row below the cookie card.
+      // Keep that row above the fixed panel without changing consent handling.
+      const clearance = window.innerWidth <= 640 ? 112 : 32;
+      const height = Math.ceil(card.getBoundingClientRect().height + clearance);
       root.style.setProperty("--ilkoku-consent-footer-clearance", `${height}px`);
     };
 

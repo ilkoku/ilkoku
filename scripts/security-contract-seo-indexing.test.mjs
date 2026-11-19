@@ -1545,6 +1545,24 @@ test("Power-SEO read-only live sitemap census measures per-page meta description
   assertNotContains(census, 'prisma.', "read-only without DB mutations");
 });
 
+test("Power-SEO title audit reports exact Turkish-case duplicates, not close but different titles", async () => {
+  const { duplicateTitleGroups } = await import("./power-seo-live-census.mjs");
+  const grouped = duplicateTitleGroups([
+    { url: "https://ilkoku.com/a", title: "Roman Nasıl Yazılır? | İlkOku" },
+    { url: "https://ilkoku.com/b", title: "roman nasıl yazılır?  | ilkoku" },
+    { url: "https://ilkoku.com/c", title: "Roman Nasıl Yazılır? — İlkOku" },
+    { url: "https://ilkoku.com/d", title: "" },
+  ]);
+  assert.equal(grouped.length, 1, "only exact normalized titles count");
+  assert.equal(grouped[0].count, 2);
+  assert.deepEqual(grouped[0].urls, ["https://ilkoku.com/a", "https://ilkoku.com/b"]);
+  const sourceText = source("scripts/power-seo-live-census.mjs");
+  for (const field of ["titlesPresent:", "titlesMissing:", "duplicateTitleGroups:", "robotsMetaMissingReview:", "robotsNoFollowReview:", "redirectedSitemapUrls:"]) {
+    assertContains(sourceText, field, "live all-page audit observable " + field);
+  }
+  assertContains(sourceText, "duplicateTitles, descriptionReview", "review groups in saved JSON evidence");
+});
+
 test("Power-SEO fullsite API scans only authenticated sitemap batches without modifying SEO", () => {
   const api = source("src/app/api/admin/power-seo/scan/route.ts");
   const page = source("src/app/admin/power-seo/page.tsx");
@@ -1739,7 +1757,7 @@ test("Power-SEO census counts real HTML H1s without changing publication policy"
   assertContains(census, "pagesWithOneH1:", "full census reports factual one-H1 pages");
   assertContains(census, "pagesWithoutH1:", "missing H1 pages are observable");
   assertContains(census, "pagesWithMultipleH1:", "multiple H1 pages are observable");
-  assertContains(census, "h1Review, descriptionReview,", "per-page H1 review is in artifact");
+  assertContains(census, "h1Review, duplicateTitles, descriptionReview,", "per-page H1 review is in artifact");
   assertContains(census, 'classification: "manual-technical-review"', "no invented Google indexing penalty");
 });
 

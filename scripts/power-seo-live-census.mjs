@@ -177,6 +177,22 @@ function inspectBreadcrumbHierarchy(schema, pageUrl, siteUrls) {
   return { chains, issues };
 }
 
+// Normalize observed live page titles for exact duplicate review only.
+// Do not flag similarities or infer Google indexing decisions.
+function duplicateTitleGroups(pages) {
+  const groups = new Map();
+  for (const page of pages) {
+    const title = (page.title || "").normalize("NFC").replace(/\s+/gu, " ").trim();
+    if (!title) continue;
+    const key = title.toLocaleLowerCase("tr-TR");
+    const group = groups.get(key) || { title, urls: [] };
+    group.urls.push(page.url);
+    groups.set(key, group);
+  }
+  return [...groups.values()].filter((group) => group.urls.length > 1)
+    .map((group) => ({ ...group, count: group.urls.length }));
+}
+
 function comparableDescription(value) {
   return value.normalize("NFC").toLocaleLowerCase("tr-TR").replace(/\s+/gu, " ").trim();
 }
@@ -627,6 +643,8 @@ async function main() {
     .filter((urls) => urls.length > 1)
     .map((urls) => ({ count: urls.length, urls }));
 
+  const duplicateTitles = duplicateTitleGroups(validPages);
+
   const nearDuplicateDescriptions = [];
   for (let i = 0; i < validPages.length; i += 1) {
     for (let j = i + 1; j < validPages.length; j += 1) {
@@ -690,6 +708,12 @@ async function main() {
     offSitemapPublicHttpUnverified: offSitemapHttp.results.filter((item) => item.outcome === "unverified" || item.outcome === "temporary-error").length,
     offSitemapPublicHttpSkippedPrivateOrOther: offSitemapHttp.skippedPrivateOrOther,
     offSitemapPublicHttpHalted: Number(offSitemapHttp.halted),
+    titlesPresent: validPages.filter((x) => !!x.title).length,
+    titlesMissing: validPages.filter((x) => !x.title).length,
+    duplicateTitleGroups: duplicateTitles.length,
+    robotsMetaMissingReview: validPages.filter((x) => !x.robots).length,
+    robotsNoFollowReview: validPages.filter((x) => /\bnofollow\b/iu.test(x.robots)).length,
+    redirectedSitemapUrls: results.filter((x) => x.status >= 300 && x.status < 400).length,
     descriptionsPresent: validPages.filter((x) => !!x.description).length,
     mainContentPresent: validPages.filter((x) => !!x.mainText).length,
     mainContentAbsent: validPages.filter((x) => !x.mainText).length,
@@ -723,7 +747,7 @@ async function main() {
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
     .map((page) => ({ url: page.url, h1Count: page.h1Count, classification: "manual-technical-review" }));
-  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, homeReachability, headerNavigationReview, headerProblems, offSitemapHttp };
+  const report = { checkedAt: new Date().toISOString(), origin: ORIGIN, summary, firstAttemptFailuresByCause, results: publicResults, h1Review, duplicateTitles, descriptionReview, duplicateDescriptions, nearDuplicateDescriptions, contentReview, imageReview, schemaReview, schemaIssues, schemaTypeTotals, linkReview, homeReachability, headerNavigationReview, headerProblems, offSitemapHttp };
   const file = path.join(process.cwd(), "artifacts", "power-seo-live-census.json");
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
@@ -762,6 +786,9 @@ async function main() {
     console.log(JSON.stringify({ noSharedHeaderReview: item.url, classification: "design-review-only" }));
   }
   // Keep a bounded, inspectable evidence trail in GitHub logs as well as JSON.
+  for (const item of duplicateTitles.slice(0, 20)) {
+    console.log(JSON.stringify({ duplicateTitleReview: item }));
+  }
   for (const item of schemaIssues.slice(0, 25)) {
     console.log(JSON.stringify({ schemaReviewFinding: { url: item.url, findings: item.findings } }));
   }
@@ -794,7 +821,7 @@ async function main() {
     summary.homepageUnreachableSitemapUrls || summary.pagesWithHeaderNavigationProblems) process.exitCode = 1;
 }
 
-export { h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
+export { duplicateTitleGroups, h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

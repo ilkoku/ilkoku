@@ -31,7 +31,7 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs');
           const h=fs.readFileSync('/tmp/publisher-hero-network/page.html','utf8');
-          const match=h.match(/<link[^>]+rel="preload"[^>]+for-publishers\.webp[^>]*>/);
+          const match=h.match(/<link[^>]+rel="preload"[^>]+for-publishers-w828-q60-v1\.webp[^>]*>/);
           if(!match)throw Error('Hero preload missing');
           const tag=match[0];
           if(!/fetchPriority="high"|fetchpriority="high"/i.test(tag) && !/fetchpriority="high"/i.test(h))throw Error('High fetch priority missing');

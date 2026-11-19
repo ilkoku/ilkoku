@@ -59,7 +59,7 @@ export async function PublicTrustFooter() {
         <nav className="public-trust-footer__column" aria-label="Destek bağlantıları">
           <h3>Destek</h3>
           {publicSupportLinks.map((item) => (
-            <Link href={item.href} key={item.href}>{item.label}</Link>
+            <a href={item.href} key={item.href}>{item.label}</a>
           ))}
         </nav>
       </div>

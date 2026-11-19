@@ -64,6 +64,12 @@
   background-color: rgba(255, 255, 255, .065) !important;
 }
 
+/* The fixed consent card can overlap the last links at page-bottom.
+   Reserve its measured height only while it is visible. */
+.landing-page .nx-live-footer-scope .landing-footer .landing-footer__copyright {
+  padding-bottom: calc(1.15rem + var(--ilkoku-consent-footer-clearance, 0px)) !important;
+}
+
 @media (max-width: 40rem) {
   .nx-live-footer-scope .landing-footer__copyright {
     align-items: flex-start !important;

@@ -1,7 +1,7 @@
 export const forEditorsPageContent = {
   title: "Editörler İçin",
   summary: "Yeni eserlerin gelişiminde profesyonel iz bırak: uygun inceleme görevlerini al, metinden kanıtlanan gerekçeli raporlar üret, bağımsız ikinci görüş modelinde çalış ve tamamlanan incelemelerini kayıt üzerinden takip et.",
-  seoTitle: "Editörler İçin | İlkOku",
+  seoTitle: "Editörlük ve Eser Değerlendirme | İlkOku",
   seoDescription: "İlkOku editör yolculuğunu keşfedin: Genel Editör Havuzu, görev kilidi, gerekçeli rapor, bağımsız ikinci görüş, gizlilik ve tamamlanan inceleme kayıtları.",
   canonical: "/editorler-icin",
   updatedAt: "2026-08-26T00:00:00.000Z",

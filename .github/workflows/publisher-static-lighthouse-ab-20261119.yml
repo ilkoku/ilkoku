@@ -1,0 +1,82 @@
+name: Publisher static hero lab A-B preview versus live
+on:
+  push:
+    branches:
+      - perf/publisher-static-hero-edge-20261119
+    paths:
+      - .github/workflows/publisher-static-lighthouse-ab-20261119.yml
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: A-B across real live vs unchanged-image preview, comparable lab
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/publisher-static-lh
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          for i in 1 2 3 4 5 6; do
+            case "$i" in 1|4|5) mode=live; url='https://ilkoku.com/yayinevleri-icin' ;; 2|3|6) mode=preview;url='https://happy-powderblue-snail-73.hostingersite.com/yayinevleri-icin' ;; esac
+            echo "LH_STATIC_AB $i $mode $url"
+            npx --yes lighthouse@12.8.2 "$url" \
+              --only-categories=performance --form-factor=mobile --throttling-method=simulate \
+              --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+              --output=json --output-path="/tmp/publisher-static-lh/run-$i.json" --quiet
+            sleep 4
+          done
+      - name: Validate samples and report medians without inventing causality
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),dir='/tmp/publisher-static-lh';
+          const labels=['live','preview','preview','live','live','preview'];
+          const origins={live:'https://ilkoku.com',preview:'https://happy-powderblue-snail-73.hostingersite.com'};
+          const rows=[];
+          for(let i=1;i<=6;i++){
+            const path=dir+'/run-'+i+'.json';
+            if(!fs.existsSync(path))break;
+            const d=JSON.parse(fs.readFileSync(path,'utf8'));
+            const u=new URL(d.finalDisplayedUrl||d.finalUrl);
+            if(u.origin!==origins[labels[i-1]]||u.pathname!='/yayinevleri-icin'||d.runtimeError||d.configSettings.formFactor!=='mobile')throw Error('Invalid Lighthouse sample '+i+' url='+u);
+            const a=d.audits, net=a['network-requests']?.details?.items||[];
+            const hero=net.filter(x=>(x.url||'').includes('for-publishers')&&x.resourceType==='Image'&&x.statusCode===200);
+            const css=net.filter(x=>x.resourceType==='Stylesheet');
+            const target=labels[i-1]==='live'?'/_next/image?':'/trust-pages/for-publishers-w';
+            if(!hero.some(x=>x.url.includes(target)))throw Error('Hero source mismatch '+i+': '+hero.map(x=>x.url));
+            if(css.length!==7)throw Error('CSS count changed '+i+': '+css.length);
+            rows.push({index:i,mode:labels[i-1],lcpMs:Math.round(a['largest-contentful-paint'].numericValue),
+              fcpMs:Math.round(a['first-contentful-paint'].numericValue),
+              cls:a['cumulative-layout-shift'].numericValue,
+              tbtMs:Math.round(a['total-blocking-time'].numericValue),
+              serverResponseMs:Math.round(a['server-response-time'].numericValue),
+              cssCount:css.length,
+              heroBytes:hero.reduce((n,x)=>n+(x.transferSize||0),0),
+              heroNetworkMs:Math.round(hero[0].networkEndTime-hero[0].networkRequestTime)});
+            console.log('STATIC_LH_SAMPLE '+JSON.stringify(rows.at(-1)));
+          }
+          const median=xs=>[...xs].sort((a,b)=>a-b)[1];
+          const a=rows.filter(x=>x.mode==='live'),b=rows.filter(x=>x.mode==='preview');
+          const s={rows,liveMedianLcpMs:a.length===3?median(a.map(x=>x.lcpMs)):null,
+            previewMedianLcpMs:b.length===3?median(b.map(x=>x.lcpMs)):null,
+            note:'Laboratory mobile simulated Lighthouse, across different origins; this is directional only; release needs same-origin live repeat.'};
+          fs.writeFileSync(dir+'/summary.json',JSON.stringify(s,null,2));
+          console.log('STATIC_LH_SUMMARY '+JSON.stringify(s));
+          if(rows.length!==6)throw Error('Incomplete Lighthouse pairing '+rows.length);
+          if(rows.some(x=>x.cls>0.01))throw Error('Unexpected CLS regression');
+          NODE
+      - name: Preserve paired lab data
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: publisher-static-lighthouse-ab-20261119
+          path: /tmp/publisher-static-lh/
+          retention-days: 14
+          if-no-files-found: warn

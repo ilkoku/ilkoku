@@ -73,6 +73,15 @@ test("homepage metadata uses the previously approved wording without ecosystem l
   assertContains(layout, "description: publicBrandDescription", "WebSite structured data uses approved description");
 });
 
+test("editor public SEO title upgrade only matches the original generic CMS title", () => {
+  const page = source("src/app/editorler-icin/page.tsx");
+  const copy = source("src/content/for-editors.ts");
+  assertContains(copy, 'seoTitle: "Editörlük ve Eser Değerlendirme | İlkOku"', "stronger editor search title");
+  assertContains(page, 'const legacyEditorSeoTitle = "Editörler İçin | İlkOku"', "exact legacy title match");
+  assertContains(page, 'page.seoTitle === legacyEditorSeoTitle ? forEditorsPageContent.seoTitle : page.seoTitle', "preserve customized published CMS title");
+  assertContains(page, "title: seoTitle", "SEO title is used for page and social metadata");
+});
+
 test("robots.txt permits all crawlers without removing private response protections", () => {
   const robots = source("src/app/robots.ts");
   const nextConfig = source("next.config.ts");

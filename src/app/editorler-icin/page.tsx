@@ -19,6 +19,8 @@ import "./role-illustrations.css";
 const baseUrl = "https://ilkoku.com";
 const visual = getPublicTrustPageVisual("/editorler-icin");
 const socialImage = `${baseUrl}${visual.src}`;
+// Only upgrade the original, generic published CMS title. Preserve editor-customized SEO titles.
+const legacyEditorSeoTitle = "Editörler İçin | İlkOku";
 
 export const revalidate = 300;
 
@@ -53,14 +55,15 @@ const resolvePage = cache(async () => {
 export async function generateMetadata(): Promise<Metadata> {
   const page = await resolvePage();
   const noIndex = page.noIndex || isSoftLaunchSearchExcludedPath(page.canonical);
+  const seoTitle = page.seoTitle === legacyEditorSeoTitle ? forEditorsPageContent.seoTitle : page.seoTitle;
 
   return {
-    title: page.seoTitle,
+    title: seoTitle,
     description: page.seoDescription,
     alternates: { canonical: page.canonical },
     robots: noIndex ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
-      title: page.seoTitle,
+      title: seoTitle,
       description: page.seoDescription,
       type: "website",
       locale: "tr_TR",
@@ -69,7 +72,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: page.seoTitle,
+      title: seoTitle,
       description: page.seoDescription,
       images: [socialImage],
     },

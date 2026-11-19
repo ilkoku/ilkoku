@@ -28,11 +28,12 @@ jobs:
           print('LIVE_REVISION_VERIFIED',rev)
           PY
           for i in 1 2 3 4 5; do
-            for target in html image css; do
+            for target in html image css original; do
               case "$target" in
                 html) url='https://ilkoku.com/yayinevleri-icin' ;;
                 image) url='https://ilkoku.com/_next/image?url=%2Ftrust-pages%2Ffor-publishers.webp&w=750&q=60' ;;
                 css) url='https://ilkoku.com/_next/static/css/5f8fc4b693736fb1.css' ;;
+                original) url='https://ilkoku.com/trust-pages/for-publishers.webp' ;;
               esac
               curl -sS --connect-timeout 8 --max-time 25 \
                 -A 'IlkOku-Publisher-LCP-OriginProbe/1.0' \
@@ -54,10 +55,10 @@ jobs:
           fp=root/'timings.csv'
           if not fp.exists(): raise SystemExit('No valid samples; do not report success')
           rows=list(csv.reader(fp.open()))
-          if len(rows)!=15: raise SystemExit('Expected 15 samples, got '+str(len(rows)))
+          if len(rows)!=20: raise SystemExit('Expected 20 samples, got '+str(len(rows)))
           report={}
           keys=('cache-control','cf-cache-status','age','x-nextjs-cache','vary','server','content-type','etag','last-modified')
-          for target in ('html','image','css'):
+          for target in ('html','image','css','original'):
               subset=[r for r in rows if r[0]==target]
               data=[]
               for r in subset:

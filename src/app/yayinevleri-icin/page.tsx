@@ -10,7 +10,6 @@ import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy"
 
 import "@/app/nasil-calisir/how-it-works.css";
 import "@/app/nasil-calisir/public-trust-footer.css";
-import "./for-publishers.css";
 import "./role-illustrations.css";
 
 const baseUrl = "https://ilkoku.com";

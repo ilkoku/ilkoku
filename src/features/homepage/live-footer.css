@@ -46,13 +46,22 @@
   margin-left: auto !important;
 }
 
+/* Legal links must have reliable mouse and touch hit targets, even after CMS hydration. */
 .nx-live-footer-scope .landing-footer__legal a {
   display: inline-flex !important;
-  min-height: 0 !important;
+  align-items: center !important;
+  min-height: 2.75rem !important;
   margin: 0 !important;
-  padding: .12rem 0 !important;
-  font-size: .7rem !important;
+  padding: .5rem .42rem !important;
+  border-radius: .4rem !important;
+  color: rgba(239, 235, 255, .88) !important;
+  font-size: .78rem !important;
   white-space: nowrap !important;
+  touch-action: manipulation !important;
+}
+.nx-live-footer-scope .landing-footer__legal a:hover {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, .065) !important;
 }
 
 @media (max-width: 40rem) {

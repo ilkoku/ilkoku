@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 
@@ -127,12 +126,6 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
 
   return (
     <main className="how-page for-editors-page">
-      <header className="how-header">
-        <div className="how-container how-header__inner">
-          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris">Giriş yap</Link>
-        </div>
-      </header>
 
       <section className="how-hero editors-hero">
         <div className="how-container how-hero__grid">
@@ -223,8 +216,6 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
           ))}
         </div>
       </aside>
-
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>
   );
 }

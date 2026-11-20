@@ -22,6 +22,6 @@ test("footer CMS enhancement stays outside initial route bundle and SSR links re
   assert.match(layout, /<PublicCmsHydrator \/>/);
   assert.match(renderer, /siteContact\.socialLinks\.map/);
   assert.match(renderer, /<CloudflareSafeEmailLink \/>/);
-  assert.match(renderer, /publicPlatformLinks/);
+  assert.match(renderer, /publicFooterPlatformLinks/);
   assert.match(footer, /PublicSiteFooter/);
 });

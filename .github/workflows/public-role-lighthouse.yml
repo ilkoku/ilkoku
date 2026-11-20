@@ -1,3 +1,4 @@
+# Read-only P1 baseline verification run on 2026-11-20; no app changes.
 name: Public roles mobile Lighthouse
 on:
   workflow_dispatch:

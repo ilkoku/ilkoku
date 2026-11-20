@@ -82,7 +82,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   has(homepage, "HomepageExperience", "promoted homepage composition");
   has(homepage, "<HomepageExperience />", "promoted homepage render");
   has(renderer, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
-  has(renderer, "publicPlatformLinks", "homepage footer canonical platform source");
+  has(renderer, "publicFooterPlatformLinks", "homepage footer canonical platform source");
   has(renderer, "publicTrustLinks", "homepage footer canonical trust source");
   has(renderer, "publicSupportLinks", "homepage footer canonical support source");
   has(renderer, "publicLegalLinks", "homepage footer canonical legal source");
@@ -151,7 +151,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     has(page, "<PublicTrustFooter />", `${path} canonical footer render`);
   }
 
-  has(renderer, "publicPlatformLinks", "trust footer canonical platform source");
+  has(renderer, "publicFooterPlatformLinks", "trust footer canonical platform source");
   has(renderer, "publicTrustLinks", "trust footer canonical trust source");
   has(renderer, "publicSupportLinks", "trust footer canonical support source");
   has(renderer, "publicLegalLinks", "trust footer canonical legal source");

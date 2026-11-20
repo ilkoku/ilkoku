@@ -179,7 +179,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
 
   has(footer, "getPublicSiteIdentity()", "trust footer centralized site identity source");
   has(footer, '<PublicSiteFooter variant="trust"', "trust pages use single renderer");
-  has(liveFooter, "PublicSiteFooter", "homepage uses single renderer");
+  has(source("src/features/homepage/live-footer.tsx"), "PublicSiteFooter", "homepage uses single renderer");
   has(renderer, "identity.footerTaglineLead", "trust footer managed slogan lead");
   has(renderer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
   has(identity, 'footerTaglineLead: "İlk cümle, ilk okurun,"', "default footer slogan lead");

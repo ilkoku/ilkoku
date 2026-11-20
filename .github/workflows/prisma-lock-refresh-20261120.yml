@@ -25,17 +25,17 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Update only Prisma package family and MariaDB security override
+      - name: Override newly disclosed effect vulnerability only
         shell: bash
         run: |
           set -Eeuo pipefail
           node <<'NODE'
           const fs=require('node:fs');
           const p=JSON.parse(fs.readFileSync('package.json','utf8'));
-          p.overrides.mariadb='3.5.4';
+          p.overrides.effect='3.22.1';
           fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
           NODE
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact prisma@7.10.1 @prisma/client@7.10.1 @prisma/adapter-mariadb@7.10.1
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           npm ci --ignore-scripts --no-fund --no-audit
       - name: Verify security and lockfile policy BEFORE committing
         run: |
@@ -52,5 +52,5 @@ jobs:
             echo 'Dependencies already up to date'
             exit 0
           fi
-          git commit -m 'security(deps): align Prisma 7.10.1 and MariaDB patch lockfile'
+          git commit -m 'security(deps): patch transitive effect to 3.22.1'
           git push origin HEAD:refs/heads/security/prisma-7-10-1-20261120

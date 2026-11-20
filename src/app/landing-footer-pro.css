@@ -47,7 +47,7 @@
 
 .landing-page .landing-footer .landing-footer__grid {
   display: grid !important;
-  grid-template-columns: minmax(13rem, 1.45fr) repeat(3, minmax(8.5rem, 0.72fr)) !important;
+  grid-template-columns: minmax(13rem, 1.45fr) repeat(5, minmax(6.75rem, 0.72fr)) !important;
   align-items: start !important;
   gap: clamp(2rem, 5vw, 4.75rem) !important;
   padding-bottom: clamp(2.1rem, 3.7vw, 3rem) !important;

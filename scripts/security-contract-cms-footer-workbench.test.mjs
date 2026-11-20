@@ -192,7 +192,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   lacks(footer, "getRoleNavigation", "public footer must not resolve workspace server-side");
   lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");
 
-  has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");
+  lacks(styles, ".how-page > .how-footer", "dead footer removed rather than CSS-hidden");
   has(styles, ".public-trust-footer", "canonical trust footer scope");
   has(styles, "linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%)", "homepage-aligned trust footer dark brand gradient");
   has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(5, minmax(6.75rem, 0.72fr))", "homepage-aligned six-area desktop footer grid");
@@ -262,7 +262,7 @@ test("İlkOku'da shows only four role entrypoints, while Platform stays canonica
   }
   has(nav, "publicAudienceLinks = publicPlatformLinks.filter", "audience links use canonical routes");
   has(nav, "publicFooterPlatformLinks = publicPlatformLinks.filter", "non-role platform links stay separate");
-  has(hydrator, '.filter((link) => !publicAudienceLinks.some', "CMS hydration must not reinsert role links into Platform");
+  has(hydrator, "footerPlatformSlots.find((item) => item.href === fallback.href)", "CMS hydration updates stable link identities, not array positions");
   has(landingCss, "repeat(5, minmax(6.75rem, .72fr))", "landing desktop fits six cells");
   has(trustCss, "repeat(5, minmax(6.75rem, 0.72fr))", "trust desktop fits six cells");
 });

@@ -100,12 +100,7 @@ export default async function LegalPageRoute({ params }: PageProps) {
 
   return (
     <main className="legal-page">
-      <header className="legal-header">
-        <div className="legal-shell legal-header__inner">
-          <Link className="legal-brand" href="/">İlkOku</Link>
-          <Link className="legal-back" href="/">Ana sayfaya dön</Link>
-        </div>
-      </header>
+      
 
       <div className="legal-shell legal-layout">
         <nav className="legal-nav" aria-label="Yasal sayfalar">

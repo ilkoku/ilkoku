@@ -303,7 +303,7 @@ test("editorial standards stay CMS-compatible and independent review access stay
   contains(cmsStore, '"editoryal-standartlar": {', "legacy editorial CMS bridge");
   contains(sitemap, "${baseUrl}/editoryal-standartlar", "editorial standards sitemap route");
   contains(collector, '"/nasil-calisir | /editoryal-standartlar | /icerik-ve-yas-politikasi"', "public trust system map");
-  contains(howItWorks, 'href="/editoryal-standartlar"', "public inbound editorial standards link");
+  contains(source("src/lib/public-site-navigation.ts"), 'href: "/editoryal-standartlar"', "public inbound editorial standards link in the shared visible footer");
 
   contains(detailQuery, 'editorReviewStatus: "completed"', "completed work access boundary");
   contains(detailQuery, "work: {\n                is: {\n                  assignedEditorId: editorId", "first editor data-minimization boundary");

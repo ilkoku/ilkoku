@@ -245,3 +245,24 @@ test("public pages have exactly one footer renderer, with two CSS themes only", 
   has(canonical, '<a href={item.href} key={item.href}>', "native legal click targets stay available");
   has(canonical, "siteContact.socialLinks.map", "shared renderer preserves public social links");
 });
+
+test("İlkOku'da shows only four role entrypoints, while Platform stays canonical after CMS hydration", () => {
+  const footer = source("src/components/content/PublicSiteFooter.tsx");
+  const nav = source("src/lib/public-site-navigation.ts");
+  const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const landingCss = source("src/app/landing-footer-tight.css");
+  const trustCss = source("src/app/nasil-calisir/public-trust-footer.css");
+
+  has(footer, 'title="İlkOku\'da"', "the approved heading is exact");
+  has(footer, 'links={publicAudienceLinks}', "the four links have one dedicated column");
+  has(footer, 'links={platformLinks}', "Platform keeps its own separate column");
+  has(footer, "publicFooterPlatformLinks", "role links are excluded from the Platform column");
+  for (const href of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin", "/yayinevleri-icin"]) {
+    has(nav, '"' + href + '"', href + " stays in the full canonical public site inventory");
+  }
+  has(nav, "publicAudienceLinks = publicPlatformLinks.filter", "audience links use canonical routes");
+  has(nav, "publicFooterPlatformLinks = publicPlatformLinks.filter", "non-role platform links stay separate");
+  has(hydrator, '.filter((link) => !publicAudienceLinks.some', "CMS hydration must not reinsert role links into Platform");
+  has(landingCss, "repeat(5, minmax(6.75rem, .72fr))", "landing desktop fits six cells");
+  has(trustCss, "repeat(5, minmax(6.75rem, 0.72fr))", "trust desktop fits six cells");
+});

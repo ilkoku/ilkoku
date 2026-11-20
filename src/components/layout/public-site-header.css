@@ -223,7 +223,6 @@
 }
 
 /* These legacy headers only disappear inside an explicitly mounted public site frame. */
-.public-site-frame .how-header,
 .public-site-frame .public-library__header,
 .public-site-frame .public-hub__nav,
 .public-site-frame .editors-topbar {

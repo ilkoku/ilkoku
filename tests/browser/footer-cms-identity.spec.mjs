@@ -1,3 +1,4 @@
+// Read-only footer regression; leaves Book Index menu and public content untouched.
 import { expect, test } from "@playwright/test";
 
 const platformHrefs = ["/eserler", "/yazarlar", "/turler", "/hakkimizda", "/nasil-calisir"];

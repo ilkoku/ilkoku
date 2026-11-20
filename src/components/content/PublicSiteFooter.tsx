@@ -4,8 +4,9 @@ import Link from "next/link";
 import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { logoutAction } from "@/features/auth/actions";
 import {
+  publicAudienceLinks,
+  publicFooterPlatformLinks,
   publicLegalLinks,
-  publicPlatformLinks,
   publicSupportLinks,
   publicTrustLinks,
   type PublicSiteLink,
@@ -116,8 +117,8 @@ function FooterAccount({ props, landing }: { props: PublicSiteFooterProps; landi
 export function PublicSiteFooter(props: PublicSiteFooterProps) {
   const landing = props.variant === "landing";
   const platformLinks: PublicSiteLink[] = props.bookIndexPublished
-    ? [...publicPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]
-    : [...publicPlatformLinks];
+    ? [...publicFooterPlatformLinks, { href: "/en-cok-satanlar", label: "En Çok Satanlar" }]
+    : [...publicFooterPlatformLinks];
 
   const footer = (
     <footer className={landing ? "landing-footer" : "public-trust-footer"} id={landing ? "iletisim" : undefined}>
@@ -142,6 +143,7 @@ export function PublicSiteFooter(props: PublicSiteFooterProps) {
           </div>
         )}
         <FooterColumn landing={landing} title="Platform" label="Platform bağlantıları" links={platformLinks} />
+        <FooterColumn landing={landing} title="İlkOku\u0027da" label="İlkOku\u0027da kullanıcı grupları" className="landing-footer__audience" links={publicAudienceLinks} />
         <FooterColumn landing={landing} title="Güven & Standartlar" label="Güven ve standartlar bağlantıları" className="landing-footer__trust" links={publicTrustLinks} />
         <FooterAccount props={props} landing={landing} />
         <FooterColumn landing={landing} title="Destek" label="Destek bağlantıları" links={publicSupportLinks}>

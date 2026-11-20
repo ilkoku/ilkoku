@@ -179,6 +179,32 @@ const sharedFooterScenarios = [
   ]),
 ];
 
+for (const variant of [
+  { label: "landing", path: "/", selector: ".landing-footer" },
+  { label: "trust", path: "/yayinevleri-icin", selector: ".public-trust-footer" },
+]) {
+  for (const viewport of [viewports.desktop, viewports.phone390]) {
+    test(`İlkOku'da audience footer links: ${variant.label} ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      const response = await page.goto(variant.path, { waitUntil: "domcontentloaded" });
+      expect(response?.status()).toBe(200);
+      const footer = page.locator(variant.selector);
+      const audience = variant.label === "landing"
+        ? footer.locator(".landing-footer__audience")
+        : footer.getByRole("navigation", { name: "İlkOku'da kullanıcı grupları" });
+      const platform = variant.label === "landing"
+        ? footer.locator(".landing-footer__grid > div").filter({ has: footer.getByRole("heading", { name: "Platform", exact: true }) })
+        : footer.getByRole("navigation", { name: "Platform bağlantıları" });
+      await expect(audience.getByRole("heading", { name: "İlkOku'da", exact: true })).toBeVisible();
+      for (const href of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin", "/yayinevleri-icin"]) {
+        await expect(audience.locator(`a[href="${href}"]`)).toHaveCount(1);
+        await expect(platform.locator(`a[href="${href}"]`)).toHaveCount(0);
+        await expect(footer.locator(`a[href="${href}"]`)).toHaveCount(1);
+      }
+    });
+  }
+}
+
 for (const scenario of sharedFooterScenarios) {
   test(`shared public footer visual integrity: ${scenario.name}`, async ({ page }) => {
     await page.setViewportSize(scenario.viewport);

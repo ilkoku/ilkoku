@@ -83,6 +83,6 @@ export function resolveCmsPlatformLabel(
   content: Partial<FooterNavigationPayload>,
 ): string {
   const configuredHref = content[`${slot.key}Href`]?.trim();
-  if (configuredHref !== slot.href) return slot.label;
+  if (configuredHref && configuredHref !== slot.href) return slot.label;
   return content[`${slot.key}Label`]?.trim() || slot.label;
 }

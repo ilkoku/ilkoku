@@ -95,6 +95,27 @@ for (const scenario of [
   });
 }
 
+test("trust footer: contact block is in SSR HTML and hydration keeps link count", async ({ page, request }) => {
+  const ssr = await request.get("/yazarlar-icin");
+  expect(ssr.status()).toBe(200);
+  const html = await ssr.text();
+  // Count the rendered element only; the RSC flight payload repeats the class name with escaped quotes.
+  expect(html.match(/<a class="site-contact-footer__email"/g)?.length ?? 0).toBe(1);
+
+  const response = await page.goto("/yazarlar-icin", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+
+  const footer = page.locator("footer.public-trust-footer");
+  const links = footer.locator("a");
+  const before = await links.count();
+  await expect(footer.locator(".site-contact-footer__email")).toHaveCount(1);
+
+  // The hydrator waits for the footer to approach the viewport.
+  await footer.scrollIntoViewIfNeeded();
+  await page.waitForLoadState("networkidle");
+  await expect(footer.locator(".site-contact-footer__email")).toHaveCount(1);
+  expect(await links.count()).toBe(before);
+});
 
 for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
   test(`four İlkOku'da links actually navigate at ${viewport.width}px`, async ({ page }) => {

@@ -1,0 +1,70 @@
+name: İlkOku P1 three-run mobile LCP evidence 2026-11-20
+on:
+  pull_request:
+    paths:
+      - .github/workflows/ilkoku-lcp-3runs-20261120.yml
+      - scripts/audit-lcp-three-runs-20261120.mjs
+permissions:
+  contents: read
+jobs:
+  readonly-mobile-lab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - name: Checkout benchmark branch without modifying production
+        uses: actions/checkout@v6
+      - name: Set up Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Check live deployment identity, Chrome and report syntax
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts/ilkoku-lcp-3runs
+          node --check scripts/audit-lcp-three-runs-20261120.mjs
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          test -n "$CHROME_PATH"
+          status="$(curl --silent --show-error --connect-timeout 8 --max-time 20 \
+            -H 'Cache-Control: no-store' -A 'IlkOku-LCP-Lab/1.0' \
+            -o artifacts/ilkoku-lcp-3runs/build-info.json -w '%{http_code}' \
+            https://ilkoku.com/api/build-info)"
+          test "$status" = 200
+          node -e "const x=require('./artifacts/ilkoku-lcp-3runs/build-info.json');if(x.commitSha!=='5f925475ae1abba9a48cea52df98b2297be959f7')throw Error('Live revision differs from verified P0/P1 baseline: '+x.commitSha)"
+          echo 'LIVE_SHA_VERIFIED'
+      - name: Measure four public role URLs in three independent mobile passes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable)"
+          routes=(/yazarlar-icin/kurgu/roman /okurlar-icin/okumaya-baslama /editorler-icin/egitim/editorluge-baslama /yayinevleri-icin)
+          for run in 1 2 3; do
+            for index in 0 1 2 3; do
+              url="https://ilkoku.com${routes[$index]}"
+              code="$(curl --silent --show-error --connect-timeout 8 --max-time 22 \
+                -A 'IlkOku-LCP-Lab/1.0' -o /dev/null -w '%{http_code}' "$url" || true)"
+              echo "PRECHECK run=$run route=${routes[$index]} status=$code"
+              if [[ "$code" == "403" || "$code" == "429" ]]; then
+                echo "::error::WAF/bot protection abort; no retries"; exit 1
+              fi
+              if [[ "$code" != "200" ]]; then
+                echo "::error::Unexpected live HTTP $code"; exit 1
+              fi
+              npx --yes lighthouse@12.8.2 "$url" --only-categories=performance \
+                --form-factor=mobile --throttling-method=simulate \
+                --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+                --output=json --output-path="artifacts/ilkoku-lcp-3runs/run-$run-$index.json" --quiet
+              sleep 7
+            done
+          done
+      - name: Summarize median LCP and resource evidence
+        if: always()
+        run: node scripts/audit-lcp-three-runs-20261120.mjs
+      - name: Preserve raw evidence even if measurement failed
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-lcp-3runs-readonly-20261120
+          path: artifacts/ilkoku-lcp-3runs/
+          retention-days: 14
+          if-no-files-found: warn

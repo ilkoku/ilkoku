@@ -1,0 +1,105 @@
+name: İlkOku P0 live SEO evidence (read-only, 2026-11-20)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/seo-p0-readonly-20261120.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  p0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Record live revision and public robots (GET only)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          curl --fail --silent --show-error --connect-timeout 8 --max-time 20 -H 'Cache-Control: no-store' https://ilkoku.com/api/build-info -o artifacts/p0-live-build.json
+          curl --fail --silent --show-error --connect-timeout 8 --max-time 20 https://ilkoku.com/robots.txt -o artifacts/p0-robots.txt
+          echo "LIVE_BUILD_INFO $(cat artifacts/p0-live-build.json)"
+          echo "LIVE_ROBOTS_START"
+          head -n 80 artifacts/p0-robots.txt
+          echo "LIVE_ROBOTS_END"
+      - name: Check HTTP redirect chains without changing them
+        continue-on-error: true
+        run: node scripts/seo-redirect-chain-audit.mjs
+      - name: Read-only crawl of published sitemap and same-origin links
+        continue-on-error: true
+        run: node scripts/power-seo-live-census.mjs
+      - name: Produce P0 in-scope evidence without Book Index actions
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const inScope=(s)=>{
+            if(typeof s!=='string') return false;
+            try {
+              const p=new URL(s,'https://ilkoku.com').pathname;
+              return !(/^(\/en-cok-satanlar(?:\/|$)|\/yeni-cikanlar(?:\/|$)|\/kitap(?:\/|$))/u.test(p));
+            } catch { return false; }
+          };
+          const source='artifacts/power-seo-live-census.json';
+          const out='artifacts/p0-non-bookindex-review.json';
+          if(!fs.existsSync(source)){
+            console.log('P0_CENSUS_REPORT_UNAVAILABLE: main census did not write artifact');
+            process.exit(0);
+          }
+          const audit=JSON.parse(fs.readFileSync(source,'utf8'));
+          const pages=(audit.results||[]).filter(x=>inScope(x.url));
+          const errors=pages.filter(x=>!x.ok||x.canonicalMatches===false||/\bnoindex\b/iu.test(x.robots||''));
+          const schema=(audit.schemaIssues||[]).filter(x=>inScope(x.url));
+          const off=(audit.offSitemapHttp?.results||[]).filter(x=>inScope(x.url||x.path));
+          const dynamic=(audit.dynamicPublicHttp?.results||[]).filter(x=>inScope(x.url||x.path));
+          const report={
+            generatedAt:new Date().toISOString(), readOnly:true,
+            scope:'Sitemap pages outside /en-cok-satanlar*, /yeni-cikanlar*, /kitap/*; no Book Index modifications',
+            liveSha:fs.existsSync('artifacts/p0-live-build.json')?JSON.parse(fs.readFileSync('artifacts/p0-live-build.json','utf8')).commitSha:null,
+            sitemapTotal:audit.summary?.sitemapUrls??audit.summary?.total??null,
+            checkedNonBookIndex:pages.length,
+            incompleteOrCanonicalOrNoindex:errors,
+            schemaReviewFindings:schema,
+            offSitemapPublicHttp:off,
+            dynamicPublicHttp:dynamic,
+            headlineSourceSummary:audit.summary,
+          };
+          fs.writeFileSync(out,JSON.stringify(report,null,2));
+          console.log('P0_IN_SCOPE_SUMMARY '+JSON.stringify({
+            liveSha:report.liveSha,checked:pages.length,
+            nonPassingOrCanonicalOrNoindex:errors.length,
+            schemaReviewPages:schema.length,
+            offSitemapHttpChecked:off.length,
+            dynamicPublicHttpChecked:dynamic.length,
+            sourceTotal:audit.summary?.sitemapUrls??audit.summary?.total??null,
+          }));
+          for(const e of errors.slice(0,50))console.log('P0_URL_REVIEW '+JSON.stringify(e));
+          for(const s of schema.slice(0,30))console.log('P0_SCHEMA_REVIEW '+JSON.stringify(s));
+          for(const a of [...off,...dynamic].filter(x=>x.outcome==='missing'||x.outcome==='temporary-error').slice(0,40))console.log('P0_LINK_HTTP_REVIEW '+JSON.stringify(a));
+          NODE
+      - name: Upload raw and filtered evidence even when crawl finds errors
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ilkoku-p0-20261120-readonly
+          path: |
+            artifacts/power-seo-live-census.json
+            artifacts/p0-non-bookindex-review.json
+            artifacts/p0-live-build.json
+            artifacts/p0-robots.txt
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Mark incomplete crawl as unresolved
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -s artifacts/p0-non-bookindex-review.json ]; then
+            echo "::error::P0 evidence unavailable or incomplete"
+            exit 1
+          fi
+          node -e "const a=require('./artifacts/p0-non-bookindex-review.json');if(!a.liveSha||!a.checkedNonBookIndex)process.exit(1)"

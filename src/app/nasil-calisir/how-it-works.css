@@ -24,23 +24,6 @@
 .how-page [id] { scroll-margin-top: 6rem; }
 .how-container { width: min(76rem, calc(100% - 3rem)); margin-inline: auto; }
 
-.how-header {
-  position: sticky;
-  z-index: 50;
-  top: 0;
-  border-bottom: 1px solid rgba(49, 39, 94, 0.09);
-  background: rgba(255, 255, 255, 0.91);
-  box-shadow: 0 0.5rem 2rem rgba(26, 20, 67, 0.035);
-  backdrop-filter: saturate(165%) blur(1.25rem);
-}
-.how-header__inner { min-height: 4.75rem; display: grid; grid-template-columns: 10rem 1fr auto; align-items: center; gap: 2rem; }
-.how-logo { position: relative; width: 10rem; aspect-ratio: 407 / 146; display: block; overflow: hidden; border-radius: 1rem; }
-.how-logo img { width: 100%; height: 100%; object-fit: contain; }
-.how-header nav { display: flex; align-items: center; justify-content: center; gap: clamp(1rem, 3vw, 2.5rem); color: var(--how-night); font-size: 0.78rem; font-weight: 750; }
-.how-header nav a { transition: color 180ms ease; }
-.how-header nav a:hover { color: var(--how-primary-strong); }
-.how-header__account { min-height: 2.7rem; display: inline-flex; align-items: center; justify-content: center; padding-inline: 1.1rem; border: 1px solid rgba(104, 71, 232, 0.2); border-radius: 999px; color: var(--how-primary-strong) !important; background: var(--how-soft); font-size: 0.78rem; font-weight: 850; }
-
 .how-hero {
   position: relative;
   background:
@@ -178,10 +161,6 @@
 .how-related strong { color: var(--how-primary-strong); font-family: var(--how-display); font-size: 1.05rem; line-height: 1.25; }
 .how-related span { margin-top: 0.5rem; color: var(--how-muted); font-size: 0.7rem; line-height: 1.55; }
 
-.how-footer { padding-block: 1.35rem; color: #d8d1eb; background: var(--how-night); }
-.how-footer > div { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-.how-footer .how-logo { width: 4.4rem; aspect-ratio: 1; filter: none; opacity: 1; }
-.how-footer nav { display: flex; flex-wrap: wrap; justify-content: end; gap: 1rem; font-size: 0.7rem; font-weight: 740; }
 
 @media (max-width: 64rem) {
   .how-hero__grid { grid-template-columns: minmax(0, 0.88fr) minmax(27rem, 1.12fr); gap: 1.75rem; }
@@ -191,8 +170,6 @@
 }
 
 @media (max-width: 53rem) {
-  .how-header__inner { grid-template-columns: 9rem 1fr auto; }
-  .how-header nav { display: none; }
   .how-hero__grid { min-height: 0; grid-template-columns: 1fr; padding-block: 3.25rem; }
   .how-hero__content { max-width: 45rem; }
   .how-hero__visual { min-height: clamp(21rem, 56vw, 28rem); }
@@ -203,8 +180,6 @@
 
 @media (max-width: 42rem) {
   .how-container { width: min(100% - 1.5rem, 76rem); }
-  .how-header__inner { min-height: 4.25rem; grid-template-columns: 8.3rem 1fr; }
-  .how-header__account { justify-self: end; }
   .how-hero__grid { padding-block: 2.7rem; }
   .how-hero h1 { font-size: clamp(3.1rem, 13vw, 4rem); }
   .how-hero__actions { display: grid; }
@@ -227,9 +202,7 @@
   .how-role ul { grid-template-columns: 1fr; }
   .how-visibility__panel { padding: 0.7rem; }
   .how-related__grid { grid-template-columns: 1fr; }
-  .how-footer > div { align-items: flex-start; flex-direction: column; }
-  .how-footer nav { justify-content: start; }
-}
+    }
 
 @media (prefers-reduced-motion: reduce) {
   .how-page *, .how-page *::before, .how-page *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }

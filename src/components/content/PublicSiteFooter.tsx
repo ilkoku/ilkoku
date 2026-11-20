@@ -143,7 +143,7 @@ export function PublicSiteFooter(props: PublicSiteFooterProps) {
           </div>
         )}
         <FooterColumn landing={landing} title="Platform" label="Platform bağlantıları" links={platformLinks} />
-        <FooterColumn landing={landing} title="İlkOku\u0027da" label="İlkOku\u0027da kullanıcı grupları" className="landing-footer__audience" links={publicAudienceLinks} />
+        <FooterColumn landing={landing} title="İlkOku'da" label="İlkOku'da kullanıcı grupları" className="landing-footer__audience" links={publicAudienceLinks} />
         <FooterColumn landing={landing} title="Güven & Standartlar" label="Güven ve standartlar bağlantıları" className="landing-footer__trust" links={publicTrustLinks} />
         <FooterAccount props={props} landing={landing} />
         <FooterColumn landing={landing} title="Destek" label="Destek bağlantıları" links={publicSupportLinks}>

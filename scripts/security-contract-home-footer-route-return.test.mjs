@@ -5,7 +5,7 @@ import test from "node:test";
 const source = readFileSync("src/components/content/PublicFooterHydrator.tsx", "utf8");
 
 test("server footer protects the canonical email from Cloudflare HTML rewriting", () => {
-  const footer = readFileSync("src/features/homepage/live-footer.tsx", "utf8");
+  const footer = readFileSync("src/components/content/PublicSiteFooter.tsx", "utf8");
 
   assert.match(footer, /function CloudflareSafeEmailLink/);
   assert.match(footer, /<!--email_off-->/);

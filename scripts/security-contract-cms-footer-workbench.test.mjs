@@ -87,7 +87,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   has(renderer, "publicSupportLinks", "homepage footer canonical support source");
   has(renderer, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
-  has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
+  has(hydrator, "publicFooterPlatformLinks", "canonical platform navigation source");
   has(hydrator, "publicTrustLinks", "canonical trust navigation source");
   has(hydrator, "publicSupportLinks", "canonical support navigation source");
   has(hydrator, "publicLegalLinks", "canonical legal navigation source");
@@ -118,9 +118,9 @@ test("homepage footer keeps its brand and separates platform from trust navigati
     has(validation, `"${href}"`, `${href} authoritative footer validation route`);
   }
 
-  has(contract, 'platform1Href: "/nasil-calisir"', "platform primary default");
-  has(contract, 'platform2Href: "/yazarlar-icin"', "writer public page default");
-  has(contract, 'platform3Href: "/editorler-icin"', "editor public page default");
+  has(contract, 'platform1Href: "/yazarlar"', "stable writer directory slot");
+  has(contract, 'platform2Href: "/turler"', "stable genre directory slot");
+  has(contract, 'platform3Href: "/nasil-calisir"', "stable how-it-works slot");
   lacks(contract, 'platform2Href: "#eser-pasaportu"', "obsolete homepage passport anchor default");
   lacks(contract, 'platform3Href: "#neden-ilkoku"', "obsolete homepage why anchor default");
 });

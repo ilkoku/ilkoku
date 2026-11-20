@@ -266,3 +266,51 @@ test("İlkOku'da shows only four role entrypoints, while Platform stays canonica
   has(landingCss, "repeat(5, minmax(6.75rem, .72fr))", "landing desktop fits six cells");
   has(trustCss, "repeat(5, minmax(6.75rem, 0.72fr))", "trust desktop fits six cells");
 });
+
+
+test("footer CMS preserves stable links and never removes SSR anchors or social media targets", () => {
+  const contract = source("src/lib/cms-footer-navigation.ts");
+  const validator = source("src/lib/cms-footer-validation.ts");
+  const hydrate = source("src/components/content/PublicFooterHydrator.tsx");
+  const navigation = source("src/lib/public-site-navigation.ts");
+
+  for (const [id, href] of [["platform1", "/yazarlar"], ["platform2", "/turler"], ["platform3", "/nasil-calisir"]]) {
+    has(contract, `{ key: "${id}", href: "${href}"`, `${id} fixed route identity`);
+    has(contract, `${id}Href: "${href}"`, `${id} CMS default`);
+    has(navigation, `href: "${href}"`, `${id} canonical public link`);
+  }
+  has(contract, "resolveCmsPlatformLabel(", "CMS labels are matched by route identity");
+  has(validator, "fixedSlot && safeHref !== fixedSlot.href", "invalid CMS targets block publication");
+  has(hydrate, "footerPlatformSlots.find((item) => item.href === fallback.href)", "CMS never overwrites unrelated link by array index");
+  has(hydrate, 'candidate.getAttribute("href") === link.href', "SSR anchor stable keyed reconciliation");
+  has(hydrate, "reconcileColumnLinks(", "column links are reconciled in place");
+  has(hydrate, "if (block.querySelector(\".site-contact-footer__email\")) return;", "existing SSR social/contact link block is retained");
+  lacks(hydrate, "replaceColumnLinks(", "no destructive navigation replacement");
+  lacks(hydrate, "block.replaceChildren(", "no destructive contact block replacement");
+  lacks(hydrate, "copyright.replaceChildren(", "no destructive copyright replacement");
+  lacks(hydrate, "anchor.remove()", "no existing SSR navigation anchor deleted");
+  has(hydrate, "if (!payload?.content || typeof payload.content !== \"object\") return;", "absent CMS data cannot force a duplicate update");
+});
+
+test("trust pages contain no hidden second footer or duplicate legacy header", () => {
+  const components = [
+    "HowItWorksExperience",
+    "ForWritersExperience",
+    "ForEditorsExperience",
+    "ForPublishersExperience",
+    "CommunityRulesExperience",
+    "ContentAgePolicyExperience",
+    "EditorialStandardsExperience",
+    "CopyrightNoticeExperience",
+  ];
+  for (const name of components) {
+    const content = source(`src/components/content/${name}.tsx`);
+    lacks(content, '<footer className="how-footer">', `${name} dead footer removed`);
+    lacks(content, '<header className="how-header">', `${name} dead header removed`);
+  }
+  const legal = source("src/app/yasal/[slug]/page.tsx");
+  lacks(legal, '<header className="legal-header">', "shared legal route has no duplicate header");
+  has(source("src/app/uyelik-sozlesmesi/page.tsx"), 'className="legal-header"', "standalone registration agreement header remains available");
+  lacks(source("src/app/nasil-calisir/public-trust-footer.css"), ".how-page > .how-footer", "no CSS-based hidden footer duplicate");
+  lacks(source("src/components/layout/public-site-header.css"), ".public-site-frame .how-header", "no CSS-based hidden trust header duplicate");
+});

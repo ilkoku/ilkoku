@@ -219,7 +219,7 @@ for (const scenario of sharedFooterScenarios) {
     expect(metrics.gridDisplay, JSON.stringify(metrics)).toBe("grid");
     expect(metrics.gridColumns, JSON.stringify(metrics)).not.toBe("none");
     expect(metrics.backgroundImage, JSON.stringify(metrics)).toContain("linear-gradient");
-    expect(metrics.columnCount, JSON.stringify(metrics)).toBe(5);
+    expect(metrics.columnCount, JSON.stringify(metrics)).toBe(6);
     if (scenario.viewport.width <= 390) {
       expect(metrics.isSingleColumn, JSON.stringify(metrics)).toBe(true);
     }

@@ -3,18 +3,17 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
-  publicAudienceLinks,
   publicLegalLinks,
-  publicPlatformLinks,
+  publicFooterPlatformLinks,
   publicSupportLinks,
   publicTrustLinks,
   type PublicSiteLink,
 } from "@/lib/public-site-navigation";
 import { siteContact } from "@/lib/site-contact";
+import { footerPlatformSlots, resolveCmsPlatformLabel } from "@/lib/cms-footer-navigation";
 
 type FooterContent = Record<string, string>;
 
-const canonicalPlatformHrefs = new Set<string>(publicPlatformLinks.map((link) => link.href));
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function internalHref(value: string | undefined, fallback: string) {
@@ -46,7 +45,6 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   let copyrightText = copyright.querySelector<HTMLElement>(".landing-footer__copyright-text");
   if (!copyrightText) {
     const originalText = copyright.textContent?.trim() || `© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`;
-    copyright.replaceChildren();
     copyrightText = document.createElement("span");
     copyrightText.className = "landing-footer__copyright-text";
     copyrightText.textContent = originalText;
@@ -99,31 +97,22 @@ function ensureLegalBar(footer: HTMLElement, content: FooterContent) {
   for (const extra of existingAnchors.slice(keys.length)) extra.remove();
 }
 
-function resolvedPlatformLinks(content: FooterContent) {
-  return publicPlatformLinks.map((fallback, index) => {
-    if (index === 0 || index > 3) return fallback;
-
-    const slot = index;
-    const rawHref = content[`platform${slot}Href`]?.trim();
-    if (!rawHref) return fallback;
-
-    const href = internalHref(rawHref, fallback.href);
-    if (!canonicalPlatformHrefs.has(href) || href === "/hakkimizda") return fallback;
-
-    return {
-      href,
-      label: content[`platform${slot}Label`]?.trim() || fallback.label,
-    };
-  }).filter((link) => !publicAudienceLinks.some((audience) => audience.href === link.href));
+function resolvedPlatformLinks(content: FooterContent): readonly PublicSiteLink[] {
+  // Match CMS values by immutable href, never by the link's display position.
+  // Invalid or legacy slot targets cannot delete or duplicate public links.
+  return publicFooterPlatformLinks.map((fallback) => {
+    const slot = footerPlatformSlots.find((item) => item.href === fallback.href);
+    return slot ? { ...fallback, label: resolveCmsPlatformLabel(slot, content) } : fallback;
+  });
 }
 
-function replaceColumnLinks(column: HTMLElement, links: readonly PublicSiteLink[]) {
-  for (const anchor of Array.from(column.querySelectorAll("a"))) anchor.remove();
+// Preserve React/Next.js server-rendered anchors and their delegated click
+// handlers. CMS may update labels but cannot tear down or retarget links.
+function reconcileColumnLinks(column: HTMLElement, links: readonly PublicSiteLink[]) {
+  const anchors = Array.from(column.querySelectorAll<HTMLAnchorElement>(":scope > a"));
   for (const link of links) {
-    const anchor = document.createElement("a");
-    anchor.textContent = link.label;
-    anchor.setAttribute("href", link.href);
-    column.append(anchor);
+    const anchor = anchors.find((candidate) => candidate.getAttribute("href") === link.href);
+    if (anchor && anchor.textContent !== link.label) anchor.textContent = link.label;
   }
 }
 
@@ -131,7 +120,7 @@ function rebuildPlatformColumn(column: HTMLElement | undefined, content: FooterC
   if (!column) return;
   const heading = column.querySelector<HTMLElement>("h3");
   if (heading) heading.textContent = content.platformTitle || "Platform";
-  replaceColumnLinks(column, resolvedPlatformLinks(content));
+  reconcileColumnLinks(column, resolvedPlatformLinks(content));
 }
 
 function ensureTrustColumn(footer: HTMLElement) {
@@ -153,14 +142,14 @@ function ensureTrustColumn(footer: HTMLElement) {
 function rebuildTrustColumn(footer: HTMLElement) {
   const column = ensureTrustColumn(footer);
   if (!column) return;
-  replaceColumnLinks(column, publicTrustLinks);
+  reconcileColumnLinks(column, publicTrustLinks);
 }
 
 function rebuildSupportColumn(column: HTMLElement | undefined, content: FooterContent) {
   if (!column) return;
   const heading = column.querySelector<HTMLElement>("h3");
   if (heading) heading.textContent = content.supportTitle || "Destek";
-  replaceColumnLinks(column, publicSupportLinks);
+  reconcileColumnLinks(column, publicSupportLinks);
 }
 
 function externalLink(href: string, label: string) {
@@ -234,7 +223,8 @@ function ensureFooterContactBlock(column: HTMLElement | undefined) {
     block = document.createElement("div");
     block.className = "site-contact-footer";
   }
-  block.replaceChildren();
+  // SSR already rendered homepage contact links. Never detach them during hydration.
+  if (block.querySelector(".site-contact-footer__email")) return;
 
   const email = document.createElement("a");
   email.className = "site-contact-footer__email";
@@ -354,7 +344,8 @@ export function PublicFooterHydrator() {
         .then((response) => (response.ok ? response.json() : null))
         .then((payload) => {
           if (!active || controller.signal.aborted) return;
-          const content = (payload?.content ?? {}) as FooterContent;
+          if (!payload?.content || typeof payload.content !== "object") return;
+          const content = payload.content as FooterContent;
           ensureLegalBar(footer, content);
           rebuildPlatformColumn(findColumn(footer, "Platform"), content);
           rebuildTrustColumn(footer);

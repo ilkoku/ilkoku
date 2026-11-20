@@ -56,10 +56,10 @@ for (const scenario of [
 
     const footer = page.locator("footer.landing-footer");
     const platform = footer.locator(".landing-footer__grid > div").filter({
-      has: footer.locator('a[href="/eserler"]'),
+      has: page.locator('a[href="/eserler"]'),
     });
     const support = footer.locator(".landing-footer__grid > div").filter({
-      has: footer.locator('a[href="/yardim"]'),
+      has: page.locator('a[href="/yardim"]'),
     });
 
     await expect(platform.locator('a[href="/yazarlar"]')).toHaveCount(1);

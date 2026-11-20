@@ -235,7 +235,8 @@ test("how-it-works trust page stays discovery-led, CMS-compatible and truthful",
   contains(experience, "EditorialBody body={part.body}", "CMS journey content in cards");
   contains(experience, 'sectionMap.get("İlkOku sana ne kazandırır?")', "positive dark value card");
   contains(experienceStyles, ".how-step--passport > h3 { grid-column: 2;", "passport title grid boundary");
-  contains(experienceStyles, ".how-footer .how-logo { width: 4.4rem; aspect-ratio: 1; filter: none;", "footer logo color boundary");
+  notContains(experienceStyles, ".how-footer", "hidden legacy footer style no longer ships");
+  notContains(experienceStyles, ".how-header", "hidden legacy header style no longer ships");
   contains(experienceStyles, ".how-start { padding: clamp(5rem, 9vw, 8rem) 0", "start-to-discovery spacing boundary");
   contains(preview, 'page.contentKey === "page:tr:nasil-calisir"', "visual CMS preview boundary");
   contains(page, '"@type": "WebPage"', "WebPage schema");

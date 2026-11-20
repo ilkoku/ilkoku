@@ -15,7 +15,7 @@ test("Single canonical footer renders crawlable links without homepage prefetch"
   assert.match(renderer, /prefetch=\{landing \? false : undefined\}/u);
   assert.match(renderer, /href=\{item\.href\}/u);
   assert.match(renderer, /publicLegalLinks\.map\(\(item\) => <a href=\{item\.href\}/u);
-  for (const token of ["publicPlatformLinks", "publicTrustLinks", "publicSupportLinks", "publicLegalLinks", "CloudflareSafeEmailLink", "siteContact.socialLinks"]) {
+  for (const token of ["publicFooterPlatformLinks", "publicAudienceLinks", "publicTrustLinks", "publicSupportLinks", "publicLegalLinks", "CloudflareSafeEmailLink", "siteContact.socialLinks"]) {
     assert.ok(renderer.includes(token), "Footer SSR link/data group must be preserved: " + token);
   }
   assert.match(homepage, /<HomepageExperience\s*\/>/u);

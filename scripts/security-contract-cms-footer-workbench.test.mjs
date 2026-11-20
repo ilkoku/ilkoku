@@ -93,7 +93,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   has(hydrator, "publicLegalLinks", "canonical legal navigation source");
   has(hydrator, "ensureTrustColumn", "trust column builder");
   has(hydrator, 'heading.textContent = "Güven & Standartlar"', "trust column heading");
-  has(styles, "repeat(4, minmax(6.75rem, .72fr))", "five-area desktop footer grid");
+  has(styles, "repeat(5, minmax(6.75rem, .72fr))", "six-area desktop footer grid");
   has(styles, "@media (max-width: 27rem)", "single-column narrow mobile footer guard");
 
   for (const href of [
@@ -195,7 +195,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");
   has(styles, ".public-trust-footer", "canonical trust footer scope");
   has(styles, "linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%)", "homepage-aligned trust footer dark brand gradient");
-  has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(4, minmax(6.75rem, 0.72fr))", "homepage-aligned five-area desktop footer grid");
+  has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(5, minmax(6.75rem, 0.72fr))", "homepage-aligned six-area desktop footer grid");
   has(styles, ".public-trust-footer__bottom", "copyright and legal bottom bar");
   has(styles, ".public-trust-footer__legal", "legal navigation styling");
   has(styles, "@media (max-width: 27rem)", "trust footer narrow mobile guard");

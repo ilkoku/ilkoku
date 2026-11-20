@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { PublisherHeroStaticImage } from "@/components/content/PublisherHeroStaticImage";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
@@ -135,8 +134,6 @@ export function ForPublishersExperience({ body, summary, title, updatedAt }: { b
           <Link href="/telif-bildirimi"><strong>Telif Bildirimi</strong><span>Eser haklarıyla ilgili platform içi bildirim yolunu inceleyin.</span></Link>
         </div>
       </aside>
-
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/yazarlar-icin">Yazarlar İçin</Link><Link href="/editorler-icin">Editörler İçin</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link></nav></div></footer>
     </main>
   );
 }

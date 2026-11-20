@@ -12,6 +12,7 @@ on:
       - src/features/homepage/live-footer.css
       - src/components/content/PublicFooterHydrator.tsx
       - src/components/privacy/SiteConsentBanner.tsx
+      - tests/browser/footer-cms-identity.spec.mjs
   workflow_dispatch:
 permissions:
   contents: read

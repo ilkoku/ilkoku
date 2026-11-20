@@ -229,3 +229,19 @@ test("remaining public trust pages keep a consistent closing and structured-data
   has(contentAgePage, 'name: "Ana Sayfa"', "content-age breadcrumb homepage item");
   has(contentAgePage, "item: absoluteUrl", "content-age breadcrumb canonical item");
 });
+
+
+test("public pages have exactly one footer renderer, with two CSS themes only", () => {
+  const canonical = source("src/components/content/PublicSiteFooter.tsx");
+  const landingAdapter = source("src/features/homepage/live-footer.tsx");
+  const trustAdapter = source("src/components/content/PublicTrustFooter.tsx");
+
+  assert.equal((canonical.match(/<footer\b/g) || []).length, 1, "only one actual footer JSX implementation");
+  assert.doesNotMatch(landingAdapter, /<footer\b/);
+  assert.doesNotMatch(trustAdapter, /<footer\b/);
+  has(landingAdapter, '<PublicSiteFooter variant="landing"', "landing visual theme uses canonical renderer");
+  has(trustAdapter, '<PublicSiteFooter variant="trust"', "trust visual theme uses canonical renderer");
+  assert.equal((canonical.match(/publicLegalLinks\.map/g) || []).length, 1, "native legal links have one owner");
+  has(canonical, '<a href={item.href} key={item.href}>', "native legal click targets stay available");
+  has(canonical, "siteContact.socialLinks.map", "shared renderer preserves public social links");
+});

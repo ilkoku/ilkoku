@@ -52,7 +52,7 @@
 .public-trust-footer__grid {
   width: min(calc(100% - 2rem), 76rem);
   display: grid;
-  grid-template-columns: minmax(13rem, 1.08fr) repeat(4, minmax(6.75rem, 0.72fr));
+  grid-template-columns: minmax(13rem, 1.08fr) repeat(5, minmax(6.75rem, 0.72fr));
   align-items: start;
   column-gap: clamp(0.7rem, 1.15vw, 1rem);
   row-gap: 0.65rem;

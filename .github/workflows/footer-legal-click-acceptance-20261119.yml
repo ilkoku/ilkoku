@@ -4,6 +4,7 @@ on:
     paths:
       - .github/workflows/footer-legal-click-acceptance-20261119.yml
       - src/components/content/PublicTrustFooter.tsx
+      - src/components/content/PublicSiteFooter.tsx
       - src/app/nasil-calisir/public-trust-footer.css
       - src/lib/public-site-navigation.ts
       - src/app/yasal/**
@@ -37,11 +38,14 @@ jobs:
           const read=p=>fs.readFileSync(p,'utf8');
           const trust=read('src/components/content/PublicTrustFooter.tsx');
           const home=read('src/features/homepage/live-footer.tsx');
+          const canonical=read('src/components/content/PublicSiteFooter.tsx');
           const a=read('src/app/nasil-calisir/public-trust-footer.css');
           const b=read('src/features/homepage/live-footer.css');
           const hydrator=read('src/components/content/PublicFooterHydrator.tsx');
-          assert.match(trust,/publicLegalLinks\.map[\s\S]*?<a href=\{item\.href\} key=\{item\.href\}>/);
-          assert.match(home,/publicLegalLinks\.map[\s\S]*?<a href=\{item\.href\} key=\{item\.href\}>/);
+          assert.match(trust, /<PublicSiteFooter variant="trust"/);
+          assert.match(home, /<PublicSiteFooter variant="landing"/);
+          assert.match(canonical, /publicLegalLinks\.map[\s\S]*?<a href=\{item\.href\} key=\{item\.href\}>/);
+          assert.equal((canonical.match(/publicLegalLinks\.map/g)||[]).length, 1);
           assert.match(a,/\.public-trust-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(b,/\.nx-live-footer-scope \.landing-footer__legal a\s*\{[^}]*min-height:\s*2\.75rem/s);
           assert.match(hydrator,/anchor\.style\.setProperty\("min-height", "2\.75rem", "important"\)/);

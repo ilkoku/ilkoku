@@ -19,6 +19,17 @@ export const publicPlatformLinks = [
   { href: "/yayinevleri-icin", label: "Yayınevleri İçin" },
 ] satisfies readonly PublicSiteLink[];
 
+// The role guides are published routes used by SEO too. Keep them in the
+// complete platform inventory, but display them in their own footer column.
+const publicAudienceHrefs = new Set([
+  "/yazarlar-icin",
+  "/okurlar-icin",
+  "/editorler-icin",
+  "/yayinevleri-icin",
+]);
+export const publicAudienceLinks = publicPlatformLinks.filter((link) => publicAudienceHrefs.has(link.href));
+export const publicFooterPlatformLinks = publicPlatformLinks.filter((link) => !publicAudienceHrefs.has(link.href));
+
 export const publicTrustLinks = [
   { href: "/editoryal-standartlar", label: "Editoryal Standartlar" },
   { href: "/icerik-ve-yas-politikasi", label: "İçerik ve Yaş" },

@@ -147,6 +147,7 @@ jobs:
 
       - name: Build application
         if: ${{ !cancelled() }}
+        id: app_build
         shell: bash
         run: |
           set +e
@@ -166,11 +167,11 @@ jobs:
         run: node scripts/prepare-browser-auth-fixtures.mjs
 
       - name: Install Playwright test runner
-        if: ${{ !cancelled() && success() }}
+        if: ${{ !cancelled() && steps.app_build.outcome == 'success' }}
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0
 
       - name: Install Chromium for browser QA
-        if: ${{ !cancelled() && success() }}
+        if: ${{ !cancelled() && steps.app_build.outcome == 'success' }}
         timeout-minutes: 8
         # All browser QA runs headlessly on Ubuntu 24.04. Download only
         # Chromium's headless shell and avoid transient apt-get stalls in
@@ -178,7 +179,7 @@ jobs:
         run: npx playwright install --only-shell chromium
 
       - name: Run mobile and browser QA gate
-        if: ${{ !cancelled() && success() }}
+        if: ${{ !cancelled() && steps.app_build.outcome == 'success' }}
         env:
           BROWSER_AUTH_FIXTURE_PATH: /tmp/ilkoku-browser-auth.json
           DATABASE_URL: "mysql://ci_user:ci_password@127.0.0.1:3307/ilkoku_recovery"

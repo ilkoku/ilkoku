@@ -53,6 +53,7 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 
 test("all seven writing category hubs and 85 guides load the compact homepage footer styles from their route layout", () => {
   const footer = source("src/features/homepage/live-footer.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const writersLayout = source("src/app/yazarlar-icin/layout.tsx");
   const hub = source("src/components/content/WritingCategoryLandingPage.tsx");
   const guide = source("src/components/content/WritingGuideShell.tsx");
@@ -60,7 +61,7 @@ test("all seven writing category hubs and 85 guides load the compact homepage fo
   const tight = source("src/app/landing-footer-tight.css");
   has(writersLayout, 'import "../landing-footer-pro.css";', "writer route loads dark footer background and logo sizing");
   has(writersLayout, 'import "../landing-footer-tight.css";', "writer route loads responsive footer grid");
-  has(footer, 'style={{ width: "156px", maxWidth: "100%", height: "auto" }}', "logo has independent hard sizing even if CSS is absent");
+  has(renderer, 'style={{ width: "156px", maxWidth: "100%", height: "auto" }}', "logo has independent hard sizing even if CSS is absent");
   has(footer, 'import "./live-footer.css";', "shared footer keeps its own supplemental footer styles");
   has(hub, "<LiveHomepageFooter", "category hub uses footer");
   has(guide, "<LiveHomepageFooter", "all 85 guides use footer");
@@ -71,6 +72,7 @@ test("all seven writing category hubs and 85 guides load the compact homepage fo
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
   const liveFooter = source("src/features/homepage/live-footer.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/landing-footer-tight.css");
@@ -79,11 +81,11 @@ test("homepage footer keeps its brand and separates platform from trust navigati
 
   has(homepage, "HomepageExperience", "promoted homepage composition");
   has(homepage, "<HomepageExperience />", "promoted homepage render");
-  has(liveFooter, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
-  has(liveFooter, "publicPlatformLinks", "homepage footer canonical platform source");
-  has(liveFooter, "publicTrustLinks", "homepage footer canonical trust source");
-  has(liveFooter, "publicSupportLinks", "homepage footer canonical support source");
-  has(liveFooter, "publicLegalLinks", "homepage footer canonical legal source");
+  has(renderer, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(renderer, "publicFooterPlatformLinks", "homepage footer canonical platform source");
+  has(renderer, "publicTrustLinks", "homepage footer canonical trust source");
+  has(renderer, "publicSupportLinks", "homepage footer canonical support source");
+  has(renderer, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
   has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
   has(hydrator, "publicTrustLinks", "canonical trust navigation source");
@@ -91,7 +93,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   has(hydrator, "publicLegalLinks", "canonical legal navigation source");
   has(hydrator, "ensureTrustColumn", "trust column builder");
   has(hydrator, 'heading.textContent = "Güven & Standartlar"', "trust column heading");
-  has(styles, "repeat(4, minmax(6.75rem, .72fr))", "five-area desktop footer grid");
+  has(styles, "repeat(5, minmax(6.75rem, .72fr))", "six-area desktop footer grid");
   has(styles, "@media (max-width: 27rem)", "single-column narrow mobile footer guard");
 
   for (const href of [
@@ -135,6 +137,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     "src/app/yayinevleri-icin/page.tsx",
   ];
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const identity = source("src/lib/site-identity.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/nasil-calisir/public-trust-footer.css");
@@ -148,10 +151,10 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     has(page, "<PublicTrustFooter />", `${path} canonical footer render`);
   }
 
-  has(footer, "publicPlatformLinks", "trust footer canonical platform source");
-  has(footer, "publicTrustLinks", "trust footer canonical trust source");
-  has(footer, "publicSupportLinks", "trust footer canonical support source");
-  has(footer, "publicLegalLinks", "trust footer canonical legal source");
+  has(renderer, "publicFooterPlatformLinks", "trust footer canonical platform source");
+  has(renderer, "publicTrustLinks", "trust footer canonical trust source");
+  has(renderer, "publicSupportLinks", "trust footer canonical support source");
+  has(renderer, "publicLegalLinks", "trust footer canonical legal source");
 
   for (const href of [
     "/hakkimizda",
@@ -175,14 +178,16 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   }
 
   has(footer, "getPublicSiteIdentity()", "trust footer centralized site identity source");
-  has(footer, "identity.footerTaglineLead", "trust footer managed slogan lead");
-  has(footer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
+  has(footer, '<PublicSiteFooter variant="trust"', "trust pages use single renderer");
+  has(source("src/features/homepage/live-footer.tsx"), "PublicSiteFooter", "homepage uses single renderer");
+  has(renderer, "identity.footerTaglineLead", "trust footer managed slogan lead");
+  has(renderer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
   has(identity, 'footerTaglineLead: "İlk cümle, ilk okurun,"', "default footer slogan lead");
   has(identity, 'footerTaglineEmphasis: "ilk adımın."', "default footer slogan emphasis");
-  has(footer, "Güven &amp; Standartlar", "trust column heading");
-  has(footer, "Hesap", "account column heading");
-  has(footer, "Destek", "support column heading");
-  has(footer, "public-trust-footer__legal", "legal bar markup");
+  has(renderer, "Güven & Standartlar", "trust column heading");
+  has(renderer, "Hesap", "account column heading");
+  has(renderer, "Destek", "support column heading");
+  has(renderer, "public-trust-footer__legal", "legal bar markup");
   lacks(footer, "getCurrentProfile", "public footer must not read session server-side");
   lacks(footer, "getRoleNavigation", "public footer must not resolve workspace server-side");
   lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");
@@ -190,7 +195,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");
   has(styles, ".public-trust-footer", "canonical trust footer scope");
   has(styles, "linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%)", "homepage-aligned trust footer dark brand gradient");
-  has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(4, minmax(6.75rem, 0.72fr))", "homepage-aligned five-area desktop footer grid");
+  has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(5, minmax(6.75rem, 0.72fr))", "homepage-aligned six-area desktop footer grid");
   has(styles, ".public-trust-footer__bottom", "copyright and legal bottom bar");
   has(styles, ".public-trust-footer__legal", "legal navigation styling");
   has(styles, "@media (max-width: 27rem)", "trust footer narrow mobile guard");
@@ -223,4 +228,41 @@ test("remaining public trust pages keep a consistent closing and structured-data
   has(contentAgePage, '"@type": "BreadcrumbList"', "content-age breadcrumb schema");
   has(contentAgePage, 'name: "Ana Sayfa"', "content-age breadcrumb homepage item");
   has(contentAgePage, "item: absoluteUrl", "content-age breadcrumb canonical item");
+});
+
+
+test("public pages have exactly one footer renderer, with two CSS themes only", () => {
+  const canonical = source("src/components/content/PublicSiteFooter.tsx");
+  const landingAdapter = source("src/features/homepage/live-footer.tsx");
+  const trustAdapter = source("src/components/content/PublicTrustFooter.tsx");
+
+  assert.equal((canonical.match(/<footer\b/g) || []).length, 1, "only one actual footer JSX implementation");
+  assert.doesNotMatch(landingAdapter, /<footer\b/);
+  assert.doesNotMatch(trustAdapter, /<footer\b/);
+  has(landingAdapter, '<PublicSiteFooter variant="landing"', "landing visual theme uses canonical renderer");
+  has(trustAdapter, '<PublicSiteFooter variant="trust"', "trust visual theme uses canonical renderer");
+  assert.equal((canonical.match(/publicLegalLinks\.map/g) || []).length, 1, "native legal links have one owner");
+  has(canonical, '<a href={item.href} key={item.href}>', "native legal click targets stay available");
+  has(canonical, "siteContact.socialLinks.map", "shared renderer preserves public social links");
+});
+
+test("İlkOku'da shows only four role entrypoints, while Platform stays canonical after CMS hydration", () => {
+  const footer = source("src/components/content/PublicSiteFooter.tsx");
+  const nav = source("src/lib/public-site-navigation.ts");
+  const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
+  const landingCss = source("src/app/landing-footer-tight.css");
+  const trustCss = source("src/app/nasil-calisir/public-trust-footer.css");
+
+  has(footer, 'title="İlkOku\'da"', "the approved heading is exact");
+  has(footer, 'links={publicAudienceLinks}', "the four links have one dedicated column");
+  has(footer, 'links={platformLinks}', "Platform keeps its own separate column");
+  has(footer, "publicFooterPlatformLinks", "role links are excluded from the Platform column");
+  for (const href of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin", "/yayinevleri-icin"]) {
+    has(nav, '"' + href + '"', href + " stays in the full canonical public site inventory");
+  }
+  has(nav, "publicAudienceLinks = publicPlatformLinks.filter", "audience links use canonical routes");
+  has(nav, "publicFooterPlatformLinks = publicPlatformLinks.filter", "non-role platform links stay separate");
+  has(hydrator, '.filter((link) => !publicAudienceLinks.some', "CMS hydration must not reinsert role links into Platform");
+  has(landingCss, "repeat(5, minmax(6.75rem, .72fr))", "landing desktop fits six cells");
+  has(trustCss, "repeat(5, minmax(6.75rem, 0.72fr))", "trust desktop fits six cells");
 });

@@ -9,6 +9,7 @@ test("footer CMS enhancement stays outside initial route bundle and SSR links re
   const enhancement = read("src/components/content/PublicFooterHydrator.tsx");
   const layout = read("src/app/layout.tsx");
   const footer = read("src/features/homepage/live-footer.tsx");
+  const renderer = read("src/components/content/PublicSiteFooter.tsx");
   assert.match(shell, /import\("@\/components\/content\/PublicFooterHydrator"\)/);
   assert.doesNotMatch(shell, /^import \{ PublicFooterHydrator \} from /m);
   assert.match(shell, /IntersectionObserver/);
@@ -19,7 +20,8 @@ test("footer CMS enhancement stays outside initial route bundle and SSR links re
   assert.match(enhancement, /ensureFooterContactBlock/);
   assert.match(enhancement, /ensureContactPageBlock/);
   assert.match(layout, /<PublicCmsHydrator \/>/);
-  assert.match(footer, /siteContact\.socialLinks\.map/);
-  assert.match(footer, /<CloudflareSafeEmailLink \/>/);
-  assert.match(footer, /publicPlatformLinks\.map/);
+  assert.match(renderer, /siteContact\.socialLinks\.map/);
+  assert.match(renderer, /<CloudflareSafeEmailLink \/>/);
+  assert.match(renderer, /publicFooterPlatformLinks/);
+  assert.match(footer, /PublicSiteFooter/);
 });

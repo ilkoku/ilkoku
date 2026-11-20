@@ -173,6 +173,7 @@ test("homepage footer reuses the cached full publication decision", () => {
 
 test("Book Index maintains a gated site-wide footer link with cached decision", () => {
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
 
   contains(
     footer,
@@ -180,13 +181,13 @@ test("Book Index maintains a gated site-wide footer link with cached decision", 
     "footer uses the same fail-closed public gate",
   );
   contains(
-    footer,
+    renderer,
     '{ href: "/en-cok-satanlar", label: "En Çok Satanlar" }',
     "footer Book Index discovery link",
   );
   contains(
-    footer,
-    "const platformLinks = bookIndexPublished",
+    renderer,
+    "const platformLinks: PublicSiteLink[] = props.bookIndexPublished",
     "footer link only appears when publication is actually allowed",
   );
 });

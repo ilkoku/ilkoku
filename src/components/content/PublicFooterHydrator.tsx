@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
+  publicAudienceLinks,
   publicLegalLinks,
   publicPlatformLinks,
   publicSupportLinks,
@@ -113,7 +114,7 @@ function resolvedPlatformLinks(content: FooterContent) {
       href,
       label: content[`platform${slot}Label`]?.trim() || fallback.label,
     };
-  });
+  }).filter((link) => !publicAudienceLinks.some((audience) => audience.href === link.href));
 }
 
 function replaceColumnLinks(column: HTMLElement, links: readonly PublicSiteLink[]) {

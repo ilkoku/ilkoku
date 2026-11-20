@@ -96,12 +96,12 @@ for (const scenario of [
 
 
 for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-  test(\`four İlkOku'da links actually navigate at \${viewport.width}px\`, async ({ page }) => {
+  test(`four İlkOku'da links actually navigate at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     for (const href of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin", "/yayinevleri-icin"]) {
       const response = await page.goto("/", { waitUntil: "domcontentloaded" });
       expect(response?.status()).toBe(200);
-      const link = page.locator(\`footer.landing-footer .landing-footer__audience a[href="\${href}"]\`);
+      const link = page.locator(`footer.landing-footer .landing-footer__audience a[href="${href}"]`);
       await expect(link).toHaveCount(1);
       await link.scrollIntoViewIfNeeded();
       await link.click();

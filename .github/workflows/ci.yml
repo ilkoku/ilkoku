@@ -146,8 +146,8 @@ jobs:
         run: node scripts/validate-contract-policy-text-alignment.mjs
 
       - name: Build application
-        id: app_build
         if: ${{ !cancelled() }}
+        id: app_build
         shell: bash
         run: |
           set +e

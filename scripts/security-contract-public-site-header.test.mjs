@@ -385,11 +385,12 @@ test("editor directory and help center stay connected to the same public footer 
   assert.match(helpPage, /Henüz yayınlanmış SSS kaydı yok/);
 });
 
-test("legacy public headers are hidden only inside the explicit public frame", () => {
+test("remaining public-navigation header compatibility rules are scoped to the frame", () => {
   const css = read("src/components/layout/public-site-header.css");
-  for (const selector of [".how-header", ".public-library__header", ".public-hub__nav", ".editors-topbar"]) {
+  for (const selector of [".public-library__header", ".public-hub__nav", ".editors-topbar"]) {
     assert.ok(css.includes(`.public-site-frame ${selector}`), `${selector} must be scoped to public-site-frame`);
   }
+  assert.doesNotMatch(css, /\.public-site-frame \.how-header/, "hidden legacy trust headers are removed rather than merely hidden");
 });
 
 test("all public mega-menu labels navigate while mobile submenu buttons expand separately", () => {

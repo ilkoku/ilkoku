@@ -1,7 +1,7 @@
 import "server-only";
 
 import { safeCmsInternalHref } from "@/lib/cms-links";
-import { type FooterNavigationPayload } from "@/lib/cms-footer-navigation";
+import { footerPlatformSlots, type FooterNavigationPayload } from "@/lib/cms-footer-navigation";
 import { prisma } from "@/lib/prisma";
 
 export type FooterLinkStatus = "ok" | "fallback" | "duplicate" | "broken";
@@ -39,9 +39,9 @@ const fixedPublicPaths = new Set([
 ]);
 
 const linkSpecs = [
-  ["platform1", "Nasıl Çalışır?", "/nasil-calisir"],
-  ["platform2", "Yazarlar İçin", "/yazarlar-icin"],
-  ["platform3", "Editörler İçin", "/editorler-icin"],
+  ["platform1", "Yazarlar", "/yazarlar"],
+  ["platform2", "Türler", "/turler"],
+  ["platform3", "Nasıl Çalışır?", "/nasil-calisir"],
   ["support", "Destek", "mailto:destek@ilkoku.com"],
   ["terms", "Kullanım Şartları", "/yasal/kullanim-sartlari"],
   ["privacy", "Gizlilik", "/yasal/gizlilik-politikasi"],
@@ -96,6 +96,18 @@ export async function analyzeFooterNavigation(payload: FooterNavigationPayload) 
         effectiveHref: rawHref,
         status: "broken" as const,
         detail: "Hedef güvenli site içi URL/anchor değil veya yönetim/API alanına gidiyor.",
+      };
+    }
+
+    const fixedSlot = footerPlatformSlots.find((slot) => slot.key === key);
+    if (fixedSlot && safeHref !== fixedSlot.href) {
+      return {
+        key,
+        label,
+        href: rawHref,
+        effectiveHref: safeHref,
+        status: "broken" as const,
+        detail: `Platform bağlantı kimliği sabittir: ${fixedSlot.href}. Eski/başka bir hedef bu sütundaki bağlantıları değiştiremez.`,
       };
     }
 

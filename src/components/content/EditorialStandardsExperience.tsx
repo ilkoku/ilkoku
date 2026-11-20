@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 
@@ -119,12 +118,6 @@ export function EditorialStandardsExperience({ body, summary, title, updatedAt }
 
   return (
     <main className="how-page standards-page">
-      <header className="how-header">
-        <div className="how-container how-header__inner">
-          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris">Giriş yap</Link>
-        </div>
-      </header>
 
       <section className="how-hero standards-hero">
         <div className="how-container how-hero__grid">
@@ -173,8 +166,6 @@ export function EditorialStandardsExperience({ body, summary, title, updatedAt }
       {extras.length > 0 ? <section className="how-extras how-container">{extras.map((section) => <GenericSection section={section} key={section.title} />)}</section> : null}
 
       <aside className="how-related how-container" aria-label="İlkOku içinde devam et"><SectionHeading eyebrow="İlkOku içinde devam et" title="Profesyonel değerlendirmeyi gerçek eser yolculuğunda keşfet." /><div className="how-related__grid"><Link href="/editorler-icin"><strong>Editörler İçin</strong><span>Yeni eserlerde profesyonel iz bırakma akışını incele.</span></Link><Link href="/yazarlar-icin"><strong>Yazarlar İçin</strong><span>İki editör görüşünün yazarın gelişim yolculuğuna nasıl katıldığını gör.</span></Link><Link href="/nasil-calisir"><strong>Nasıl Çalışır?</strong><span>Eserin okur, editör ve yayınevi keşfine uzanan yolculuğunu incele.</span></Link><Link href="/editorler"><strong>Editörleri keşfet</strong><span>Editör profillerini ve uzmanlık alanlarını gör.</span></Link></div></aside>
-
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/yasal/gizlilik-politikasi">Gizlilik</Link><Link href="/yasal/kullanim-sartlari">Kullanım Şartları</Link></nav></div></footer>
     </main>
   );
 }

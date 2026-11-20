@@ -87,7 +87,7 @@ test("homepage footer keeps its brand and separates platform from trust navigati
   has(renderer, "publicSupportLinks", "homepage footer canonical support source");
   has(renderer, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
-  has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
+  has(hydrator, "publicFooterPlatformLinks", "canonical platform navigation source");
   has(hydrator, "publicTrustLinks", "canonical trust navigation source");
   has(hydrator, "publicSupportLinks", "canonical support navigation source");
   has(hydrator, "publicLegalLinks", "canonical legal navigation source");
@@ -118,9 +118,9 @@ test("homepage footer keeps its brand and separates platform from trust navigati
     has(validation, `"${href}"`, `${href} authoritative footer validation route`);
   }
 
-  has(contract, 'platform1Href: "/nasil-calisir"', "platform primary default");
-  has(contract, 'platform2Href: "/yazarlar-icin"', "writer public page default");
-  has(contract, 'platform3Href: "/editorler-icin"', "editor public page default");
+  has(contract, 'platform1Href: "/yazarlar"', "stable writer directory slot");
+  has(contract, 'platform2Href: "/turler"', "stable genre directory slot");
+  has(contract, 'platform3Href: "/nasil-calisir"', "stable how-it-works slot");
   lacks(contract, 'platform2Href: "#eser-pasaportu"', "obsolete homepage passport anchor default");
   lacks(contract, 'platform3Href: "#neden-ilkoku"', "obsolete homepage why anchor default");
 });
@@ -192,7 +192,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   lacks(footer, "getRoleNavigation", "public footer must not resolve workspace server-side");
   lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");
 
-  has(styles, ".how-page > .how-footer", "legacy embedded trust footer suppression");
+  lacks(styles, ".how-page > .how-footer", "dead footer removed rather than CSS-hidden");
   has(styles, ".public-trust-footer", "canonical trust footer scope");
   has(styles, "linear-gradient(112deg, #17152f 0%, #1d1a3c 55%, #322367 100%)", "homepage-aligned trust footer dark brand gradient");
   has(styles, "grid-template-columns: minmax(13rem, 1.08fr) repeat(5, minmax(6.75rem, 0.72fr))", "homepage-aligned six-area desktop footer grid");
@@ -262,7 +262,55 @@ test("İlkOku'da shows only four role entrypoints, while Platform stays canonica
   }
   has(nav, "publicAudienceLinks = publicPlatformLinks.filter", "audience links use canonical routes");
   has(nav, "publicFooterPlatformLinks = publicPlatformLinks.filter", "non-role platform links stay separate");
-  has(hydrator, '.filter((link) => !publicAudienceLinks.some', "CMS hydration must not reinsert role links into Platform");
+  has(hydrator, "footerPlatformSlots.find((item) => item.href === fallback.href)", "CMS hydration updates stable link identities, not array positions");
   has(landingCss, "repeat(5, minmax(6.75rem, .72fr))", "landing desktop fits six cells");
   has(trustCss, "repeat(5, minmax(6.75rem, 0.72fr))", "trust desktop fits six cells");
+});
+
+
+test("footer CMS preserves stable links and never removes SSR anchors or social media targets", () => {
+  const contract = source("src/lib/cms-footer-navigation.ts");
+  const validator = source("src/lib/cms-footer-validation.ts");
+  const hydrate = source("src/components/content/PublicFooterHydrator.tsx");
+  const navigation = source("src/lib/public-site-navigation.ts");
+
+  for (const [id, href] of [["platform1", "/yazarlar"], ["platform2", "/turler"], ["platform3", "/nasil-calisir"]]) {
+    has(contract, `{ key: "${id}", href: "${href}"`, `${id} fixed route identity`);
+    has(contract, `${id}Href: "${href}"`, `${id} CMS default`);
+    has(navigation, `href: "${href}"`, `${id} canonical public link`);
+  }
+  has(contract, "resolveCmsPlatformLabel(", "CMS labels are matched by route identity");
+  has(validator, "fixedSlot && safeHref !== fixedSlot.href", "invalid CMS targets block publication");
+  has(hydrate, "footerPlatformSlots.find((item) => item.href === fallback.href)", "CMS never overwrites unrelated link by array index");
+  has(hydrate, 'candidate.getAttribute("href") === link.href', "SSR anchor stable keyed reconciliation");
+  has(hydrate, "reconcileColumnLinks(", "column links are reconciled in place");
+  has(hydrate, "if (block.querySelector(\".site-contact-footer__email\")) return;", "existing SSR social/contact link block is retained");
+  lacks(hydrate, "replaceColumnLinks(", "no destructive navigation replacement");
+  lacks(hydrate, "block.replaceChildren(", "no destructive contact block replacement");
+  lacks(hydrate, "copyright.replaceChildren(", "no destructive copyright replacement");
+  lacks(hydrate, "anchor.remove()", "no existing SSR navigation anchor deleted");
+  has(hydrate, "if (!payload?.content || typeof payload.content !== \"object\") return;", "absent CMS data cannot force a duplicate update");
+});
+
+test("trust pages contain no hidden second footer or duplicate legacy header", () => {
+  const components = [
+    "HowItWorksExperience",
+    "ForWritersExperience",
+    "ForEditorsExperience",
+    "ForPublishersExperience",
+    "CommunityRulesExperience",
+    "ContentAgePolicyExperience",
+    "EditorialStandardsExperience",
+    "CopyrightNoticeExperience",
+  ];
+  for (const name of components) {
+    const content = source(`src/components/content/${name}.tsx`);
+    lacks(content, '<footer className="how-footer">', `${name} dead footer removed`);
+    lacks(content, '<header className="how-header">', `${name} dead header removed`);
+  }
+  const legal = source("src/app/yasal/[slug]/page.tsx");
+  lacks(legal, '<header className="legal-header">', "shared legal route has no duplicate header");
+  has(source("src/app/uyelik-sozlesmesi/page.tsx"), 'className="legal-header"', "standalone registration agreement header remains available");
+  lacks(source("src/app/nasil-calisir/public-trust-footer.css"), ".how-page > .how-footer", "no CSS-based hidden footer duplicate");
+  lacks(source("src/components/layout/public-site-header.css"), ".public-site-frame .how-header", "no CSS-based hidden trust header duplicate");
 });

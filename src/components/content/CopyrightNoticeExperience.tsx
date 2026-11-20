@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import logo from "@/assets/brand/ilkoku-logo-desktop-retina.png";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
 
@@ -71,12 +70,6 @@ export function CopyrightNoticeExperience({ body, summary, title, updatedAt }: {
 
   return (
     <main className="how-page copyright-notice-page">
-      <header className="how-header">
-        <div className="how-container how-header__inner">
-          <Link className="how-logo" href="/" aria-label="İlkOku ana sayfa"><Image src={logo} alt="İlkOku" priority sizes="160px" /></Link>
-          <Link className="how-header__account" href="/giris">Giriş yap</Link>
-        </div>
-      </header>
 
       <section className="how-hero copyright-hero">
         <div className="how-container how-hero__grid">
@@ -149,8 +142,6 @@ export function CopyrightNoticeExperience({ body, summary, title, updatedAt }: {
           <Link href="/yasal/telif-hakki-politikasi"><strong>Telif Hakkı Politikası</strong><span>Platformdaki eser ve kullanıcı içeriğine ilişkin genel telif çerçevesini incele.</span></Link>
         </div>
       </aside>
-
-      <footer className="how-footer"><div className="how-container"><Link className="how-logo" href="/"><Image src={logo} alt="İlkOku" sizes="150px" /></Link><nav><Link href="/nasil-calisir">Nasıl Çalışır?</Link><Link href="/editoryal-standartlar">Editoryal Standartlar</Link><Link href="/icerik-ve-yas-politikasi">İçerik ve Yaş</Link><Link href="/topluluk-kurallari">Topluluk</Link><Link href="/telif-bildirimi">Telif Bildirimi</Link></nav></div></footer>
     </main>
   );
 }

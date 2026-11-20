@@ -1,9 +1,5 @@
 /* İlkOku public trust pages — homepage-aligned canonical footer */
 
-.how-page > .how-footer {
-  display: none;
-}
-
 .public-trust-footer {
   position: relative;
   isolation: isolate;

@@ -179,6 +179,22 @@ const sharedFooterScenarios = [
   ]),
 ];
 
+for (const path of ["/nasil-calisir", "/yazarlar-icin", "/editorler-icin", "/yayinevleri-icin", "/topluluk-kurallari", "/telif-bildirimi", "/editoryal-standartlar", "/icerik-ve-yas-politikasi"]) {
+  test(`exactly one public footer/header after legacy cleanup: ${path}`, async ({ page }) => {
+    const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator("footer.public-trust-footer")).toHaveCount(1);
+    await expect(page.locator("header.public-site-header")).toHaveCount(1);
+    await expect(page.locator(".how-footer, .how-header")).toHaveCount(0);
+  });
+}
+
+test("shared legal page does not render the old hidden legal header", async ({ page }) => {
+  const response = await page.goto("/yasal/kullanim-sartlari", { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.locator("header.public-site-header")).toHaveCount(1);
+  await expect(page.locator("header.legal-header")).toHaveCount(0);
+});
 for (const variant of [
   { label: "landing", path: "/", selector: ".landing-footer" },
   { label: "trust", path: "/yayinevleri-icin", selector: ".public-trust-footer" },

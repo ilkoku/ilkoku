@@ -53,6 +53,7 @@ test("footer workbench keeps all canonical form fields and fixed fallback semant
 
 test("all seven writing category hubs and 85 guides load the compact homepage footer styles from their route layout", () => {
   const footer = source("src/features/homepage/live-footer.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const writersLayout = source("src/app/yazarlar-icin/layout.tsx");
   const hub = source("src/components/content/WritingCategoryLandingPage.tsx");
   const guide = source("src/components/content/WritingGuideShell.tsx");
@@ -60,7 +61,7 @@ test("all seven writing category hubs and 85 guides load the compact homepage fo
   const tight = source("src/app/landing-footer-tight.css");
   has(writersLayout, 'import "../landing-footer-pro.css";', "writer route loads dark footer background and logo sizing");
   has(writersLayout, 'import "../landing-footer-tight.css";', "writer route loads responsive footer grid");
-  has(footer, 'style={{ width: "156px", maxWidth: "100%", height: "auto" }}', "logo has independent hard sizing even if CSS is absent");
+  has(renderer, 'style={{ width: "156px", maxWidth: "100%", height: "auto" }}', "logo has independent hard sizing even if CSS is absent");
   has(footer, 'import "./live-footer.css";', "shared footer keeps its own supplemental footer styles");
   has(hub, "<LiveHomepageFooter", "category hub uses footer");
   has(guide, "<LiveHomepageFooter", "all 85 guides use footer");
@@ -71,6 +72,7 @@ test("all seven writing category hubs and 85 guides load the compact homepage fo
 test("homepage footer keeps its brand and separates platform from trust navigation", () => {
   const homepage = source("src/app/page.tsx");
   const liveFooter = source("src/features/homepage/live-footer.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const hydrator = source("src/components/content/PublicFooterHydrator.tsx");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/landing-footer-tight.css");
@@ -79,11 +81,11 @@ test("homepage footer keeps its brand and separates platform from trust navigati
 
   has(homepage, "HomepageExperience", "promoted homepage composition");
   has(homepage, "<HomepageExperience />", "promoted homepage render");
-  has(liveFooter, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
-  has(liveFooter, "publicPlatformLinks", "homepage footer canonical platform source");
-  has(liveFooter, "publicTrustLinks", "homepage footer canonical trust source");
-  has(liveFooter, "publicSupportLinks", "homepage footer canonical support source");
-  has(liveFooter, "publicLegalLinks", "homepage footer canonical legal source");
+  has(renderer, 'className="landing-logo landing-logo--footer"', "homepage footer brand logo markup");
+  has(renderer, "publicPlatformLinks", "homepage footer canonical platform source");
+  has(renderer, "publicTrustLinks", "homepage footer canonical trust source");
+  has(renderer, "publicSupportLinks", "homepage footer canonical support source");
+  has(renderer, "publicLegalLinks", "homepage footer canonical legal source");
   lacks(hydrator, 'footer.querySelector<HTMLElement>(".landing-logo--footer")?.remove();', "footer logo must not be removed by hydration");
   has(hydrator, "publicPlatformLinks", "canonical platform navigation source");
   has(hydrator, "publicTrustLinks", "canonical trust navigation source");
@@ -135,6 +137,7 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     "src/app/yayinevleri-icin/page.tsx",
   ];
   const footer = source("src/components/content/PublicTrustFooter.tsx");
+  const renderer = source("src/components/content/PublicSiteFooter.tsx");
   const identity = source("src/lib/site-identity.ts");
   const navigation = source("src/lib/public-site-navigation.ts");
   const styles = source("src/app/nasil-calisir/public-trust-footer.css");
@@ -148,10 +151,10 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
     has(page, "<PublicTrustFooter />", `${path} canonical footer render`);
   }
 
-  has(footer, "publicPlatformLinks", "trust footer canonical platform source");
-  has(footer, "publicTrustLinks", "trust footer canonical trust source");
-  has(footer, "publicSupportLinks", "trust footer canonical support source");
-  has(footer, "publicLegalLinks", "trust footer canonical legal source");
+  has(renderer, "publicPlatformLinks", "trust footer canonical platform source");
+  has(renderer, "publicTrustLinks", "trust footer canonical trust source");
+  has(renderer, "publicSupportLinks", "trust footer canonical support source");
+  has(renderer, "publicLegalLinks", "trust footer canonical legal source");
 
   for (const href of [
     "/hakkimizda",
@@ -175,14 +178,16 @@ test("all eight public trust pages render one homepage-aligned canonical footer"
   }
 
   has(footer, "getPublicSiteIdentity()", "trust footer centralized site identity source");
-  has(footer, "identity.footerTaglineLead", "trust footer managed slogan lead");
-  has(footer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
+  has(footer, '<PublicSiteFooter variant="trust"', "trust pages use single renderer");
+  has(liveFooter, "PublicSiteFooter", "homepage uses single renderer");
+  has(renderer, "identity.footerTaglineLead", "trust footer managed slogan lead");
+  has(renderer, "identity.footerTaglineEmphasis", "trust footer managed slogan emphasis");
   has(identity, 'footerTaglineLead: "İlk cümle, ilk okurun,"', "default footer slogan lead");
   has(identity, 'footerTaglineEmphasis: "ilk adımın."', "default footer slogan emphasis");
-  has(footer, "Güven &amp; Standartlar", "trust column heading");
-  has(footer, "Hesap", "account column heading");
-  has(footer, "Destek", "support column heading");
-  has(footer, "public-trust-footer__legal", "legal bar markup");
+  has(renderer, "Güven & Standartlar", "trust column heading");
+  has(renderer, "Hesap", "account column heading");
+  has(renderer, "Destek", "support column heading");
+  has(renderer, "public-trust-footer__legal", "legal bar markup");
   lacks(footer, "getCurrentProfile", "public footer must not read session server-side");
   lacks(footer, "getRoleNavigation", "public footer must not resolve workspace server-side");
   lacks(footer, 'href="/rehber"', "redirect-only guide route must stay out of canonical trust footer");

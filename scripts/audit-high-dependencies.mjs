@@ -111,10 +111,56 @@ if (waived.length > 0) {
   }
 }
 
+// Preserve the strict high/critical gate while making failures actionable:
+// print the upstream advisory identifiers, the vulnerable lockfile nodes and
+// npm's reported fix availability, not just the names of dependent packages.
+function collectRootAdvisories(packageName, seen = new Set()) {
+  if (seen.has(packageName)) return [];
+  seen.add(packageName);
+  const vulnerability = vulnerabilities[packageName];
+  if (!vulnerability) return [];
+
+  const records = [];
+  for (const via of vulnerability.via ?? []) {
+    if (typeof via === "string") {
+      records.push(...collectRootAdvisories(via, seen));
+    } else if (via && typeof via === "object") {
+      records.push({
+        title: String(via.title ?? "unknown advisory"),
+        url: String(via.url ?? "unknown URL"),
+        range: String(via.range ?? "unknown range"),
+      });
+    }
+  }
+  return records;
+}
+
+function describeBlockedVulnerability(item) {
+  const vulnerability = vulnerabilities[item.packageName];
+  const nodes = vulnerability?.nodes ?? [];
+  const advisories = collectRootAdvisories(item.packageName);
+  const seen = new Set();
+  for (const entry of advisories) {
+    const key = `${entry.url}|${entry.range}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    console.error(`    advisory: ${entry.title} | ${entry.url} | affected ${entry.range}`);
+  }
+  if (seen.size === 0) console.error("    advisory: unresolved; inspect npm audit --json");
+  for (const nodePath of nodes.slice(0, 20)) {
+    const node = lockfile.packages?.[nodePath];
+    console.error(`    installed: ${nodePath}@${node?.version ?? "unknown"} | dev=${node?.dev === true}`);
+  }
+  if (nodes.length > 20) console.error(`    additional lockfile nodes: ${nodes.length - 20}`);
+  const fix = vulnerability?.fixAvailable;
+  console.error(`    npm fix available: ${typeof fix === "boolean" ? fix : JSON.stringify(fix ?? null)}`);
+}
+
 if (blocked.length > 0) {
   console.error("High/critical dependency vulnerabilities detected:");
   for (const item of blocked) {
     console.error(`- ${item.packageName}: ${item.severity}`);
+    describeBlockedVulnerability(item);
   }
   process.exit(1);
 }

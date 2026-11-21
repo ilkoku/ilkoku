@@ -32,19 +32,15 @@ function sourceFromPath(path: string[]) {
 
 async function loadPublicPage(source: string) {
   if (source.split("/").filter(Boolean).length !== 1) return null;
-  try {
-    const rows = await prisma.$queryRaw<PublicPageRow[]>`
-      SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex, updatedAt
-      FROM ContentPage
-      WHERE slug = ${source}
-        AND contentKey LIKE 'page:tr:%'
-        AND status = 'published'
-      LIMIT 1
+  const rows = await prisma.$queryRaw<PublicPageRow[]>`
+    SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex, updatedAt
+    FROM ContentPage
+    WHERE slug = ${source}
+      AND contentKey LIKE 'page:tr:%'
+      AND status = 'published'
+    LIMIT 1
     `;
-    return rows[0] ?? null;
-  } catch {
-    return null;
-  }
+  return rows[0] ?? null;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -98,19 +94,14 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
     notFound();
   }
 
-  let rows: RedirectRow[] = [];
-  try {
-    rows = await prisma.$queryRaw<RedirectRow[]>`
-      SELECT valueJson
-      FROM SiteContent
-      WHERE namespace = 'redirect'
-        AND contentKey = ${normalizedSource}
-        AND status = 'published'
-      LIMIT 1
-    `;
-  } catch {
-    notFound();
-  }
+  const rows = await prisma.$queryRaw<RedirectRow[]>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'redirect'
+      AND contentKey = ${normalizedSource}
+      AND status = 'published'
+    LIMIT 1
+  `;
 
   const value = rows[0] ? parseCmsRedirectValue(rows[0].valueJson) : null;
   if (!value || value.source !== normalizedSource) notFound();

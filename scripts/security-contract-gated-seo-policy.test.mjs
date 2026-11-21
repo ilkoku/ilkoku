@@ -129,7 +129,8 @@ test("browser hardening is sitewide without changing auth and discovery index po
     ["/kayit", registration],
     ["/sifremi-unuttum", recovery],
   ]) {
-    assert.match(page, /robots: \{ index: false, follow: true \}/u, `${route} must keep noindex follow`);
+    assert.ok(page.includes("createPublicPageMetadata({"), `${route} must keep complete metadata`);
+    assert.match(page, /noIndex: true/u, `${route} must keep noindex follow`);
     assert.ok(nextConfig.includes(`"${route}"`), `${route} must retain auth noindex header`);
   }
 

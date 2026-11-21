@@ -77,6 +77,36 @@ test("Ahrefs social preview: public catalogue and coverless books retain approve
     "book Open Graph metadata includes a fallback image");
 });
 
+test("SiteGuru: noindex auth and passport pages declare complete canonical OG URLs", () => {
+  const metadataBuilder = source("src/lib/public-page-metadata.ts");
+  contains(metadataBuilder, "url: canonicalUrl,",
+    "shared metadata builder emits the Open Graph URL");
+
+  for (const [route, canonical] of [
+    ["giris", "/giris"],
+    ["kayit", "/kayit"],
+    ["sifremi-unuttum", "/sifremi-unuttum"],
+  ]) {
+    const page = source(`src/app/${route}/page.tsx`);
+    contains(page, "createPublicPageMetadata({",
+      `${route} emits complete social metadata`);
+    contains(page, `canonical: "${canonical}"`,
+      `${route} keeps its stable page address`);
+    contains(page, "noIndex: true",
+      `${route} remains crawlable but excluded from indexing`);
+  }
+
+  const passport = source("src/app/kitap/[slug]/pasaport/page.tsx");
+  contains(passport, "export async function generateMetadata({",
+    "passport OG URL is generated for each book slug");
+  contains(passport, 'canonical: `/kitap/${encodeURIComponent(slug)}/pasaport`',
+    "passport canonical remains stable without from parameter");
+  contains(passport, "noIndex: true",
+    "passport retains the existing noindex policy");
+  contains(passport, "await enforceAdultWorkGate({",
+    "passport adult-access flow remains enforced");
+});
+
 test("P1: public genre and author metadata share request-local DB reads", () => {
   const library = source("src/features/public-discovery/library.ts");
   const author = source("src/app/yazarlar/[publicId]/page.tsx");

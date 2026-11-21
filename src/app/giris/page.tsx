@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createPublicPageMetadata } from "@/lib/public-page-metadata";
 import { redirect } from "next/navigation";
 import { authContent, notificationContent } from "@/content";
 import { AuthShell } from "@/features/auth/components/AuthShell";
@@ -6,7 +7,12 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
 import { getAuthenticatedDestination } from "@/features/auth/destination";
 import { getCurrentProfile } from "@/features/auth/profile";
 
-export const metadata: Metadata = { title: authContent.login.metadataTitle, description: authContent.login.metadataDescription, robots: { index: false, follow: true } };
+export const metadata: Metadata = createPublicPageMetadata({
+  title: authContent.login.metadataTitle,
+  description: authContent.login.metadataDescription,
+  canonical: "/giris",
+  noIndex: true,
+});
 
 const statusMessages: Record<string, string> = {
   "baglanti-gecersiz": notificationContent.routeStatus.invalidLink,

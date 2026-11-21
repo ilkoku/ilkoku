@@ -147,7 +147,7 @@ export function PublicSiteFooter(props: PublicSiteFooterProps) {
         <FooterColumn landing={landing} title="Güven & Standartlar" label="Güven ve standartlar bağlantıları" className="landing-footer__trust" links={publicTrustLinks} />
         <FooterAccount props={props} landing={landing} />
         <FooterColumn landing={landing} title="Destek" label="Destek bağlantıları" links={publicSupportLinks}>
-          {landing ? <FooterContact /> : null}
+          <FooterContact />
         </FooterColumn>
       </div>
       <div className={landing ? "landing-footer__copyright" : "public-trust-footer__bottom"}>

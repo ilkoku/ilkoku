@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
+import { getBookIndexFooterDiscoveryEnabled } from "@/lib/book-index/public-access";
 import {
   READER_EDUCATION_CATEGORIES,
   readerEducationPublicPath,
@@ -70,11 +71,19 @@ export function ReaderEducationShell({ children, activeCategory }: ReaderEducati
         </div>
       </div>
 
-      <LiveHomepageFooter
-        signedIn={false}
-        slogan="İlk cümle, ilk okurun, ilk adımın."
-        copyright={`© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
-      />
+      <ReaderEducationFooter />
     </>
+  );
+}
+
+async function ReaderEducationFooter() {
+  const bookIndexPublished = await getBookIndexFooterDiscoveryEnabled().catch(() => false);
+  return (
+    <LiveHomepageFooter
+      signedIn={false}
+      bookIndexPublished={bookIndexPublished}
+      slogan="İlk cümle, ilk okurun, ilk adımın."
+      copyright={`© ${new Date().getFullYear()} İlkOku. Tüm hakları saklıdır.`}
+    />
   );
 }

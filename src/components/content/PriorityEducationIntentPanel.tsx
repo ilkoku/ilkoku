@@ -105,7 +105,7 @@ export function PriorityEducationIntentPanel({
         </div>
         <div className="rounded-[1.45rem] border border-[#6b52c7]/12 bg-[#efebff] p-5">
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#5b35dd]">
-            Eğitim sonunda elinde
+            Eğitim sonunda elinde olacaklar
           </p>
           <ul className="mt-3 space-y-2">
             {intent.outputs.map((output) => (

@@ -295,7 +295,7 @@ function buildFantastikBlocks(
       type: "cta",
       heading: "Dünyanın kuralları hazır. Şimdi hikâyeyi yaşat.",
       text: "Haritayı, büyü sistemini ve tarihi dosyada bırakma. Onları karakterinin kararlarına, kayıplarına ve değişimine dönüştür; sonra ilk sahneyi yaz.",
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

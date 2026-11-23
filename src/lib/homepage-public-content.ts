@@ -1,7 +1,7 @@
 export const homepagePublicFallback = {
   hero: {
     title: "İlk cümle,\nilk okurun,\nilk adımın.",
-    description: "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil.",
+    description: "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedilsin.",
     primaryCtaLabel: "Eserini Yazmaya Başla",
     primaryCtaHref: "/kayit?rol=writer",
     secondaryCtaLabel: "Eserleri Keşfet",

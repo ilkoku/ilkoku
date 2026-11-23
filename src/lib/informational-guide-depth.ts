@@ -42,7 +42,7 @@ const depth: Record<string, InformationalExtraSection[]> = {
     { id: "arguman-haritasi", type: "steps", heading: "Felsefi argümanı öncül–sonuç haritasına çevir", items: [
       { title: "İddiayı ayır", text: "Metindeki ana sonucu tek cümleye indir." },
       { title: "Öncülleri çıkar", text: "Sonucu taşıyan varsayımları ve ara sonuçları sırala." },
-      { title: "Bağlantıyı sınay", text: "Öncüller doğru olsa sonuç gerçekten takip ediyor mu kontrol et." },
+      { title: "Bağlantıyı sına", text: "Öncüller doğru olsa sonuç gerçekten takip ediyor mu kontrol et." },
     ]},
     { id: "kavram-tanimi", type: "cards", heading: "Kavramları tartışmadan önce kullanımını sabitle", items: [
       { title: "Çalışma tanımı", text: "Özgürlük, adalet veya bilinç gibi kavramı bu metinde hangi anlamda kullandığını belirt." },
@@ -362,7 +362,7 @@ const depth: Record<string, InformationalExtraSection[]> = {
       { title: "Belge görmeden sonuç", text: "Sözleşme veya dosya içeriğini görmeden kesin hüküm verme." },
     ]},
     { id: "sure-ve-usul", type: "cards", heading: "Süre ve usul bilgisini yüksek riskli veri olarak işle", items: [
-      { title: "Başlangıç anı", text: "Sürenin hangi olaydan itibaren başladığını kaynakla." },
+      { title: "Başlangıç anı", text: "Sürenin hangi olaydan itibaren başladığını kaynakla belirt." },
       { title: "İstisna", text: "Tatil, tebligat veya özel usul kuralı gibi istisnaları araştır." },
       { title: "Güncellik", text: "Süre bilgisini yayımdan hemen önce tekrar doğrula." },
     ]},
@@ -440,7 +440,7 @@ const depth: Record<string, InformationalExtraSection[]> = {
     { id: "mesaj-mimarisi", type: "steps", heading: "Mesajı ana fikir → kanıt → eylem şeklinde kur", items: [
       { title: "Ana fikir", text: "Okurun tek cümlede ne anlaması gerektiğini belirle." },
       { title: "Kanıt", text: "İddiayı destekleyen örnek veya veriyi seç." },
-      { title: "Eylem", text: "Okurdan ne yapmasını beklediğini açıklaştır." },
+      { title: "Eylem", text: "Okurdan ne yapmasını beklediğini netleştir." },
     ]},
     { id: "kriz-iletisimi", type: "cards", heading: "Kriz iletişiminde hız ile doğruluğu dengele", items: [
       { title: "Bilinen", text: "Doğrulanmış olguyu açıkça söyle." },
@@ -591,7 +591,7 @@ const depth: Record<string, InformationalExtraSection[]> = {
   seyahat: [
     { id: "guncellik", type: "steps", heading: "Seyahat bilgisini tarih damgasıyla yayımla", items: [
       { title: "Açılış / kapanış", text: "Mekân ve hizmet durumunu yayın öncesi kontrol et." },
-      { title: "Ulaşım", text: "Hat, saat ve ücretin değişebilir olduğunu kaynakla." },
+      { title: "Ulaşım", text: "Hat, saat ve ücretin değişebilir olduğunu kaynakla doğrula." },
       { title: "Güncelleme", text: "Metnin son kontrol tarihini görünür tut." },
     ]},
     { id: "vize-kural", type: "cards", heading: "Vize, giriş ve sağlık kuralında resmî kaynağı öncele", items: [

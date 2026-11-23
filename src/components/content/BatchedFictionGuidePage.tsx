@@ -238,7 +238,7 @@ export async function BatchedFictionGuidePage({ definition }: { definition: Fict
       type: "cta",
       heading: definition.ctaHeading,
       text: definition.ctaText,
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

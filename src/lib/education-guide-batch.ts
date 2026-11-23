@@ -140,7 +140,7 @@ const definitions: EducationGuideDefinition[] = [
     workspaceIntro: "Dize ve ses değişikliklerini görebileceğin sade bir çalışma sistemi kullan.",
     workspaceItems: [
       { title: "Tek şiir / tek sayfa", text: "İlk taslakta şiiri başka metinlerle karıştırmadan gör." },
-      { title: "Sürüm numarası", text: "Her büyük revizyonu ayrı sürümde sakla; kaybettiğin dizeye dönebil." },
+      { title: "Sürüm numarası", text: "Her büyük revizyonu ayrı sürümde sakla; kaybettiğin dizeye dönebilesin." },
       { title: "Sesli okuma işaretleri", text: "Nefes, vurgu ve takıldığın yerleri kenarda işaretle." },
       { title: "Satır alternatifi", text: "Kararsız kaldığın dize kırılmalarını yan yana karşılaştır." },
     ],
@@ -154,7 +154,7 @@ const definitions: EducationGuideDefinition[] = [
       { title: "Dönüşü bul", text: "Şiirin ortasında ne değişiyor, bunu işaretle." },
       { title: "Sonu geçici bırak", text: "Finali ilk taslakta kesinleştirmek zorunda değilsin." },
     ],
-    revisionHeading: "Revizyonda şiiri kelime kelime sınay",
+    revisionHeading: "Revizyonda şiiri kelime kelime sına",
     revisionIntro: "Her kelimenin şiirde neden bulunduğunu sor.",
     revisionItems: [
       { title: "Soyutluk testi", text: "Duygu adlarını çıkarınca şiir hâlâ aynı duyguyu taşıyor mu?" },
@@ -1181,7 +1181,7 @@ const definitions: EducationGuideDefinition[] = [
       { title: "5 · Dil/ses", text: "Anlatıcının cümle ritmini ve kelime alanını belirle." },
       { title: "6 · İlk taslak", text: "Temayı açıklamadan sahneleri tamamla." },
       { title: "7 · Yapı revizyonu", text: "Her sahnenin karakter veya tema üzerinde yeni bir basınç kurduğunu kontrol et." },
-      { title: "8 · Dil revizyonu", text: "Cümlelerin gösteriş değil anlam için çalıştığını sınay." },
+      { title: "8 · Dil revizyonu", text: "Cümlelerin gösteriş değil anlam için çalıştığını sına." },
     ],
     structureHeading: "Yapıyı dış olay ve iç dönüşüm birlikte taşısın", structureIntro: "Karakterin algısı değişmiyorsa yalnız olay değişimi yetmeyebilir.",
     structureItems: [
@@ -1213,7 +1213,7 @@ const definitions: EducationGuideDefinition[] = [
     draftItems: [
       { title: "Sahneyi tamamla", text: "Cümle düzeltmesini sahne bitene kadar ertele." },
       { title: "Tema notunu kenarda tut", text: "Sahneye doğrudan açıklama olarak dökme." },
-      { title: "Karakter seçim yazsın", text: "İç dünyayı yalnız düşünceyle değil davranışla göster." },
+      { title: "Karakter seçimi yazsın", text: "İç dünyayı yalnız düşünceyle değil davranışla göster." },
       { title: "Boşluğu koru", text: "Okurun tamamlayabileceği anlam alanları bırak." },
     ],
     revisionHeading: "Revizyonda metni gösteriş ve belirsizlik testine sok", revisionIntro: "Derinlik ile kapalılık aynı şey değildir.",
@@ -1453,7 +1453,7 @@ const definitions: EducationGuideDefinition[] = [
       { question: "Portre için kişiyle röportaj yapmak şart mı?", answer: "Hayır, fakat doğrudan gözlem ve doğrulanabilir bilgi gerekir. Röportaj güçlü bir kaynak olabilir." },
       { question: "Kişinin bütün hayatını anlatmalı mıyım?", answer: "Hayır. Portre seçicidir; karakteri açan geçmiş bilgisi yeterlidir." },
       { question: "Gerçek kişiyi eleştirebilir miyim?", answer: "Evet, fakat somut davranış ve adil bağlamla; hakaret, uydurma veya gereksiz özel bilgiyle değil." },
-      { question: "Kendimi metne koyabilir miyim?", answer: "Evet. Kişiyle ilişkin portreyi etkiliyorsa anlatıcı konumunu görünür kılmak dürüst olabilir." },
+      { question: "Kendimi metne koyabilir miyim?", answer: "Evet. Kişiye ilişkin portreyi etkiliyorsa anlatıcı konumunu görünür kılmak dürüst olabilir." },
     ],
     finalCaption: "Portre, bir insanı bütün hayatıyla değil onu eşsiz yapan seçilmiş anlarla görünür kılar.", ctaHeading: "Bir davranışı gerçekten gördüysen portreye başlayabilirsin.", ctaText: "Kişini seç, gözlem dosyanı kur ve ilk portre sahnesini İlkOku Yazar Alanı'nda geliştirmeye başla.",
   },

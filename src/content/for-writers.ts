@@ -5,9 +5,7 @@ export const forWritersPageContent = {
   seoDescription: "İlkOku'da eser ve bölüm oluşturma, yayınlama, okur geri bildirimi, iki aşamalı editör incelemesi, Eser Pasaportu ve yayınevi süreçlerini inceleyin.",
   canonical: "/yazarlar-icin",
   updatedAt: "2026-09-08T00:00:00.000Z",
-  body: `İlkOku, yazdığın eseri yalnızca saklayacağın bir çalışma alanı değil; onu adım adım geliştirip hazır olduğunda yayımlayabileceğin bir eser yolculuğu sunar. Bölümlerini oluşturur, okurla buluşur, gerçek etkileşimleri görür, istersen profesyonel editör incelemesi alır ve eserin gelişim izini kayıt altında tutarsın.
-
-En önemli nokta şu: direksiyon sende kalır. Ne zaman yayımlayacağına, hangi geri bildirimi kullanacağına ve eserini nasıl geliştireceğine sen karar verirsin. İlkOku bu kararların etrafına okur, editör ve yayınevi süreçlerini bağlayan bir ekosistem kurar.
+  body: `Ne zaman yayımlayacağına, hangi geri bildirimi kullanacağına ve eserini nasıl geliştireceğine sen karar verirsin. İlkOku bu kararların etrafına okur, editör ve yayınevi süreçlerini bağlar.
 
 ## Eserini oluştur ve bölüm bölüm geliştir
 
@@ -23,7 +21,7 @@ Sınıflandırma eser geliştikçe güncellenebilir. 18+ eserler de yayımlanabi
 
 ## Taslak ile yayın kararını ayrı tut
 
-Kaydetmek yayınlamak değildir. Bölümlerini uzun süre taslakta geliştirebilir; eserinin okurla buluşmaya hazır olduğuna sen karar verebilirsin.
+Kaydetmek yayınlamak değildir. Bölümlerini uzun süre taslakta geliştirebilirsin; eserinin okurla buluşmaya hazır olduğuna sen karar verebilirsin.
 
 Yayın koşulları tamamlandığında uygun eser için herkese açık bir eser vitrini oluşabilir. Kapak, başlık, tür, tanıtım ve yazar adı bu vitrinde gösterilir; bölüm metinlerini okumak ise üyelik, giriş ve ilgili erişim kuralları kapsamında ilerler.
 
@@ -55,9 +53,9 @@ Bu sayede eser yalnız son hâliyle değil, gelişim yolculuğuyla da iz bırak�
 
 Uygun eserler, yetkili yayınevi hesaplarının yeni yazar ve eser değerlendirdiği keşif alanlarında görünür olabilir. Bu, eserinin yalnız okur tarafından değil sektör profesyonelleri tarafından da fark edilmesi için yeni bir kapı açar.
 
-İlkOku'nun rolü eseri doğru değerlendirme ortamına taşımaktır. Yayınevinin ilgilenmesi, sonraki profesyonel görüşme veya ticari kararların başlangıcı olabilir; yayın kararı ve olası anlaşma tarafların ayrıca vereceği kararlardır.
+İlkOku'nun rolü eseri doğru değerlendirme ortamına taşımaktır. Yayınevinin ilgilenmesi, sonraki profesyonel görüşmenin veya ticari kararların başlangıcı olabilir; yayın kararı ve olası anlaşma tarafların ayrıca vereceği kararlardır.
 
-## Eser üzerindeki hakların yazarda kalır
+## Eser üzerindeki haklar yazarda kalır
 
 Eserini İlkOku'ya yüklemek veya yayımlamak fikrî haklarını kendiliğinden platforma, editöre ya da yayınevine devretmez. Yaratıcı karar ve eser üzerindeki haklar yazarda kalır.
 
@@ -71,7 +69,5 @@ Bunu doğru beklenti olarak düşün: İlkOku'nun değeri "seni kesin yayımlar�
 
 ## Yazar olarak başla
 
-İlk eser kaydını oluşturmak için yazar hesabınla başla. Önce taslağını aç, ilk bölümünü geliştir ve eserinin ne zaman yayımlanacağına kendi temponla karar ver.
-
-Hazır olduğunda okurla buluşabilir, profesyonel editör görüşü isteyebilir ve eserinin gelişim yolculuğunu büyütebilirsin. İlkOku'da yeni bir yazar için ilk adım, ilk eseri oluşturmaktır.`
+Yazar hesabınla ilk eser kaydını aç. Taslağını geliştir, hazır olduğunda okurla buluş; ne zaman yayımlayacağına kendi temponla karar ver.`
 } as const;

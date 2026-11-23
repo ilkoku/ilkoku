@@ -67,7 +67,7 @@ const knownSections = new Set([
   "Birinci editör raporunu tamamla ve ikinci aşamayı başlat",
   "İkinci editör bağımsız değerlendirme yapar",
   "Gizliliği görev boyunca koru",
-  "Çıkar çatışmasını gizleme",
+  "Çıkar çatışmasını bildir",
   "Yazarın yaratıcı kararına saygı göster",
   "Editör görüşünün sınırını açık tut",
   "Tamamlanan incelemelerini kayıt üzerinden takip et",
@@ -188,7 +188,7 @@ export function ForEditorsExperience({ body, summary, title, updatedAt }: { body
           <SectionHeading eyebrow="Profesyonel güven" title="Güçlü editörlük, iyi rapor kadar güvenilir çalışma disiplini de ister." description="Gizlilik, çıkar çatışması ve yetki sınırı yazarın profesyonel incelemeye güvenle başvurabilmesini sağlar." />
           <div className="editors-guardrails__grid">
             {sectionMap.get("Gizliliği görev boyunca koru") ? <article><EditorIcon name="shield" /><span>Gizlilik</span><h3>Yazarın çalışma alanını profesyonel güvenle koru.</h3><EditorialBody body={sectionMap.get("Gizliliği görev boyunca koru")!.body} /></article> : null}
-            {sectionMap.get("Çıkar çatışmasını gizleme") ? <article><EditorIcon name="conflict" /><span>Bağımsızlık</span><h3>Şeffaflıkla raporunun güvenilirliğini koru.</h3><EditorialBody body={sectionMap.get("Çıkar çatışmasını gizleme")!.body} /></article> : null}
+            {sectionMap.get("Çıkar çatışmasını bildir") ? <article><EditorIcon name="conflict" /><span>Bağımsızlık</span><h3>Şeffaflıkla raporunun güvenilirliğini koru.</h3><EditorialBody body={sectionMap.get("Çıkar çatışmasını bildir")!.body} /></article> : null}
             {sectionMap.get("Editör görüşünün sınırını açık tut") ? <article><EditorIcon name="lock" /><span>Profesyonel kapsam</span><h3>Raporun değerini, hangi soruya cevap verdiğini açık tutarak güçlendir.</h3><EditorialBody body={sectionMap.get("Editör görüşünün sınırını açık tut")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
           </div>
         </div>

@@ -20,7 +20,7 @@ export const softContractDraftCatalog = [
     code: "SOFT_WRITER_EDITOR_REVIEW",
     title: "Editör İnceleme Süreci Onay Taslağı",
     targetRole: "writer",
-    reason: "Eserin bağımsız editörlerce okunması, notlanması ve değerlendirme sonucunun yazara iletilmesi sürecini açıklaştırmak için.",
+    reason: "Eserin bağımsız editörlerce okunması, notlanması ve değerlendirme sonucunun yazara iletilmesi sürecini netleştirmek için.",
     trigger: "Yazar editör incelemesi talep ettiğinde.",
   },
   {

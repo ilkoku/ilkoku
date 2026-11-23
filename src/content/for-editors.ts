@@ -1,6 +1,6 @@
 export const forEditorsPageContent = {
   title: "Editörler İçin",
-  summary: "Yeni eserlerin gelişiminde profesyonel iz bırak: uygun inceleme görevlerini al, metinden kanıtlanan gerekçeli raporlar üret, bağımsız ikinci görüş modelinde çalış ve tamamlanan incelemelerini kayıt üzerinden takip et.",
+  summary: "Yeni eserlerin gelişiminde profesyonel iz bırak: uygun inceleme görevlerini al, metinden izlenebilen gerekçeli raporlar üret, bağımsız ikinci görüş modelinde çalış ve tamamlanan incelemelerini kayıt üzerinden takip et.",
   seoTitle: "Editörlük ve Eser Değerlendirme | İlkOku",
   seoDescription: "İlkOku editör yolculuğunu keşfedin: Genel Editör Havuzu, görev kilidi, gerekçeli rapor, bağımsız ikinci görüş, gizlilik ve tamamlanan inceleme kayıtları.",
   canonical: "/editorler-icin",
@@ -11,7 +11,7 @@ Editör olarak uygun görevleri alır, belirli eser sürümü üzerinde çalış
 
 ## Editör çalışma alanına yetkili rol ile gir
 
-Editör çalışma yüzeyleri editör rolü ve uygun profil bulunan hesaplara açılır. Public editör profilin, uzmanlık alanını görünür kılan ayrı yüzeydir; özel inceleme alanı ise yalnız üstlendiğin görevlerle bağlantılıdır.
+Editör çalışma yüzeyleri editör rolü ve uygun profil bulunan hesaplara açılır. Herkese açık editör profilin, uzmanlık alanını görünür kılan ayrı yüzeydir; özel inceleme alanı ise yalnız üstlendiğin görevlerle bağlantılıdır.
 
 Bu ayrım, editörün profesyonel görünürlüğü ile yazarın çalışma gizliliğini aynı platformda birlikte korur.
 
@@ -51,7 +51,7 @@ Yayımlanmamış eser metni, özel sürümler, editör notları ve süreç kayı
 
 Görev için zorunlu olmayan kopyalama, harici depolama veya üçüncü taraf paylaşımı yapılmamalıdır. Bu sınır editörü kısıtlamak için değil, yazarın profesyonel incelemeye güvenle başvurabilmesi için vardır.
 
-## Çıkar çatışmasını gizleme
+## Çıkar çatışmasını bildir
 
 Tarafsız değerlendirmeyi etkileyebilecek kişisel, mesleki veya mali ilişki varsa görevi almadan önce ya da öğrendiğin anda bildir. Şeffaflık, profesyonel itibarın ve rapor güvenilirliğinin parçasıdır.
 

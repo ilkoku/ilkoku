@@ -141,9 +141,8 @@ Platformun amacı yazarın eserini görünür kılmak, gelişim yolculuğunu des
 
 | Durum | Kapsam |
 | --- | --- |
-| Kullanımda | Eser oluşturma, taslak ve bölüm yönetimi, yayın, uygun eserlerde public eser vitrini, üyelikle okuma, okur etkileşimleri ve iki aşamalı editör inceleme akışı |
+| Kullanımda | Eser oluşturma, taslak ve bölüm yönetimi, yayın, uygun eserlerde public eser vitrini, genel eser, yazar ve tür katalog dizinleri, üyelikle okuma, okur etkileşimleri ve iki aşamalı editör inceleme akışı |
 | Kontrollü erişimde | Eser Pasaportu ayrıntıları, yetişkin içerik erişimi ve rol/yetkiye bağlı kurumsal yayınevi yüzeyleri |
-| Public gezinmeye kapalı | Genel eser, yazar ve tür katalog dizinleri |
 | Kademeli geliştirmede | Kurumsal paylaşım, bildirim ve diğer ileri yayınevi çalışma araçları |
 
 Bir özellik etkin değilse kullanılabilir gibi gösterilmez. İlkOku'nun ürün yüzeyleri, gerçek erişim ve yayın kurallarıyla birlikte genişletilir.

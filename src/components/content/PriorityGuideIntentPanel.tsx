@@ -84,7 +84,7 @@ const PRIORITY_GUIDE_INTENTS: Readonly<Record<string, PriorityGuideIntent>> = {
       "Kötü bir yönetim ilan etmek yerine sistemin hangi korku veya vaatle meşrulaştığını, gündelik hayatı hangi mekanizmalarla kontrol ettiğini ve karakteri hangi seçimlere zorladığını göster.",
     difference:
       "Distopyayı yalnız karanlık atmosferden ayıran şey sistem mantığıdır. Kural, propaganda, teşvik, ceza ve vatandaşın gündelik uyumu birlikte çalışmadığında dünya yalnız dekor olarak kalır.",
-    caseLabel: "Bu sayfadaki temel çözüm problemi",
+    caseLabel: "Bu sayfada çözülecek temel problem",
     caseText:
       "Okurun 'bu sistem neden böyle sürüyor?' sorusuna kurum, alışkanlık ve çıkar düzeyinde cevap verirken; karakterin direnişini de yalnız cesaret değil gerçek bedel üzerinden kurmak.",
     outputs: [

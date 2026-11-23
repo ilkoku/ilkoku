@@ -1,22 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AllWritingGuidesDirectory } from "@/components/content/AllWritingGuidesDirectory";
 import { EditorialBody } from "@/components/content/PublicEditorialDocument";
 import { getPublicTrustPageVisual } from "@/content/public-trust-page-visuals";
-import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 type Section = { body: string; title: string };
-
-const priorityWritingGuideLinks = [
-  // The flagship Roman guide must be directly discoverable from the main writer hub.
-  { href: "/yazarlar-icin/kurgu/roman", label: "Roman yazarlığı" },
-  { href: "/yazarlar-icin/kurgu/oyku", label: "Öykü yazarlığı" },
-  { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik yazarlığı" },
-  { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu yazarlığı" },
-  { href: "/yazarlar-icin/kurgu/distopya", label: "Distopya yazarlığı" },
-  { href: "/yazarlar-icin/kurgu/dedektif", label: "Dedektif yazarlığı" },
-  { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir yazarlığı" },
-] as const;
 
 type WriterHistoryMilestone = {
   body: string;
@@ -87,7 +76,7 @@ const knownSections = new Set([
   "Editör raporlarından sonra yaratıcı karar yazarda kalır",
   "Eser Pasaportu gelişim geçmişini kayıt altında tutar",
   "Yayınevi keşfi yayın garantisi değildir",
-  "Eser üzerindeki hakların yazarda kalır",
+  "Eser üzerindeki haklar yazarda kalır",
   "İlkOku yazar için neyi garanti etmez",
   "Yazar olarak başla",
 ]);
@@ -109,13 +98,6 @@ function splitSections(body: string) {
   return { intro: intro.join("\n").trim(), sections };
 }
 
-function formatUpdatedAt(value?: Date | string | null) {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("tr-TR", { dateStyle: "long" }).format(date);
-}
-
 function WriterIcon({ name }: { name: "book" | "pen" | "shield" | "readers" | "editors" | "passport" | "publisher" | "rights" }) {
   const paths = {
     book: <><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v18H7.5A3.5 3.5 0 0 0 4 23V5.5Z" /><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v18h4.5A3.5 3.5 0 0 1 20 23V5.5Z" /></>,
@@ -135,11 +117,10 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow: string; titl
   return <header className="how-section-heading"><span>{eyebrow}</span><h2>{title}</h2>{description ? <p>{description}</p> : null}</header>;
 }
 
-export function ForWritersExperience({ body, summary, title, updatedAt }: { body: string; summary: string; title: string; updatedAt?: Date | string | null }) {
+export function ForWritersExperience({ body, summary, title }: { body: string; summary: string; title: string; updatedAt?: Date | string | null }) {
   const parsed = splitSections(body);
   const sectionMap = new Map(parsed.sections.map((section) => [section.title, section]));
   const extras = parsed.sections.filter((section) => !knownSections.has(section.title));
-  const updatedLabel = formatUpdatedAt(updatedAt);
   const visual = getPublicTrustPageVisual("/yazarlar-icin");
 
   return (
@@ -156,7 +137,6 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
               <Link className="how-button how-button--secondary" href="#yazar-ilkleri">Yazarların ilklerini gör</Link>
             </div>
             <div className="how-hero__proof"><span><strong>Keşif</strong> okurla başlar</span><span><strong>2</strong> bağımsız editör görüşü</span><span><strong>Haklar</strong> yazarda</span></div>
-            {updatedLabel ? <small>Son güncelleme: {updatedLabel}</small> : null}
           </div>
           <figure className="how-hero__visual writers-hero__visual">
             <Image src={visual.src} alt={visual.alt} fill priority sizes="(max-width: 860px) 100vw, 54vw" style={{ objectPosition: visual.focalPoint }} />
@@ -172,7 +152,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         <a href="#haklar"><span>04</span>Haklar</a>
       </nav>
 
-      {parsed.intro ? <section className="how-truth how-container" aria-label="Yazar için İlkOku değeri"><span><WriterIcon name="pen" /></span><div><strong>Yaz, keşfe aç, gerçek okurla buluş ve eserini yeni bakışlarla geliştir.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
+      {parsed.intro ? <section className="how-truth how-container" aria-label="Yazar için İlkOku değeri"><span><WriterIcon name="pen" /></span><div><strong>Direksiyon sende kalır.</strong><EditorialBody body={parsed.intro} /></div></section> : null}
 
       <section className="writers-history" id="yazar-ilkleri" aria-labelledby="writer-history-heading">
         <div className="how-container">
@@ -207,8 +187,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
               <p>Belki ilk tamamladığın roman, ilk kez kurduğun bir dünya, ilk kez senin sesinle anlatılan bir karakter ya da yıllardır aklında taşıdığın o hikâye. Edebiyat tarihi geriye dönüp baktığımızda “ilk”leri gösterir; yazarken ise her biri yalnızca cesaret edilmiş bir başlangıçtır.</p>
             </div>
             <div className="writers-history__now-actions">
-              <Link className="how-button how-button--primary" href="/kayit?rol=writer">Kendi ilk cümlene başla <span aria-hidden="true">→</span></Link>
-              <a className="how-button how-button--secondary" href="#yazar-yolculugu">İlkOku&apos;daki yazar yolculuğunu gör</a>
+              <a className="how-button how-button--primary" href="#yazar-yolculugu">İlkOku&apos;daki yazar yolculuğunu gör</a>
             </div>
           </div>
         </div>
@@ -246,7 +225,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
         <div className="how-container">
           <SectionHeading eyebrow="Yaratıcı kontrol ve güven" title="Eserini görünür kılarken haklarını ve yaratıcı kararını koru." description="İlkOku görünürlük ve gelişim fırsatı oluşturur; eser üzerindeki yaratıcı karar ve hak sahipliği sende kalır." />
           <div className="writers-rights__grid">
-            {sectionMap.get("Eser üzerindeki hakların yazarda kalır") ? <article><WriterIcon name="rights" /><span>Haklar</span><h3>Hakların sende kalırken eserini yeni okurlara aç.</h3><EditorialBody body={sectionMap.get("Eser üzerindeki hakların yazarda kalır")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
+            {sectionMap.get("Eser üzerindeki haklar yazarda kalır") ? <article><WriterIcon name="rights" /><span>Haklar</span><h3>Hakların sende kalırken eserini yeni okurlara aç.</h3><EditorialBody body={sectionMap.get("Eser üzerindeki haklar yazarda kalır")!.body} /><Link href="/telif-bildirimi">Telif Bildirimi →</Link></article> : null}
             {sectionMap.get("İlkOku yazar için neyi garanti etmez") ? <article><WriterIcon name="shield" /><span>Gerçekçi beklenti</span><h3>Fırsat alanını büyüt; sonuçları vaat yerine gerçek keşif üzerinden değerlendir.</h3><EditorialBody body={sectionMap.get("İlkOku yazar için neyi garanti etmez")!.body} /></article> : null}
           </div>
         </div>
@@ -256,27 +235,7 @@ export function ForWritersExperience({ body, summary, title, updatedAt }: { body
 
       {extras.length ? <section className="how-extras how-container">{extras.map((section) => <article className="how-editorial-card" key={section.title}><h2>{section.title}</h2><EditorialBody body={section.body} /></article>)}</section> : null}
 
-      <aside className="how-related how-container writers-education" aria-label="Eğitim kategorileri">
-        <SectionHeading eyebrow="Eğitim" title="Yazmak istediğin alanı seç, türüne özel eğitime geç." description="İlkOku Yazarlık Okulu'nda her ana kategori, kendi eser türlerine ve yazarlık mantığına açılır." />
-        <div className="how-related__grid writers-education__grid">
-          {WRITING_CATEGORY_HUBS.map((hub) => (
-            <Link href={hub.href} key={hub.slug}>
-              <strong>{hub.title}</strong>
-              <span>{hub.cardText}</span>
-            </Link>
-          ))}
-        </div>
-        <nav className="writers-education__shortcuts" aria-label="Doğrudan yazarlık rehberleri">
-          <p>İlk rehberini seç</p>
-          <div className="writers-education__shortcuts-links">
-            {priorityWritingGuideLinks.map((guide) => (
-              <Link href={guide.href} key={guide.href}>
-                {guide.label} <span aria-hidden="true">→</span>
-              </Link>
-            ))}
-          </div>
-        </nav>
-      </aside>
+      <AllWritingGuidesDirectory />
     </main>
   );
 }

@@ -277,7 +277,7 @@ const seeds: Record<string, Seed> = {
   },
   macera: {
     idea: [
-      "Bir hedefi haritaya bağla: bulunacak yer, ulaştırılacak nesne veya tamamlanacak rota karakteri gerçekten hareket ettirsin.",
+      "Bir hedefi haritaya bağla: bulunacak yer, ulaştırılacak nesne veya tamamlanacak rota olsun; karakteri gerçekten hareket ettirsin.",
       "Yolculuğa değişen çevresel sorunlar ekle; her durak aynı engelin başka versiyonu olmasın.",
       "Dış hedef ile iç ihtiyaç arasında gerilim kur; karakter varış noktasına yaklaşırken kendisi hakkında neyi değiştirmek zorunda?",
     ],
@@ -297,7 +297,7 @@ const seeds: Record<string, Seed> = {
     ],
     draftAvoid: "Karakteri yalnız tesadüflerle bir sonraki durağa taşıma ve her problemi yeni bir yardımcı karakterle çözme.",
     draftFinish: "Taslağı hedefe ulaşma veya vazgeçme kararının verildiği ve yolculuğun anlamının değiştiği noktaya kadar tamamla.",
-    finalFormat: "Mesafe, rota, hava, araç ve zaman bilgilerinin coğrafi olarak mümkün kaldığını kontrol et.",
+    finalFormat: "Mesafe, rota, hava, araç ve zaman bilgilerinin coğrafi olarak mümkün olduğunu kontrol et.",
     finalReader: "Okur hem dış hedefin ilerlediğini hem yolculuğun karakteri değiştirdiğini hissedebilmeli.",
     outputCore: "Hedef + rota + ana engel + iç ihtiyaç + varış bedelini tek cümlede yaz.",
     outputPlan: "En az beş durak ve her durakta değişecek bir kaynak veya ilişki çıkar.",
@@ -509,7 +509,7 @@ const seeds: Record<string, Seed> = {
   },
   hiciv: {
     idea: [
-      "Eleştirmek istediğin kurum veya alışkanlığı tek cümlede tanımla ve kendi mantığını sonuna kadar uygulandığında doğacak çelişkiyi bul.",
+      "Eleştirmek istediğin kurum veya alışkanlığı tek cümlede tanımla ve kendi mantığının sonuna kadar uygulandığında doğacak çelişkiyi bul.",
       "Gerçek dünyadaki dili biraz büyüt; slogan, form, performans ölçütü veya kurumsal jargon kendi absürtlüğünü açığa çıkarsın.",
       "Hedefi insan grubuna değil güç ilişkisine yönelt; kim ne kazanıyor, kim görünmez kalıyor?",
     ],
@@ -637,7 +637,7 @@ const seeds: Record<string, Seed> = {
     scene: "Her yeni kanıt, önceki yorumu ya güçlendirsin ya da bozsın; yalnız daha büyük efekt üretmek için eklenmesin.",
     draft: "İlk taslakta karakterleri hemen kesin inanan veya kesin reddeden klişelere ayırma.",
     revise: "Revizyonda kanıtların tutarlılığını, olgunun sınırını ve belirsizliğin hileye dönüşmediğini kontrol et.",
-    finish: "Finalde olay tamamen açıklanabilir veya gizemli kalabilir; fakat karakterin ilişki ve seçimi sonuçlanmalı.",
+    finish: "Finalde olay tamamen açıklanabilir veya gizemli kalabilir; fakat karakterin ilişkisi ve seçimi sonuçlanmalı.",
     workspace: [
       "Kanıt çizelgesi: olay, tanık, fiziksel iz ve alternatif açıklamayı birlikte yaz.",
       "Kural listesi: olgu ne zaman görünür, kim etkilenir, neyi yapamaz?",
@@ -683,9 +683,13 @@ const seeds: Record<string, Seed> = {
   },
 };
 
+// Sıfat olan tür adlarının ("Romantik fikri") isim tamlaması kurması için "hikâye" eklenir.
+const ADJECTIVE_GENRE_LABELS = new Set(["Fantastik", "Romantik", "Gotik", "Paranormal", "Post-Apokaliptik"]);
+
 function build(seed: Seed, label: string, projectName: string): FictionPedagogyParity {
+  const ideaLabel = ADJECTIVE_GENRE_LABELS.has(label) ? `${label} hikâye` : label;
   return {
-    ideaHeading: `${label} fikri nereden gelir?`,
+    ideaHeading: `${ideaLabel} fikri nereden gelir?`,
     ideaIntro: "İlhamı beklemek yerine türün kendi motorunu kullan. Aşağıdaki başlangıç yollarından biri tek cümlelik çekirdeğe dönüşebilir.",
     ideaItems: [
       { title: "Gözlem / sorun", text: seed.idea[0] },
@@ -705,7 +709,7 @@ function build(seed: Seed, label: string, projectName: string): FictionPedagogyP
       { title: "6 · Bitmiş eser ölçütünü karşıla", text: seed.finish },
     ],
     workspaceHeading: `${label} için yazım ve çalışma düzeni`,
-    workspaceIntro: "Görsel olmasa da öğrenci hangi dosyaları, notları ve süreklilik kayıtlarını tutacağını bilmelidir.",
+    workspaceIntro: "Yazar hangi dosyaları, notları ve süreklilik kayıtlarını tutacağını bilmelidir.",
     workspaceItems: [
       { title: "Ana çalışma dosyası", text: seed.workspace[0] },
       { title: "Süreklilik / sistem kaydı", text: seed.workspace[1] },

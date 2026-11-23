@@ -278,7 +278,7 @@ function buildBilimKurguBlocks(
       type: "faq",
       heading: "Bilim kurgu yazarken sık sorulanlar",
       items: [
-        { question: "Bilim kurgu yazmak için bilim insanı olmam gerekir mi?", answer: "Hayır. Fakat hikâyenin dayandığı temel alanı araştırmalı, neyin gerçek bilgi neyin kendi varsayımın olduğunu bilmelisin. Güvenilirlik uzman unvanından değil, tutarlı araştırma ve kurallardan gelir." },
+        { question: "Bilim kurgu yazmak için bilim insanı olmam gerekir mi?", answer: "Hayır. Fakat hikâyenin dayandığı temel alanı araştırmalı, neyin gerçek bilgi, neyin kendi varsayımın olduğunu bilmelisin. Güvenilirlik uzman unvanından değil, tutarlı araştırma ve kurallardan gelir." },
         { question: "Bilimsel olarak bugün imkânsız bir teknoloji kullanabilir miyim?", answer: "Evet. Bilim kurgu spekülasyona izin verir. Önemli olan bu sıçramanın kendi kurallarını belirlemek ve hikâye ilerledikçe gerektiği için değiştirmemektir." },
         { question: "Okura teknolojinin nasıl çalıştığını tamamen açıklamalı mıyım?", answer: "Hayır. Okur, karakterin kararını ve sonucu anlamak için gereken kısmı bilmelidir. Yazar olarak sistemi daha ayrıntılı bilmen, metinde bütün ayrıntıyı göstermen gerektiği anlamına gelmez." },
         { question: "Çok teknik terim kullanmak eseri daha inandırıcı yapar mı?", answer: "Genellikle hayır. İnandırıcılık, doğru yerde kullanılan somut ayrıntı ve nedensellikten gelir. Gereksiz jargon okurun hikâyeden kopmasına yol açabilir." },
@@ -297,7 +297,7 @@ function buildBilimKurguBlocks(
       type: "cta",
       heading: "Varsayımın hazır. Şimdi sonuçlarını yaşat.",
       text: "Bilimi ve teknolojiyi açıklama dosyasında bırakma. Onları karakterinin kararlarına, kayıplarına ve yeni gerçekliğine dönüştür; sonra ilk sahneyi yaz.",
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

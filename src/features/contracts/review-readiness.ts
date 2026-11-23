@@ -115,7 +115,7 @@ export const contractReviewReadiness: readonly ContractReviewReadiness[] = [
     reviewState: "legal_review",
     summary: "Yazar tarafındaki yayın niyetini bağlayıcı nihai yayın sözleşmesinden ayırıyor; hak devri ve ticari garanti üretmiyor. Operasyonel kullanım şimdilik pasif tutuluyor.",
     legalReviewItems: [
-      "Belgenin bağlayıcı olmayan niyet metni niteliği ve no-shop/münhasırlık maddesinin bağlayıcılığı hukukçu tarafından açıklaştırılmalı.",
+      "Belgenin bağlayıcı olmayan niyet metni niteliği ve no-shop/münhasırlık maddesinin bağlayıcılığı hukukçu tarafından netleştirilmeli.",
       "60 günlük geçerlilik, 30 günlük no-shop ve nihai yayın sözleşmesine geçiş etkisi hukuki olarak kontrol edilmeli.",
     ],
     ownerDecisionItems: [

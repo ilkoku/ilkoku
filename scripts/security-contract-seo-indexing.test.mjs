@@ -986,13 +986,13 @@ test("Writer hub includes the real Roman flagship and other indexable priority g
   ];
 
   for (const path of links) {
-    assertContains(writerHub, `href: "${path}"`, `writer hub priority link ${path}`);
     assertContains(searchPolicy, `"${path}"`, `indexable URL retained ${path}`);
   }
-  assertContains(writerHub, 'aria-label="Doğrudan yazarlık rehberleri"', "accessible quick links");
-  assertContains(writerHub, "priorityWritingGuideLinks.map((guide)", "SSR-rendered real link list");
-  assertContains(writerHub, "<Link href={guide.href}", "crawler-visible href anchors");
-  assertContains(styles, ".writers-education__shortcuts-links", "responsive link styling");
+  const directory = source("src/components/content/AllWritingGuidesDirectory.tsx");
+  assertContains(writerHub, "<AllWritingGuidesDirectory />", "single education directory is mounted on the writer hub");
+  assertContains(directory, "getWritingGuideEntries(hub.category, hub.href).map((guide)", "SSR-rendered real link list");
+  assertContains(directory, "<Link href={guide.href}", "crawler-visible href anchors");
+  assertContains(styles, ".writers-directory__list", "responsive directory styling");
 });
 
 test("Writer hub sitemap lastmod reflects the real November 16 Roman link update", () => {

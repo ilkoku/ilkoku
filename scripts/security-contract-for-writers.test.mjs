@@ -87,7 +87,7 @@ test("writer inspiration journey is detailed, writer-only and connects history b
   contains(experience, 'id="yazar-ilkleri"', "writer history section anchor");
   contains(experience, "Her şey bir “ilk” ile başlar", "homepage history narrative continuity");
   contains(experience, "Sıradaki “ilk” henüz yazılmadı", "present-day writer handoff");
-  contains(experience, "Kendi ilk cümlene başla", "history-to-registration CTA");
+  notContains(experience, "Kendi ilk cümlene başla", "registration CTA lives only in the hero and the closing section");
   contains(experience, 'href="#yazar-ilkleri"', "hero-to-history CTA");
   contains(experience, 'href="#yazar-yolculugu"', "history-to-product-flow continuation");
   contains(css, ".writers-history__grid", "writer history responsive grid");

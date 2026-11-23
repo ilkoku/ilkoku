@@ -289,7 +289,7 @@ function buildNovellaBlocks(
       type: "cta",
       heading: "Ana dönüşümü kurdun. Şimdi novellanı tamamla.",
       text: "Hacmi büyütmeye çalışma. Sahne zincirini tamamla, gereksiz yan hatları temizle ve karakterin başlangıçtan finale nasıl değiştiğini görünür bırak.",
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

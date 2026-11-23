@@ -62,35 +62,168 @@
   }
 }
 
-/* Madde 14: directly link to priority public writing lessons from the writer hub. */
-.writers-education__shortcuts {
-  margin-top: 1.5rem;
+/* Tüm rehberler dizini: solda yapışkan kategori menüsü, sağda kategori blokları. Bağlantılar sunucuda düz <a>. */
+.writers-directory {
+  padding-bottom: 4.5rem;
+  scroll-margin-top: 11rem;
 }
 
-.writers-education__shortcuts > p {
-  margin: 0 0 0.65rem;
-  font-weight: 700;
+.writers-directory .how-section-heading {
+  max-width: 48rem;
 }
 
-.writers-education__shortcuts-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+.writers-directory__layout {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem;
+  margin-top: 1.75rem;
 }
 
-.writers-education__shortcuts-links a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid rgba(107, 82, 199, 0.24);
-  border-radius: 999px;
+.writers-directory__menu {
+  position: sticky;
+  top: 11rem;
+}
+
+.writers-directory__menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  border-left: 2px solid rgba(107, 82, 199, 0.18);
+}
+
+.writers-directory__menu a {
+  display: block;
+  margin-left: -2px;
+  padding: 0.5rem 0.9rem;
+  border-left: 2px solid transparent;
+  color: #4a4268;
+  font-size: 0.95rem;
+  font-weight: 600;
   text-decoration: none;
-  color: inherit;
-  transition: border-color 180ms ease;
+  transition: color 160ms ease, border-color 160ms ease;
 }
 
-.writers-education__shortcuts-links a:hover,
-.writers-education__shortcuts-links a:focus-visible {
-  border-color: #6b52c7;
+.writers-directory__menu a:hover,
+.writers-directory__menu a:focus-visible {
+  color: #6b52c7;
+  border-left-color: #6b52c7;
+}
+
+.writers-directory__list {
+  display: grid;
+  gap: 1rem;
+}
+
+.writers-directory .writers-directory__list > article {
+  scroll-margin-top: 11rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.9rem;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(146, 119, 255, 0.2), transparent 10rem),
+    linear-gradient(145deg, #17122f 0%, #211746 58%, #2b1c57 100%);
+  box-shadow: 0 1.1rem 2.8rem rgba(23, 18, 47, 0.15);
+  padding: 1.75rem;
+}
+
+.writers-directory__list h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.writers-directory__list article > p {
+  margin: 0 0 1rem;
+  max-width: 40rem;
+  color: #b9b0d6;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.writers-directory__list h3 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.writers-directory__list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 0.1rem;
+}
+
+.writers-directory__list li a {
+  display: block;
+  padding: 0.35rem 0;
+  color: #d8d1eb;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.writers-directory__list a:hover,
+.writers-directory__list a:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 64rem) {
+  .writers-directory__layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .writers-directory__menu {
+    position: sticky;
+    top: 8.5rem;
+    z-index: 2;
+    margin: 0 -0.25rem;
+    padding: 0.5rem 0.25rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    overflow-x: auto;
+  }
+
+  .writers-directory__menu ul {
+    display: flex;
+    gap: 0.5rem;
+    border-left: 0;
+    width: max-content;
+  }
+
+  .writers-directory__menu a {
+    margin: 0;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(107, 82, 199, 0.24);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .writers-directory__menu a:hover,
+  .writers-directory__menu a:focus-visible {
+    border-color: #6b52c7;
+  }
+
+  .writers-directory .writers-directory__list > article {
+    scroll-margin-top: 14rem;
+  }
+}
+
+@media (max-width: 36rem) {
+  .writers-directory__list ul {
+    grid-template-columns: 1fr;
+  }
+
+  .writers-directory .writers-directory__list > article {
+    border-radius: 1.6rem;
+    padding: 1.4rem;
+  }
 }

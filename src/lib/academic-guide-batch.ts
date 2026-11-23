@@ -163,7 +163,7 @@ const definitions: AcademicGuideDefinition[] = [
     finalIntro: "Metni yalnız yazım hatası için değil araştırma iddiasının güvenilirliği için de denetle.",
     finalItems: [
       { title: "Soru–sonuç uyumu", text: "Sonuç gerçekten araştırma sorusunu cevaplıyor mu?" },
-      { title: "Atıf bütünlüğü", text: "Dış iddialar kaynaklı, kaynakça kayıtları tam mı?" },
+      { title: "Atıf bütünlüğü", text: "Dış iddialar kaynak gösterilmiş mi, kaynakça kayıtları tam mı?" },
       { title: "Etik / beyan", text: "Gerekli izin, finansman ve çıkar çatışması beyanları hazır mı?" },
       { title: "Dergi uyumu", text: "Kapsam, kelime sınırı, biçim ve dosya gereklilikleri karşılanıyor mu?" },
     ],
@@ -190,7 +190,7 @@ const definitions: AcademicGuideDefinition[] = [
     ],
     finalCaption: "Akademik makale, iddiası kanıtından büyük olmadığında ve araştırma yolu okur tarafından izlenebildiğinde güvenilir hale gelir.",
     ctaHeading: "Makale araştırma dosyanı kur",
-    ctaText: "Sorun, literatür haritan ve yöntem planın hazırsa İlkOku Yazar Alanı'nda makale taslağını oluşturmaya başla.",
+    ctaText: "Sorunun, literatür haritan ve yöntem planın hazırsa İlkOku Yazar Alanı'nda makale taslağını oluşturmaya başla.",
   },
   {
     category: "Akademik",
@@ -308,7 +308,7 @@ const definitions: AcademicGuideDefinition[] = [
       },
     ],
     draftHeading: "Araştırma raporunun ilk taslağını sonuçtan geriye doğru kur",
-    draftIntro: "Önce ne yaptığını ve ne bulduğunu açıklaştır, sonra giriş ve bağlamı keskinleştir.",
+    draftIntro: "Önce ne yaptığını ve ne bulduğunu netleştir, sonra giriş ve bağlamı keskinleştir.",
     draftItems: [
       { title: "Yöntemi yaz", text: "Prosedür hafızadayken ayrıntıları kaydet." },
       { title: "Bulguları düzenle", text: "Araştırma sorusuna göre tablo, tema veya analiz çıktısını sırala." },
@@ -360,7 +360,7 @@ const definitions: AcademicGuideDefinition[] = [
     ],
     finalCaption: "İyi araştırma, yalnız cevabı değil cevaba nasıl ulaşıldığını da denetlenebilir hale getirir.",
     ctaHeading: "Araştırma protokolünü oluşturmaya başla",
-    ctaText: "Problemin ve araştırma sorun hazırsa İlkOku Yazar Alanı'nda araştırma dosyanı adım adım kur.",
+    ctaText: "Problemin ve araştırma sorunun hazırsa İlkOku Yazar Alanı'nda araştırma dosyanı adım adım kur.",
   },
   {
     category: "Akademik",
@@ -528,7 +528,7 @@ const definitions: AcademicGuideDefinition[] = [
       { title: "Howard S. Becker", text: "Akademik yazıda üretim, revizyon ve yazma alışkanlıklarına yaklaşımını incele." },
     ],
     faq: [
-      { question: "Tez konusu ne kadar dar olmalı?", answer: "Süren, veri erişimin ve yöntemin içinde gerçekten cevaplanabilecek kadar dar; akademik katkı üretmeye yetecek kadar anlamlı olmalıdır." },
+      { question: "Tez konusu ne kadar dar olmalı?", answer: "Konu; süren, veri erişimin ve yöntemin içinde gerçekten cevaplanabilecek kadar dar; akademik katkı üretmeye yetecek kadar anlamlı olmalıdır." },
       { question: "Bölümleri sırayla mı yazmalıyım?", answer: "Zorunlu değil. Yöntem ve analiz bölümleri erken yazılabilir; ancak düzenli bütünlük kontrolü yaparak ana sorudan kopmamak gerekir." },
       { question: "Danışman her şeyi düzeltmeli mi?", answer: "Hayır. Danışman yön, eleştiri ve akademik denetim sağlar; araştırma kararlarını anlamak ve metnin sorumluluğunu taşımak araştırmacının görevidir." },
     ],
@@ -869,7 +869,7 @@ const definitions: AcademicGuideDefinition[] = [
     ],
     finalCaption: "Vaka analizi, olayın cazibesini değil kanıt zincirini merkeze aldığında akademik açıklamaya dönüşür.",
     ctaHeading: "Vaka analiz dosyanı kur",
-    ctaText: "Analitik sorun ve vaka sınırın hazırsa İlkOku Yazar Alanı'nda kaynak ve kronoloji dosyanı oluşturmaya başla.",
+    ctaText: "Analitik soru ve vaka sınırın hazırsa İlkOku Yazar Alanı'nda kaynak ve kronoloji dosyanı oluşturmaya başla.",
   },
   {
     category: "Akademik",
@@ -880,7 +880,7 @@ const definitions: AcademicGuideDefinition[] = [
     summary: "Kaynakları peş peşe özetleme; açık bir inceleme sorusuyla literatürü sistemli biçimde ara, değerlendir, karşılaştır ve yeni bir senteze dönüştür.",
     alts: alts("Akademik İnceleme", "Dijital Okuma ve Anlama Üzerine Bulgular"),
     orientationHeading: "Akademik inceleme, kaynak özeti değil literatürden yeni bir bilgi haritası üretme işidir",
-    orientationBody: "İncelemede veri setin çoğu zaman yayımlanmış çalışmalardır. Bu nedenle hangi çalışmaları nasıl bulduğun, neden dahil ettiğin, kalite ve çelişkileri nasıl değerlendirdiğin sonucu doğrudan etkiler. Sentez, kaynakları tek tek anlatmak değil aralarındaki örüntüyü açıklamaktır.",
+    orientationBody: "İncelemede veri setin çoğu zaman yayımlanmış çalışmalardan oluşur. Bu nedenle hangi çalışmaları nasıl bulduğun, neden dahil ettiğin, kalite ve çelişkileri nasıl değerlendirdiğin sonucu doğrudan etkiler. Sentez, kaynakları tek tek anlatmak değil aralarındaki örüntüyü açıklamaktır.",
     ideaHeading: "İnceleme sorusunu alanın gerçek belirsizliğinden çıkar",
     ideaIntro: "‘Bu konuda neler yazılmış?’ yerine karşılaştırılabilir bir soru kur.",
     ideaItems: [
@@ -1041,7 +1041,7 @@ const definitions: AcademicGuideDefinition[] = [
     ],
     finalCaption: "Akademik inceleme, çok kaynak topladığında değil kaynakları şeffaf seçim ve analitik sentezle yeni bir bilgi haritasına dönüştürdüğünde tamamlanır.",
     ctaHeading: "İnceleme protokolünü kur",
-    ctaText: "İnceleme sorun ve kapsamın hazırsa İlkOku Yazar Alanı'nda arama, seçim ve sentez dosyanı oluşturmaya başla.",
+    ctaText: "İnceleme sorunun ve kapsamın hazırsa İlkOku Yazar Alanı'nda arama, seçim ve sentez dosyanı oluşturmaya başla.",
   },
 ];
 

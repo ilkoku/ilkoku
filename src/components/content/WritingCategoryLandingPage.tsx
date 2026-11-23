@@ -2,6 +2,7 @@ import Link from "next/link";
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
+import { FEATURED_GUIDE_SLUGS, getWritingGuideEntries } from "@/lib/writing-guide-directory";
 import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
 
@@ -10,6 +11,11 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
   const priorityGenres = genres.filter(
     (genre) => !isSoftLaunchSearchExcludedPath(`${hub.href}/${genre.slug}`),
   );
+  const guideEntries = getWritingGuideEntries(hub.category, hub.href);
+  const featuredEntries = FEATURED_GUIDE_SLUGS[hub.category].flatMap((slug) => {
+    const entry = guideEntries.find((item) => item.slug === slug);
+    return entry && priorityGenres.some((genre) => genre.slug === slug) ? [entry] : [];
+  });
   const canonicalUrl = `https://ilkoku.com${hub.href}`;
   const structuredData = [
     {
@@ -138,7 +144,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
           </div>
         </section>
 
-        {priorityGenres.length > 0 ? (
+        {featuredEntries.length > 0 ? (
           <section
             className="mt-6 rounded-[2.25rem] border border-[#6b52c7]/10 bg-[#efebff] px-7 py-9 shadow-[0_14px_44px_rgba(91,53,221,0.08)] sm:px-10 sm:py-11"
             aria-labelledby={`${hub.slug}-baslangic-rehberleri`}
@@ -156,15 +162,15 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
               Bu rehberler, kategori içindeki temel yazarlık problemlerini farklı çalışma biçimleriyle ele alır. İhtiyacına en yakın rehberden başlayıp diğer türlere daha sonra geçebilirsin.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {priorityGenres.map((genre) => (
+              {featuredEntries.map((entry) => (
                 <Link prefetch={false}
                   className="group rounded-[1.35rem] border border-[#6b52c7]/15 bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgba(34,23,70,0.05)] transition hover:-translate-y-0.5 hover:border-[#6b52c7]/35 hover:shadow-[0_14px_32px_rgba(34,23,70,0.08)]"
-                  href={`${hub.href}/${genre.slug}`}
-                  key={genre.slug}
+                  href={entry.href}
+                  key={entry.slug}
                 >
-                  <strong className="block text-sm font-extrabold text-[#211746]">{genre.label} yazarlık rehberi</strong>
+                  <strong className="block text-sm font-extrabold text-[#211746]">{entry.label} yazarlık rehberi</strong>
                   <span className="mt-1 block text-xs font-semibold leading-5 text-[#6b6472]">
-                    Türe özgü yöntem, örnek ve uygulama planını incele <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                    {entry.summary || "Türe özgü yöntem, örnek ve uygulama planını incele"} <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
                   </span>
                 </Link>
               ))}
@@ -198,7 +204,7 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
             <p className="mt-5 max-w-3xl text-base leading-8 text-[#5f5869]">{hub.outcomeIntro}</p>
           </div>
           <div className="rounded-[2.2rem] border border-black/[0.06] bg-white p-6 shadow-[0_14px_44px_rgba(34,23,70,0.06)] sm:p-8">
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a78c8]">Eğitim sonunda elinde</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a78c8]">Eğitim sonunda elinde olacaklar</p>
             <ul className="mt-5 space-y-4">
               {hub.outcomes.map((item) => (
                 <li className="flex gap-3 text-sm font-semibold leading-7 text-[#423a52]" key={item}>

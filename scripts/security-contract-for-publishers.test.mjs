@@ -75,7 +75,10 @@ test("publisher page follows the proven /yazarlar-icin public-page shell without
     notContains(experience, '<header className="how-header">', "dead header markup removed");
   }
 
-  contains(writer, 'className="how-related how-container', "writer related-section shell classes");
+  // Yazar eğitim bölümü artık tek bileşende (AllWritingGuidesDirectory); how-container kabuğunu korur.
+  const writerDirectory = source("src/components/content/AllWritingGuidesDirectory.tsx");
+  contains(writer, "<AllWritingGuidesDirectory />", "writer route mounts its education section");
+  contains(writerDirectory, 'className="writers-directory how-container"', "writer education section shell classes");
   contains(publisher, 'className="how-related how-container"', "publisher related-section shell classes");
   contains(publisher, 'className="publishers-start how-container"', "writer-style final CTA container");
   contains(styles, ".publishers-start { display:grid", "publisher CTA local style");

@@ -9,6 +9,7 @@ import { getPublishedRoleCardsState } from "@/lib/cms-role-card-store";
 import { getHomepageAffiliatePlacement } from "@/lib/affiliate-placement";
 import { getBookIndexFooterDiscoveryEnabled } from "@/lib/book-index/public-access";
 import { cmsRoleMeta, roleCardsFromPayload } from "@/lib/cms-role-cards";
+import { WRITING_CATEGORY_HUBS } from "@/lib/writing-category-hubs";
 
 import History670 from "./history-670";
 import LiveHomepageFooter from "./live-footer";
@@ -130,6 +131,54 @@ async function HomepageRoleSection({
   );
 }
 
+const homepageFeaturedGuides = [
+  { href: "/yazarlar-icin/kurgu/roman", label: "Roman nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/oyku", label: "Öykü nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/fantastik", label: "Fantastik nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/bilim-kurgu", label: "Bilim kurgu nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/distopya", label: "Distopya nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/dedektif", label: "Dedektif öyküsü ve romanı nasıl yazılır?" },
+  { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir nasıl yazılır?" },
+  { href: "/yazarlar-icin/akademik/tez", label: "Tez nasıl yazılır?" },
+] as const;
+
+// Sunucuda çizilen düz bağlantılar: açılır menüye veya istemci koduna bağlı değil.
+function HomepageWritingSchoolSection() {
+  return (
+    <section className="bg-white py-20" id="yazarlik-okulu" aria-labelledby="yazarlik-okulu-baslik">
+      <div className="nx-shell">
+        <header className="nx-section-heading" style={{ marginBottom: 32 }}>
+          <p className="nx-eyebrow nx-eyebrow--violet">Yazarlık Okulu</p>
+          <h2 id="yazarlik-okulu-baslik" style={{ fontSize: "clamp(2.2rem, 4vw, 3.6rem)" }}>Yazmayı türüne göre öğren.</h2>
+          <p>Yedi ana kategoride türe özel yazarlık rehberleri: roman ve öyküden şiire, senaryodan tez yazımına.</p>
+        </header>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {WRITING_CATEGORY_HUBS.map((hub) => (
+            <li key={hub.slug}>
+              <Link prefetch={false} href={hub.href} className="block h-full border border-[rgba(38,25,80,.12)] p-5 transition hover:border-[#6e4df5]">
+                <strong className="block text-base text-[#261858]">{hub.title}</strong>
+                <span className="mt-2 block text-sm leading-6 text-[#6a6572]">{hub.cardText}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <nav className="mt-8" aria-label="Öne çıkan yazarlık rehberleri">
+          <p className="text-sm font-extrabold text-[#261858]">Öne çıkan rehberler</p>
+          <ul className="mt-3 flex flex-wrap gap-3">
+            {homepageFeaturedGuides.map((guide) => (
+              <li key={guide.href}>
+                <Link prefetch={false} href={guide.href} className="inline-block border border-[rgba(38,25,80,.12)] px-4 py-2 text-sm font-semibold text-[#4b2dbf] transition hover:border-[#6e4df5]">
+                  {guide.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </section>
+  );
+}
+
 async function HomepageAffiliateSection() {
   const affiliatePlacement = await getHomepageAffiliatePlacement();
   return affiliatePlacement.enabled
@@ -185,7 +234,7 @@ export default async function HomepageExperience() {
           <div className="nx-hero__copy">
             <p className="nx-eyebrow"><LandingIcon name="book" /> Yazarları, okurları, editörleri ve yayınevlerini buluşturan dijital platform</p>
             <h1>{heroLines.length > 0 ? heroLines.map((line, index) => <span key={`${index}-${line}`}>{index > 0 ? " " : null}{line}</span>) : <span>{heroTitle}</span>}</h1>
-            <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedil."}</p>
+            <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedilsin."}</p>
             <div className="nx-hero__actions"><Link prefetch={false} href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link prefetch={false} href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
           <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={45} sizes="(max-width: 480px) 82vw, (max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
@@ -198,6 +247,8 @@ export default async function HomepageExperience() {
       <Suspense fallback={null}>
         <HomepageRoleSection roleSection={roleSection} />
       </Suspense>
+
+      <HomepageWritingSchoolSection />
 
       <Suspense fallback={null}>
         <HomepageAffiliateSection />

@@ -78,7 +78,7 @@ Bu yapı, ikinci görüşün ilk raporu tekrar etmesi yerine esere gerçekten ye
 
 Yayımlanmamış eser metni, özel sürümler, yazarın kamuya açık olmayan bilgileri, editör notları ve süreç kayıtları yalnız görev amacıyla kullanılır. İnceleme erişimi editöre eser üzerinde yayınlama, çoğaltma veya başka bir kullanım hakkı vermez.
 
-Yayınlanmamış eser veya kullanıcı verisi, İlkOku tarafından açıkça yetkilendirilmemiş üçüncü taraf servislerine taşınmamalıdır. Bu sınır, yazarın profesyonel değerlendirme isterken çalışma alanını güvenle kullanabilmesi için korunur.
+Yayımlanmamış eser veya kullanıcı verisi, İlkOku tarafından açıkça yetkilendirilmemiş üçüncü taraf servislerine taşınmamalıdır. Bu sınır, yazarın profesyonel değerlendirme isterken çalışma alanını güvenle kullanabilmesi için korunur.
 
 ## Yazarın yaratıcı kararı
 

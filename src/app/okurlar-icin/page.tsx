@@ -101,7 +101,7 @@ export default function ReadersHomePage() {
               Eser seçmeyi, metinle çalışmayı, anlatıyı çözümlemeyi ve okur görüşünü gerekçeli biçimde ifade etmeyi adım adım öğren.
             </p>
             <p className="mt-7 max-w-3xl text-base leading-8 text-[#d8d2e8]">
-              Okurluk Okulu; okumaya başlamadan eleştirel okumaya, türleri anlamaktan yorum ve eleştiri yazmaya uzanan birbirini tamamlayan eğitimlerden oluşur.
+              Okurluk Okulu; okumaya başlamaktan eleştirel okumaya, türleri anlamaktan yorum ve eleştiri yazmaya uzanan birbirini tamamlayan eğitimlerden oluşur.
             </p>
           </header>
 
@@ -173,7 +173,7 @@ export default function ReadersHomePage() {
             </div>
             <div className="mt-6 rounded-[1.5rem] border border-[#6b52c7]/15 bg-[#efebff] px-6 py-6">
               <h3 className="text-lg font-extrabold text-[#211746]">Örnek: On beş dakikalık okuma kararı</h3>
-              <p className="mt-3 text-sm leading-7 text-[#625b6d]">Yalnızca akşamları on beş dakikan olduğunu düşün. Uzun bir kitaba hemen söz vermek yerine iki eserin ilk sayfalarına bak; hangisinin dili şu anki dikkatine uyuyor, hangisi merakını canlı tutuyor? Birini seç, üç akşam dene ve her okuma sonunda tek cümle yaz: Bugün hangi soru aklımda kaldı? Sonunda eserini ve okuma zamanını sürdürüp sürdürmeyeceğine bu küçük kayıtlara bakarak karar ver.</p>
+              <p className="mt-3 text-sm leading-7 text-[#625b6d]">Yalnızca akşamları on beş dakikan olduğunu düşün. Uzun bir kitaba hemen söz vermek yerine iki eserin ilk sayfalarına bak; hangisinin dili şu anki dikkatine uyuyor, hangisi merakını canlı tutuyor? Birini seç, üç akşam dene ve her okuma sonunda tek cümle yaz: Bugün hangi soru aklımda kaldı? Sonunda bu eseri okumaya devam edip etmeyeceğine ve okuma zamanını sürdürüp sürdürmeyeceğine bu küçük kayıtlara bakarak karar ver.</p>
             </div>
           </section>
 

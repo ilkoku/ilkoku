@@ -261,7 +261,7 @@ function buildOykuBlocks(visuals: OykuVisuals, alts: OykuAlts, title: string, su
       type: "cta",
       heading: "Öykünün çekirdeğini buldun. Şimdi onu yazıya dönüştür.",
       text: "İlk taslağı mükemmel yapmak zorunda değilsin. Odağını koru, sahneyi bitir ve sonra metni sıkılaştır.",
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

@@ -143,7 +143,7 @@ function build(profile: Profile): InformationalGuideDefinition {
     masters: profile.masters,
     faq: profile.faq,
     finalCaption: `${label} yazısı, yalnız doğru bilgi değil doğru kapsam, açık kaynak ve dürüst belirsizlik üretmelidir.`,
-    ctaHeading: `Sorun ve kaynak planın hazırsa ${label.toLocaleLowerCase("tr-TR")} taslağına başlayabilirsin.`,
+    ctaHeading: `Sorunun ve kaynak planın hazırsa ${label.toLocaleLowerCase("tr-TR")} taslağına başlayabilirsin.`,
     ctaText: `Araştırma dosyanı kur, ilk doğrulanmış bölümünü yaz ve ${label.toLocaleLowerCase("tr-TR")} eserini İlkOku Yazar Alanı'nda geliştirmeye başla.`,
   };
 }
@@ -581,7 +581,7 @@ const profiles: Profile[] = [
       { title: "Karar karşılaştırması", text: "Benzer olaylarda farklı sonuca yol açan olguları incele." },
     ],
     contrastItems: [
-      { title: "Hukuk yazısı ≠ kişisel hukuki görüş", text: "Kural, yorum ve tavsiyeyi ayrı etiketler." },
+      { title: "Hukuk yazısı ≠ kişisel hukuki görüş", text: "Kural, yorum ve tavsiyeyi ayrı etiketle." },
       { title: "Hukuk yazısı ≠ madde özeti", text: "Uygulama koşulu ve istisnaları göstermeden tamamlanmış sayılmaz." },
       { title: "Hukuk yazısı ≠ kesin sonuç garantisi", text: "Somut olay ve mahkeme değerlendirmesi sonucu değiştirebilir." },
     ],
@@ -601,7 +601,7 @@ const profiles: Profile[] = [
       { question: "Kanun maddesini kopyalamak yeterli mi?", answer: "Hayır. Güncel metin, kapsam, istisna ve uygulama bağlamı açıklanmalıdır." },
       { question: "Mahkeme kararını genelleyebilir miyim?", answer: "Kararın bağlayıcılığına, olay benzerliğine ve hukuk sistemine göre değişir; tek kararı genel kural gibi sunmamalısın." },
       { question: "Süre bilgisi verirken ne yapmalıyım?", answer: "Başlangıç anı, istisna ve güncel mevzuatı özellikle kontrol et; yüksek riskli durumda profesyonel yardıma yönlendir." },
-      { question: "Hukuki örnek vaka yazabilir miyim?", answer: "Evet; kişisel veriyi ve tanınabilirliği koruyarak, örneğin eğitim amaçlı olduğunu açık tut." },
+      { question: "Hukuki örnek vaka yazabilir miyim?", answer: "Evet; kişisel veriyi ve tanınabilirliği koruyarak, örneğin amacının eğitim olduğunu açık tut." },
     ],
   },
   {
@@ -651,7 +651,7 @@ const profiles: Profile[] = [
       { title: "Kurum süreci", text: "Bir tasarı veya kararın hangi kurumsal aşamalardan geçtiğini anlat." },
     ],
     contrastItems: [
-      { title: "Siyaset yazısı ≠ propaganda", text: "Bir tarafın çerçevesini doğrulamadan metnin varsayılan dili yapmaz." },
+      { title: "Siyaset yazısı ≠ propaganda", text: "Bir tarafın çerçevesini doğrulamadan metnin varsayılan dili hâline getirme." },
       { title: "Siyaset yazısı ≠ sahte denge", text: "Kanıt gücü eşit değilse iki iddiayı sırf simetri için eşitlemez." },
       { title: "Siyaset yazısı ≠ sosyal medya tepkisi", text: "Gürültülü azınlığı kamuoyu verisi gibi sunmaz." },
     ],
@@ -694,7 +694,7 @@ const profiles: Profile[] = [
     scopeRule: "Hedef kitle, kanal, kültür ve amaç değiştiğinde aynı mesaj kuralını otomatik genelleme.",
     craftRule: "Okurun davranışını etkilemek için gerekli bilgiyi saklayan veya yanıltıcı çerçeve kuran taktikleri başarı gibi öğretme.",
     projectName: "Kesinti Mesajını Yeniden Yazmak",
-    projectBody: "**Durum:** Dijital hizmet iki saat erişilemiyor.\n\n**Kitleler:** Mevcut müşteriler, destek ekibi ve kamu.\n\n**Mesaj yapısı:** Bilinen → etkilenme alanı → geçici çözüm → sonraki güncelleme saati.\n\n**Ölçüm:** Destek başvurularındaki tekrar sorular ve mesajın anlaşılma oranı.",
+    projectBody: "**Durum:** Dijital hizmet iki saat erişilemiyor.\n\n**Kitleler:** Mevcut müşteriler, destek ekibi ve kamu.\n\n**Mesaj yapısı:** Bilinen → etkilenme alanı → geçici çözüm → sonraki güncelleme saati.\n\n**Ölçüm:** Destek başvurularındaki tekrar eden sorular ve mesajın anlaşılma oranı.",
     sampleHeading: "Örnek kriz iletişimi paragrafı",
     sampleBody: "‘Teknik sorun yaşıyoruz’ demek hızlıdır ama okurun temel sorularını cevaplamaz. Daha yararlı mesaj, hangi hizmetlerin etkilendiğini, verilerin güvende olup olmadığı hakkında neyin bilindiğini, kullanıcıdan beklenen geçici adımı ve bir sonraki güncellemenin saatini açıkça vermelidir.",
     masters: [
@@ -869,7 +869,7 @@ const profiles: Profile[] = [
     scopeRule: "Malzeme markası, fırın tipi, rakım, porsiyon ve mevsim sonucu etkileyebilir; kritik koşulları belirt.",
     craftRule: "‘Bağışıklığı güçlendirir’, ‘detoks yapar’, ‘kesin kilo verdirir’ gibi sağlık iddialarını uygun kanıt olmadan tarif diline ekleme.",
     projectName: "Çıtır Börek Neden Yumuşuyor?",
-    projectBody: "**Soru:** Fırından çıktıktan sonra çıtır katman neden kısa sürede yumuşuyor?\n\n**Test:** Üç farklı iç nemi ve dinlendirme biçimi.\n\n**Kayıt:** Gramaj, fırın sıcaklığı, süre, soğutma yüzeyi ve 30 dakika sonraki doku.\n\n**Amaç:** ‘Göz kararı’ yerine okurun tekrarlayabileceği teknik işaretler üretmek.",
+    projectBody: "**Soru:** Fırından çıktıktan sonra çıtır katman neden kısa sürede yumuşuyor?\n\n**Test:** Üç farklı iç nem düzeyi ve dinlendirme biçimi.\n\n**Kayıt:** Gramaj, fırın sıcaklığı, süre, soğutma yüzeyi ve 30 dakika sonraki doku.\n\n**Amaç:** ‘Göz kararı’ yerine okurun tekrarlayabileceği teknik işaretler üretmek.",
     sampleHeading: "Örnek tarif açıklaması: dakika yerine işaret ver",
     sampleBody: "Böreği yalnız ‘25 dakika pişir’ diye tarif etmek farklı fırınlarda aynı sonucu vermez. Süreye ek olarak üst yüzeyin eşit altın rengine gelmesi, tabanın kuru ve sert hissedilmesi ve fırından çıktıktan sonra tepside buhar biriktirmeden tel üzerinde dinlendirilmesi daha tekrarlanabilir işaretlerdir.",
     masters: [

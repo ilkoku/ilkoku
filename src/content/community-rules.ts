@@ -65,7 +65,7 @@ Bildirim, güvenli topluluk alanını korumak için kayıtlı bir inceleme başl
 
 ## İtiraz ve bağlam
 
-Bir içerik veya hesap işleminin bağlamı yanlış anladığını düşünüyorsanız aynı kayıtla bağlantılı açıklama sunabilirsiniz. Bağlam, edebiyat ve topluluk etkileşimlerinde önemlidir; tek bir cümle bütün olayı her zaman açıklamaz.
+Bir içerik veya hesap işleminin bağlamının yanlış anlaşıldığını düşünüyorsanız aynı kayıtla bağlantılı açıklama sunabilirsiniz. Bağlam, edebiyat ve topluluk etkileşimlerinde önemlidir; tek bir cümle bütün olayı her zaman açıklamaz.
 
 Amaç otomatik ceza üretmek değil, gerçek etkileşimi ve güvenilir keşif ortamını koruyan tutarlı bir topluluk standardı oluşturmaktır.`
 } as const;

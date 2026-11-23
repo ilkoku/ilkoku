@@ -42,7 +42,7 @@ const STAGE_GUIDE_DEPTH: Record<string, StageGuideExtraSection[]> = {
       intro: "Karakterin söylediği şey ile istediği şey her zaman aynı olmak zorunda değildir.",
       items: [
         { title: "Amaç", text: "Her konuşmada karakterin karşı taraftan ne elde etmeye çalıştığını bil." },
-        { title: "Taktik", text: "İkna, kaçınma, suçlama, mizah veya sessizlik gibi yöntemi sahne içinde değiştirebil." },
+        { title: "Taktik", text: "İkna, kaçınma, suçlama, mizah veya sessizlik gibi yöntemi sahne içinde değiştirebilsin." },
         { title: "Alt metin", text: "Karakterin açıkça söylemediği gerilimi davranış ve kelime seçimine yerleştir." },
         { title: "Ses ayrımı", text: "Karakterlerin kelime ritmi, eğitim düzeyi, savunma biçimi ve mizahı birbirine benzemesin." },
       ],

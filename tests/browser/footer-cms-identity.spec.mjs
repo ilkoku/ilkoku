@@ -111,3 +111,15 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     }
   });
 }
+
+// Contact block must be in the server-rendered HTML (no JS). Count only the <a> tag:
+// the class name also appears in Next RSC payload text, so a plain text count would be 2.
+for (const path of ["/yazarlar-icin", "/okurlar-icin", "/editorler-icin"]) {
+  test(`SSR HTML has exactly one .site-contact-footer__email link: ${path}`, async ({ request }) => {
+    const response = await request.get(path);
+    expect(response.status()).toBe(200);
+    const html = await response.text();
+    const anchors = html.match(/<a\b[^>]*\bclass="[^"]*\bsite-contact-footer__email\b[^"]*"[^>]*>/g) ?? [];
+    expect(anchors).toHaveLength(1);
+  });
+}

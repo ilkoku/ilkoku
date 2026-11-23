@@ -278,7 +278,7 @@ function buildDistopyaBlocks(
       type: "cta",
       heading: "Sistemi kurdun. Şimdi çatlağı yaşat.",
       text: "Kuralı açıklamakla yetinme. Onu karakterinin günlük rahatlığına, suç ortaklığına, kaybına ve geri dönülmez seçimine dönüştür; sonra ilk sahneyi yaz.",
-      primaryLabel: "İlkOku Yazar Alanına Git",
+      primaryLabel: "İlkOku Yazar Alanı'na Git",
       primaryHref: "/yazar",
       secondaryLabel: "",
       secondaryHref: "",

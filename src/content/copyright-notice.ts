@@ -11,7 +11,7 @@ Amaç yazarı karmaşık bir başvuru yüküyle karşı karşıya bırakmak değ
 
 ## Bildirim ne zaman kullanılmalı
 
-Bu yol; size ait bir metnin, bölümün, kapak veya görselin ya da başka korunan yaratıcı içeriğin İlkOku üzerinde izinsiz yayımlandığını veya başka birinin çalışması gibi sunulduğunu düşündüğünüz durumlar içindir.
+Bu yol; size ait bir metnin, bölümün, kapağın veya görselin ya da başka korunan yaratıcı içeriğin İlkOku üzerinde izinsiz yayımlandığını veya başka birinin çalışması gibi sunulduğunu düşündüğünüz durumlar içindir.
 
 Benzer tema, genel fikir, üslup yakınlığı, olumsuz yorum veya editoryal görüş tek başına telif bildirimi değildir. En sağlıklı başlangıç, somut özgün eser ile somut İlkOku içeriği arasındaki ilişkiyi göstermektir.
 

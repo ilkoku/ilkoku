@@ -359,7 +359,7 @@ const definitions: FictionGuideDefinition[] = [
     summary: "Macera yalnız uzak yerlere gitmek değildir; her durak hedefi değiştirir, yeni bilgi verir ve kahramanı daha zor bir seçime iter.",
     alts: alts("Macera", "Kayıp Meridyen"),
     orientationHeading: "Macera, hareket eden hedef ve değişen dünya duygusudur",
-    orientationBody: `Macera anlatısında yolculuk dekor değil **neden-sonuç zinciridir**. Her yeni mekân kahramana başka bir bilgi, engel veya müttefik sunmalı. Yol aynı kalıp yalnız manzara değişiyorsa macera ilerlemiyordur.`,
+    orientationBody: `Macera anlatısında yolculuk dekor değil **neden-sonuç zinciridir**. Her yeni mekân kahramana başka bir bilgi, engel veya müttefik sunmalı. Yol aynı kalıbı tekrarlayıp yalnız manzara değişiyorsa macera ilerlemiyordur.`,
     ideaHeading: "Hedefe ulaşmayı değil, hedefin anlamını değiştiren yolculuğu tasarla",
     ideaBody: `Kayıp Meridyen'de Arda'nın ilk hedefi dedesinin kayıp haritasını bulmaktır. Yolculuk ilerledikçe haritanın defineyi değil, kuraklık dönemlerinde kullanılan eski su tünellerini gösterdiğini öğrenir. **Hedef nesneden sorumluluğa dönüşür.**`,
     structureHeading: "Macera yolunu 6 dönüm noktasına böl", structureIntro: "Her durak bir önceki hedefi zorlaştırmalı veya yeniden tanımlamalı.",
@@ -448,7 +448,7 @@ const definitions: FictionGuideDefinition[] = [
     revisionItems: [
       { title: "Konum kaybı", text: "Okur karakterlerin nerede olduğunu takip edebiliyor mu?" },
       { title: "Süs hareketi", text: "Bir hareket hedefe veya avantaja hiçbir şey katmıyor mu?" },
-      { title: "Yaralanma unutma", text: "Bedensel bedeller sonraki vuruşlarda etkisini sürdürüyor mu?" },
+      { title: "Yaralanmayı unutma", text: "Bedensel bedeller sonraki vuruşlarda etkisini sürdürüyor mu?" },
       { title: "Set-piece izolasyonu", text: "Sahne bitince hikâye eski hâline mi dönüyor?" },
     ],
     projectName: "Sekiz Dakika",

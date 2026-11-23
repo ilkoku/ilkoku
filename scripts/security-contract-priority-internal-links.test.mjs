@@ -15,7 +15,10 @@ test("priority writing links strengthen the focused cohort without hiding the fu
   assert.match(category, /Öne çıkan başlangıç rehberleri/u);
   assert.match(category, /Önce bu rehberlerle güçlü bir temel kur\./u);
   assert.match(category, /\{genres\.map\(\(genre\) => \(/u);
-  assert.match(category, /\{priorityGenres\.map\(\(genre\) => \(/u);
+  // Öne çıkan blok artık FEATURED_GUIDE_SLUGS'tan 4-6 rehber çizer; priorityGenres süzgeci korunur.
+  assert.match(category, /featuredEntries = FEATURED_GUIDE_SLUGS\[hub\.category\]\.flatMap/u);
+  assert.match(category, /priorityGenres\.some\(\(genre\) => genre\.slug === slug\)/u);
+  assert.match(category, /\{featuredEntries\.map\(\(entry\) => \(/u);
 });
 
 test("writer header features every focused genre needed for sitewide discovery", () => {

@@ -25,10 +25,10 @@ test("education surfaces expose visible editorial methodology without removing l
   assert.match(note, /uzman görüşünün ve güncel yetkili kaynakların yerine geçmez/u);
 
   assert.match(writing, /expertVerificationRequired\?: boolean/u);
-  assert.match(writing, /authoritativeSources={authoritativeSources}/u);
-  assert.match(writing, /expertVerificationRequired={expertVerificationRequired}/u);
+  assert.match(writing, /authoritativeSources=\{authoritativeSources\}/u);
+  assert.match(writing, /expertVerificationRequired=\{expertVerificationRequired\}/u);
   assert.match(reading, /<EditorialTrustNote context="reading" \/>/u);
-  assert.match(editing, /<EditorialTrustNote context="editing" \/>/u);
+  assert.match(editing, /<EditorialTrustNote context="editing" updatedAt=\{updatedAt\} \/>/u);
 });
 
 test("sensitive informational writing guides expose the expert-verification layer", () => {
@@ -40,7 +40,7 @@ test("sensitive informational writing guides expose the expert-verification laye
     assert.match(education, new RegExp(`"${slug}"`, "u"));
   }
   assert.match(education, /EXPERT_VERIFICATION_GUIDE_SLUGS\.has\(definition\.slug\)/u);
-  assert.match(education, /expertVerificationRequired={expertVerificationRequired}/u);
+  assert.match(education, /expertVerificationRequired=\{expertVerificationRequired\}/u);
   assert.match(education, /citation: authoritativeSources\.map/u);
   assert.match(note, /Yetkili ve birincil kaynaklar/u);
   assert.match(note, /authoritativeSources\.map/u);

@@ -145,7 +145,7 @@ const LITERATURE_GUIDE_DEPTH: Record<string, LiteratureGuideExtraSection[]> = {
       items: [
         { title: "Dönem sınırı", text: "Belirli yıllar, ilişki, şehir, meslek veya kırılma üzerinden kapsamı daralt." },
         { title: "Tema hattı", text: "Hangi deneyimlerin aynı temel soruya veya değişime hizmet ettiğini belirle." },
-        { title: "Zaman sıçraması", text: "Okuru kaybetmemek için her sıçramada nerede ve hangi dönemde olduğunu açıklaştır." },
+        { title: "Zaman sıçraması", text: "Okuru kaybetmemek için her sıçramada nerede ve hangi dönemde olduğunu netleştir." },
         { title: "Eksiltme", text: "Gerçek olduğu halde kitabın merkezine hizmet etmeyen olayları dışarıda bırakmaktan çekinme." },
       ],
     },
@@ -221,7 +221,7 @@ const LITERATURE_GUIDE_DEPTH: Record<string, LiteratureGuideExtraSection[]> = {
       heading: "Mektubun dilini konudan önce muhatapla kurulan ilişki belirler",
       intro: "Aynı olay sevgiliye, arkadaşına, çocuğa, kuruma veya hiç gönderilmeyecek bir kişiye farklı yazılır.",
       items: [
-        { title: "Yakınlık", text: "Muhatapla arandaki duygusal ve sosyal mesafeyi belirle." },
+        { title: "Yakınlık", text: "Muhatapla aranızdaki duygusal ve sosyal mesafeyi belirle." },
         { title: "Ortak bilgi", text: "İkinizin zaten bildiği şeyleri gereksiz açıklama; dış okur için yazıyorsan bağlamı başka yerde kur." },
         { title: "Amaç", text: "Bilgilendirmek, barışmak, vedalaşmak, ikna etmek veya tanıklık etmek gibi temel amacı netleştir." },
         { title: "Söylenmeyen", text: "Mektubun gerilimini yalnız söylenen değil, ertelenen veya dolaylı anlatılan şey de taşıyabilir." },
@@ -602,7 +602,7 @@ const LITERATURE_GUIDE_DEPTH: Record<string, LiteratureGuideExtraSection[]> = {
       heading: "Kaydı metne dönüştürürken konuğun anlamını düzeltme adına yeniden yazma",
       intro: "Okunabilirlik için edit yapılabilir; fakat kişinin söylediği şeyi başka bir iddiaya dönüştürmemelisin.",
       items: [
-        { title: "Kayıt izni", text: "Görüşme öncesi kayıt ve kullanım koşullarını açıklaştır." },
+        { title: "Kayıt izni", text: "Görüşme öncesi kayıt ve kullanım koşullarını netleştir." },
         { title: "Doğru deşifre", text: "Önemli alıntıları kayıtla yeniden karşılaştır; isim ve teknik terimleri doğrula." },
         { title: "Temizleme", text: "Dolgu sözcüklerini azaltırken ton ve anlamı koru." },
         { title: "Kesme bağlamı", text: "Parçaları birleştirerek kişinin söylemediği neden-sonuç veya kesinlik üretme." },

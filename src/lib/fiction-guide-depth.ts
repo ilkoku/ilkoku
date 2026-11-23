@@ -9,7 +9,7 @@ const FICTION_GUIDE_DEPTH: Record<string, FictionGuideExtraSection[]> = {
     {
       id: "ideal-duzen-tasarimi",
       heading: "Ütopyayı kusursuz dekor değil işleyen bir toplumsal sistem olarak tasarla",
-      body: "Ütopyanın merkezine tek bir güzel fikir koyup bırakma. **Kaynak dağılımı, karar alma, eğitim, bakım, emek, mahremiyet ve çatışma çözümü** gibi alanlarda düzenin nasıl işlediğini göster. Her iyi düzenin hangi varsayıma dayandığını ve hangi insan ihtiyacını öncelediğini açıklaştır.",
+      body: "Ütopyanın merkezine tek bir güzel fikir koyup bırakma. **Kaynak dağılımı, karar alma, eğitim, bakım, emek, mahremiyet ve çatışma çözümü** gibi alanlarda düzenin nasıl işlediğini göster. Her iyi düzenin hangi varsayıma dayandığını ve hangi insan ihtiyacını öncelediğini netleştir.",
     },
     {
       id: "bedel-ve-kor-nokta",

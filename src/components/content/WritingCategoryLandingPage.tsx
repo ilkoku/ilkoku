@@ -2,7 +2,7 @@ import Link from "next/link";
 import LiveHomepageFooter from "@/features/homepage/live-footer";
 import { WritingGuideShell } from "@/components/content/WritingGuideShell";
 import { getGenresByCategory } from "@/lib/genres";
-import { FEATURED_GUIDE_SLUGS, getWritingGuideEntries } from "@/lib/writing-guide-directory";
+import { getFeaturedGuideSlugs, getWritingGuideEntries } from "@/lib/writing-guide-directory";
 import { isSoftLaunchSearchExcludedPath } from "@/lib/soft-launch-search-policy";
 import type { WritingCategoryHub } from "@/lib/writing-category-hubs";
 
@@ -12,9 +12,12 @@ export function WritingCategoryLandingPage({ hub }: { hub: WritingCategoryHub })
     (genre) => !isSoftLaunchSearchExcludedPath(`${hub.href}/${genre.slug}`),
   );
   const guideEntries = getWritingGuideEntries(hub.category, hub.href);
-  const featuredEntries = FEATURED_GUIDE_SLUGS[hub.category].flatMap((slug) => {
+  const featuredEntries = getFeaturedGuideSlugs(
+    hub.category,
+    priorityGenres.map((genre) => genre.slug),
+  ).flatMap((slug) => {
     const entry = guideEntries.find((item) => item.slug === slug);
-    return entry && priorityGenres.some((genre) => genre.slug === slug) ? [entry] : [];
+    return entry ? [entry] : [];
   });
   const canonicalUrl = `https://ilkoku.com${hub.href}`;
   const structuredData = [

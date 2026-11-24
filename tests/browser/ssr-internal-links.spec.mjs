@@ -32,9 +32,16 @@ test("/yazarlar-icin ham HTML'inde 85 rehber + 7 hub bağlantısı var", async (
   }
 });
 
-test("Ana sayfa ham HTML'inde /yazarlar-icin altına en az 7 bağlantı var", async ({ request }) => {
+test("Ana sayfa ham HTML'inde /yazarlar-icin altına en az 11 bağlantı var", async ({ request }) => {
   const response = await request.get("/");
   expect(response.ok()).toBe(true);
   const links = childGuideLinks(await response.text());
-  expect(links.size).toBeGreaterThanOrEqual(7);
+  expect(links.size).toBeGreaterThanOrEqual(11);
+  for (const path of [
+    "/yazarlar-icin/kurgu/novella",
+    "/yazarlar-icin/akademik/makale",
+    "/yazarlar-icin/cizgi-anlati/grafik-roman",
+  ]) {
+    expect(links.has(path), path).toBe(true);
+  }
 });

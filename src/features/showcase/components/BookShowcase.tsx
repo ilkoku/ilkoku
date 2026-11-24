@@ -157,7 +157,7 @@ export function BookShowcase({
             href={returnTo}
           >
             <span aria-hidden="true">←</span>
-            <span>{readingContent.common.back}</span>
+            <span className="sr-only showcase-back__label">{readingContent.common.back}</span>
           </Link>
 
           <Link

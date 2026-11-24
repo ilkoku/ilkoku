@@ -140,6 +140,9 @@ const homepageFeaturedGuides = [
   { href: "/yazarlar-icin/kurgu/dedektif", label: "Dedektif öyküsü ve romanı nasıl yazılır?" },
   { href: "/yazarlar-icin/edebiyat/siir", label: "Şiir nasıl yazılır?" },
   { href: "/yazarlar-icin/akademik/tez", label: "Tez nasıl yazılır?" },
+  { href: "/yazarlar-icin/kurgu/novella", label: "Novella nasıl yazılır?" },
+  { href: "/yazarlar-icin/akademik/makale", label: "Makale nasıl yazılır?" },
+  { href: "/yazarlar-icin/cizgi-anlati/grafik-roman", label: "Grafik roman nasıl yazılır?" },
 ] as const;
 
 // Sunucuda çizilen düz bağlantılar: açılır menüye veya istemci koduna bağlı değil.
@@ -237,7 +240,7 @@ export default async function HomepageExperience() {
             <p className="nx-hero__description">{hero?.description || "Eserini yaz, okurlarla geliştir, profesyonel editör incelemesine taşı ve yayınevleri tarafından keşfedilsin."}</p>
             <div className="nx-hero__actions"><Link prefetch={false} href={primaryHref} className="nx-action nx-action--light">{hero?.primaryCtaLabel || "Eserini Yazmaya Başla"}<span aria-hidden="true">→</span></Link><Link prefetch={false} href={secondaryHref} className="nx-action nx-action--line">{secondaryLabel}</Link></div>
           </div>
-          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={45} sizes="(max-width: 480px) 82vw, (max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
+          <div className="nx-hero__art" aria-label="İlkOku ana görseli"><Image src="/landing/ilkoku-hero-user-final.webp" alt="Bir yazarın açık kitap ve defterlerle çalıştığı mor tonlu illüstrasyon" fill priority fetchPriority="high" quality={60} sizes="(max-width: 480px) 94vw, (max-width: 900px) 100vw, 48vw" /><div className="nx-hero__art-frame" aria-hidden="true" /></div>
         </div>
         <div className="nx-shell nx-hero__proof" aria-label="İlkOku temel özellikleri"><span><LandingIcon name="shield" /> Sürüm geçmişi</span><span><LandingIcon name="editor" /> Editör incelemesi</span><span><LandingIcon name="publisher" /> Yayınevi keşfi</span></div>
       </section>

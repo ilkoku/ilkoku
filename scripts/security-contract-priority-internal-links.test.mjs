@@ -15,9 +15,9 @@ test("priority writing links strengthen the focused cohort without hiding the fu
   assert.match(category, /Öne çıkan başlangıç rehberleri/u);
   assert.match(category, /Önce bu rehberlerle güçlü bir temel kur\./u);
   assert.match(category, /\{genres\.map\(\(genre\) => \(/u);
-  // Öne çıkan blok artık FEATURED_GUIDE_SLUGS'tan 4-6 rehber çizer; priorityGenres süzgeci korunur.
-  assert.match(category, /featuredEntries = FEATURED_GUIDE_SLUGS\[hub\.category\]\.flatMap/u);
-  assert.match(category, /priorityGenres\.some\(\(genre\) => genre\.slug === slug\)/u);
+  // Öne çıkan blok getFeaturedGuideSlugs ile (tıklamaya göre, en çok 6) çizilir; priorityGenres süzgeci korunur.
+  assert.match(category, /featuredEntries = getFeaturedGuideSlugs\(/u);
+  assert.match(category, /priorityGenres\.map\(\(genre\) => genre\.slug\)/u);
   assert.match(category, /\{featuredEntries\.map\(\(entry\) => \(/u);
 });
 

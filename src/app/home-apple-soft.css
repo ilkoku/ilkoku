@@ -541,7 +541,8 @@
   }
 
   .homepage-live .nx-hero__art {
-    min-height: 430px;
+    min-height: 0;
+    aspect-ratio: 3 / 2;
     border-radius: 26px;
   }
 

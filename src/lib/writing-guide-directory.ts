@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { getEducationGuideDefinition as getAcademicGuide } from "@/lib/academic-guide-batch";
 import { getEducationGuideDefinition as getLiteratureGuide } from "@/lib/education-guide-batch";
 import { FICTION_GUIDE_DEFINITIONS } from "@/lib/fiction-guide-batch";
@@ -85,13 +87,58 @@ export function getWritingGuideEntries(category: GenreCategory, hubHref: string)
   });
 }
 
-// Hub sayfasında "Öne çıkan başlangıç rehberleri" bloğuna giren 4-6 rehber.
+// Hub sayfasında "Öne çıkan başlangıç rehberleri" bloğunun VARSAYILAN listesi ve sırası
+// (arama niyetine göre yaygın olandan başlar). Tıklama verisi varsa sıralama
+// getFeaturedGuideSlugs ile veriye göre değişir; eşitlikte bu sıra geçerlidir.
 export const FEATURED_GUIDE_SLUGS: Record<GenreCategory, readonly string[]> = {
-  Kurgu: ["roman", "oyku", "fantastik", "bilim-kurgu", "distopya", "dedektif"],
+  Kurgu: ["roman", "oyku", "bilim-kurgu", "fantastik", "distopya", "novella"],
   Edebiyat: ["siir", "deneme", "ani", "biyografi", "gunluk"],
   "Senaryo ve Sahne": ["film-senaryosu", "dizi-senaryosu", "kisa-film-senaryosu", "tiyatro"],
-  Akademik: ["makale", "tez", "arastirma", "bildiri"],
+  Akademik: ["tez", "makale", "arastirma", "bildiri"],
   Bilgilendirici: ["tarih", "felsefe", "psikoloji", "kisisel-gelisim", "yapay-zeka", "girisimcilik"],
   "Çocuk ve Gençlik": ["masal", "cocuk-hikayesi", "cocuk-romani", "genc-yetiskin"],
-  "Çizgi Anlatı": ["cizgi-roman", "manga", "webtoon", "grafik-roman"],
+  "Çizgi Anlatı": ["grafik-roman", "cizgi-roman", "manga", "webtoon"],
 };
+
+export const MAX_FEATURED_GUIDES = 6;
+
+const FEATURED_CLICKS_PATH = join(process.cwd(), "src", "data", "featured-guide-clicks.json");
+
+// Depodaki tıklama anlık görüntüsünü okur: { "updatedAt": "...", "clicks": { slug: sayı } }.
+// Dosya yoksa, bozuksa ya da boşsa boş nesne döner; sıralama varsayılan listeye düşer.
+function readFeaturedClicks(): Record<string, number> {
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(FEATURED_CLICKS_PATH, "utf8"));
+    const clicks = (parsed as { clicks?: unknown } | null)?.clicks;
+    if (!clicks || typeof clicks !== "object") return {};
+    const result: Record<string, number> = {};
+    for (const [slug, value] of Object.entries(clicks)) {
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) result[slug] = value;
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+// Öne çıkan slug'ları döndürür: tıklaması azalan, eşitlikte varsayılan sıra, en çok 6.
+// Aday havuzu = varsayılan liste + kategoride tıklaması 0'dan büyük olan rehberler;
+// böylece listede olmayan ama çok tıklanan bir rehber de öne çıkabilir.
+export function getFeaturedGuideSlugs(
+  category: GenreCategory,
+  eligibleSlugs: readonly string[],
+  clicks: Record<string, number> = readFeaturedClicks(),
+): string[] {
+  const defaults = FEATURED_GUIDE_SLUGS[category];
+  const eligible = new Set(eligibleSlugs);
+  const candidates = [
+    ...defaults,
+    ...eligibleSlugs.filter((slug) => !defaults.includes(slug) && (clicks[slug] ?? 0) > 0),
+  ].filter((slug) => eligible.has(slug));
+
+  return candidates
+    .map((slug, order) => ({ slug, order, count: clicks[slug] ?? 0 }))
+    .sort((a, b) => b.count - a.count || a.order - b.order)
+    .slice(0, MAX_FEATURED_GUIDES)
+    .map((item) => item.slug);
+}

@@ -148,29 +148,29 @@ const homepageFeaturedGuides = [
 // Sunucuda çizilen düz bağlantılar: açılır menüye veya istemci koduna bağlı değil.
 function HomepageWritingSchoolSection() {
   return (
-    <section className="bg-white py-20" id="yazarlik-okulu" aria-labelledby="yazarlik-okulu-baslik">
+    <section className="nx-writing-school" id="yazarlik-okulu" aria-labelledby="yazarlik-okulu-baslik">
       <div className="nx-shell">
-        <header className="nx-section-heading" style={{ marginBottom: 32 }}>
+        <header className="nx-section-heading nx-writing-school__heading">
           <p className="nx-eyebrow nx-eyebrow--violet">Yazarlık Okulu</p>
-          <h2 id="yazarlik-okulu-baslik" style={{ fontSize: "clamp(2.2rem, 4vw, 3.6rem)" }}>Yazmayı türüne göre öğren.</h2>
+          <h2 id="yazarlik-okulu-baslik">Yazmayı türüne göre öğren.</h2>
           <p>Yedi ana kategoride türe özel yazarlık rehberleri: roman ve öyküden şiire, senaryodan tez yazımına.</p>
         </header>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="nx-writing-school__grid">
           {WRITING_CATEGORY_HUBS.map((hub) => (
             <li key={hub.slug}>
-              <Link prefetch={false} href={hub.href} className="block h-full border border-[rgba(38,25,80,.12)] p-5 transition hover:border-[#6e4df5]">
-                <strong className="block text-base text-[#261858]">{hub.title}</strong>
-                <span className="mt-2 block text-sm leading-6 text-[#6a6572]">{hub.cardText}</span>
+              <Link prefetch={false} href={hub.href} className="nx-writing-school__card">
+                <strong className="nx-writing-school__title">{hub.title}</strong>
+                <span className="nx-writing-school__description">{hub.cardText}</span>
               </Link>
             </li>
           ))}
         </ul>
-        <nav className="mt-8" aria-label="Öne çıkan yazarlık rehberleri">
-          <p className="text-sm font-extrabold text-[#261858]">Öne çıkan rehberler</p>
-          <ul className="mt-3 flex flex-wrap gap-3">
+        <nav className="nx-writing-school__guides" aria-label="Öne çıkan yazarlık rehberleri">
+          <p className="nx-writing-school__guides-title">Öne çıkan rehberler</p>
+          <ul className="nx-writing-school__guide-list">
             {homepageFeaturedGuides.map((guide) => (
               <li key={guide.href}>
-                <Link prefetch={false} href={guide.href} className="inline-block border border-[rgba(38,25,80,.12)] px-4 py-2 text-sm font-semibold text-[#4b2dbf] transition hover:border-[#6e4df5]">
+                <Link prefetch={false} href={guide.href} className="nx-writing-school__guide">
                   {guide.label}
                 </Link>
               </li>

@@ -631,3 +631,183 @@
     contain-intrinsic-size: auto 1200px;
   }
 }
+
+
+/* Writing school: match the existing homepage's soft surfaces and typography.
+   All rules are scoped to this section; no extra font or script downloads. */
+.homepage-live .nx-writing-school {
+  padding: clamp(64px, 6vw, 104px) 0;
+  background: linear-gradient(180deg, var(--paper-soft) 0%, #f2effa 100%);
+}
+
+.homepage-live .nx-writing-school .nx-writing-school__heading {
+  margin-bottom: clamp(28px, 3vw, 44px);
+}
+
+.homepage-live .nx-writing-school .nx-writing-school__heading h2 {
+  font-size: clamp(2.25rem, 4.4vw, 4.5rem);
+  line-height: 1.04;
+}
+
+.homepage-live .nx-writing-school__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(12px, 1.3vw, 18px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.homepage-live .nx-writing-school__grid > li {
+  grid-column: span 3;
+  min-width: 0;
+}
+
+/* Seven categories: four cards followed by three balanced cards. */
+.homepage-live .nx-writing-school__grid > li:nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.homepage-live .nx-writing-school__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 160px;
+  height: 100%;
+  padding: clamp(20px, 2.2vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  color: var(--ink);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(40, 31, 72, 0.045);
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.homepage-live .nx-writing-school__title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.homepage-live .nx-writing-school__description {
+  font-family: inherit;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.homepage-live .nx-writing-school__guides {
+  margin-top: clamp(24px, 3vw, 36px);
+  padding: clamp(20px, 2.6vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--paper-soft);
+}
+
+.homepage-live .nx-writing-school__guides-title {
+  margin: 0 0 16px;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.homepage-live .nx-writing-school__guide-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.homepage-live .nx-writing-school__guide-list > li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.homepage-live .nx-writing-school__guide {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 18px;
+  border: 1px solid rgba(104, 71, 232, 0.13);
+  border-radius: 999px;
+  background: rgba(104, 71, 232, 0.055);
+  color: var(--violet-deep);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.homepage-live .nx-writing-school__card:hover {
+  border-color: rgba(104, 71, 232, 0.27);
+  background: #fcfaff;
+  box-shadow: 0 16px 38px rgba(40, 31, 72, 0.075);
+}
+
+.homepage-live .nx-writing-school__guide:hover {
+  border-color: rgba(104, 71, 232, 0.28);
+  background: rgba(104, 71, 232, 0.1);
+}
+
+.homepage-live .nx-writing-school a:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 4px;
+}
+
+@media (max-width: 1100px) {
+  .homepage-live .nx-writing-school__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .homepage-live .nx-writing-school__grid > li,
+  .homepage-live .nx-writing-school__grid > li:nth-child(n + 5) {
+    grid-column: span 1;
+  }
+
+  .homepage-live .nx-writing-school__grid > li:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .homepage-live .nx-writing-school__card,
+  .homepage-live .nx-writing-school__guides {
+    border-radius: 22px;
+    padding: 18px;
+  }
+
+  .homepage-live .nx-writing-school__title {
+    font-size: clamp(1.25rem, 4.5vw, 1.55rem);
+  }
+
+  .homepage-live .nx-writing-school__card {
+    min-height: 0;
+  }
+
+  .homepage-live .nx-writing-school__guide {
+    padding-inline: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .homepage-live .nx-writing-school__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage-live .nx-writing-school__card,
+  .homepage-live .nx-writing-school__guide {
+    transition: none;
+  }
+}

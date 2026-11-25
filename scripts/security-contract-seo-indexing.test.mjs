@@ -2105,3 +2105,48 @@ test("successful retry preserves first-attempt status and duration", async (t) =
   assert.ok(Number.isInteger(result.firstAttemptMs) && result.firstAttemptMs >= 0);
   assert.ok(Number.isInteger(result.requestMs) && result.requestMs >= 0);
 });
+
+
+test("public URL graph preserves author ID case and joins the GSC graph correctly", async () => {
+  const { internalLinksFromHtml, buildInternalLinkReview, buildHomeReachability, publicDynamicOffSitemapKind, inspect } =
+    await import("./power-seo-live-census.mjs");
+  const { buildAudit } = await import("./seo-audit-loop.mjs");
+  const root = "https://ilkoku.com";
+  const author = root + "/yazarlar/IKO-U-2026-000029";
+  const lower = root + "/yazarlar/iko-u-2026-000029";
+  const links = internalLinksFromHtml('<a href="/yazarlar/IKO-U-2026-000029?from=%2Fyazarlar">Author</a><a href="/yazarlar/iko-u-2026-000029">Other case</a>', root + "/");
+  assert.deepEqual(links, [author, lower].sort());
+  assert.equal(publicDynamicOffSitemapKind(author), "author");
+  assert.equal(publicDynamicOffSitemapKind(root + "/admin/IKO-U-2026-000029"), null);
+  const pages = [
+    { url: root + "/", internalLinks: links, ok: true, canonicalMatches: true },
+    { url: author, internalLinks: [root], ok: true, canonicalMatches: true },
+  ];
+  const cohort = new Set([root, author]);
+  const linkReview = buildInternalLinkReview(pages, cohort);
+  assert.deepEqual(linkReview.pageLinks[0].insideSitemap, [author]);
+  assert.equal(linkReview.offSitemapTargets[0].url, lower);
+  assert.equal(buildHomeReachability(pages, cohort).reachableCount, 2);
+  const now = new Date("2026-11-25T17:00:00Z");
+  const audit = buildAudit({
+    now,
+    gsc: { generatedAt: now.toISOString(), results: pages.map(p => ({ inspectionUrl: p.url, verdict: "NEUTRAL" })) },
+    power: { checkedAt: now.toISOString(), results: pages, linkReview },
+  });
+  assert.equal(audit.rows.find(p => p.url === author).incomingSitemapPages, 1);
+  assert.equal(audit.stats.noIncomingInSitemapGraph, 0);
+});
+
+test("canonical comparison cannot silently equate different author ID case", async (t) => {
+  const { inspect } = await import("./power-seo-live-census.mjs");
+  const url = "https://ilkoku.com/yazarlar/IKO-U-2026-000029";
+  const lower = url.toLowerCase();
+  let canonical = lower;
+  t.mock.method(globalThis, "fetch", async () => new Response(
+    '<html><head><title>Author</title><link rel="canonical" href="' + canonical + '"></head><body><main><h1>Author</h1></main></body></html>',
+    { headers: { "content-type": "text/html" } },
+  ));
+  assert.equal((await inspect(url)).canonicalMatches, false);
+  canonical = url;
+  assert.equal((await inspect(url)).canonicalMatches, true);
+});

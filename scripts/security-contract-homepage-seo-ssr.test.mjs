@@ -83,3 +83,19 @@ test("below-fold affiliate creative stays lazy-loaded", () => {
 
   assertContains(banner, 'loading="lazy"', "affiliate creative lazy loading");
 });
+
+
+test("homepage and history share the same request-local published row snapshot", () => {
+  const store = source("src/lib/cms-homepage-store.ts");
+  const history = source("src/features/homepage/history-670.tsx");
+  assertContains(store, 'import { cache } from "react"', "React request-scoped cache");
+  assertContains(store, "export const getPublishedHomepageRows = cache(", "shared request lookup");
+  assertContains(store, "const rows = await getPublishedHomepageRows(locale)", "homepage uses shared lookup");
+  assertContains(history, 'const rows = await getPublishedHomepageRows("tr")', "history uses shared lookup");
+  assertContains(history, 'rows.find((row) => row.contentKey === "history")', "history selected independently");
+  assertContains(history, "migrateLegacyHistoryContent(mergeHistoryContent(raw))", "legacy and default history behavior");
+  assertContains(history, "return { ...historyDefaults }", "history fallback remains");
+  assert.equal((store.match(/prisma\.\$queryRaw/g) || []).length, 1, "one shared SQL definition");
+  assertNotContains(history, "prisma.$queryRaw", "no duplicate history SQL");
+  assertNotContains(store, "unstable_cache", "no persistent CMS cache");
+});

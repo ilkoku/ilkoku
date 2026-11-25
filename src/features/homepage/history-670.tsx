@@ -1,9 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { cmsLocaleNamespace } from "@/lib/cms-locales";
+import { getPublishedHomepageRows } from "@/lib/cms-homepage-store";
 import { historyDefaults, mergeHistoryContent } from "@/lib/history-content";
-import { prisma } from "@/lib/prisma";
-
-type HistoryRow = { valueJson: string };
 
 const historyIllustrations = [
   {
@@ -39,16 +36,10 @@ function migrateLegacyHistoryContent(content: Record<string, string>) {
 
 async function getHistory() {
   try {
-    const namespace = cmsLocaleNamespace("homepage", "tr");
-    const rows = await prisma.$queryRaw<HistoryRow[]>`
-      SELECT valueJson FROM SiteContent
-      WHERE namespace = ${namespace}
-        AND contentKey = 'history'
-        AND status = 'published'
-      LIMIT 1
-    `;
-    if (!rows[0]?.valueJson) return { ...historyDefaults };
-    const raw = JSON.parse(rows[0].valueJson) as Record<string, unknown>;
+    const rows = await getPublishedHomepageRows("tr");
+    const history = rows.find((row) => row.contentKey === "history");
+    if (!history?.valueJson) return { ...historyDefaults };
+    const raw = JSON.parse(history.valueJson) as Record<string, unknown>;
     return migrateLegacyHistoryContent(mergeHistoryContent(raw));
   } catch {
     return { ...historyDefaults };

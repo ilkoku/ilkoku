@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { cmsLocaleNamespace, type CmsLocaleCode } from "@/lib/cms-locales";
 import { prisma } from "@/lib/prisma";
 
@@ -34,15 +36,21 @@ function parseSection(valueJson: string): CmsHomepageSection | null {
   }
 }
 
-export async function getPublishedHomepageState(locale: CmsLocaleCode): Promise<PublishedHomepageState> {
+// Request-local snapshot shared by the main homepage and its history section.
+// Do not cache across requests: publication and preview freshness stay unchanged.
+export const getPublishedHomepageRows = cache(async (locale: CmsLocaleCode) => {
   const namespace = cmsLocaleNamespace("homepage", locale);
+  return prisma.$queryRaw<PublishedHomepageRow[]>`
+    SELECT contentKey, valueJson, updatedAt
+    FROM SiteContent
+    WHERE namespace = ${namespace}
+      AND status = 'published'
+  `;
+});
+
+export async function getPublishedHomepageState(locale: CmsLocaleCode): Promise<PublishedHomepageState> {
   try {
-    const rows = await prisma.$queryRaw<PublishedHomepageRow[]>`
-      SELECT contentKey, valueJson, updatedAt
-      FROM SiteContent
-      WHERE namespace = ${namespace}
-        AND status = 'published'
-    `;
+    const rows = await getPublishedHomepageRows(locale);
 
     const allowed = new Set<string>(cmsHomepageSectionKeys);
     const relevant = rows.filter((row) => allowed.has(row.contentKey));

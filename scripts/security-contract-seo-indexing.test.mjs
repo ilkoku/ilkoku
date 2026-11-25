@@ -2074,6 +2074,8 @@ test("live census records HTTP robots directives and checks Google-specific scop
   assert.equal(pageHasNoindex({ xRobotsTag: "googlebot: noindex, nofollow" }), true);
   assert.equal(pageHasNoindex({ xRobotsTag: "otherbot: noindex, nofollow" }), false);
   assert.equal(pageHasNoindex({ robots: "index, follow", xRobotsTag: "max-snippet: 120" }), false);
+  assert.equal(pageHasNoindex({ robots: "index, max-image-preview: none", xRobotsTag: "googlebot: max-image-preview: none" }), false);
+  assert.equal(pageHasNoindex({ robots: "index, max-image-preview: none, noindex" }), true);
   const html = '<html><head><title>Example</title><link rel="canonical" href="https://ilkoku.com/"><meta name="robots" content="index, follow"><meta name="googlebot" content="noindex"></head><body><main><h1>Example</h1></main></body></html>';
   t.mock.method(globalThis, "fetch", async () => new Response(html, {
     headers: { "Content-Type": "text/html", "X-Robots-Tag": "noindex" },

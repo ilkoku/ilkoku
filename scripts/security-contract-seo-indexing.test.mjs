@@ -2065,3 +2065,43 @@ test("Ahrefs historical literary-novel 404 redirects only to healthy canonical g
     'destination: "/turler/tarihi-roman"',
     "do not redirect into a currently unavailable historical category");
 });
+
+
+test("live census records HTTP robots directives and checks Google-specific scope", async (t) => {
+  const { inspect, pageHasNoindex } = await import("./power-seo-live-census.mjs");
+  assert.equal(pageHasNoindex({ robots: "index, follow", xRobotsTag: "noindex" }), true);
+  assert.equal(pageHasNoindex({ googlebotRobots: "none" }), true);
+  assert.equal(pageHasNoindex({ xRobotsTag: "googlebot: noindex, nofollow" }), true);
+  assert.equal(pageHasNoindex({ xRobotsTag: "otherbot: noindex, nofollow" }), false);
+  assert.equal(pageHasNoindex({ robots: "index, follow", xRobotsTag: "max-snippet: 120" }), false);
+  assert.equal(pageHasNoindex({ robots: "index, max-image-preview: none", xRobotsTag: "googlebot: max-image-preview: none" }), false);
+  assert.equal(pageHasNoindex({ robots: "index, max-image-preview: none, noindex" }), true);
+  const html = '<html><head><title>Example</title><link rel="canonical" href="https://ilkoku.com/"><meta name="robots" content="index, follow"><meta name="googlebot" content="noindex"></head><body><main><h1>Example</h1></main></body></html>';
+  t.mock.method(globalThis, "fetch", async () => new Response(html, {
+    headers: { "Content-Type": "text/html", "X-Robots-Tag": "noindex" },
+  }));
+  const result = await inspect("https://ilkoku.com/");
+  assert.equal(result.ok, true);
+  assert.equal(result.xRobotsTag, "noindex");
+  assert.equal(result.googlebotRobots, "noindex");
+  assert.equal(pageHasNoindex(result), true);
+  assert.ok(Number.isInteger(result.requestMs) && result.requestMs >= 0);
+  assert.equal(result.firstAttemptMs, result.requestMs);
+});
+
+test("successful retry preserves first-attempt status and duration", async (t) => {
+  const { inspect } = await import("./power-seo-live-census.mjs");
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    if (calls === 1) return new Response("unavailable", { status: 503 });
+    return new Response('<html><head><title>Example</title><link rel="canonical" href="https://ilkoku.com/"></head><body><main><h1>Example</h1></main></body></html>', { headers: { "Content-Type": "text/html" } });
+  });
+  const result = await inspect("https://ilkoku.com/");
+  assert.equal(calls, 2);
+  assert.equal(result.status, 200);
+  assert.equal(result.recoveredTransientFailure, true);
+  assert.equal(result.firstAttemptFailure, "http-503");
+  assert.ok(Number.isInteger(result.firstAttemptMs) && result.firstAttemptMs >= 0);
+  assert.ok(Number.isInteger(result.requestMs) && result.requestMs >= 0);
+});

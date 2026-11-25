@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pageHasNoindex } from "./power-seo-live-census.mjs";
 
 const SITE_ORIGIN = "https://ilkoku.com";
 const GSC_INDEXED = "Gönderildi ve dizine eklendi";
@@ -112,7 +113,7 @@ export function buildAudit({ gsc, power, previousGsc = null, now = new Date() })
     const latestCrawl = watch.get(pathName);
     const googleCrawled = Boolean(google.lastCrawlTime);
     const technicalIssue = live
-      ? live.ok === false || live.canonicalMatches === false || /\bnoindex\b/iu.test(live.robots || "")
+      ? live.ok === false || live.canonicalMatches === false || pageHasNoindex(live)
       : true;
     const googleTechnicalIssue = googleCrawled && (
       google.robotsTxtState === "DISALLOWED" ||

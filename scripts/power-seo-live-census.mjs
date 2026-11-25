@@ -329,8 +329,9 @@ function compareMainContent(pages) {
 function normalize(url) {
   try {
     const parsed = new URL(url);
-    return parsed.origin === ORIGIN
-      ? (parsed.origin + parsed.pathname.replace(/\/+$/u, "")).toLowerCase()
+    // URL normalizes the scheme and host. Path identity is case-sensitive.
+    return parsed.origin === ORIGIN && !parsed.username && !parsed.password
+      ? parsed.origin + parsed.pathname.replace(/\/+$/u, "")
       : "";
   } catch {
     return "";
@@ -623,7 +624,7 @@ function publicDynamicOffSitemapKind(raw) {
   const pathname = parsed.pathname;
   if (/^\/kitap\/[a-z0-9-]+\/pasaport$/u.test(pathname)) return "passport";
   if (/^\/kitap\/[a-z0-9-]+$/u.test(pathname)) return "book";
-  if (/^\/yazarlar\/[a-z0-9-]+$/u.test(pathname)) return "author";
+  if (/^\/yazarlar\/[A-Za-z0-9-]+$/u.test(pathname)) return "author";
   if (/^\/turler\/[a-z0-9-]+$/u.test(pathname)) return "genre";
   return null;
 }

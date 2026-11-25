@@ -32,11 +32,34 @@ function h1CountFromHtml(html) {
   return (html.match(/<h1\b[^>]*>/giu) || []).length;
 }
 
-function robotsFromHtml(html) {
-  for (const tag of html.match(/<meta\b[^>]*>/giu) || []) {
-    if (attribute(tag, "name").toLowerCase() === "robots") return attribute(tag, "content");
+function robotsFromHtml(html, name = "robots") {
+  return (html.match(/<meta\b[^>]*>/giu) || [])
+    .filter((tag) => attribute(tag, "name").toLowerCase() === name)
+    .map((tag) => attribute(tag, "content")).filter(Boolean).join(", ");
+}
+
+// Header directives may be scoped to another crawler. Keep the raw header
+// for review, and treat only unscoped or Googlebot-specific directives as
+// Google indexability findings. A combined header can be ambiguous.
+function hasNoindexDirective(value) {
+  return /(?:^|[\s,;])(?:noindex|none)(?=$|[\s,;])/iu.test(value || "");
+}
+function headerNoindexForGoogle(value) {
+  let agent = "";
+  for (const raw of (value || "").split(",")) {
+    let directive = raw.trim();
+    const scoped = /^([a-z][a-z0-9_-]*):\s*(.*)$/iu.exec(directive);
+    if (scoped && !["max-snippet", "max-image-preview", "max-video-preview", "unavailable_after"].includes(scoped[1].toLowerCase())) {
+      agent = scoped[1].toLowerCase();
+      directive = scoped[2];
+    }
+    if ((!agent || agent === "googlebot") && hasNoindexDirective(directive)) return true;
   }
-  return "";
+  return false;
+}
+function pageHasNoindex(page) {
+  return hasNoindexDirective(page.robots) || hasNoindexDirective(page.googlebotRobots) ||
+    headerNoindexForGoogle(page.xRobotsTag);
 }
 
 function descriptionFromHtml(html) {
@@ -538,19 +561,23 @@ function parseSitemap(xml) {
   return urls;
 }
 
-async function inspect(url, retry = 0, firstAttemptFailure = "") {
+async function inspect(url, retry = 0, firstAttemptFailure = "", firstAttemptMs = null) {
+  const started = performance.now();
   try {
     const { response, body } = await read(url, MAX_HTML_BYTES);
+    const requestMs = Math.round(performance.now() - started);
     // A single bounded retry for transient upstream 5xx. Persistent failures
     // remain visible and fail the census; 403/429 are never retried.
     if (response.status >= 500 && retry === 0) {
       await new Promise((done) => setTimeout(done, 950));
-      return inspect(url, 1, `http-${response.status}`);
+      return inspect(url, 1, `http-${response.status}`, requestMs);
     }
     const ok = response.status === 200 &&
       (response.headers.get("content-type") || "").toLowerCase().includes("text/html");
     const canonical = ok ? canonicalFromHtml(body) : "";
     const robots = ok ? robotsFromHtml(body) : "";
+    const googlebotRobots = ok ? robotsFromHtml(body, "googlebot") : "";
+    const xRobotsTag = response.headers.get("x-robots-tag") || "";
     const description = ok ? descriptionFromHtml(body) : "";
     const mainText = ok ? mainTextFromHtml(body) : "";
     const h1Count = ok ? h1CountFromHtml(body) : null;
@@ -560,7 +587,8 @@ async function inspect(url, retry = 0, firstAttemptFailure = "") {
     const headerMenu = ok ? publicHeaderMenuLinksFromHtml(body) : null;
     const title = ok ? /<title[^>]*>([\s\S]*?)<\/title>/iu.exec(body)?.[1]?.replace(/<[^>]+>/gu, " ").trim().slice(0, 170) || "" : "";
     return {
-      url, status: response.status, ok, title, description, canonical, robots, h1Count, mainText, imageAlt, structuredData, internalLinks, headerMenu,
+      url, status: response.status, ok, title, description, canonical, robots, googlebotRobots, xRobotsTag, h1Count, mainText, imageAlt, structuredData, internalLinks, headerMenu,
+      requestMs, firstAttemptMs: firstAttemptMs ?? requestMs,
       canonicalMatches: !!canonical && normalize(canonical) === normalize(url),
       recoveredTransientFailure: retry > 0 && ok,
       firstAttemptFailure,
@@ -570,10 +598,12 @@ async function inspect(url, retry = 0, firstAttemptFailure = "") {
     // Socket resets and timeouts should receive one, and only one, bounded
     // second attempt. Never retry permission, origin policy or parse failures.
     if (retry === 0 && (e instanceof TypeError || e?.name === "TimeoutError")) {
+      const failedRequestMs = Math.round(performance.now() - started);
       await new Promise((done) => setTimeout(done, 950));
-      return inspect(url, 1, e?.name === "TimeoutError" ? "timeout" : "network-type-error");
+      return inspect(url, 1, e?.name === "TimeoutError" ? "timeout" : "network-type-error", failedRequestMs);
     }
-    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", h1Count: null, mainText: "",
+    const requestMs = Math.round(performance.now() - started);
+    return { url, status: null, ok: false, title: "", description: "", canonical: "", robots: "", googlebotRobots: "", xRobotsTag: "", requestMs, firstAttemptMs: firstAttemptMs ?? requestMs, h1Count: null, mainText: "",
       imageAlt: null, structuredData: null, internalLinks: [], headerMenu: null, canonicalMatches: false, recoveredTransientFailure: false,
       firstAttemptFailure,
       error: e instanceof Error ? e.name : "Unknown error" };
@@ -811,7 +841,9 @@ async function main() {
     duplicateDescriptionGroups: duplicateDescriptions.length,
     nearDuplicateDescriptionPairs: nearDuplicateDescriptions.length,
     canonicalMissingOrDifferent: results.filter((x) => x.ok && !x.canonicalMatches).length,
-    noindexPagesInSitemap: results.filter((x) => /\bnoindex\b/iu.test(x.robots)).length,
+    noindexPagesInSitemap: validPages.filter(pageHasNoindex).length,
+    sitemapHeaderNoindexReview: validPages.filter((x) => /\b(?:noindex|none)\b/iu.test(x.xRobotsTag)).length,
+    sitemapRequestsOver2000Ms: results.filter((x) => x.firstAttemptMs >= 2000 || x.requestMs >= 2000).length,
     scope: "Read-only full live-sitemap SEO and internal-link census; no external inbound or Google index status",
   };
   const h1Review = validPages.filter((page) => page.h1Count !== 1)
@@ -830,8 +862,11 @@ async function main() {
     (!/\bnoindex\b/iu.test(page.robots) && !page.canonicalMatches)).slice(0, 50)) {
     console.log(JSON.stringify({ dynamicPublicHttpReview: item }));
   }
-  for (const page of results.filter((x) => !x.ok || !x.canonicalMatches || /\bnoindex\b/iu.test(x.robots))) {
-    console.log(JSON.stringify(page));
+  for (const page of publicResults.filter((x) => !x.ok || !x.canonicalMatches || pageHasNoindex(x) || x.firstAttemptFailure || /\b(?:noindex|none)\b/iu.test(x.xRobotsTag))) {
+    console.log(JSON.stringify({ sitemapRequestReview: page }));
+  }
+  for (const page of [...publicResults].sort((a, b) => Math.max(b.firstAttemptMs, b.requestMs) - Math.max(a.firstAttemptMs, a.requestMs)).slice(0, 15)) {
+    console.log(JSON.stringify({ slowSitemapRequestReview: { url: page.url, status: page.status, firstAttemptMs: page.firstAttemptMs, requestMs: page.requestMs, firstAttemptFailure: page.firstAttemptFailure } }));
   }
   // Non-sitemap destinations are only review candidates, not confirmed 404s.
   for (const item of h1Review.slice(0, 25)) {
@@ -898,7 +933,7 @@ async function main() {
     summary.homepageUnreachableSitemapUrls || summary.pagesWithHeaderNavigationProblems) process.exitCode = 1;
 }
 
-export { publicDynamicOffSitemapKind, verifyPublicDynamicOffSitemapLinks, duplicateTitleGroups, h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
+export { inspect, pageHasNoindex, publicDynamicOffSitemapKind, verifyPublicDynamicOffSitemapLinks, duplicateTitleGroups, h1CountFromHtml, mainTextFromHtml, compareMainContent, imageAltFromHtml, structuredDataFromHtml, inspectBreadcrumbHierarchy, internalLinksFromHtml, buildInternalLinkReview, publicHeaderMenuLinksFromHtml, buildHomeReachability, publicOffSitemapPath, verifyPublicOffSitemapLinks };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {

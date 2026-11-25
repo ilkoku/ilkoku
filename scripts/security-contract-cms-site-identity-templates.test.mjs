@@ -125,3 +125,84 @@ test("writer motivation series is user-day idempotent, CMS-managed and consisten
   contains(cmsEditor, "+ Yeni motivasyon ekle", "CMS motivation extension control");
   contains(modules, 'href: "/icerik/motivasyon"', "motivation CMS navigation");
 });
+
+
+test("generic public CMS route shares one request lookup and separates missing rows from query failure", async () => {
+  const route = source("src/app/[...path]/page.tsx");
+  contains(route, 'import { cache } from "react"', "request-scoped React memoization");
+  contains(route, "const loadPublicPage = cache(", "shared CMS lookup");
+  assert.equal((route.match(/await loadPublicPage\(source\)/gu) || []).length, 2);
+  assert.equal((route.match(/status = 'published'/gu) || []).length, 2);
+  const ts = await import("typescript");
+  const js = ts.transpileModule(route, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
+    fileName: "page.tsx",
+  }).outputText;
+  const missing = new Error("test notFound");
+  const redirect = new Error("test redirect");
+  const unavailable = new Error("test database unavailable");
+  const row = { slug: "/cms-example", title: "Example", bodyJson: "{}", noIndex: false };
+  const props = { params: Promise.resolve({ path: ["cms-example"] }) };
+
+  function loadRoute(pageResult, redirectResult) {
+    const calls = [];
+    const exports = {};
+    const requireMock = (id) => {
+      if (id === "react") return { cache: (fn) => {
+        // A fresh map for each simulated request, not a persistent data cache.
+        const memo = new Map();
+        return (key) => {
+          if (!memo.has(key)) memo.set(key, fn(key));
+          return memo.get(key);
+        };
+      } };
+      if (id === "next/navigation") return {
+        notFound() { throw missing; },
+        permanentRedirect(target) { assert.equal(target, "/nasil-calisir"); throw redirect; },
+      };
+      if (id === "react/jsx-runtime") return { jsx: () => ({}), jsxs: () => ({}) };
+      if (id === "@/lib/prisma") return { prisma: {
+        async $queryRaw(strings) {
+          const sql = strings.join("?");
+          const pageLookup = sql.includes("FROM ContentPage");
+          calls.push(pageLookup ? "page" : "redirect");
+          const value = pageLookup ? pageResult : redirectResult;
+          if (value instanceof Error) throw value;
+          return value;
+        },
+      } };
+      if (id === "@/lib/cms-pages") return { parseCmsPageBody: () => ({ summary: "Summary", blocks: [], body: "Body" }) };
+      if (id === "@/lib/public-page-metadata") return { createPublicPageMetadata: (input) => input };
+      if (id === "@/lib/cms-redirects") return {
+        normalizeCmsRedirectPath: (value) => value,
+        parseCmsRedirectValue: JSON.parse,
+      };
+      if (id === "@/lib/site-identity") return { getPublicSiteIdentity: async () => ({ defaultEyebrow: "First" }) };
+      if (id.startsWith("@/components/")) return {};
+      throw new Error("Unexpected route dependency: " + id);
+    };
+    new Function("require", "exports", js)(requireMock, exports);
+    return { route: exports, calls };
+  }
+
+  const published = loadRoute([row], []);
+  assert.equal((await published.route.generateMetadata(props)).canonical, "/cms-example");
+  await published.route.default(props);
+  assert.deepEqual(published.calls, ["page"]);
+
+  const absent = loadRoute([], []);
+  await assert.rejects(absent.route.default(props), (error) => error === missing);
+  assert.deepEqual(absent.calls, ["page", "redirect"]);
+
+  const redirected = loadRoute([], [{ valueJson: '{"source":"/cms-example","target":"/nasil-calisir","code":308}' }]);
+  await assert.rejects(redirected.route.default(props), (error) => error === redirect);
+
+  const pageFailure = loadRoute(unavailable, []);
+  await assert.rejects(pageFailure.route.generateMetadata(props), (error) => error === unavailable);
+  await assert.rejects(pageFailure.route.default(props), (error) => error === unavailable);
+  assert.deepEqual(pageFailure.calls, ["page"]);
+
+  const redirectFailure = loadRoute([], unavailable);
+  await assert.rejects(redirectFailure.route.default(props), (error) => error === unavailable);
+  assert.deepEqual(redirectFailure.calls, ["page", "redirect"]);
+});

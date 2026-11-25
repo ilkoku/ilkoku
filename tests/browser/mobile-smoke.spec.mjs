@@ -3277,3 +3277,43 @@ test("book opening initial appears only in the first protected paragraph", async
   expect(sizes[3].initial).toBeGreaterThan(sizes[3].base * 3);
   expect(sizes[4].initial).toBeCloseTo(sizes[4].base, 1);
 });
+
+
+// The homepage school must retain its real SSR links and reuse the site's
+// established typography while gaining soft, responsive surfaces.
+for (const viewport of [viewports.phone390, viewports.desktop]) {
+  test(`writing school soft surfaces preserve links at ${viewport.width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    const response = await page.goto("/", { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    const school = page.locator("#yazarlik-okulu");
+    await expect(school).toBeVisible();
+    const cards = school.locator(".nx-writing-school__card");
+    const guides = school.locator(".nx-writing-school__guide");
+    await expect(cards).toHaveCount(7);
+    await expect(guides).toHaveCount(11);
+    const facts = await school.evaluate((section) => {
+      const card = section.querySelector(".nx-writing-school__card");
+      const title = card.querySelector(".nx-writing-school__title");
+      const guide = section.querySelector(".nx-writing-school__guide");
+      const heading = section.querySelector("h2");
+      const refHeading = document.querySelector(".nx-role h3");
+      return {
+        cardRadius: parseFloat(getComputedStyle(card).borderTopLeftRadius),
+        pillRadius: parseFloat(getComputedStyle(guide).borderTopLeftRadius),
+        titleFont: getComputedStyle(title).fontFamily,
+        headingFont: getComputedStyle(heading).fontFamily,
+        roleFont: refHeading ? getComputedStyle(refHeading).fontFamily : null,
+        links: [...section.querySelectorAll("a")].map(a => a.getAttribute("href")),
+        overflow: section.scrollWidth - section.clientWidth,
+      };
+    });
+    expect(facts.cardRadius).toBeGreaterThanOrEqual(22);
+    expect(facts.pillRadius).toBeGreaterThanOrEqual(100);
+    expect(facts.titleFont).toBe(facts.headingFont);
+    expect(facts.overflow).toBeLessThanOrEqual(1);
+    expect(new Set(facts.links).size).toBe(18);
+    expect(facts.links.every(href => href.startsWith("/yazarlar-icin/"))).toBe(true);
+    await school.screenshot({ path: testInfo.outputPath("writing-school.png"), animations: "disabled" });
+  });
+}

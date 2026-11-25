@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { PublicCmsPageBlocks } from "@/components/content/PublicCmsPageBlocks";
@@ -30,22 +31,21 @@ function sourceFromPath(path: string[]) {
   return `/${path.join("/")}`.replace(/\/{2,}/g, "/");
 }
 
-async function loadPublicPage(source: string) {
+// Share the published-page lookup between metadata and rendering for this
+// request only. React cache does not persist content across requests.
+// A failed database query is not evidence that the page is missing.
+const loadPublicPage = cache(async (source: string) => {
   if (source.split("/").filter(Boolean).length !== 1) return null;
-  try {
-    const rows = await prisma.$queryRaw<PublicPageRow[]>`
-      SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex, updatedAt
-      FROM ContentPage
-      WHERE slug = ${source}
-        AND contentKey LIKE 'page:tr:%'
-        AND status = 'published'
-      LIMIT 1
-    `;
-    return rows[0] ?? null;
-  } catch {
-    return null;
-  }
-}
+  const rows = await prisma.$queryRaw<PublicPageRow[]>`
+    SELECT slug, title, bodyJson, seoTitle, seoDescription, canonicalUrl, noIndex, updatedAt
+    FROM ContentPage
+    WHERE slug = ${source}
+      AND contentKey LIKE 'page:tr:%'
+      AND status = 'published'
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { path } = await params;
@@ -98,19 +98,17 @@ export default async function CmsPageOrRedirectFallback({ params }: PageProps) {
     notFound();
   }
 
-  let rows: RedirectRow[] = [];
-  try {
-    rows = await prisma.$queryRaw<RedirectRow[]>`
-      SELECT valueJson
-      FROM SiteContent
-      WHERE namespace = 'redirect'
-        AND contentKey = ${normalizedSource}
-        AND status = 'published'
-      LIMIT 1
-    `;
-  } catch {
-    notFound();
-  }
+  // Only a successful lookup with no valid redirect is a true miss.
+  // Propagate infrastructure errors to Next.js error handling instead of
+  // explicitly classifying a temporary database failure as not found.
+  const rows = await prisma.$queryRaw<RedirectRow[]>`
+    SELECT valueJson
+    FROM SiteContent
+    WHERE namespace = 'redirect'
+      AND contentKey = ${normalizedSource}
+      AND status = 'published'
+    LIMIT 1
+  `;
 
   const value = rows[0] ? parseCmsRedirectValue(rows[0].valueJson) : null;
   if (!value || value.source !== normalizedSource) notFound();

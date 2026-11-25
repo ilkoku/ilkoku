@@ -42,9 +42,10 @@ function robotsFromHtml(html, name = "robots") {
 // for review, and treat only unscoped or Googlebot-specific directives as
 // Google indexability findings. A combined header can be ambiguous.
 function hasNoindexDirective(value) {
-  return /(?:^|[\s,;])(?:noindex|none)(?=$|[\s,;])/iu.test(value || "");
+  const directives = (value || "").replace(/\bmax-image-preview\s*:\s*(?:none|standard|large)\b/giu, "");
+  return /(?:^|[\s,;])(?:noindex|none)(?=$|[\s,;])/iu.test(directives);
 }
-function headerNoindexForGoogle(value) {
+function headerNoindexForGoogle(value, allAgents = false) {
   let agent = "";
   for (const raw of (value || "").split(",")) {
     let directive = raw.trim();
@@ -53,7 +54,7 @@ function headerNoindexForGoogle(value) {
       agent = scoped[1].toLowerCase();
       directive = scoped[2];
     }
-    if ((!agent || agent === "googlebot") && hasNoindexDirective(directive)) return true;
+    if ((allAgents || !agent || agent === "googlebot") && hasNoindexDirective(directive)) return true;
   }
   return false;
 }
@@ -842,7 +843,7 @@ async function main() {
     nearDuplicateDescriptionPairs: nearDuplicateDescriptions.length,
     canonicalMissingOrDifferent: results.filter((x) => x.ok && !x.canonicalMatches).length,
     noindexPagesInSitemap: validPages.filter(pageHasNoindex).length,
-    sitemapHeaderNoindexReview: validPages.filter((x) => /\b(?:noindex|none)\b/iu.test(x.xRobotsTag)).length,
+    sitemapHeaderNoindexReview: validPages.filter((x) => headerNoindexForGoogle(x.xRobotsTag, true)).length,
     sitemapRequestsOver2000Ms: results.filter((x) => x.firstAttemptMs >= 2000 || x.requestMs >= 2000).length,
     scope: "Read-only full live-sitemap SEO and internal-link census; no external inbound or Google index status",
   };
@@ -862,7 +863,7 @@ async function main() {
     (!/\bnoindex\b/iu.test(page.robots) && !page.canonicalMatches)).slice(0, 50)) {
     console.log(JSON.stringify({ dynamicPublicHttpReview: item }));
   }
-  for (const page of publicResults.filter((x) => !x.ok || !x.canonicalMatches || pageHasNoindex(x) || x.firstAttemptFailure || /\b(?:noindex|none)\b/iu.test(x.xRobotsTag))) {
+  for (const page of publicResults.filter((x) => !x.ok || !x.canonicalMatches || pageHasNoindex(x) || x.firstAttemptFailure || headerNoindexForGoogle(x.xRobotsTag, true))) {
     console.log(JSON.stringify({ sitemapRequestReview: page }));
   }
   for (const page of [...publicResults].sort((a, b) => Math.max(b.firstAttemptMs, b.requestMs) - Math.max(a.firstAttemptMs, a.requestMs)).slice(0, 15)) {

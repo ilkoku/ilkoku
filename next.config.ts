@@ -124,7 +124,11 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Link",
-            value: '<https://ilkoku.com/llms.txt>; rel="describedby"; type="text/plain"',
+            value: '<https://ilkoku.com/llms.txt>; rel="describedby"; type="text/plain", <https://ilkoku.com/agent/home.md>; rel="alternate"; type="text/markdown"',
+          },
+          {
+            key: "Vary",
+            value: "Accept, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
           },
         ],
       },
@@ -245,6 +249,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        {
+          // Only explicit Markdown requests; never rewrite ordinary browser or RSC traffic.
+          source: "/",
+          has: [{ type: "header", key: "accept", value: "text/markdown" }],
+          missing: [{ type: "header", key: "rsc" }],
+          destination: "/agent/home.md",
+        },
         {
           // Preserve existing shared Open Graph image links without a redirect or 404.
           source: "/opengraph-image",

@@ -58,11 +58,41 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const homepageSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://ilkoku.com/#webpage",
+      url: "https://ilkoku.com/",
+      name: homeTitle,
+      description: homeDescription,
+      inLanguage: "tr-TR",
+      isPartOf: { "@id": "https://ilkoku.com/#website" },
+      about: { "@id": "https://ilkoku.com/#organization" },
+      mainEntity: { "@id": "https://ilkoku.com/#platform-service" },
+    },
+    {
+      "@type": "Service",
+      "@id": "https://ilkoku.com/#platform-service",
+      name: "İlkOku Dijital Yazar Platformu",
+      serviceType: "Dijital yazarlık ve editoryal değerlendirme platformu",
+      description: homeDescription,
+      url: "https://ilkoku.com/",
+      provider: { "@id": "https://ilkoku.com/#organization" },
+    },
+  ],
+};
+
 export const revalidate = 300;
 
 export default function HomePage() {
   return (
     <div className="homepage-live">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema).replace(/</g, "\\u003c") }}
+      />
       <PublicSiteHeader />
       <HomepageExperience />
     </div>

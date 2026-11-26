@@ -58,6 +58,19 @@ test("global public routes share one canonical SEO and social brand identity", (
   assertContains(layout, "description: publicBrandDescription", "global metadata keeps canonical brand description");
 });
 
+test("homepage structured data describes the real platform and links existing entity IDs", () => {
+  const homepage = source("src/app/page.tsx");
+  const layout = source("src/app/layout.tsx");
+  assertContains(homepage, '"@type": "WebPage"', "homepage WebPage");
+  assertContains(homepage, '"@type": "Service"', "digital platform service");
+  assertContains(homepage, 'isPartOf: { "@id": "https://ilkoku.com/#website" }', "website reference");
+  assertContains(homepage, 'provider: { "@id": "https://ilkoku.com/#organization" }', "organization reference");
+  assertContains(homepage, 'mainEntity: { "@id": "https://ilkoku.com/#platform-service" }', "service reference");
+  assertContains(homepage, 'JSON.stringify(homepageSchema)', "server-rendered JSON-LD");
+  assertContains(layout, '/#website', "website identifier");
+  assertContains(layout, '/#organization', "organization identifier");
+});
+
 test("homepage metadata uses the previously approved wording without ecosystem language", () => {
   const expected = "Yazarları, okurları, editörleri ve yayınevlerini buluşturan dijital platform";
   const brand = source("src/lib/public-brand.ts");

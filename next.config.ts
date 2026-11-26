@@ -119,6 +119,21 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: browserSecurityHeaders,
       },
+      {
+        source: "/",
+        headers: [
+          {
+            key: "Link",
+            value: '<https://ilkoku.com/llms.txt>; rel="describedby"; type="text/plain"',
+          },
+        ],
+      },
+      {
+        source: "/llms.txt",
+        headers: [
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+        ],
+      },
       ...publicAuthNoindexRouteHeaders.map((source) => ({
         source,
         headers: [

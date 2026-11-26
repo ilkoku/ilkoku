@@ -1,0 +1,32 @@
+# İlkOku
+
+> İlkOku.com, yazarları, okurları, editörleri ve yayınevlerini bir araya getiren Türkçe dijital yazar platformudur.
+
+İlkOku hakkında güncel bilgiler için aşağıdaki herkese açık sayfaları kullanın. Platformun editoryal süreçleri, kullanıcı rolleri ve eğitim içerikleri ilgili sayfalarda açıklanır. Bu dosya bir erişim yetkisi veya içerik lisansı vermez; özel hesap verileri ve yayımlanmamış eserler kapsam dışıdır.
+
+## Platform
+
+- [Ana sayfa](https://ilkoku.com/): Platformun tanıtımı.
+- [Hakkımızda](https://ilkoku.com/hakkimizda): İlkOku hakkında bilgi.
+- [Nasıl çalışır?](https://ilkoku.com/nasil-calisir): Platformun işleyişi.
+- [Editoryal standartlar](https://ilkoku.com/editoryal-standartlar): Editoryal değerlendirme ilkeleri.
+
+## Kullanıcı rolleri ve eğitimler
+
+- [Yazarlar için](https://ilkoku.com/yazarlar-icin): Eser yazma ve yayımlama rehberleri.
+- [Okurlar için](https://ilkoku.com/okurlar-icin): Okuma rehberleri.
+- [Editörler için](https://ilkoku.com/editorler-icin): Editörlük ve değerlendirme rehberleri.
+- [Yayınevleri için](https://ilkoku.com/yayinevleri-icin): Yayınevlerine yönelik platform bilgileri.
+- [Kurgu](https://ilkoku.com/yazarlar-icin/kurgu): Kurgu türleri ve yazarlık rehberleri.
+- [Edebiyat](https://ilkoku.com/yazarlar-icin/edebiyat): Edebî türlere ilişkin rehberler.
+
+## İletişim ve yasal bilgiler
+
+- [İletişim](https://ilkoku.com/iletisim): Resmî iletişim kanalları.
+- [Kullanım şartları](https://ilkoku.com/yasal/kullanim-sartlari): Platform kullanım koşulları.
+- [Gizlilik politikası](https://ilkoku.com/yasal/gizlilik-politikasi): Kişisel veriler ve gizlilik.
+- [KVKK](https://ilkoku.com/yasal/kvkk): Kişisel verilerin korunmasına ilişkin bilgiler.
+
+## Optional
+
+- [XML sitemap](https://ilkoku.com/sitemap.xml): Güncel herkese açık arama motoru URL envanteri.

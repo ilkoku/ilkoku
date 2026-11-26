@@ -2150,3 +2150,19 @@ test("canonical comparison cannot silently equate different author ID case", asy
   canonical = url;
   assert.equal((await inspect(url)).canonicalMatches, true);
 });
+
+test("agent discovery guide links only approved public canonical resources", () => {
+  const guide = source("public/llms.txt");
+  const config = source("next.config.ts");
+  assert.ok(guide.startsWith("# İlkOku\n\n> "));
+  const urls = [...guide.matchAll(/\]\((https:\/\/ilkoku\.com[^)]+)\)/g)].map((match) => match[1]);
+  assert.deepEqual(urls.map((url) => new URL(url).pathname), [
+    "/", "/hakkimizda", "/nasil-calisir", "/editoryal-standartlar",
+    "/yazarlar-icin", "/okurlar-icin", "/editorler-icin", "/yayinevleri-icin",
+    "/yazarlar-icin/kurgu", "/yazarlar-icin/edebiyat", "/iletisim",
+    "/yasal/kullanim-sartlari", "/yasal/gizlilik-politikasi", "/yasal/kvkk",
+    "/sitemap.xml",
+  ]);
+  assert.match(config, /source: "\/",\s*headers: \[\s*\{\s*key: "Link",\s*value: '<https:\/\/ilkoku\.com\/llms\.txt>; rel="describedby"; type="text\/plain"'/);
+  assert.match(config, /source: "\/llms\.txt",\s*headers: \[\s*\{ key: "Content-Type", value: "text\/plain; charset=utf-8" \}/);
+});

@@ -3317,3 +3317,42 @@ for (const viewport of [viewports.phone390, viewports.desktop]) {
     await school.screenshot({ path: testInfo.outputPath("writing-school.png"), animations: "disabled" });
   });
 }
+
+
+test("homepage Markdown is negotiated explicitly without contaminating HTML or RSC cache variants", async ({ request }) => {
+  const varyNames = (response) => (response.headers().vary || "").toLowerCase().split(",").map((name) => name.trim());
+  const html = await request.get("/", { headers: { Accept: "text/html" } });
+  expect(html.status()).toBe(200);
+  expect(html.headers()["content-type"]).toContain("text/html");
+  expect(varyNames(html)).toContain("accept");
+  expect(varyNames(html)).toContain("rsc");
+  expect(html.headers().link).toContain('rel="alternate"; type="text/markdown"');
+
+  const markdown = await request.get("/", { headers: { Accept: "text/markdown" } });
+  expect(markdown.status()).toBe(200);
+  expect(markdown.headers()["content-type"]).toContain("text/markdown");
+  expect(markdown.headers()["cache-control"]).toContain("no-store");
+  expect(varyNames(markdown)).toContain("accept");
+  const body = await markdown.text();
+  expect(body).toContain("# İlkOku | Dijital Yazar Platformu");
+  expect(body).toContain("https://ilkoku.com/yazarlar-icin");
+  expect(body).not.toContain("<html");
+
+  const alternate = await request.get("/agent/home.md");
+  expect(alternate.status()).toBe(200);
+  expect(await alternate.text()).toBe(body);
+  const head = await request.head("/", { headers: { Accept: "text/markdown" } });
+  expect(head.status()).toBe(200);
+  expect(head.headers()["content-type"]).toContain("text/markdown");
+  expect((await head.body()).length).toBe(0);
+
+  for (const accept of ["text/html", "*/*", "text/html, text/markdown;q=0"]) {
+    const response = await request.get("/", { headers: { Accept: accept } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+  }
+  const llms = await request.get("/llms.txt");
+  expect(llms.status()).toBe(200);
+  expect(llms.headers()["content-type"]).toContain("text/plain");
+  expect(await llms.text()).toContain("# İlkOku");
+});

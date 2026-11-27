@@ -1,0 +1,52 @@
+name: Agent readiness live HTTP evidence
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/agent-readiness-live-http.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-readiness-live-http
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect public resources and response headers
+        shell: bash
+        run: |
+          set -eu
+          temp="$(mktemp -d)"
+          trap 'rm -rf "$temp"' EXIT
+          probe() {
+            local label="$1" path="$2" accept="$3" ua="$4" code
+            code="$(curl --silent --show-error --connect-timeout 8 --max-time 15 \
+              --user-agent "$ua" --header "Accept: $accept" \
+              --dump-header "$temp/headers" --output "$temp/body" \
+              --write-out '%{http_code}' "https://ilkoku.com$path")" || code="transport-error"
+            printf 'AGENT_HTTP %s path=%s status=%s\n' "$label" "$path" "$code"
+            grep -Ei '^(content-type|link|vary|cache-control|x-robots-tag|cf-ray|cf-mitigated|location|retry-after):' "$temp/headers" || true
+            if [ "$code" = "429" ]; then
+              echo "Rate limit observed; stop this bounded audit."
+              exit 0
+            fi
+            sleep 1
+          }
+          probe homepage / text/html 'IlkOku-Agent-Readiness-Audit/1.0'
+          probe llms /llms.txt text/plain 'IlkOku-Agent-Readiness-Audit/1.0'
+          probe markdown /agent/home.md text/markdown 'IlkOku-Agent-Readiness-Audit/1.0'
+          probe markdown-negotiation / text/markdown 'IlkOku-Agent-Readiness-Audit/1.0'
+          # These are synthetic User-Agent probes from a GitHub runner, not verified crawler IPs.
+          # A blocked synthetic request does not demonstrate a genuine crawler blockade.
+          probe synthetic-oai-search / text/html 'OAI-SearchBot/1.0'
+          probe synthetic-chatgpt-user / text/html 'ChatGPT-User/1.0'
+          probe synthetic-claudebot / text/html 'ClaudeBot/1.0'
+          probe synthetic-gptbot / text/html 'GPTBot/1.2'
+          echo "Read-only diagnostic complete. Inspect recorded statuses and headers; this is not an indexing or WAF pass/fail gate."

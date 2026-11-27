@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { PublicSiteHeader } from "@/components/layout/PublicSiteHeader";
 import { isCmsLocaleEnabled } from "@/lib/cms-locale-state";
@@ -93,6 +94,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema).replace(/</g, "\\u003c") }}
       />
+      <Script id="ilkoku-public-webmcp" src="/agent/webmcp.js" strategy="afterInteractive" />
       <PublicSiteHeader />
       <HomepageExperience />
     </div>

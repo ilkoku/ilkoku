@@ -2179,3 +2179,37 @@ test("agent discovery guide links only approved public canonical resources", () 
   assert.match(config, /source: "\/",\s*headers: \[\s*\{\s*key: "Link",\s*value: '<https:\/\/ilkoku\.com\/llms\.txt>; rel="describedby"; type="text\/plain", <https:\/\/ilkoku\.com\/agent\/home\.md>; rel="alternate"; type="text\/markdown"'/);
   assert.match(config, /source: "\/llms\.txt",\s*headers: \[\s*\{ key: "Content-Type", value: "text\/plain; charset=utf-8" \}/);
 });
+
+
+test("WebMCP registers only public read-only document tools and tolerates unsupported browsers", async () => {
+  const { runInNewContext } = await import("node:vm");
+  const script = source("public/agent/webmcp.js");
+  const homepage = source("src/app/page.tsx");
+  assertContains(homepage, 'src="/agent/webmcp.js" strategy="afterInteractive"', "homepage script");
+  await runInNewContext(script, { document: {} });
+  const registered = [];
+  await runInNewContext(script, {
+    document: { modelContext: { async registerTool(tool) { registered.push(tool); } } },
+  });
+  assert.deepEqual(registered.map((tool) => tool.name), ["ilkoku_get_platform_info", "ilkoku_list_public_resources"]);
+  for (const tool of registered) {
+    assert.equal(tool.annotations.readOnlyHint, true);
+    assert.equal(tool.inputSchema.additionalProperties, false);
+    assert.equal(typeof tool.execute({ unexpected: true }).error, "string");
+  }
+  const info = registered[0].execute({});
+  assert.equal(info.name, "İlkOku");
+  assert.equal(info.roles.length, 4);
+  const resources = registered[1].execute({}).resources;
+  assert.equal(resources.length, 14);
+  for (const resource of resources) {
+    const url = new URL(resource.url);
+    assert.equal(url.origin, "https://ilkoku.com");
+    assert.doesNotMatch(url.pathname, /^(\/admin|\/api|\/hesabim|\/oku\/|\/sistem-yonetimi)/);
+  }
+  assert.ok(resources.some((resource) => resource.url === "https://ilkoku.com/llms.txt"));
+  assert.ok(resources.some((resource) => resource.url === "https://ilkoku.com/agent/home.md"));
+  await runInNewContext(script, {
+    document: { modelContext: { async registerTool() { throw new Error("Preview API rejected"); } } },
+  });
+});

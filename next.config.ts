@@ -124,7 +124,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Link",
-            value: '<https://ilkoku.com/llms.txt>; rel="describedby"; type="text/plain"',
+            value: '<https://ilkoku.com/llms.txt>; rel="describedby"; type="text/plain", <https://ilkoku.com/agent/home.md>; rel="alternate"; type="text/markdown"',
           },
         ],
       },

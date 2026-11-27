@@ -50,13 +50,39 @@ const publicWorkBaseWhere: Prisma.WorkWhereInput = {
   },
 };
 
+// Resolve the shared noindex policy before count, pagination and grouping.
+// The production Prisma adapter has previously failed NOT/startsWith
+// combinations. Read only slugs in bounded batches, then use the already
+// supported exact notIn predicate. Direct work and author reads are unchanged.
+const getPublicDiscoveryWhere = cache(async (): Promise<Prisma.WorkWhereInput> => {
+  const excluded = new Set<string>(BLOCKED_PUBLIC_WORK_SLUGS);
+  const batchSize = 1000;
+  let cursor: string | undefined;
+  for (;;) {
+    const rows = await prisma.work.findMany({
+      where: publicWorkBaseWhere,
+      select: { slug: true },
+      orderBy: { slug: "asc" },
+      take: batchSize,
+      ...(cursor ? { cursor: { slug: cursor }, skip: 1 } : {}),
+    });
+    for (const row of rows) {
+      if (isSearchIndexExcludedPublicWorkSlug(row.slug)) excluded.add(row.slug);
+    }
+    if (rows.length < batchSize) break;
+    cursor = rows[rows.length - 1].slug;
+  }
+  return { ...publicWorkBaseWhere, slug: { notIn: [...excluded] } };
+});
+
 function publicWorkWhere(
   filters: PublicWorkLibraryFilters,
+  baseWhere: Prisma.WorkWhereInput,
 ): Prisma.WorkWhereInput {
   const genre = normalizeGenreLabel(filters.genre);
 
   return {
-    ...publicWorkBaseWhere,
+    ...baseWhere,
     ...(filters.search
       ? {
           OR: [
@@ -120,7 +146,9 @@ export async function getPublicWorkLibrary(
   filters: PublicWorkLibraryFilters,
   requestedPage: number,
   includeGenres = true,
+  includeFixtures = false,
 ) {
+  const baseWhere = includeFixtures ? publicWorkBaseWhere : await getPublicDiscoveryWhere();
   const orderBy: Prisma.WorkOrderByWithRelationInput[] =
     filters.sort === "updated"
       ? [
@@ -144,7 +172,7 @@ export async function getPublicWorkLibrary(
         },
         take: 100,
         where: {
-          ...publicWorkBaseWhere,
+          ...baseWhere,
           genre: {
             not: null,
           },
@@ -159,7 +187,7 @@ export async function getPublicWorkLibrary(
     const whereWithoutSearch = publicWorkWhere({
       ...filters,
       search: undefined,
-    });
+    }, baseWhere);
     const [genreRows, candidates] = await Promise.all([
       genreRowsQuery,
       prisma.work.findMany({
@@ -209,7 +237,7 @@ export async function getPublicWorkLibrary(
     };
   }
 
-  const where = publicWorkWhere(filters);
+  const where = publicWorkWhere(filters, baseWhere);
   const [totalCount, genreRows] = await Promise.all([
     prisma.work.count({ where }),
     genreRowsQuery,
@@ -239,8 +267,9 @@ export async function getPublicWorkLibrary(
   };
 }
 
-export const getPublicGenres = cache(async function getPublicGenres(search?: string) {
+export const getPublicGenres = cache(async function getPublicGenres(search?: string, includeFixtures = true) {
   const normalizedSearch = search?.trim().slice(0, 120);
+  const baseWhere = includeFixtures ? publicWorkBaseWhere : await getPublicDiscoveryWhere();
   const rows = await prisma.work.groupBy({
     _count: {
       _all: true,
@@ -251,7 +280,7 @@ export const getPublicGenres = cache(async function getPublicGenres(search?: str
     },
     take: 100,
     where: {
-      ...publicWorkBaseWhere,
+      ...baseWhere,
       genre: {
         not: null,
       },

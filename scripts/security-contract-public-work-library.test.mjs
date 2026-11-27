@@ -429,3 +429,18 @@ test("landing, sitemap and production smoke keep retired public discovery closed
     "published public work stays outside blanket noindex",
   );
 });
+
+
+test("public discovery filters search-excluded fixtures before counts, search, pagination and genre grouping", () => {
+  const library = source("src/features/public-discovery/library.ts");
+  const directory = source("src/app/turler/page.tsx");
+  const detail = source("src/app/turler/[slug]/page.tsx");
+  contains(library, "isSearchIndexExcludedPublicWorkSlug(row.slug)", "shared fixture policy applied to slugs");
+  contains(library, "slug: { notIn: [...excluded] }", "exact exclusion before database reads");
+  contains(library, "take: batchSize", "bounded slug inventory reads");
+  contains(library, "includeFixtures = false", "discovery defaults to real publications");
+  contains(library, "publicWorkWhere(filters, baseWhere)", "count and pagination share discovery boundary");
+  contains(library, "}, baseWhere);", "search uses same discovery boundary");
+  contains(directory, "getPublicGenres(search, false)", "directory excludes QA-only genres");
+  contains(detail, "includeFixtures = !eligible.has(genre.slug)", "only confirmed QA-only genres retain direct fixture browsing");
+});

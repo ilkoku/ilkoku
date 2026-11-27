@@ -137,6 +137,15 @@ export default async function PublicGenrePage({
   }
 
   const returnTo = safeReturnPath(query.from);
+  // Only a confirmed QA-only genre retains its direct fixture browsing.
+  // An indexable genre must show the same real works as its search metadata.
+  let includeFixtures = false;
+  try {
+    const eligible = await getSearchIndexEligibleGenreSlugs(genre.sourceGenres);
+    includeFixtures = !eligible.has(genre.slug);
+  } catch (error) {
+    console.error("Public genre fixture eligibility lookup failed", error);
+  }
   const library = await getPublicWorkLibrary(
     {
       genre: genre.label,
@@ -144,6 +153,7 @@ export default async function PublicGenrePage({
     },
     pageNumber(query.sayfa),
     false, // Genre-filter options are not displayed on this detail page.
+    includeFixtures,
   );
   const currentPath = genrePageHref(
     genre.slug,

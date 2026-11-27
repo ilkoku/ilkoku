@@ -1,0 +1,38 @@
+name: MCP public discovery and live proof
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/mcp-discovery-proof.yml
+      - src/lib/public-mcp-card.json
+      - src/app/.well-known/mcp/server-card.json/route.ts
+      - scripts/mcp-card-contract.mjs
+      - scripts/mcp-public-live-probe.mjs
+permissions:
+  contents: read
+jobs:
+  card:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - run: node scripts/mcp-card-contract.mjs
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: node scripts/mcp-public-live-probe.mjs

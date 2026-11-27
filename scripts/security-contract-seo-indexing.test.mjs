@@ -2176,6 +2176,6 @@ test("agent discovery guide links only approved public canonical resources", () 
     "/yasal/kullanim-sartlari", "/yasal/gizlilik-politikasi", "/yasal/kvkk",
     "/sitemap.xml",
   ]);
-  assert.match(config, /source: "\/",\s*headers: \[\s*\{\s*key: "Link",\s*value: '<https:\/\/ilkoku\.com\/llms\.txt>; rel="describedby"; type="text\/plain"'/);
+  assert.match(config, /source: "\/",\s*headers: \[\s*\{\s*key: "Link",\s*value: '<https:\/\/ilkoku\.com\/llms\.txt>; rel="describedby"; type="text\/plain", <https:\/\/ilkoku\.com\/agent\/home\.md>; rel="alternate"; type="text\/markdown"'/);
   assert.match(config, /source: "\/llms\.txt",\s*headers: \[\s*\{ key: "Content-Type", value: "text\/plain; charset=utf-8" \}/);
 });

@@ -3317,3 +3317,37 @@ for (const viewport of [viewports.phone390, viewports.desktop]) {
     await school.screenshot({ path: testInfo.outputPath("writing-school.png"), animations: "disabled" });
   });
 }
+
+
+// Same-URL Accept negotiation remains blocked until the edge cache supports
+// Vary: Accept reliably. The direct alternate must never change homepage HTML.
+test("homepage advertises a separate Markdown representation and preserves HTML and RSC", async ({ request }) => {
+  const html = await request.get("/", { headers: { Accept: "text/html" } });
+  expect(html.status()).toBe(200);
+  expect(html.headers()["content-type"]).toContain("text/html");
+  expect((html.headers().vary || "").toLowerCase().split(",").map((name) => name.trim())).toContain("rsc");
+  expect(html.headers().link).toContain('rel="alternate"; type="text/markdown"');
+
+  const markdown = await request.get("/agent/home.md");
+  expect(markdown.status()).toBe(200);
+  expect(markdown.headers()["content-type"]).toContain("text/markdown");
+  expect(markdown.headers()["cache-control"]).toContain("no-store");
+  const body = await markdown.text();
+  expect(body).toContain("# İlkOku | Dijital Yazar Platformu");
+  expect(body).toContain("https://ilkoku.com/yazarlar-icin");
+  expect(body).not.toContain("<html");
+  const head = await request.head("/agent/home.md");
+  expect(head.status()).toBe(200);
+  expect(head.headers()["content-type"]).toContain("text/markdown");
+  expect((await head.body()).length).toBe(0);
+
+  for (const accept of ["text/html", "*/*", "text/markdown", "text/html, text/markdown;q=0"]) {
+    const response = await request.get("/", { headers: { Accept: accept } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+  }
+  const llms = await request.get("/llms.txt");
+  expect(llms.status()).toBe(200);
+  expect(llms.headers()["content-type"]).toContain("text/plain");
+  expect(await llms.text()).toContain("# İlkOku");
+});

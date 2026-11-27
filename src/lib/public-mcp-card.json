@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "protocolVersion": "2026-07-28",
+  "serverInfo": {
+    "name": "ilkoku-public",
+    "title": "İlkOku Public MCP",
+    "version": "1.0.0"
+  },
+  "description": "Read-only public information and official resource links for İlkOku.",
+  "documentationUrl": "https://ilkoku.com/llms.txt",
+  "transport": {
+    "type": "streamable-http",
+    "endpoint": "https://ilkoku.com/mcp"
+  },
+  "capabilities": {
+    "tools": {
+      "listChanged": false
+    }
+  },
+  "authentication": {
+    "required": false,
+    "schemes": []
+  },
+  "tools": [
+    {
+      "name": "ilkoku_get_platform_info",
+      "description": "Public purpose and user roles of İlkOku, the Turkish digital writing platform.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "ilkoku_list_public_resources",
+      "description": "Official public information, guidance, legal and agent resource links.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

@@ -3317,3 +3317,49 @@ for (const viewport of [viewports.phone390, viewports.desktop]) {
     await school.screenshot({ path: testInfo.outputPath("writing-school.png"), animations: "disabled" });
   });
 }
+
+
+test("disposable DB: public discovery excludes fixture works before filtering and keeps a real work visible", async ({ request, baseURL }) => {
+  test.skip(!authFixture || !process.env.DATABASE_URL || !baseURL, "Disposable local browser database required.");
+  const dbUrl = new URL(process.env.DATABASE_URL);
+  const localHosts = ["localhost", "127.0.0.1", "::1", "[::1]"];
+  test.skip(!localHosts.includes(dbUrl.hostname) || !localHosts.includes(new URL(baseURL).hostname) ||
+    dbUrl.pathname !== "/ilkoku_recovery", "Never create QA rows outside the disposable recovery database.");
+  const db = await mysql.createConnection({
+    host: dbUrl.hostname,
+    port: Number(dbUrl.port || 3306),
+    user: decodeURIComponent(dbUrl.username),
+    password: decodeURIComponent(dbUrl.password),
+    database: decodeURIComponent(dbUrl.pathname.slice(1)),
+  });
+  const token = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  const realSlug = "ci-discovery-" + token;
+  const demoSlug = "demo-ci-discovery-" + token;
+  const ids = [crypto.randomUUID(), crypto.randomUUID()];
+  try {
+    const [authors] = await db.execute("SELECT authorId FROM Work WHERE slug = 'ci-browser-zero-total-work'");
+    expect(authors).toHaveLength(1);
+    for (const [i, slug] of [realSlug, demoSlug].entries()) {
+      await db.execute(
+        "INSERT INTO Work (id, publicId, authorId, title, slug, genre, status, visibility, isActive, publishedAt, createdAt, updatedAt) " +
+        "VALUES (?, ?, ?, ?, ?, 'Roman', 'published', 'public', true, NOW(), NOW(), NOW())",
+        [ids[i], "CIDISC" + i + token, authors[0].authorId, "CI Discovery " + token, slug],
+      );
+    }
+    for (const path of ["/eserler?arama=" + token, "/eserler", "/eserler/yeni", "/eserler/guncellenen", "/turler/roman"]) {
+      const started = Date.now();
+      const response = await request.get(path);
+      expect(response.status(), path).toBe(200);
+      const html = await response.text();
+      expect(html, path).toContain("/kitap/" + realSlug);
+      expect(html, path).not.toContain("/kitap/" + demoSlug);
+      console.log("discovery fixture gate", path, Date.now() - started, "ms");
+    }
+    const direct = await request.get("/kitap/" + demoSlug);
+    expect(direct.status()).toBe(200);
+    expect((await direct.text()).toLowerCase()).toContain("noindex");
+  } finally {
+    await db.execute("DELETE FROM Work WHERE id IN (?, ?)", ids);
+    await db.end();
+  }
+});

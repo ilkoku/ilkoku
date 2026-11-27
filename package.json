@@ -24,6 +24,7 @@
     "social-images:prepare": "node scripts/prepare-social-images.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
     "@power-seo/ai": "1.0.19",
     "@power-seo/analytics": "1.0.19",
     "@power-seo/audit": "1.0.19",

@@ -1,0 +1,42 @@
+name: Public MCP SDK compatibility probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/mcp-public-sdk-probe.yml
+      - src/lib/public-mcp.mjs
+      - src/app/mcp/route.ts
+      - package.json
+      - package-lock.json
+      - scripts/mcp-public-sdk-probe.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Check committed SDK dependency
+        run: node -e 'const p=require("./package.json"); if(p.dependencies["@modelcontextprotocol/server"]!=="2.4.0") process.exit(1)'
+      - name: Audit candidate supply chain
+        run: |
+          npm run audit:supply-chain
+          node scripts/audit-high-dependencies.mjs
+      - name: Install candidate dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Report runtime advisories for newly added MCP packages
+        run: |
+          npm audit --omit=dev --json > /tmp/mcp-audit.json || true
+          node -e 'const r=require("/tmp/mcp-audit.json"); if(r.error || !r.vulnerabilities) process.exit(1); const a=Object.entries(r.vulnerabilities).filter(([n])=>n.startsWith("@modelcontextprotocol/")); console.log("MCP_RUNTIME_ADVISORIES", JSON.stringify(a)); if(a.length) process.exit(1)'
+      - name: Test official SDK against current protocol
+        run: node scripts/mcp-public-sdk-probe.mjs

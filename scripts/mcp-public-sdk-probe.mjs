@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { createPublicMcpHandler } from "./mcp-public-sdk-candidate.mjs";
+import { createPublicMcpEndpoint } from "../src/lib/public-mcp.mjs";
 
-const handler = createPublicMcpHandler();
+const handler = createPublicMcpEndpoint();
 const version = "2026-07-28";
 const meta = {
   "io.modelcontextprotocol/protocolVersion": version,
@@ -11,6 +11,7 @@ const meta = {
 let id = 0;
 async function rpc(method, params = {}, extraHeaders = {}) {
   const headers = {
+    Host: "ilkoku.com",
     "Content-Type": "application/json",
     Accept: "application/json, text/event-stream",
     "MCP-Protocol-Version": version,
@@ -53,6 +54,31 @@ try {
   const mismatch = await rpc("tools/call", { name: "ilkoku_get_platform_info", arguments: {} }, { "Mcp-Name": "ilkoku_list_public_resources" });
   assert.equal(mismatch.status, 400);
   assert.equal(mismatch.body.error.code, -32020);
+  for (const headers of [
+    { Host: "evil.example" },
+    { Host: "ilkoku.com", Origin: "https://evil.example" },
+    { Host: "ilkoku.com", Origin: "null" },
+  ]) {
+    const response = await handler.fetch(new Request("https://ilkoku.com/mcp", { method: "POST", headers, body: "{}" }));
+    assert.equal(response.status, 403);
+    assert.match(response.headers.get("cache-control"), /no-store/);
+  }
+  const badMethod = await handler.fetch(new Request("https://ilkoku.com/mcp", { headers: { Host: "ilkoku.com" } }));
+  assert.equal(badMethod.status, 405);
+  const big = await handler.fetch(new Request("https://ilkoku.com/mcp", {
+    method: "POST", headers: { Host: "ilkoku.com", "Content-Length": "8193" }, body: "{}",
+  }));
+  assert.equal(big.status, 413);
+  const chunked = await handler.fetch(new Request("https://ilkoku.com/mcp", {
+    method: "POST", headers: { Host: "ilkoku.com", "Content-Type": "application/json", Accept: "application/json, text/event-stream", "MCP-Protocol-Version": version, "Mcp-Method": "tools/list" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 99, method: "tools/list", params: { _meta: meta, padding: "x".repeat(9000) } }),
+  }));
+  assert.equal(chunked.status, 413);
+  const compressed = await handler.fetch(new Request("https://ilkoku.com/mcp", {
+    method: "POST", headers: { Host: "ilkoku.com", "Content-Encoding": "gzip" }, body: "{}",
+  }));
+  assert.equal(compressed.status, 415);
+  console.log("MCP_SECURITY_PROBE_PASS: host, origin, method, cache, declared and actual body size, encoding");
   console.log("MCP_SDK_PROBE_PASS: list, calls, strict inputs, origin-only resource URLs, header mismatch");
 } finally {
   await handler.close();

@@ -1,0 +1,31 @@
+name: Native WebMCP browser proof
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/webmcp-native-proof.yml
+      - scripts/webmcp-native-proof.mjs
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Check system Chrome
+        run: google-chrome --version
+      - name: Install isolated pinned test runner
+        run: |
+          mkdir -p "$RUNNER_TEMP/webmcp-native"
+          npm install --prefix "$RUNNER_TEMP/webmcp-native" --no-package-lock --ignore-scripts --save-exact playwright@1.55.0
+          cp scripts/webmcp-native-proof.mjs "$RUNNER_TEMP/webmcp-native/"
+      - name: Run headed native browser, without injecting API mocks
+        run: xvfb-run -a node "$RUNNER_TEMP/webmcp-native/webmcp-native-proof.mjs"

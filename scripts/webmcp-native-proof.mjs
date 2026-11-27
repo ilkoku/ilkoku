@@ -25,21 +25,43 @@ try {
   });
   console.log("WEBMCP_NATIVE_SURFACE", JSON.stringify(native));
   assert.deepEqual(native, { secure: true, registration: "function", discovery: "function", invocation: "function" }, "Native browser API unavailable; not an application test result");
-  await page.waitForFunction(async () => {
-    const tools = await document.modelContext.getTools();
-    return ["ilkoku_get_platform_info","ilkoku_list_public_resources"].every(name => tools.some(tool => tool.name === name));
-  }, { timeout: 20000 }, { timeout: 25000 });
-  const result = await page.evaluate(async () => {
-    const context = document.modelContext;
-    const tools = await context.getTools();
-    const selected = tools.filter(t => t.name.startsWith("ilkoku_"));
-    const outputs = {};
-    for (const tool of selected) {
-      const value = await context.executeTool(tool, {});
-      outputs[tool.name] = typeof value === "string" ? JSON.parse(value) : value;
+  const expected = ["ilkoku_get_platform_info", "ilkoku_list_public_resources"];
+  // Keep discovery, readiness and execution in the same browser evaluation.
+  // A waitForFunction followed by a separate evaluate can race document changes.
+  const result = await page.evaluate(async (names) => {
+    const deadline = performance.now() + 20000;
+    const snapshots = [];
+    let selected = [];
+    let stable = 0;
+    while (performance.now() < deadline) {
+      const tools = await document.modelContext.getTools();
+      selected = Array.from(tools).filter(t => names.includes(t.name));
+      const found = selected.map(t => t.name).sort();
+      if (snapshots.at(-1)?.join(",") !== found.join(",")) snapshots.push(found);
+      if (names.every(name => found.includes(name))) {
+        stable += 1;
+        if (stable === 3) break;
+      } else stable = 0;
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
-    return { tools: selected.map(t => ({name:t.name,readOnly:t.annotations?.readOnlyHint})), outputs };
-  });
+    const metadata = selected.map(t => ({ name: t.name, readOnly: t.annotations?.readOnlyHint }));
+    const outputs = {};
+    const errors = {};
+    if (stable === 3) {
+      for (const name of names) {
+        const tool = selected.find(t => t.name === name);
+        try {
+          const value = await document.modelContext.executeTool(tool, {});
+          outputs[name] = typeof value === "string" ? JSON.parse(value) : value;
+        } catch (error) {
+          errors[name] = String(error);
+        }
+      }
+    }
+    return { tools: metadata, outputs, errors, snapshots, stable };
+  }, expected);
+  assert.equal(result.stable, 3, "Both tools must remain discoverable across three consecutive native snapshots: " + JSON.stringify(result.snapshots));
+  assert.deepEqual(result.errors, {}, "Native invocation errors: " + JSON.stringify(result.errors));
   console.log("WEBMCP_NATIVE_RESULT", JSON.stringify(result));
   assert.deepEqual(result.tools.map(t=>t.name).sort(), ["ilkoku_get_platform_info","ilkoku_list_public_resources"]);
   assert.ok(result.tools.every(t=>t.readOnly === true));

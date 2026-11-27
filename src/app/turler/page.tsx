@@ -59,9 +59,9 @@ export default async function PublicGenresPage({
 }: PublicGenresPageProps) {
   const query = await searchParams;
   const search = query.arama?.trim().slice(0, 120) || undefined;
-  const genres = await getPublicGenres(search);
-  // This indexable directory can display demo genres for QA visitors, but its
-  // search metadata must only mention destinations backed by real publications.
+  const genres = await getPublicGenres(search, false);
+  // The public directory and its search metadata only describe real publications.
+  // Direct QA genre and work routes retain their separate access policy.
   // Resolve eligibility once for the distinct source labels, not per genre.
   const sourceGenres = [...new Set(genres.flatMap((genre) => genre.sourceGenres))];
   let eligibleGenreSlugs = new Set<string>();
